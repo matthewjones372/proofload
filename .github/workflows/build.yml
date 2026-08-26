@@ -41,6 +41,13 @@ jobs:
       - name: Build and test
         run: ./gradlew build --stacktrace
 
+      # `build` does not run these, on purpose: a 40 ms target measured beside
+      # eight modules' tests answers about the runner rather than the tool. A
+      # step of their own is what keeps the wall-clock claims checked instead of
+      # quietly dropped.
+      - name: Wall-clock tests
+        run: ./gradlew :examples:timingTests --stacktrace
+
       # A load generator's own suites assert on timing, so a failure here is
       # worth reading rather than guessing at — and a flake on a loaded runner
       # looks exactly like a regression until someone opens the report.

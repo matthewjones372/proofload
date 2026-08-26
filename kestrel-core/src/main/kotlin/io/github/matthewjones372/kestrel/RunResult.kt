@@ -206,6 +206,20 @@ data class RunResult(
 }
 
 /**
+ * The steps holding records the run could not account for. Every sink asks this
+ * rather than each deciding when a zero is worth a line, so a run that lost
+ * records on the page lost them in the job summary too.
+ */
+val RunResult.unanswered: List<StepStats>
+    get() = steps.values.filter { it.unmatched > 0L || it.inFlight > 0L }
+
+/** How many records departed and never arrived, across the whole run. */
+val RunResult.unmatched: Long get() = steps.values.sumOf { it.unmatched }
+
+/** How many the run stopped waiting for, across the whole run. */
+val RunResult.inFlight: Long get() = steps.values.sumOf { it.inFlight }
+
+/**
  * Whether the generator's own backlog is large enough to have moved a number a
  * report prints. The gate is the histogram's error bar: under that the delay
  * cannot show up in a percentile beside it, and a warning that does not show up

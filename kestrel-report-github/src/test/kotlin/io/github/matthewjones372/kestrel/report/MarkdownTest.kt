@@ -91,6 +91,31 @@ class MarkdownTest {
     }
 
     @Test
+    fun `a run that lost records says so above everything, and says which step lost them`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf(
+                "submitted" to step("submitted", 113L, 113L, emptyMap(), payLatency),
+                "settled" to step("settled", 60L, 60L, emptyMap(), payLatency).copy(unmatched = 41L, inFlight = 12L),
+            ),
+            behind = timingOf(listOf(50.microseconds)),
+        )
+
+        result.markdown() shouldBe golden("records-lost.md")
+    }
+
+    @Test
+    fun `a run that lost nothing is not made to say it lost nothing`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse),
+            behind = timingOf(listOf(50.microseconds)),
+        )
+
+        result.markdown() shouldNotContain "never arrived"
+    }
+
+    @Test
     fun `a run with no steps reports that rather than an empty table`() {
         val result = RunResult(startedAt = startedAt, steps = emptyMap(), behind = timingOf(listOf(Duration.ZERO)))
 

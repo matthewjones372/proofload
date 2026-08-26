@@ -9,4 +9,6 @@ include(
     "kestrel-pelican",
     "kestrel-report-github",
     "kestrel-report-html",
+    // Not a library: the end-to-end proof that the modules above compose.
+    "examples",
 )

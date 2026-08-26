@@ -73,6 +73,12 @@ val moduleDescriptions = mapOf(
 // The floor is a ratchet against regression, not a target to code towards — a
 // test written to move a percentage is worth less than no test at all. Raise
 // it when the real number has been comfortably above it for a while.
+// `examples` publishes nothing, so it has no binary surface to keep. Without
+// this the validator asks for an .api dump of a module nobody can depend on.
+apiValidation {
+    ignoredProjects.add("examples")
+}
+
 kover {
     reports {
         total {
@@ -91,7 +97,7 @@ dependencies {
 tasks.named("check") { dependsOn("koverVerify") }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name }
+val publishedModules = subprojects.map { it.name } - "examples"
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")

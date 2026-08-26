@@ -27,7 +27,15 @@ public fun RunResult.writeHtmlReport(path: Path): Path {
 }
 
 private fun RunResult.documentLines(): List<String> =
-    listOf(headLines(), behindLines(), totalsLines(), stepsLines(), dataLines(), scriptLines()).flatten()
+    listOf(
+        headLines(),
+        behindLines(),
+        totalsLines(),
+        readingLines(),
+        stepsLines(),
+        dataLines(),
+        scriptLines(),
+    ).flatten()
 
 /**
  * First thing on the page when it applies, because every percentile below it
@@ -109,7 +117,7 @@ private fun RunResult.tableLines(): List<String> =
         "      <table>",
         "        <thead>",
         "          <tr>",
-    ) + COLUMNS.map { (heading, numeric) ->
+    ) + columnsFor(this).map { (heading, numeric) ->
         val classes = if (numeric) """ class="num"""" else ""
         """            <th scope="col"$classes data-sort="${heading.sortKey()}" aria-sort="none">""" +
             """<button type="button">${heading.escapedForHtml()}</button></th>"""
@@ -177,7 +185,7 @@ private fun RunResult.dataLines(): List<String> =
 private fun RunResult.scriptLines(): List<String> =
     listOf("<script>") + REPORT_JS.lines() + listOf("</script>", "</body>", "</html>")
 
-private fun String.sortKey(): String = lowercase().replace(" ", "-")
+private fun String.sortKey(): String = substringBefore(" (").lowercase().replace(" ", "-")
 
 private fun Timing.p99OrNothing(): String = if (count == 0L) NOTHING_MEASURED else p99.forReport()
 
@@ -191,6 +199,25 @@ private fun htmlEscaped(char: Char): String = when (char) {
     '\'' -> "&#39;"
     else -> char.toString()
 }
+
+/**
+ * The percentile columns say how many samples sit at or beyond them, for the
+ * thinnest step in the run. A p99 written without that reads like a fact when
+ * it is sometimes five requests.
+ */
+private fun columnsFor(result: RunResult): List<Pair<String, Boolean>> {
+    val thinnest = result.steps.values.minByOrNull { it.count } ?: return COLUMNS
+    return COLUMNS.map { (heading, numeric) ->
+        when (heading) {
+            "p95" -> "p95 (${samplesBeyond(thinnest, PERCENTILE_95).grouped()})" to numeric
+            "p99" -> "p99 (${samplesBeyond(thinnest, PERCENTILE_99).grouped()})" to numeric
+            else -> heading to numeric
+        }
+    }
+}
+
+private const val PERCENTILE_95 = 95.0
+private const val PERCENTILE_99 = 99.0
 
 /** Each column, and whether it holds a number. */
 private val COLUMNS = listOf(

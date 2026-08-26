@@ -109,6 +109,9 @@ internal val REPORT_CSS: String = """
     tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
     #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
     #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+    .reading { margin: 0 0 2rem; max-width: 46rem; }
+    .reading p { margin: 0 0 0.6rem; }
+    .reading strong { font-weight: 600; }
     .chart { margin: 1.5rem 0 0; }
     .chart figcaption { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
     .chart svg { width: 100%; height: 9rem; overflow: visible; }

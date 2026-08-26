@@ -105,6 +105,9 @@ tr.step[aria-expanded="true"] > th::before { content: "\25BE "; }
 tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
 #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+.reading { margin: 0 0 2rem; max-width: 46rem; }
+.reading p { margin: 0 0 0.6rem; }
+.reading strong { font-weight: 600; }
 .chart { margin: 1.5rem 0 0; }
 .chart figcaption { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
 .chart svg { width: 100%; height: 9rem; overflow: visible; }
@@ -144,6 +147,13 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
       <span class="tile-value">801 ms</span>
     </div>
   </section>
+  <section class="reading" aria-label="What these numbers say">
+    <p><strong>9 requests</strong>, <strong>3 failed</strong> (33.3%).</p>
+    <p>The generator fell behind its own schedule by 801 ms at p99, so the response times below include time this tool spent queueing rather than time the target took.</p>
+    <p><strong>pay is the slowest step</strong> at 1.21 s p99, and it carries 3 of the 3 failures.</p>
+    <p><strong>p99 rests on 1 request</strong> for browse. Treat it as a hint rather than a number: a longer run is the only thing that firms a percentile up.</p>
+    <p>A user completes 2 steps, so about <strong>1 user in 50</strong> meets a p99 somewhere in the journey — assuming the steps are independent, which they are not quite. Percentiles do not add: the journey's own p99 is not the sum of the steps'.</p>
+  </section>
   <section class="steps">
     <div class="steps-head">
       <h2>Steps</h2>
@@ -158,8 +168,8 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
             <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
             <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
             <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
-            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95</button></th>
-            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99</button></th>
+            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (1)</button></th>
+            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (1)</button></th>
             <th scope="col" class="num" data-sort="max" aria-sort="none"><button type="button">Max</button></th>
           </tr>
         </thead>

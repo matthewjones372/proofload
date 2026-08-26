@@ -26,6 +26,13 @@ data class Simulation(
     val feeder: Feeder = Feeder.empty,
 )
 
+/** What this run is asking for, before any of it happens. */
+fun Simulation.plan(): Plan = Plan(
+    scenario = scenario.name,
+    steps = scenario.steps.map { it.name },
+    profile = profile,
+)
+
 /** The same run, with each user seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(feeder = feeder)
 

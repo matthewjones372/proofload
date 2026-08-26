@@ -51,11 +51,35 @@ data class StepStats(
     fun failedWith(reason: String): Long = failures[reason] ?: 0L
 }
 
+/**
+ * What a run was asked to do, carried alongside what it did.
+ *
+ * A profile that promised 480 users and a run that sent 300 are the same page
+ * without this, and every latency on that page would be describing a lighter
+ * test than the one somebody asked for.
+ */
+data class Plan(
+    val scenario: String,
+    val steps: List<String>,
+    val profile: InjectionProfile?,
+) {
+    val plannedUsers: Long get() = profile?.userCount() ?: 0L
+
+    /** An upper bound: a scenario that abandons users sends fewer, which is the point of showing it. */
+    val plannedRequests: Long get() = plannedUsers * steps.size
+
+    companion object {
+        /** For a result built from samples rather than run, which claims nothing. */
+        val none: Plan = Plan(scenario = "", steps = emptyList(), profile = null)
+    }
+}
+
 /** What a run measured, as a value: assert on it, diff it, hand it to a report. */
 data class RunResult(
     val startedAt: Instant,
     val steps: Map<String, StepStats>,
     val behind: Timing,
+    val plan: Plan = Plan.none,
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

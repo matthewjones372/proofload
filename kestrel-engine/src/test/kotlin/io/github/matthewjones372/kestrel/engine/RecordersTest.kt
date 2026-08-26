@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Plan
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -26,7 +27,7 @@ class RecordersTest {
             }
         }.forEach { it.join() }
 
-        val result = recorders.freeze()
+        val result = recorders.freeze(Plan.none)
         result["browse"].count shouldBe (WRITERS * EACH).toLong()
         result.behind.count shouldBe (WRITERS * EACH).toLong()
     }
@@ -41,7 +42,7 @@ class RecordersTest {
             }
         }.forEach { it.join() }
 
-        val pay = recorders.freeze()["pay"]
+        val pay = recorders.freeze(Plan.none)["pay"]
         pay.count shouldBe 2L
         pay.ok shouldBe 1L
         pay.failures shouldBe mapOf("503" to 1L)

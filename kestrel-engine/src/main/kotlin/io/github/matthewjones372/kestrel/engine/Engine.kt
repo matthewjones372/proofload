@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.departures
+import io.github.matthewjones372.kestrel.plan
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -42,7 +43,7 @@ fun Simulation.run(): RunResult {
     } finally {
         scheduler.shutdownNow()
     }
-    return recorders.freeze()
+    return recorders.freeze(plan())
 }
 
 private fun Scenario.depart(

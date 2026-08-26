@@ -2,6 +2,8 @@ package io.github.matthewjones372.kestrel.report
 
 import java.util.Locale
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * How a measurement is allowed to look on the page.
@@ -42,3 +44,19 @@ private const val NANOS_PER_SECOND = 1_000_000_000L
 private const val PERCENT = 100.0
 private const val HUNDRED = 100.0
 private const val TEN = 10.0
+
+/**
+ * A duration at the scale a load shape lives on.
+ *
+ * [forReport] is written for latency, where three significant figures matter;
+ * a ten-minute hold rendered as "600 s" is technically the same number and
+ * nobody reads it as ten minutes.
+ */
+internal fun Duration.forPlan(): String = when {
+    this >= 1.hours -> "%.1f h".format(Locale.ROOT, inWholeSeconds / SECONDS_PER_HOUR)
+    this >= 1.minutes -> "%.1f min".format(Locale.ROOT, inWholeSeconds / SECONDS_PER_MINUTE)
+    else -> forReport()
+}
+
+private const val SECONDS_PER_MINUTE = 60.0
+private const val SECONDS_PER_HOUR = 3600.0

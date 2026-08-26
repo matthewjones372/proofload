@@ -16,6 +16,7 @@ import kotlin.math.pow
 internal fun RunResult.readingLines(): List<String> {
     val sentences = listOfNotNull(
         totalSentence(),
+        shortfallSentence(),
         scheduleSentence(),
         slowestSentence(),
         weightSentence(),
@@ -34,6 +35,23 @@ private fun RunResult.totalSentence(): String {
         0L
     ) "none failed" else "<strong>${failed.grouped()} failed</strong> (${share.oneDecimal()}%)"
     return "<strong>${count.grouped()} requests</strong>, $failedPart."
+}
+
+/**
+ * What was sent against what was asked for. A run that sent three quarters of
+ * the load is describing a lighter test than the one somebody wrote, and
+ * without this the page looks identical to one that sent all of it.
+ */
+private fun RunResult.shortfallSentence(): String? {
+    val planned = plan.plannedRequests
+    if (planned == 0L) return null
+    if (count >= planned) return "The run sent all ${planned.grouped()} of them."
+
+    val missing = planned - count
+    val share = missing.toDouble() / planned * PERCENT
+    return "<strong>${missing.grouped()} of the ${planned.grouped()} planned requests never went out</strong> " +
+        "(${share.oneDecimal()}%), so this page describes a lighter run than the one that was asked for. " +
+        "Users abandoned after a failed step account for some of it; the rest is load that did not leave."
 }
 
 private fun RunResult.scheduleSentence(): String =

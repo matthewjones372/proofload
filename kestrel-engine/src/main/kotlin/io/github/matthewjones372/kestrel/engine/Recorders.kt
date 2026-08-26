@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import java.time.Instant
@@ -38,12 +39,12 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         recordFrom(from, step, failure, serviceTime, schedulingDelay)
     }
 
-    fun freeze(): RunResult {
+    fun freeze(plan: Plan): RunResult {
         val merged = RunRecorder(startedAt)
         repeat(slots.length()) { index ->
             merged.merge(checkNotNull(slots.get(index)) { "a shard was still in use when the run ended" })
         }
-        return merged.freeze()
+        return merged.freeze().copy(plan = plan)
     }
 
     private tailrec fun recordFrom(

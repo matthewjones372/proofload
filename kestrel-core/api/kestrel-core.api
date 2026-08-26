@@ -106,6 +106,28 @@ public final class io/github/matthewjones372/kestrel/InjectionProfileKt {
 	public static final fun userCount (Lio/github/matthewjones372/kestrel/InjectionProfile;)J
 }
 
+public final class io/github/matthewjones372/kestrel/Plan {
+	public static final field Companion Lio/github/matthewjones372/kestrel/Plan$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/InjectionProfile;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lio/github/matthewjones372/kestrel/InjectionProfile;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/InjectionProfile;)Lio/github/matthewjones372/kestrel/Plan;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Plan;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/InjectionProfile;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Plan;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlannedRequests ()J
+	public final fun getPlannedUsers ()J
+	public final fun getProfile ()Lio/github/matthewjones372/kestrel/InjectionProfile;
+	public final fun getScenario ()Ljava/lang/String;
+	public final fun getSteps ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Plan$Companion {
+	public final fun getNone ()Lio/github/matthewjones372/kestrel/Plan;
+}
+
 public final class io/github/matthewjones372/kestrel/Rate {
 	public static final field Companion Lio/github/matthewjones372/kestrel/Rate$Companion;
 	public static final synthetic fun box-impl (D)Lio/github/matthewjones372/kestrel/Rate;
@@ -137,12 +159,14 @@ public final class io/github/matthewjones372/kestrel/RunRecorder$Companion {
 }
 
 public final class io/github/matthewjones372/kestrel/RunResult {
-	public fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;)V
+	public fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Plan;)V
+	public synthetic fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Plan;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/time/Instant;
 	public final fun component2 ()Ljava/util/Map;
 	public final fun component3 ()Lio/github/matthewjones372/kestrel/Timing;
-	public final fun copy (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;)Lio/github/matthewjones372/kestrel/RunResult;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/RunResult;
+	public final fun component4 ()Lio/github/matthewjones372/kestrel/Plan;
+	public final fun copy (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Plan;)Lio/github/matthewjones372/kestrel/RunResult;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Plan;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/RunResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepStats;
 	public final fun get-Z5c0mbc (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepStats;
@@ -150,6 +174,7 @@ public final class io/github/matthewjones372/kestrel/RunResult {
 	public final fun getCount ()J
 	public final fun getFailed ()J
 	public final fun getOk ()J
+	public final fun getPlan ()Lio/github/matthewjones372/kestrel/Plan;
 	public final fun getStartedAt ()Ljava/time/Instant;
 	public final fun getSteps ()Ljava/util/Map;
 	public fun hashCode ()I
@@ -232,6 +257,7 @@ public final class io/github/matthewjones372/kestrel/SimulationKt {
 	public static final fun getPerMinute (Ljava/lang/Number;)D
 	public static final fun getPerSecond (Ljava/lang/Number;)D
 	public static final fun injecting (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/InjectionProfile;)Lio/github/matthewjones372/kestrel/Simulation;
+	public static final fun plan (Lio/github/matthewjones372/kestrel/Simulation;)Lio/github/matthewjones372/kestrel/Plan;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/Step {

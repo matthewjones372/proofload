@@ -35,6 +35,7 @@ fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
  */
 fun Simulation.run(): RunResult {
     val recorders = Recorders(Instant.now())
+    val watch = watchForHiccups()
     val runStart = System.nanoTime()
     val users = Departures()
     // Read where the offsets are consumed rather than off the profile: what the
@@ -69,7 +70,7 @@ fun Simulation.run(): RunResult {
         scheduler.shutdownNow()
     }
     drain?.close()
-    return recorders.freeze(plan(), arrivals.freeze())
+    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop())
 }
 
 private fun Scenario.depart(

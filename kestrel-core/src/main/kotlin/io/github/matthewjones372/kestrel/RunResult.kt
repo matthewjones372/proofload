@@ -91,6 +91,16 @@ data class Timing(
     companion object {
         /** Below this a p99.9 is one sample in a thousand taken from fewer than a thousand. */
         const val SAMPLES_FOR_P999: Long = 1_000L
+
+        /** Nothing was measured, which a count of zero says and every percentile below it repeats. */
+        val none: Timing = Timing(
+            count = 0L,
+            p50 = Duration.ZERO,
+            p95 = Duration.ZERO,
+            p99 = Duration.ZERO,
+            max = Duration.ZERO,
+            distribution = emptyList(),
+        )
     }
 }
 
@@ -171,6 +181,13 @@ data class RunResult(
     val arrivals: Arrivals = Arrivals.none,
     /** What measured it, so a comparison against a run from another machine can say so. */
     val machine: Machine = Machine.here(),
+
+    /**
+     * What the injector's own JVM stalled for while this ran, measured off the
+     * timed path so a stall in the measuring process sits beside the tail it
+     * caused rather than inside it. Empty for a result built from samples.
+     */
+    val hiccups: Timing = Timing.none,
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

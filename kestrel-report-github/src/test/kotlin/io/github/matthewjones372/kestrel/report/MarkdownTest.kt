@@ -148,6 +148,27 @@ class MarkdownTest {
             "departures, coefficient of variation 0.98."
     }
 
+    @Test
+    fun `what the injector itself stalled for is printed beside the tail it could have caused`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("pay" to step("pay", 100L, 100L, emptyMap(), payLatency)),
+            behind = timingOf(listOf(50.microseconds)),
+            hiccups = timingOf(
+                List(95) { 1.milliseconds } + List(4) { 14.milliseconds } + listOf(30.milliseconds),
+            ),
+        )
+
+        result.markdown() shouldBe golden("hiccups.md")
+    }
+
+    @Test
+    fun `a result nobody ran has no injector to have stalled`() {
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
+
+        result.markdown() shouldNotContain "stalled"
+    }
+
     private val nothing = listOf(Duration.ZERO)
 
     private fun ran(profile: InjectionProfile, arrivals: Arrivals) = RunResult(

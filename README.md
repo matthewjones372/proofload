@@ -136,6 +136,20 @@ that fell behind reports its own backlog rather than a fast target. When that
 backlog is large enough to have moved a number, `result.fellBehind()` is true
 and every report says so before it prints a percentile.
 
+Every run also watches the machine it is sending from. A task due every
+millisecond records how much later than that it actually ran, so a stall in the
+measuring process arrives beside the tail it caused rather than inside it:
+
+```kotlin
+result.hiccups.p99   // 14ms, what the injector's own JVM stalled for
+result.hiccups.max
+```
+
+The ticks run on an executor no departure and no step is ever submitted to, and
+their histogram is read only once that executor has terminated, so watching
+cannot move the numbers being watched. A tail no larger than `hiccups.p99` is
+this machine as readily as the target, and both reports print the two together.
+
 A timing carries the buckets it was read from, so it answers a percentile
 nobody asked for while the run was going — `p999` among them, which is where
 two JVM collectors that match to p99 come apart:

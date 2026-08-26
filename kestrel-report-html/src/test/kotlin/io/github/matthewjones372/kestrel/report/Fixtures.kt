@@ -68,6 +68,11 @@ internal object Fixtures {
         ),
     )
 
+    /** The same run, on an injector that stalled while it was sending. */
+    val stalled: RunResult = fellBehind.copy(
+        hiccups = timingOf(List(95) { 1.milliseconds } + List(4) { 14.milliseconds } + listOf(30.milliseconds)),
+    )
+
     /** The same run, with a backlog too small to have moved anything it prints. */
     val keptSchedule: RunResult = fellBehind.copy(
         behind = timingOf(listOf(1.milliseconds, 1.milliseconds, 2.milliseconds)),

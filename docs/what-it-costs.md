@@ -37,6 +37,12 @@ hundred thousand — so what it captures is occasional stalls on the machine
 rather than a backlog. One run of each rate is not enough to characterise a
 tail, and this document does not pretend otherwise.
 
+That reading is now a measurement rather than an inference. Every run carries
+`result.hiccups`, the distribution of how much later than it was due each tick
+of a one-millisecond schedule arrived on the injector's own JVM, and the reports
+print it beside the backlog. Where the two are the same size, the p99 column
+above is this machine.
+
 **The first rows are the coldest.** The low rates send the fewest requests, so
 they get the least JIT, and their medians are worse than rates ten times higher.
 Read the table as a shape rather than a ranking.

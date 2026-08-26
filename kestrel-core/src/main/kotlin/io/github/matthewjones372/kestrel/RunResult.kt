@@ -3,6 +3,15 @@ package io.github.matthewjones372.kestrel
 import java.time.Instant
 import kotlin.time.Duration
 
+/**
+ * One bucket of a distribution: everything counted at or below [upperBound] and
+ * above the bucket before it.
+ *
+ * The bound is where a percentile falling in this bucket would be reported, so
+ * a chart drawn from these and a number printed beside it cannot disagree.
+ */
+data class Bucket(val upperBound: Duration, val count: Long)
+
 /** A histogram read once and frozen: percentiles that cannot move under a reader. */
 data class Timing(
     val count: Long,
@@ -10,6 +19,8 @@ data class Timing(
     val p95: Duration,
     val p99: Duration,
     val max: Duration,
+    /** What was counted, bucket by bucket, for anything that draws rather than prints. */
+    val distribution: List<Bucket> = emptyList(),
 )
 
 fun Histogram.timing(): Timing = Timing(
@@ -18,6 +29,7 @@ fun Histogram.timing(): Timing = Timing(
     p95 = percentile(P95),
     p99 = percentile(P99),
     max = max,
+    distribution = distribution(),
 )
 
 /**

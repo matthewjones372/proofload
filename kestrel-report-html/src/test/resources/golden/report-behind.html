@@ -105,6 +105,14 @@ tr.step[aria-expanded="true"] > th::before { content: "\25BE "; }
 tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
 #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+.chart { margin: 1.5rem 0 0; }
+.chart figcaption { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
+.chart svg { width: 100%; height: 9rem; overflow: visible; }
+.bar { fill: var(--ok); opacity: 0.75; }
+.mark { stroke: var(--failed); stroke-width: 1; stroke-dasharray: 3 2; }
+.mark-label { fill: var(--failed); font-size: 9px; }
+.tick { stroke: var(--line); stroke-width: 1; }
+.tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
 .note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
 .empty { color: var(--muted); }
 </style>
@@ -187,6 +195,57 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
         </tbody>
       </table>
     </div>
+      <figure class="chart">
+        <figcaption>browse — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="browse distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>1 at 10.0 ms</title>
+          </rect>
+          <rect class="bar" x="53.4" y="0.0" width="4.0" height="120.0">
+            <title>1 at 12.1 ms</title>
+          </rect>
+          <rect class="bar" x="97.2" y="0.0" width="4.0" height="120.0">
+            <title>1 at 14.0 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="0.0" width="4.0" height="120.0">
+            <title>1 at 90.2 ms</title>
+          </rect>
+          <line class="mark" x1="53.4" y1="0" x2="53.4" y2="120.0"></line>
+          <text class="mark-label" x="56.4" y="12">p50</text>
+          <line class="mark" x1="636.0" y1="0" x2="636.0" y2="120.0"></line>
+          <text class="mark-label" x="639.0" y="12">p99</text>
+          <line class="tick" x1="0.0" y1="120.0" x2="0.0" y2="124.0"></line>
+          <text class="tick-label" x="0.0" y="140">10.0 ms</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>pay — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="pay distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>1 at 20.1 ms</title>
+          </rect>
+          <rect class="bar" x="107.6" y="0.0" width="4.0" height="120.0">
+            <title>1 at 40.1 ms</title>
+          </rect>
+          <rect class="bar" x="170.2" y="0.0" width="4.0" height="120.0">
+            <title>1 at 60.0 ms</title>
+          </rect>
+          <rect class="bar" x="572.3" y="0.0" width="4.0" height="120.0">
+            <title>1 at 801 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="0.0" width="4.0" height="120.0">
+            <title>1 at 1.21 s</title>
+          </rect>
+          <line class="mark" x1="170.2" y1="0" x2="170.2" y2="120.0"></line>
+          <text class="mark-label" x="173.2" y="12">p50</text>
+          <line class="mark" x1="636.0" y1="0" x2="636.0" y2="120.0"></line>
+          <text class="mark-label" x="639.0" y="12">p99</text>
+          <line class="tick" x1="249.3" y1="120.0" x2="249.3" y2="124.0"></line>
+          <text class="tick-label" x="249.3" y="140">100 ms</text>
+          <line class="tick" x1="606.7" y1="120.0" x2="606.7" y2="124.0"></line>
+          <text class="tick-label" x="606.7" y="140">1.00 s</text>
+        </svg>
+      </figure>
     <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
   </section>
 </main>

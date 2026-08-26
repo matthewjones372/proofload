@@ -89,7 +89,7 @@ private fun RunResult.stepsLines(): List<String> =
         """      <p class="mode">Showing <strong id="mode-name">service time</strong>. """ +
             """<button type="button" id="mode-toggle">Show response time</button></p>""",
         "    </div>",
-    ) + tableLines() + listOf(
+    ) + tableLines() + chartLines() + listOf(
         """    <p class="note">Service time is what the target took; response time counts from the """ +
             "departure the profile promised, so it carries the generator's own backlog. Percentiles are " +
             "the top of the histogram bucket a sample fell in, never a point interpolated between two: " +
@@ -98,6 +98,9 @@ private fun RunResult.stepsLines(): List<String> =
         "  </section>",
         "</main>",
     )
+
+private fun RunResult.chartLines(): List<String> =
+    steps.values.flatMap { step -> step.serviceTime.distributionChart(step.name) }
 
 private fun RunResult.tableLines(): List<String> =
     if (steps.isEmpty()) listOf("""    <p class="empty">This run recorded no steps.</p>""")

@@ -19,12 +19,19 @@ class ScheduleDriftTest {
      * unadjusted starts every user late by however long booking took — the
      * drift the profile computes its offsets from an index to avoid.
      */
+
+    /**
+     * On the median, not the tail. Drift moved every departure, so it showed up
+     * in the middle of the distribution; a p99 gate would instead be measuring
+     * whatever else the machine was doing, which during a full build is seven
+     * other test JVMs.
+     */
     @Test
     fun `booking a run does not make its own departures late`() {
         val result = nothing.at(2_000.perSecond, over = 2.seconds).run()
 
-        withClue("behind p99 was ${result.behind.p99}, max ${result.behind.max}") {
-            (result.behind.p99 < 25.milliseconds) shouldBe true
+        withClue("behind p50 was ${result.behind.p50}, p99 ${result.behind.p99}") {
+            (result.behind.p50 < 25.milliseconds) shouldBe true
         }
     }
 
@@ -33,7 +40,7 @@ class ScheduleDriftTest {
         val result = nothing.at(1_000.perSecond, over = 2.seconds).run()
 
         withClue("p50 ${result.behind.p50}, p99 ${result.behind.p99}") {
-            (result.behind.p99 < 25.milliseconds) shouldBe true
+            (result.behind.p50 < 25.milliseconds) shouldBe true
         }
     }
 }

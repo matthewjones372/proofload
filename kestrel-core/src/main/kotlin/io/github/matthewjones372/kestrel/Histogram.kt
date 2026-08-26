@@ -59,6 +59,19 @@ class Histogram {
         return if (bucket < 0) CEILING_NANOS.nanoseconds else highestEquivalentOf(bucket).nanoseconds
     }
 
+    /**
+     * The buckets that counted something, in order.
+     *
+     * Only the non-empty ones: the table has a few thousand slots and a run
+     * fills tens of them, and a report that carried the rest would be mostly
+     * zeroes on the wire.
+     */
+    fun distribution(): List<Bucket> = counts.asSequence().take(BUCKETS)
+        .mapIndexedNotNull { index, seen ->
+            if (seen == 0L) null else Bucket(highestEquivalentOf(index).nanoseconds, seen)
+        }
+        .toList()
+
     private fun indexOf(nanos: Long): Int {
         val bucket = bucketOf(nanos)
         val subBucket = (nanos ushr bucket).toInt()

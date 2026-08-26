@@ -60,6 +60,22 @@ internal object Fixtures {
         behind = timingOf(listOf(1.milliseconds, 1.milliseconds, 2.milliseconds)),
     )
 
+    /** Long enough that a p99.9 has a sample to rest on, with one request in a thousand slow. */
+    val longEnoughForATail: RunResult = RunResult(
+        startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+        steps = linkedMapOf(
+            "pay" to StepStats(
+                name = "pay",
+                count = 2_000L,
+                ok = 2_000L,
+                failures = emptyMap(),
+                serviceTime = timingOf(List(1_997) { 20.milliseconds } + List(3) { 900.milliseconds }),
+                responseTime = timingOf(List(1_997) { 25.milliseconds } + List(3) { 950.milliseconds }),
+            ),
+        ),
+        behind = timingOf(listOf(1.milliseconds)),
+    )
+
     // `vararg Duration` is prohibited: `Duration` is a value class.
     private fun timingOf(samples: List<Duration>): Timing =
         Histogram().apply { samples.forEach { record(it) } }.timing()

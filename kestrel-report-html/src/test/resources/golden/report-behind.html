@@ -138,6 +138,12 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
 .shape-area { fill: var(--fg); opacity: 0.09; }
 .shape-end { text-anchor: end; }
+.tail { margin: 2rem 0 0; max-width: 46rem; }
+.tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.tail-step { flex: 1; }
+.tail-value { font-variant-numeric: tabular-nums; }
+.tail-value.none, .tail-interval { color: var(--muted); }
 .reading { margin: 0 0 2rem; max-width: 46rem; }
 .reading p { margin: 0 0 0.6rem; }
 .reading strong { font-weight: 600; }
@@ -291,6 +297,14 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
       </figure>
     <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
   </section>
+  <section class="tail" aria-label="The tail">
+    <h2>p99.9</h2>
+    <ul class="tail-list">
+      <li><span class="tail-step">browse</span><span class="tail-value none">Not measured — only 4 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">pay</span><span class="tail-value none">Not measured — only 5 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+    </ul>
+    <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
+  </section>
 </main>
 <script type="application/json" id="kestrel-run">
 {
@@ -305,6 +319,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
     "p50": 603979775,
     "p95": 801112063,
     "p99": 801112063,
+    "p999": null,
     "max": 801112063
   },
   "steps": [
@@ -318,6 +333,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
         "p50": 12058623,
         "p95": 90177535,
         "p99": 90177535,
+        "p999": null,
         "max": 90177535
       },
       "responseTime": {
@@ -325,6 +341,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
         "p50": 413138943,
         "p95": 893386751,
         "p99": 893386751,
+        "p999": null,
         "max": 893386751
       },
       "failures": []
@@ -339,6 +356,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
         "p50": 60030975,
         "p95": 1207959551,
         "p99": 1207959551,
+        "p999": null,
         "max": 1207959551
       },
       "responseTime": {
@@ -346,6 +364,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
         "p50": 662700031,
         "p95": 2004877311,
         "p99": 2004877311,
+        "p999": null,
         "max": 2004877311
       },
       "failures": [

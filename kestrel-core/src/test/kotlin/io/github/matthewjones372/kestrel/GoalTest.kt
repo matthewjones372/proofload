@@ -1,7 +1,10 @@
 package io.github.matthewjones372.kestrel
 
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
@@ -74,6 +77,46 @@ class GoalTest {
 
         verdict.met shouldBe false
         verdict.measured shouldBe Measurement.Absent("the step never ran")
+    }
+
+    /** Enough samples that a p99.9 has one to rest on, which is what the tail goal needs. */
+    private fun resultOf(goals: List<Goal>, samples: Int) = RunResult(
+        startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+        steps = mapOf(
+            "pay" to StepStats(
+                name = "pay",
+                count = samples.toLong(),
+                ok = samples.toLong(),
+                failures = emptyMap(),
+                serviceTime = timingOf(List(samples) { 50.milliseconds }),
+                responseTime = timingOf(List(samples) { 150.milliseconds }),
+            ),
+        ),
+        behind = timingOf(listOf(1.milliseconds)),
+        plan = Plan(scenario = "checkout", steps = listOf("pay"), profile = null, goals = goals),
+    )
+
+    @Test
+    fun `a tail goal is judged like the percentiles beside it`() {
+        val goals = listOf(p999(pay) under 200.milliseconds)
+
+        resultOf(goals, samples = 1_000).verdicts.single().met shouldBe true
+        resultOf(listOf(p999(pay) under 100.milliseconds), samples = 1_000).verdicts.single().met shouldBe false
+    }
+
+    @Test
+    fun `a step too thin to have measured its tail misses the goal, and says why`() {
+        val verdict = resultOf(listOf(p999(pay) under 1.seconds), samples = 999).verdicts.single()
+
+        verdict.met shouldBe false
+        withClue("measured ${verdict.measured}") {
+            verdict.measured.shouldBeInstanceOf<Measurement.Absent>().because shouldContain "999"
+        }
+    }
+
+    @Test
+    fun `a tail goal prints the percentile it asked for, not the name of its builder`() {
+        (p999(pay) under 1.seconds).described shouldContain "p99.9"
     }
 
     @Test

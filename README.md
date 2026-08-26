@@ -115,7 +115,13 @@ when (val tail = result[placeOrder].serviceTime.p999) {
 ```
 
 A run of four hundred requests has not measured one request in a thousand, so
-`p999` answers with the reason rather than with a number nobody measured.
+`p999` answers with the reason rather than with a number nobody measured. A
+goal can name the tail as readily — `p999(placeOrder) under 1.seconds`, beside
+`p50`, `p95` and `p99` — and a run too short to have measured one misses that
+goal carrying the same reason, rather than passing on a percentile it never
+reached. The HTML report prints each step's tail with the 95% sampling
+interval around it, which is the width a number resting on one request in a
+thousand has.
 
 ## What this is for
 

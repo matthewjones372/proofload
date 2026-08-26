@@ -142,6 +142,12 @@ internal val REPORT_CSS: String = """
     .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
     .shape-area { fill: var(--fg); opacity: 0.09; }
     .shape-end { text-anchor: end; }
+    .tail { margin: 2rem 0 0; max-width: 46rem; }
+    .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+    .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+    .tail-step { flex: 1; }
+    .tail-value { font-variant-numeric: tabular-nums; }
+    .tail-value.none, .tail-interval { color: var(--muted); }
     .reading { margin: 0 0 2rem; max-width: 46rem; }
     .reading p { margin: 0 0 0.6rem; }
     .reading strong { font-weight: 600; }

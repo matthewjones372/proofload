@@ -59,8 +59,8 @@ fun RunResult.against(baseline: RunResult, percentile: Double = P99): List<Chang
 private fun compare(step: String, before: Timing, now: Timing, percentile: Double): Change {
     val wasIn = before.interval(percentile)
     val isIn = now.interval(percentile)
-    val was = before.at(percentile.name())
-    val became = now.at(percentile.name())
+    val was = before.percentile(percentile)
+    val became = now.percentile(percentile)
 
     // Without both intervals there is nothing to say beyond the numbers, and
     // claiming a direction from two points is the thing this exists to stop.
@@ -70,12 +70,4 @@ private fun compare(step: String, before: Timing, now: Timing, percentile: Doubl
     return if (became > was) Change.Worse(step, was, became, isIn) else Change.Better(step, was, became, isIn)
 }
 
-private fun Double.name(): String = when (this) {
-    P50 -> "p50"
-    P95 -> "p95"
-    else -> "p99"
-}
-
-private const val P50 = 50.0
-private const val P95 = 95.0
 private const val P99 = 99.0

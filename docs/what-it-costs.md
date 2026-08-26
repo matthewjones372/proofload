@@ -67,6 +67,25 @@ Subtracting the elapsed time at booking took the median at a hundred thousand a
 second from 45 ms to 10 µs. `ScheduleDriftTest` in `kestrel-engine` is the
 regression test.
 
+## What the recorder keeps
+
+Memory is the other overhead. A `Histogram` is a table of counters — 5,377
+longs, 43,016 bytes — and a run keeps two per step, service time and response
+time, plus one for the generator's own lateness. That is fixed per step and
+does not grow with the number of requests.
+
+`result.timeline` keeps one more per second per step, and that is the part that
+would grow: ten minutes of a three-step scenario is 1,800 of them, which at the
+full precision above is over seventy megabytes of counters for three line
+charts. A second's histogram is therefore coarse — thirty-two sub-buckets
+rather than two hundred and fifty-six, 5,384 bytes — putting the same run
+under ten megabytes, with each second's percentile good to 6.25% instead of
+0.78%.
+
+The summary is still read from the full histograms, so nothing on the page
+above the timeline is coarser than it was. `CoarseHistogramTest` asserts both
+sizes; neither is an estimate.
+
 ## Comparing two runs
 
 A baseline taken from a cold JVM will make the next release look like an

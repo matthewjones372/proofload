@@ -38,6 +38,11 @@ private class KestrelTransport(
     private val timeout: Duration,
 ) : ClientTransport {
 
+    // A transport is built for a run, so this is the run's start: the second an
+    // exchange is counted in is measured from here. Read once rather than per
+    // request, and monotonic, so no wall clock lands on the timed path.
+    private val runStart = System.nanoTime()
+
     // One client for the run. A client per user measures TLS handshakes and
     // connection setup, which is a different experiment from the one anyone
     // means to run.
@@ -68,6 +73,7 @@ private class KestrelTransport(
             failure = failure,
             serviceTime = (System.nanoTime() - startedAt).nanoseconds,
             schedulingDelay = kotlin.time.Duration.ZERO,
+            at = (startedAt - runStart).nanoseconds,
         )
     }
 

@@ -502,6 +502,30 @@ val runs = Runs.readAll(Path.of("build/kestrel"))   // ten files, oldest first
 `readAll` takes a directory rather than a list of paths, so nothing has to agree
 on the names, and it leaves anything in there that is not a run alone.
 
+A whole-run p99 cannot tell a target that degraded after ninety seconds from
+one that was evenly slow: both report the same number. `result.timeline` is the
+run second by second, counted from its start:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Histogram
+
+result.timeline.size                  // seconds the run covered
+result.timeline[0].count              // requests that left in the first second
+result.timeline[0].failed             // how many of those failed
+result.timeline[0].p99                // the target's service time that second
+result[placeOrder].timeline           // the same, for one step
+
+Histogram.COARSE_PRECISION            // 0.0625 — what a second's percentile is good to
+```
+
+A second nothing ran in is present and zero rather than missing, because a gap
+in a line is information and a dropped point is a lie about the shape. The
+percentiles come from a coarse histogram — 6.25% rather than the summary's
+0.78% — because a full table per second per step is tens of megabytes of
+counters for a ten-minute run, and a generator competing with its target for
+memory measures itself. Quote the summary for a number and the timeline for a
+shape; [docs/what-it-costs.md](docs/what-it-costs.md) has the arithmetic.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

@@ -9,12 +9,13 @@ private val started = Instant.parse("2026-08-26T09:00:00Z")
 
 class RunRecorderTest {
 
-    private fun RunRecorder.pay(failure: String? = null, service: Long = 10L, late: Long = 0L) =
+    private fun RunRecorder.pay(failure: String? = null, service: Long = 10L, late: Long = 0L, at: Long = 0L) =
         record(
             step = "pay",
             failure = failure,
             serviceTime = service.milliseconds,
             schedulingDelay = late.milliseconds,
+            at = at.milliseconds,
         )
 
     @Test

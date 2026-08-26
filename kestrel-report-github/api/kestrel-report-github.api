@@ -1,0 +1,4 @@
+public final class io/github/matthewjones372/kestrel/report/MarkdownKt {
+	public static final fun markdown (Lio/github/matthewjones372/kestrel/RunResult;)Ljava/lang/String;
+}
+

@@ -184,6 +184,42 @@ public final class io/github/matthewjones372/kestrel/InjectionProfileKt {
 	public static final fun userCount (Lio/github/matthewjones372/kestrel/InjectionProfile;)J
 }
 
+public abstract interface class io/github/matthewjones372/kestrel/Measurement {
+}
+
+public final class io/github/matthewjones372/kestrel/Measurement$Absent : io/github/matthewjones372/kestrel/Measurement {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Measurement$Absent;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Measurement$Absent;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Measurement$Absent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBecause ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Measurement$Share : io/github/matthewjones372/kestrel/Measurement {
+	public fun <init> (D)V
+	public final fun component1 ()D
+	public final fun copy (D)Lio/github/matthewjones372/kestrel/Measurement$Share;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Measurement$Share;DILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Measurement$Share;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPercent ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Measurement$Took : io/github/matthewjones372/kestrel/Measurement {
+	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun copy-LRDsOJo (J)Lio/github/matthewjones372/kestrel/Measurement$Took;
+	public static synthetic fun copy-LRDsOJo$default (Lio/github/matthewjones372/kestrel/Measurement$Took;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Measurement$Took;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDuration-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/matthewjones372/kestrel/PercentileOf {
 	public final fun copy-aCaljSc (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/PercentileOf;
 	public static synthetic fun copy-aCaljSc$default (Lio/github/matthewjones372/kestrel/PercentileOf;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/PercentileOf;
@@ -481,16 +517,16 @@ public final class io/github/matthewjones372/kestrel/Timing {
 
 public final class io/github/matthewjones372/kestrel/Verdict {
 	public static final field Companion Lio/github/matthewjones372/kestrel/Verdict$Companion;
-	public fun <init> (Lio/github/matthewjones372/kestrel/Goal;ZLjava/lang/String;Ljava/lang/Double;)V
+	public fun <init> (Lio/github/matthewjones372/kestrel/Goal;ZLio/github/matthewjones372/kestrel/Measurement;Ljava/lang/Double;)V
 	public final fun component1 ()Lio/github/matthewjones372/kestrel/Goal;
 	public final fun component2 ()Z
-	public final fun component3 ()Ljava/lang/String;
+	public final fun component3 ()Lio/github/matthewjones372/kestrel/Measurement;
 	public final fun component4 ()Ljava/lang/Double;
-	public final fun copy (Lio/github/matthewjones372/kestrel/Goal;ZLjava/lang/String;Ljava/lang/Double;)Lio/github/matthewjones372/kestrel/Verdict;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Verdict;Lio/github/matthewjones372/kestrel/Goal;ZLjava/lang/String;Ljava/lang/Double;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Verdict;
+	public final fun copy (Lio/github/matthewjones372/kestrel/Goal;ZLio/github/matthewjones372/kestrel/Measurement;Ljava/lang/Double;)Lio/github/matthewjones372/kestrel/Verdict;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Verdict;Lio/github/matthewjones372/kestrel/Goal;ZLio/github/matthewjones372/kestrel/Measurement;Ljava/lang/Double;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Verdict;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getGoal ()Lio/github/matthewjones372/kestrel/Goal;
-	public final fun getMeasured ()Ljava/lang/String;
+	public final fun getMeasured ()Lio/github/matthewjones372/kestrel/Measurement;
 	public final fun getMet ()Z
 	public final fun getOverBy ()Ljava/lang/Double;
 	public fun hashCode ()I

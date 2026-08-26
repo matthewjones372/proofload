@@ -44,7 +44,8 @@ sealed interface Goal {
         override val described: String get() = "${step.name} $percentile under $limit"
 
         override fun judge(result: RunResult): Verdict {
-            val stats = result.steps[step.name] ?: return Verdict.missed(this, "the step never ran")
+            val stats = result.steps[step.name]
+                ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
             val timing = when (clock) {
                 Clock.ServiceTime -> stats.serviceTime
                 Clock.ResponseTime -> stats.responseTime
@@ -54,7 +55,7 @@ sealed interface Goal {
                 met = measured <= limit,
                 measured = measured.inWholeNanoseconds.toDouble(),
                 limit = limit.inWholeNanoseconds.toDouble(),
-                shown = "$measured",
+                shown = Measurement.Took(measured),
             )
         }
     }
@@ -64,11 +65,13 @@ sealed interface Goal {
             "${step?.name ?: "the run"} failing under ${share.percent}%"
 
         override fun judge(result: RunResult): Verdict {
-            val counts = step?.let { result.steps[it.name] ?: return Verdict.missed(this, "the step never ran") }
+            val counts = step?.let {
+                result.steps[it.name] ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
+            }
             val total = counts?.count ?: result.count
             val failed = counts?.failed ?: result.failed
             val measured = if (total == 0L) 0.0 else failed.toDouble() / total * HUNDRED
-            return verdictFor(measured <= share.percent, measured, share.percent, "${measured.trimmed()}%")
+            return verdictFor(measured <= share.percent, measured, share.percent, Measurement.Share(measured))
         }
     }
 
@@ -77,8 +80,8 @@ sealed interface Goal {
         override val described: String get() = "the generator keeps its schedule"
 
         override fun judge(result: RunResult): Verdict =
-            if (result.fellBehind()) Verdict.missed(this, "behind by ${result.behind.p99} at p99")
-            else Verdict.met(this, "behind by ${result.behind.p99} at p99")
+            if (result.fellBehind()) Verdict.missed(this, Measurement.Took(result.behind.p99))
+            else Verdict.met(this, Measurement.Took(result.behind.p99))
     }
 }
 
@@ -89,18 +92,35 @@ sealed interface Goal {
  * reads the same whether the target was 200 ms or two seconds, and tells a
  * reader whether they are looking at tuning or at design.
  */
-private fun Goal.verdictFor(met: Boolean, measured: Double, limit: Double, shown: String): Verdict {
+private fun Goal.verdictFor(met: Boolean, measured: Double, limit: Double, shown: Measurement): Verdict {
     val over = if (limit == 0.0) null else (measured - limit) / limit * HUNDRED
     return if (met) Verdict.met(this, shown) else Verdict.missed(this, shown, over)
 }
 
+/**
+ * What a goal was judged against.
+ *
+ * A value rather than a rendered string: core has no opinion on how a duration
+ * should read, and a report that was handed text could not apply the same
+ * formatting it uses everywhere else.
+ */
+sealed interface Measurement {
+
+    data class Took(val duration: Duration) : Measurement
+
+    data class Share(val percent: Double) : Measurement
+
+    /** Why there was nothing to measure — a step that never ran, say. */
+    data class Absent(val because: String) : Measurement
+}
+
 /** What became of a goal, and by how much. */
-data class Verdict(val goal: Goal, val met: Boolean, val measured: String, val overBy: Double?) {
+data class Verdict(val goal: Goal, val met: Boolean, val measured: Measurement, val overBy: Double?) {
 
     companion object {
-        internal fun met(goal: Goal, measured: String): Verdict = Verdict(goal, true, measured, null)
+        internal fun met(goal: Goal, measured: Measurement): Verdict = Verdict(goal, true, measured, null)
 
-        internal fun missed(goal: Goal, measured: String, overBy: Double? = null): Verdict =
+        internal fun missed(goal: Goal, measured: Measurement, overBy: Double? = null): Verdict =
             Verdict(goal, false, measured, overBy)
     }
 }
@@ -137,7 +157,4 @@ internal fun Timing.at(percentile: String): Duration = when (percentile) {
     else -> p99
 }
 
-private fun Double.trimmed(): String = ((this * TEN).toLong() / TEN).toString()
-
 private const val HUNDRED = 100.0
-private const val TEN = 10.0

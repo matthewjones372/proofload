@@ -2,7 +2,6 @@ package io.github.matthewjones372.kestrel
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
@@ -74,7 +73,7 @@ class GoalTest {
         val verdict = resultOf(listOf(p99(missing) under 1.seconds)).verdicts.single()
 
         verdict.met shouldBe false
-        verdict.measured shouldContain "never ran"
+        verdict.measured shouldBe Measurement.Absent("the step never ran")
     }
 
     @Test

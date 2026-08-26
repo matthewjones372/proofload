@@ -36,11 +36,11 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
 
     private val completions = RunRecorder(startedAt)
 
-    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration) {
+    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration, at: Duration) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
-        recordFrom(from, step, failure, serviceTime, schedulingDelay)
+        recordFrom(from, step, failure, serviceTime, schedulingDelay, at)
     }
 
     /**
@@ -48,7 +48,7 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
      * claims no shard: there is only ever the one writer, and it is not on the
      * path a step is timed on.
      */
-    fun arrived(step: String, latency: Duration) = completions.arrived(step, latency)
+    fun arrived(step: String, latency: Duration, at: Duration) = completions.arrived(step, latency, at)
 
     fun outstanding(step: String, outstanding: Outstanding) = completions.outstanding(step, outstanding)
 
@@ -67,18 +67,19 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         failure: String?,
         serviceTime: Duration,
         schedulingDelay: Duration,
+        at: Duration,
     ) {
         val recorder = slots.getAndSet(index, null)
         if (recorder != null) {
             try {
-                recorder.record(step, failure, serviceTime, schedulingDelay)
+                recorder.record(step, failure, serviceTime, schedulingDelay, at)
             } finally {
                 slots.set(index, recorder)
             }
             return
         }
         Thread.onSpinWait()
-        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay)
+        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at)
     }
 
     companion object {

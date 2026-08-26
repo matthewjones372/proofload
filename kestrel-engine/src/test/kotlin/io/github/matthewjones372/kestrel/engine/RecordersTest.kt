@@ -8,6 +8,7 @@ import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RecordersTest {
 
@@ -24,13 +25,18 @@ class RecordersTest {
             Thread.ofVirtual().start {
                 ready.countDown()
                 ready.await()
-                repeat(EACH) { recorders.record("browse", null, 1.milliseconds, Duration.ZERO) }
+                repeat(EACH) { at ->
+                    recorders.record("browse", null, 1.milliseconds, Duration.ZERO, (at % SECONDS).seconds)
+                }
             }
         }.forEach { it.join() }
 
         val result = recorders.freeze(Plan.none, Arrivals.none)
         result["browse"].count shouldBe (WRITERS * EACH).toLong()
         result.behind.count shouldBe (WRITERS * EACH).toLong()
+
+        result.timeline.size shouldBe SECONDS
+        result.timeline.sumOf { it.count } shouldBe result.count
     }
 
     @Test
@@ -39,7 +45,7 @@ class RecordersTest {
 
         List(2) { index ->
             Thread.ofVirtual().start {
-                recorders.record("pay", if (index == 0) "503" else null, 1.milliseconds, Duration.ZERO)
+                recorders.record("pay", if (index == 0) "503" else null, 1.milliseconds, Duration.ZERO, Duration.ZERO)
             }
         }.forEach { it.join() }
 
@@ -57,5 +63,6 @@ class RecordersTest {
     private companion object {
         const val WRITERS = 16
         const val EACH = 2_000
+        const val SECONDS = 4
     }
 }

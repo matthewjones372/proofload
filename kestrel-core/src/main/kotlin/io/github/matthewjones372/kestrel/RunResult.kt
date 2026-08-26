@@ -144,6 +144,34 @@ private fun List<Bucket>.valueAtRank(rank: Long): Duration =
         .second
 
 /**
+ * One second of a run, counted from the run's start.
+ *
+ * A second nothing ran in is present and zero rather than missing: a gap in a
+ * line is information and a dropped point is a lie about the shape.
+ *
+ * The percentiles are the target's service time, read from a histogram good to
+ * [Histogram.COARSE_PRECISION] rather than the [Histogram.PRECISION] of the
+ * summary above — a full table a second per step is tens of megabytes of
+ * counters. Anything quoted from here carries that error bar.
+ */
+data class Second(
+    val count: Long,
+    val ok: Long,
+    val p50: Duration,
+    val p99: Duration,
+) {
+    val failed: Long get() = count - ok
+}
+
+/** A second's coarse histogram, read once and frozen. */
+internal fun Histogram.asSecond(failed: Long): Second = Second(
+    count = count,
+    ok = count - failed,
+    p50 = percentile(P50),
+    p99 = percentile(P99),
+)
+
+/**
  * What one step did. `serviceTime` is what the target took; `responseTime` is
  * measured from the departure the profile promised, so a generator that fell
  * behind reports it here rather than as the target being fast.
@@ -159,6 +187,8 @@ data class StepStats(
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */
     val inFlight: Long = 0L,
+    /** This step second by second, from the run's start. */
+    val timeline: List<Second> = emptyList(),
 ) {
     val failed: Long get() = count - ok
 
@@ -209,6 +239,9 @@ data class RunResult(
      * caused rather than inside it. Empty for a result built from samples.
      */
     val hiccups: Timing = Timing.none,
+
+    /** Every step together, second by second, from the run's start. */
+    val timeline: List<Second> = emptyList(),
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

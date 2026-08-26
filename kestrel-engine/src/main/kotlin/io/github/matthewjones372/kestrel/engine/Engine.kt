@@ -86,7 +86,7 @@ private fun Scenario.depart(
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(recorders, lateness(runStart, departure), departure, session, drain)
+            runOneUser(recorders, runStart, lateness(runStart, departure), departure, session, drain)
         } finally {
             users.finished()
         }
@@ -131,7 +131,7 @@ private class Drain(
         closed.await()
         // Every user has finished by now, so an answer still unpaired here has
         // a departure registered if it is ever going to have one.
-        record(pending.matched())
+        record(pending.matched(), at = elapsed())
         recorders.outstanding(completing.step, pending.close(closesAt, completing.drainingFor))
     }
 
@@ -140,12 +140,12 @@ private class Drain(
         if (left <= Duration.ZERO) return
         val observed = completing.from.poll(left)
         val at = elapsed()
-        record(observed.mapNotNull { id -> pending.observed(id, at) } + pending.matched())
+        record(observed.mapNotNull { id -> pending.observed(id, at) } + pending.matched(), at)
         poll()
     }
 
-    private fun record(latencies: List<Duration>) =
-        latencies.forEach { latency -> recorders.arrived(completing.step, latency) }
+    private fun record(latencies: List<Duration>, at: Duration) =
+        latencies.forEach { latency -> recorders.arrived(completing.step, latency, at) }
 
     private fun elapsed(): Duration = (System.nanoTime() - runStart).nanoseconds
 }
@@ -191,6 +191,7 @@ private fun lateness(runStart: Long, departure: Duration): Duration =
 // answered nobody.
 private fun Scenario.runOneUser(
     recorders: Recorders,
+    runStart: Long,
     schedulingDelay: Duration,
     departure: Duration,
     started: Session,
@@ -199,8 +200,8 @@ private fun Scenario.runOneUser(
     steps.fold<Step, Session?>(started) { session, step ->
         session?.let {
             when (step) {
-                is Step.Exec -> step.action.runOn(step.name, it, recorders, schedulingDelay)
-                is Step.Emit -> step.runOn(it, recorders, schedulingDelay, departure, drain)
+                is Step.Exec -> step.action.runOn(step.name, it, recorders, runStart, schedulingDelay)
+                is Step.Emit -> step.runOn(it, recorders, runStart, schedulingDelay, departure, drain)
             }
         }
     }
@@ -214,26 +215,31 @@ private fun Scenario.runOneUser(
 private fun Step.Emit.runOn(
     session: Session,
     recorders: Recorders,
+    runStart: Long,
     schedulingDelay: Duration,
     departure: Duration,
     drain: Drain?,
 ): Session? {
-    val published = action.runOn(name, session, recorders, schedulingDelay) ?: return null
+    val published = action.runOn(name, session, recorders, runStart, schedulingDelay) ?: return null
     drain?.departed(correlation.of(published), departure)
     return published
 }
 
+// The second a request is counted in is the one it left in, not the one it came
+// back in: a step that takes six seconds belongs on the timeline where the load
+// was offered, beside the profile that offered it.
 private fun Action.runOn(
     name: String,
     session: Session,
     recorders: Recorders,
+    runStart: Long,
     schedulingDelay: Duration,
 ): Session? {
     val startedAt = System.nanoTime()
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
     val reason = result.reason()
-    recorders.record(name, reason, serviceTime, schedulingDelay)
+    recorders.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
     return if (reason == null) result.session else null
 }
 

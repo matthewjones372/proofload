@@ -84,7 +84,7 @@ class CompletionsTest {
     @Test
     fun `what arrived and what never did reach the result under the step that was waiting`() {
         val recorder = RunRecorder(started)
-        recorder.arrived(step = "settled", latency = 2.seconds)
+        recorder.arrived(step = "settled", latency = 2.seconds, at = 3.seconds)
         recorder.outstanding(step = "settled", outstanding = Outstanding(unmatched = 41L, inFlight = 12L))
 
         val settled = recorder.freeze()["settled"]
@@ -93,6 +93,18 @@ class CompletionsTest {
         settled.unmatched shouldBe 41L
         settled.inFlight shouldBe 12L
         settled.serviceTime.max shouldBe settled.responseTime.max
+    }
+
+    @Test
+    fun `an answer lands on the timeline in the second it was observed, which is the second it was measured in`() {
+        val recorder = RunRecorder(started)
+        recorder.arrived(step = "settled", latency = 2.seconds, at = 3.seconds)
+
+        val timeline = recorder.freeze().timeline
+
+        timeline.size shouldBe 4
+        timeline[3].count shouldBe 1L
+        timeline[0].count shouldBe 0L
     }
 
     @Test

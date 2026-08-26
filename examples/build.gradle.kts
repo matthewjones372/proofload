@@ -12,13 +12,26 @@ tasks.test {
     useJUnitPlatform { excludeTags("timing") }
 }
 
-tasks.register<Test>("timingTests") {
+val timingTests = tasks.register<Test>("timingTests") {
     group = "verification"
     description = "Tests that measure elapsed time, run alone so the machine is not the variable."
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform { includeTags("timing") }
     maxParallelForks = 1
+}
+
+// Kover instruments every test task in a project it aggregates and `check`
+// depends on `koverVerify`, so the tag alone leaves this task in the graph of a
+// plain `./gradlew build`, beside the eight modules' tests it cannot be
+// measured next to. Dropping it from instrumentation drops it from that graph,
+// and the floor is unmoved: it covers lines the ordinary tests already reach.
+extensions.configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+    currentProject {
+        instrumentation {
+            disabledForTestTasks.add(timingTests.name)
+        }
+    }
 }
 
 dependencies {

@@ -99,6 +99,24 @@ that fell behind reports its own backlog rather than a fast target. When that
 backlog is large enough to have moved a number, `result.fellBehind()` is true
 and every report says so before it prints a percentile.
 
+A timing carries the buckets it was read from, so it answers a percentile
+nobody asked for while the run was going — `p999` among them, which is where
+two JVM collectors that match to p99 come apart:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Tail
+
+result[placeOrder].serviceTime.percentile(99.95)      // any percentile, off the buckets
+
+when (val tail = result[placeOrder].serviceTime.p999) {
+    is Tail.Measured -> tail.duration
+    is Tail.Absent -> tail.because   // "only 400 samples, and under 1000 …"
+}
+```
+
+A run of four hundred requests has not measured one request in a thousand, so
+`p999` answers with the reason rather than with a number nobody measured.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

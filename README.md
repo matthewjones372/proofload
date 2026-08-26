@@ -4,9 +4,32 @@
 Kotlin value: build it, inspect it, split it across files, run it.
 
 > [!NOTE]
-> Nothing is built yet. This repository has its process, its build and its
-> gates; the first spec in [`specs/`](specs/) is where the shape gets argued
-> out. See [AGENTS.md](AGENTS.md) before writing code.
+> Early. The description model is built and tested; nothing runs it yet. The
+> engine is the next spec in [`specs/`](specs/). See [AGENTS.md](AGENTS.md)
+> before writing code.
+
+```kotlin
+import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.sessionKey
+import kotlin.time.Duration.Companion.minutes
+
+val cart = sessionKey<String>("cart")
+
+val checkout = scenario("checkout") {
+    exec("browse") { set(cart, "empty") }
+    exec("add to cart") { set(cart, "1 anvil") }
+    exec("pay") { if (get(cart) == "empty") fail("nothing to pay for") }
+}
+
+val simulation = checkout.at(50.perSecond, over = 1.minutes)
+```
+
+No session parameter to name, no result to remember to return, and no cast to
+read one back: a key carries its type. `at` is Gatling's `setUp`, `inject` and
+`protocols` in one call, and what it returns is an ordinary value —
+`simulation.profile.userCount()` is 3000 before anything has been sent.
 
 ## What this is for
 
@@ -39,6 +62,12 @@ The three decisions that shape everything else, and are still open:
 | Module | Depends on | For |
 |---|---|---|
 | `kestrel-core` | **nothing** | scenarios as values |
+
+Planned beside it, each a leaf with its own dependency test: `kestrel-engine`
+(virtual threads), `kestrel-http`, `kestrel-report-html`,
+`kestrel-report-github`, `kestrel-junit5`, `kestrel-kotest`, and
+`kestrel-pelican` for [Pelican](https://github.com/matthewjones372/pelican)
+endpoint descriptions.
 
 Core depends on the Kotlin standard library and nothing else, and a test says
 so. Everything with a third-party type in it becomes a leaf module beside it.

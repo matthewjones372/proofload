@@ -19,17 +19,17 @@ sealed interface InjectionProfile {
     data class RampRate(val from: Double, val to: Double, override val over: Duration) : InjectionProfile
 }
 
-fun constantRate(perSecond: Double, over: Duration): InjectionProfile.ConstantRate {
-    requireRate(perSecond, "perSecond")
+fun constantRate(rate: Rate, over: Duration): InjectionProfile.ConstantRate {
+    requireRate(rate.perSecond, "rate")
     requireWindow(over)
-    return InjectionProfile.ConstantRate(perSecond, over)
+    return InjectionProfile.ConstantRate(rate.perSecond, over)
 }
 
-fun rampRate(from: Double, to: Double, over: Duration): InjectionProfile.RampRate {
-    requireRate(from, "from")
-    requireRate(to, "to")
+fun rampRate(from: Rate, to: Rate, over: Duration): InjectionProfile.RampRate {
+    requireRate(from.perSecond, "from")
+    requireRate(to.perSecond, "to")
     requireWindow(over)
-    return InjectionProfile.RampRate(from, to, over)
+    return InjectionProfile.RampRate(from.perSecond, to.perSecond, over)
 }
 
 /** How many users the profile describes: the area under its rate line. */

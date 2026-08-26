@@ -42,6 +42,7 @@ In the order the architect would take them.
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |
 | [0023](0023-a-number-you-can-follow.md) | exemplars, so a p99 leads somewhere |
 | [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | the whole run is booked before the first request |
+| [0030](0030-a-baseline-in-ci.md) | a baseline from another runner reads as a regression in your service |
 | [0029](0029-cutting-0-1-0.md) | a publishing pipeline that has never run does not work |
 
 ## Known and unwritten

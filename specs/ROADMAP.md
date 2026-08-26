@@ -31,6 +31,7 @@ built. Each row links the spec that argued for it.
 | [0035](0035-a-tail-you-can-see.md) | `p999`, any percentile off the frozen buckets |
 | [0034](0034-arrivals-that-are-not-a-metronome.md) | Poisson arrivals from a seed, and the CoV they produced |
 | [0041](0041-a-clock-test-that-really-runs-alone.md) | the wall-clock tests out of `build`, and a gate that keeps them out |
+| [0031](0031-the-rate-it-sustains.md) | `sustainable`, the ladder-then-bisect search, and the curve |
 
 ## Drafted, not built
 

@@ -75,12 +75,12 @@ there so the cost is a decision rather than a surprise.
       `worstCase`, and the ladder-then-bisect strategy over a supplied judge.
       Done when: the rungs of a search are answerable without running it, and a
       synthetic judge that fails above a known rate is found within one step.
-- [ ] **`spec-0031-run`** — running a search on the engine, void rungs, and
+- [x] **`spec-0031-run`** ([#15](https://github.com/matthewjones372/kestrel/pull/15)) — running a search on the engine, void rungs, and
       `limitedBy`.
       Done when: a target that fails a p99 goal above a rate reports that rate
       and names the goal, and a run where the injector fell behind reports the
       rung void rather than as the answer.
-- [ ] **`spec-0031-page`** — the curve on the report, with the operating point
+- [x] **`spec-0031-page`** ([#7](https://github.com/matthewjones372/kestrel/pull/7)) — the curve on the report, with the operating point
       marked.
       Done when: the golden shows every rung, its verdict, and which one was
       chosen.

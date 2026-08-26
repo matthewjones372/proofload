@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.action
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
@@ -12,6 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 class EngineTest {
 
     private val cart = sessionKey<String>("cart")
+    private val order = sessionKey<Long>("order")
 
     @Test
     fun `a one-step scenario at one user a second counts that step once`() {
@@ -83,5 +85,16 @@ class EngineTest {
 
         result["browse"].count shouldBe 4L
         result.behind.count shouldBe 4L
+    }
+
+    @Test
+    fun `an emit step is timed by its publish and does not wait for an answer`() {
+        val result = scenario("trades") {
+            emit("submitted", action { set(order, 7L) }, keyedBy = { session -> session[order] ?: 0L })
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        result["submitted"].count shouldBe 1L
+        result["submitted"].ok shouldBe 1L
+        result["submitted"].unmatched shouldBe 0L
     }
 }

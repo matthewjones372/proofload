@@ -124,6 +124,10 @@ data class StepStats(
     val failures: Map<String, Long>,
     val serviceTime: Timing,
     val responseTime: Timing,
+    /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
+    val unmatched: Long = 0L,
+    /** Records the run stopped waiting for, having left too late to be given the whole drain window. */
+    val inFlight: Long = 0L,
 ) {
     val failed: Long get() = count - ok
 
@@ -209,6 +213,10 @@ data class RunResult(
  *
  * Every sink asks this rather than each inventing a threshold, so a run that is
  * behind on the page is behind in the job summary too.
+ *
+ * This is the injector being behind, not the pipeline: it says departures left
+ * late. A pipeline falling behind is what the latency of a completion step
+ * measures, which is the number this warning sits above.
  */
 fun RunResult.fellBehind(): Boolean {
     val worst = steps.values.maxOfOrNull { it.responseTime.p99 } ?: return false

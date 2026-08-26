@@ -24,6 +24,20 @@ class RunRecorder(private val startedAt: Instant) {
         steps.getOrPut(step) { StepRecorder() }.record(failure, serviceTime, serviceTime + schedulingDelay)
     }
 
+    /**
+     * A record the sink answered for. [latency] is already measured from the
+     * departure the profile promised, so it is both times: there is no separate
+     * service time for a stage nothing here called.
+     */
+    fun arrived(step: String, latency: Duration) {
+        steps.getOrPut(step) { StepRecorder() }.record(failure = null, service = latency, response = latency)
+    }
+
+    /** What the sink never answered for, once the drain window has closed. */
+    fun outstanding(step: String, outstanding: Outstanding) {
+        steps.getOrPut(step) { StepRecorder() }.leftOver(outstanding)
+    }
+
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
         other.steps.forEach { (name, theirs) -> steps.getOrPut(name) { StepRecorder() }.merge(theirs) }
@@ -53,6 +67,10 @@ private class StepRecorder {
     private val responseTime = Histogram()
     private val failures = LinkedHashMap<String, Long>()
 
+    // The accumulator AGENTS.md allows a builder: it is added to as shards are
+    // merged and frozen into StepStats, and never escapes mutable.
+    private var outstanding: Outstanding = Outstanding.none
+
     // Both derived rather than counted: a count kept beside the histogram is a
     // second number to keep in step, and the two disagreeing is a bug nobody
     // would see until a report looked odd.
@@ -65,10 +83,18 @@ private class StepRecorder {
         if (failure != null) countFailure(failure, 1L)
     }
 
+    fun leftOver(more: Outstanding) {
+        outstanding = Outstanding(
+            unmatched = outstanding.unmatched + more.unmatched,
+            inFlight = outstanding.inFlight + more.inFlight,
+        )
+    }
+
     fun merge(other: StepRecorder) {
         serviceTime.merge(other.serviceTime)
         responseTime.merge(other.responseTime)
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
+        leftOver(other.outstanding)
     }
 
     fun freeze(name: String): StepStats = StepStats(
@@ -78,6 +104,8 @@ private class StepRecorder {
         failures = failures.toMap(),
         serviceTime = serviceTime.timing(),
         responseTime = responseTime.timing(),
+        unmatched = outstanding.unmatched,
+        inFlight = outstanding.inFlight,
     )
 
     private fun countFailure(reason: String, seen: Long) {

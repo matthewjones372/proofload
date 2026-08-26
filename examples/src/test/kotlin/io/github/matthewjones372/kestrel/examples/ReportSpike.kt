@@ -3,20 +3,27 @@ package io.github.matthewjones372.kestrel.examples
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.run
+import io.github.matthewjones372.kestrel.expecting
+import io.github.matthewjones372.kestrel.failureRate
 import io.github.matthewjones372.kestrel.fedBy
 import io.github.matthewjones372.kestrel.feed
 import io.github.matthewjones372.kestrel.http.exec
 import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.keptSchedule
+import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.report.markdown
 import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val shopper = sessionKey<String>("shopper")
@@ -52,6 +59,11 @@ class ReportSpike {
 
         val result = checkout.at(120.perSecond, over = 4.seconds)
             .fedBy(feed(shopper) { user -> "shopper-$user" })
+            .expecting(
+                p99(step("/pay")) under 400.milliseconds,
+                failureRate under 1.percent,
+                keptSchedule,
+            )
             .run()
 
         println(result.markdown())

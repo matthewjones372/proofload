@@ -109,6 +109,22 @@ internal val REPORT_CSS: String = """
     tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
     #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
     #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+    .verdicts {
+      border: 1px solid var(--line);
+      border-left-width: 4px;
+      border-radius: 0.5rem;
+      padding: 0.8rem 1rem;
+      margin: 0 0 1.5rem;
+    }
+    .verdicts.met { border-left-color: var(--ok); }
+    .verdicts.missed { border-left-color: var(--failed); }
+    .verdict-headline { margin: 0 0 0.5rem; font-size: 1.05rem; }
+    .verdict-list { list-style: none; margin: 0; padding: 0; }
+    .verdict-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+    .verdict-list li::before { content: "met"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--ok); }
+    .verdict-list li.missed::before { content: "missed"; color: var(--failed); }
+    .verdict-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+    .verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .plan { margin: 0 0 1.5rem; }
     .plan p { margin: 0 0 0.5rem; }
     .chart.shape svg { height: 4.5rem; }

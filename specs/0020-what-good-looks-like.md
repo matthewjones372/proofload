@@ -28,7 +28,6 @@ import io.github.matthewjones372.kestrel.failureRate
 import io.github.matthewjones372.kestrel.keptSchedule
 import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.percent
-import io.github.matthewjones372.kestrel.under
 
 val simulation = checkout.at(50.perSecond, over = 1.minutes).expecting(
     p99(pay) under 200.milliseconds,

@@ -62,6 +62,7 @@ data class Plan(
     val scenario: String,
     val steps: List<String>,
     val profile: InjectionProfile?,
+    val goals: List<Goal> = emptyList(),
 ) {
     val plannedUsers: Long get() = profile?.userCount() ?: 0L
 
@@ -106,6 +107,12 @@ data class RunResult(
     fun ran(step: String): Boolean = steps.containsKey(step)
 
     fun ran(step: StepName): Boolean = ran(step.name)
+
+    /** Each goal the simulation declared, judged against what happened. */
+    val verdicts: List<Verdict> get() = plan.goals.map { it.judge(this) }
+
+    /** True when every goal was met, and when there were none to miss. */
+    val metEveryGoal: Boolean get() = verdicts.all { it.met }
 }
 
 /**

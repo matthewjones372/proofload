@@ -29,6 +29,7 @@ public fun RunResult.writeHtmlReport(path: Path): Path {
 private fun RunResult.documentLines(): List<String> =
     listOf(
         headLines(),
+        verdictLines(),
         plan.headerLines(),
         behindLines(),
         totalsLines(),

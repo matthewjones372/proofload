@@ -24,13 +24,18 @@ data class Simulation(
     val scenario: Scenario,
     val profile: InjectionProfile,
     val feeder: Feeder = Feeder.empty,
+    val goals: List<Goal> = emptyList(),
 )
+
+/** What this run has to achieve to count as good. */
+fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goals + goals)
 
 /** What this run is asking for, before any of it happens. */
 fun Simulation.plan(): Plan = Plan(
     scenario = scenario.name,
     steps = scenario.steps.map { it.name },
     profile = profile,
+    goals = goals,
 )
 
 /** The same run, with each user seeded from [feeder] before its first step. */

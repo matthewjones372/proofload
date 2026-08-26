@@ -6,6 +6,22 @@ public final class io/github/matthewjones372/kestrel/ActionKt {
 	public static final fun action (Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/Action;
 }
 
+public final class io/github/matthewjones372/kestrel/Histogram {
+	public static final field Companion Lio/github/matthewjones372/kestrel/Histogram$Companion;
+	public static final field PRECISION D
+	public fun <init> ()V
+	public final fun getCount ()J
+	public final fun getMax-UwyO8pc ()J
+	public final fun getOverflowed ()J
+	public final fun merge (Lio/github/matthewjones372/kestrel/Histogram;)V
+	public final fun percentile-5sfh64U (D)J
+	public final fun record-LRDsOJo (J)V
+}
+
+public final class io/github/matthewjones372/kestrel/Histogram$Companion {
+	public final fun getCeiling-UwyO8pc ()J
+}
+
 public abstract interface class io/github/matthewjones372/kestrel/InjectionProfile {
 	public abstract fun getOver-UwyO8pc ()J
 }

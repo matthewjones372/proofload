@@ -202,6 +202,10 @@ stops rather than publish the generator's own ceiling under the target's name.
 `capacity.voided` says that happened, and `capacity.rate` is then a floor the
 generator reached rather than a ceiling the target could not pass.
 
+`capacity.toHtmlReport()` puts the whole curve on one self-contained page —
+every rung, what it was judged to be, and the operating point marked on the
+chart and in the table.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

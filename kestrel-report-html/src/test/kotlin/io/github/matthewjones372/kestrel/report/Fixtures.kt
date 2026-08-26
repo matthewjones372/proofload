@@ -1,13 +1,25 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Rate
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Rung
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.constantRate
+import io.github.matthewjones372.kestrel.failureRate
+import io.github.matthewjones372.kestrel.p99
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.kestrel.step
 import io.github.matthewjones372.kestrel.timing
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Results built by hand, sample by sample. No engine runs here, so the
@@ -75,6 +87,49 @@ internal object Fixtures {
         ),
         behind = timingOf(listOf(1.milliseconds)),
     )
+
+    private val pay = step("pay")
+
+    private val goals = listOf(p99(pay) under 200.milliseconds, failureRate under 1.percent)
+
+    /** A ladder to 4,000/s, a knee between 3,000 and 4,000, and a bisection that found 3,500. */
+    val capacity: Capacity = Capacity(
+        listOf(
+            rung(1_000.perSecond, took = 40.milliseconds, failed = 0L),
+            rung(2_000.perSecond, took = 60.milliseconds, failed = 0L),
+            rung(3_000.perSecond, took = 110.milliseconds, failed = 0L),
+            rung(3_500.perSecond, took = 180.milliseconds, failed = 0L),
+            rung(4_000.perSecond, took = 900.milliseconds, failed = 240L),
+            rung(5_000.perSecond, took = 1200.milliseconds, failed = 9_000L),
+        ),
+    )
+
+    /** The same ladder, stopped by a rung the injector could not offer. */
+    val voidedCapacity: Capacity = Capacity(
+        capacity.curve.take(3) + rung(4_000.perSecond, took = 90.milliseconds, failed = 0L, behind = 80.milliseconds),
+    )
+
+    private fun rung(rate: Rate, took: Duration, failed: Long, behind: Duration = 100.microseconds): Rung {
+        val requests = (rate.perSecond * SECONDS_HELD).toLong()
+        val result = RunResult(
+            startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+            steps = mapOf(
+                pay.name to StepStats(
+                    name = pay.name,
+                    count = requests,
+                    ok = requests - failed,
+                    failures = if (failed == 0L) emptyMap() else mapOf("status 503" to failed),
+                    serviceTime = timingOf(listOf(took)),
+                    responseTime = timingOf(listOf(took)),
+                ),
+            ),
+            behind = timingOf(listOf(behind)),
+            plan = Plan("checkout", listOf(pay.name), constantRate(rate, over = 2.minutes), goals),
+        )
+        return Rung(rate, result)
+    }
+
+    private const val SECONDS_HELD = 120.0
 
     // `vararg Duration` is prohibited: `Duration` is a value class.
     private fun timingOf(samples: List<Duration>): Timing =

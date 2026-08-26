@@ -33,6 +33,7 @@ one.
   the knee, and returns a `Capacity` — the highest rate every goal held at, the
   goal that stopped it, and the curve every rung is on. A rung the injector
   could not offer is void rather than failed, and ends the search.
+  `Capacity.toHtmlReport()` draws the curve, with the operating point marked.
 - **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
 - **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.

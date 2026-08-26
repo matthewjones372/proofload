@@ -29,6 +29,11 @@ internal fun Double.asPercent(): String =
 /** Locale-independent on purpose: a report read in one country was written in another. */
 internal fun Long.grouped(): String = String.format(Locale.ROOT, "%,d", this)
 
+/** A rate, printed with the figures it was given and no more: `3,500/s`, `0.5/s`. */
+internal fun Double.asRate(): String = "${String.format(Locale.ROOT, "%,.6g", this).trimNumber()}/s"
+
+private fun String.trimNumber(): String = if (contains('.')) trimEnd('0').trimEnd('.') else this
+
 private fun significant(value: Double): String {
     val decimals = when {
         value >= HUNDRED -> 0

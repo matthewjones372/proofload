@@ -39,16 +39,11 @@ private fun Arrivals.achieved(): String =
 
 /** The shape in words, one clause per stage, in the order they run. */
 private fun InjectionProfile.described(): String = when (this) {
-    is InjectionProfile.ConstantRate -> "${perSecond.rate()} held for ${over.forPlan()}"
-    is InjectionProfile.RampRate -> "${from.rate()} to ${to.rate()} over ${over.forPlan()}"
+    is InjectionProfile.ConstantRate -> "${perSecond.asRate()} held for ${over.forPlan()}"
+    is InjectionProfile.RampRate -> "${from.asRate()} to ${to.asRate()} over ${over.forPlan()}"
     is InjectionProfile.Stages -> stages.joinToString(separator = ", then ") { it.described() }
     is InjectionProfile.Randomized -> of.described()
 }
-
-private fun Double.rate(): String = "${String.format(Locale.ROOT, "%,.6g", this).trimNumber()}/s"
-
-private fun String.trimNumber(): String =
-    if (contains('.')) trimEnd('0').trimEnd('.') else this
 
 /**
  * The intent, drawn: rate against time, flat for a hold and sloped for a ramp.
@@ -74,7 +69,7 @@ private fun InjectionProfile.shapeChart(): List<String> {
 
     return listOf(
         """    <figure class="chart shape">""",
-        """      <figcaption>the shape that was asked for — peak ${peak.rate()}</figcaption>""",
+        """      <figcaption>the shape that was asked for — peak ${peak.asRate()}</figcaption>""",
         """      <svg viewBox="0 0 $WIDTH $HEIGHT" role="img" preserveAspectRatio="none" aria-label="load shape">""",
         """        <polygon class="shape-area" points="$area"></polygon>""",
         """        <polyline class="shape-line" points="$path"></polyline>""",

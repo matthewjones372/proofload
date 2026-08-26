@@ -138,7 +138,7 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .chart.shape svg { height: 4.5rem; }
 .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
 .shape-area { fill: var(--fg); opacity: 0.09; }
-.shape-end { text-anchor: end; }
+.shape-end, .curve-end { text-anchor: end; }
 .tail { margin: 2rem 0 0; max-width: 46rem; }
 .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
@@ -157,6 +157,21 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .tick { stroke: var(--line); stroke-width: 1; }
 .tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
 .note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
+.operating { margin: 0 0 1.5rem; }
+.operating-rate { font-size: 1.6rem; margin: 0; font-variant-numeric: tabular-nums; }
+.operating-limit { color: var(--muted); margin: 0.25rem 0 0; }
+.chart.curve svg { height: 11rem; }
+.curve-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.45; }
+.dot { fill: var(--ok); }
+.dot.failed { fill: var(--failed); }
+.dot.void { fill: var(--muted); }
+.chosen-mark { stroke: var(--ok); stroke-width: 1; stroke-dasharray: 3 2; }
+.chosen-label { fill: var(--ok); font-size: 9px; }
+.chosen-tag { color: var(--ok); font-size: 0.75rem; letter-spacing: 0.05em; margin-left: 0.4rem; }
+tr.rung.chosen > th { font-weight: 700; }
+tr.rung.failed > td.outcome { color: var(--failed); }
+tr.rung.void > td.outcome { color: var(--muted); }
+td.goals { color: var(--muted); font-size: 0.85rem; }
 .empty { color: var(--muted); }
 </style>
 </head>

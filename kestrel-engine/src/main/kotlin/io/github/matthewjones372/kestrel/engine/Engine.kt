@@ -29,7 +29,11 @@ fun Simulation.run(): RunResult {
             users.starting()
             scheduler.schedule(
                 { scenario.depart(recorders, runStart, departure, users) },
-                departure.inWholeNanoseconds,
+                // Relative to now, but the offset is from the run's start, and
+                // booking a million of these is not instant. Subtracting what
+                // has already elapsed is what stops every departure inheriting
+                // the time spent booking the ones before it.
+                departure.inWholeNanoseconds - (System.nanoTime() - runStart),
                 TimeUnit.NANOSECONDS,
             )
         }

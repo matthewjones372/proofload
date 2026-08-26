@@ -76,7 +76,7 @@ val moduleDescriptions = mapOf(
 // `examples` publishes nothing, so it has no binary surface to keep. Without
 // this the validator asks for an .api dump of a module nobody can depend on.
 apiValidation {
-    ignoredProjects.add("examples")
+    ignoredProjects.addAll(listOf("examples", "benchmarks"))
 }
 
 kover {
@@ -90,14 +90,16 @@ kover {
 }
 
 dependencies {
-    subprojects.forEach { kover(project(it.path)) }
+    // The harness is excluded on purpose: measuring the tool is not testing it,
+    // and counting its lines would let a benchmark carry the coverage floor.
+    subprojects.filterNot { it.name == "benchmarks" }.forEach { kover(project(it.path)) }
 }
 
 // A floor nobody runs is not a floor: `./gradlew build` checks it.
 tasks.named("check") { dependsOn("koverVerify") }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name } - "examples"
+val publishedModules = subprojects.map { it.name } - "examples" - "benchmarks"
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")

@@ -54,6 +54,28 @@ class EngineTest {
     }
 
     @Test
+    fun `a step that fails abandons the user, and the steps after it are not counted at all`() {
+        val result = scenario("checkout") {
+            exec("login") { fail("401") }
+            exec("pay") { }
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        result.steps.keys shouldBe setOf("login")
+        result["login"].count shouldBe 1L
+        result.count shouldBe 1L
+    }
+
+    @Test
+    fun `a step that throws abandons the user as surely as one that says it failed`() {
+        val result = scenario("checkout") {
+            exec("login") { error("connection reset") }
+            exec("pay") { }
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        result.steps.keys shouldBe setOf("login")
+    }
+
+    @Test
     fun `every request records how late it left against the departure it was promised`() {
         val result = scenario("checkout") { exec("browse") { } }
             .at(4.perSecond, over = 1.seconds)

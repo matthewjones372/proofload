@@ -1,6 +1,5 @@
 package io.github.matthewjones372.kestrel.engine
 
-import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Session
@@ -18,7 +17,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 
 /** Sends the simulation and blocks until the last user it started has finished. */
 fun Simulation.run(): RunResult {
-    val recorder = RunRecorder(Instant.now())
+    val recorders = Recorders(Instant.now())
     val runStart = System.nanoTime()
     val users = Departures()
     // One platform thread. Its only job is to start virtual threads at the
@@ -29,7 +28,7 @@ fun Simulation.run(): RunResult {
         profile.departures().forEach { departure ->
             users.starting()
             scheduler.schedule(
-                { scenario.depart(recorder, runStart, departure, users) },
+                { scenario.depart(recorders, runStart, departure, users) },
                 departure.inWholeNanoseconds,
                 TimeUnit.NANOSECONDS,
             )
@@ -39,16 +38,16 @@ fun Simulation.run(): RunResult {
     } finally {
         scheduler.shutdownNow()
     }
-    return recorder.freeze()
+    return recorders.freeze()
 }
 
-private fun Scenario.depart(recorder: RunRecorder, runStart: Long, departure: Duration, users: Departures) {
+private fun Scenario.depart(recorders: Recorders, runStart: Long, departure: Duration, users: Departures) {
     Thread.ofVirtual().start {
         try {
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(recorder, lateness(runStart, departure))
+            runOneUser(recorders, lateness(runStart, departure))
         } finally {
             users.finished()
         }
@@ -87,27 +86,30 @@ private class Departures {
  * zero: a scheduler cannot fire early, and a user that started before its
  * offset is not a backlog anybody can act on.
  */
-internal fun lateness(runStart: Long, departure: Duration): Duration =
+private fun lateness(runStart: Long, departure: Duration): Duration =
     ((System.nanoTime() - runStart).nanoseconds - departure).coerceAtLeast(Duration.ZERO)
 
-internal fun Scenario.runOneUser(recorder: RunRecorder, schedulingDelay: Duration) {
-    steps.fold(Session.empty) { session, step ->
-        when (step) {
-            is Step.Exec -> step.runOn(session, recorder, schedulingDelay)
+// A failed step abandons the user. A null session carries that decision through
+// the fold: the steps after it are not run, and are not counted as anything.
+// Counting a payment that never had a cart as a success reports a service that
+// answered nobody.
+private fun Scenario.runOneUser(recorders: Recorders, schedulingDelay: Duration) {
+    steps.fold<Step, Session?>(Session.empty) { session, step ->
+        session?.let {
+            when (step) {
+                is Step.Exec -> step.runOn(it, recorders, schedulingDelay)
+            }
         }
     }
 }
 
-private fun Step.Exec.runOn(session: Session, recorder: RunRecorder, schedulingDelay: Duration): Session {
+private fun Step.Exec.runOn(session: Session, recorders: Recorders, schedulingDelay: Duration): Session? {
     val startedAt = System.nanoTime()
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
-    // A `RunRecorder` is a mutable accumulator that says it is not thread-safe,
-    // and every virtual user shares this one. The lock is outside the timed
-    // region above, so it costs throughput rather than latency; sharding it is
-    // the next entry.
-    synchronized(recorder) { recorder.record(name, result.reason(), serviceTime, schedulingDelay) }
-    return result.session
+    val reason = result.reason()
+    recorders.record(name, reason, serviceTime, schedulingDelay)
+    return if (reason == null) result.session else null
 }
 
 // The one place in the library allowed to catch a throwable. An action is code

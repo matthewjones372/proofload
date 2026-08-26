@@ -19,13 +19,31 @@ val Number.perSecond: Rate get() = Rate.ofPerSecond(toDouble())
 
 val Number.perMinute: Rate get() = Rate.ofPerSecond(toDouble() / SECONDS_PER_MINUTE)
 
+/** A sink drained for the answers a run's emit steps departed with, and how long the run waits for them. */
+data class Completing(val step: String, val from: Completions, val drainingFor: Duration)
+
 /** A scenario, the rate it is sent at and what its users start with: a run, as one value. */
 data class Simulation(
     val scenario: Scenario,
     val profile: InjectionProfile,
     val feeder: Feeder = Feeder.empty,
     val goals: List<Goal> = emptyList(),
+    val completing: Completing? = null,
 )
+
+/**
+ * The same run, with [from] drained for the answers its emit steps departed
+ * with and each one recorded under [step].
+ *
+ * [drainingFor] is required and has no default. A wait chosen for the caller
+ * would silently turn records the run lost into records it merely did not wait
+ * for, or the other way about, and telling those two apart is what this is for.
+ */
+fun Simulation.completing(step: String, from: Completions, drainingFor: Duration): Simulation =
+    copy(completing = Completing(step, from, drainingFor))
+
+fun Simulation.completing(step: StepName, from: Completions, drainingFor: Duration): Simulation =
+    completing(step.name, from, drainingFor)
 
 /** What this run has to achieve to count as good. */
 fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goals + goals)

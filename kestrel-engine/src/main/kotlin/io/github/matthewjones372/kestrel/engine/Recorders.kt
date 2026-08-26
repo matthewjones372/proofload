@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.Outstanding
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
@@ -33,6 +34,8 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         AtomicReferenceArray<RunRecorder?>(shards)
             .also { array -> repeat(shards) { index -> array.set(index, RunRecorder(startedAt)) } }
 
+    private val completions = RunRecorder(startedAt)
+
     fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
@@ -40,11 +43,21 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         recordFrom(from, step, failure, serviceTime, schedulingDelay)
     }
 
+    /**
+     * The answers a sink gave, written by the one thread that drains it. It
+     * claims no shard: there is only ever the one writer, and it is not on the
+     * path a step is timed on.
+     */
+    fun arrived(step: String, latency: Duration) = completions.arrived(step, latency)
+
+    fun outstanding(step: String, outstanding: Outstanding) = completions.outstanding(step, outstanding)
+
     fun freeze(plan: Plan, arrivals: Arrivals): RunResult {
         val merged = RunRecorder(startedAt)
         repeat(slots.length()) { index ->
             merged.merge(checkNotNull(slots.get(index)) { "a shard was still in use when the run ended" })
         }
+        merged.merge(completions)
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 

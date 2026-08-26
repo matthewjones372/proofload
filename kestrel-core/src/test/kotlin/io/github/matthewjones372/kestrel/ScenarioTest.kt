@@ -4,9 +4,11 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
+private val page = sessionKey<String>("page")
+
 class ScenarioTest {
 
-    private val browse = Action { session -> session.set("page", "home").ok() }
+    private val browse = Action { session -> session.set(page, "home").ok() }
 
     @Test
     fun `a scenario keeps its steps in the order they were declared`() {

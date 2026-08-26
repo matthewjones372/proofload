@@ -70,14 +70,23 @@ public final class io/github/matthewjones372/kestrel/ScenarioKt {
 public final class io/github/matthewjones372/kestrel/Session {
 	public static final field Companion Lio/github/matthewjones372/kestrel/Session$Companion;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun get (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun get (Lio/github/matthewjones372/kestrel/SessionKey;)Ljava/lang/Object;
 	public fun hashCode ()I
-	public final fun set (Ljava/lang/String;Ljava/lang/Object;)Lio/github/matthewjones372/kestrel/Session;
+	public final fun set (Lio/github/matthewjones372/kestrel/SessionKey;Ljava/lang/Object;)Lio/github/matthewjones372/kestrel/Session;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/kestrel/Session$Companion {
 	public final fun getEmpty ()Lio/github/matthewjones372/kestrel/Session;
+}
+
+public final class io/github/matthewjones372/kestrel/SessionKey {
+	public fun <init> (Ljava/lang/String;Lkotlin/reflect/KClass;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Lkotlin/reflect/KClass;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/Step {

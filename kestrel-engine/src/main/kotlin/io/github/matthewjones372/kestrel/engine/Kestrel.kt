@@ -1,7 +1,10 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
+import io.github.matthewjones372.kestrel.judgedBy
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -21,6 +24,13 @@ class Kestrel {
     private val runs = CopyOnWriteArrayList<RunResult>()
 
     fun run(simulation: Simulation): RunResult = simulation.run().also { runs += it }
+
+    /**
+     * Hunts for the rate the scenario sustains. Every rung it ran is kept, so
+     * a failure can show the curve rather than only the rate read off the end
+     * of it.
+     */
+    fun run(search: Search): Capacity = search.judgedBy { rung -> run(rung) }
 
     /** What was measured, for a failure message. Empty when nothing ran. */
     fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }

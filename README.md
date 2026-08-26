@@ -160,6 +160,48 @@ reached. The HTML report prints each step's tail with the 95% sampling
 interval around it, which is the width a number resting on one request in a
 thousand has.
 
+Nobody picks a rate because they want to know about that rate. To ask the
+question they actually have — what can this take? — hand a search the ceiling
+you consent to and what good looks like at it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.failureRate
+import io.github.matthewjones372.kestrel.p99
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.kestrel.sustainable
+import io.github.matthewjones372.kestrel.engine.run
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+
+val search = checkout.sustainable(
+    upTo = 10_000.perSecond,
+    holding = 2.minutes,
+    expecting = listOf(p99(placeOrder) under 200.milliseconds, failureRate under 1.percent),
+)
+
+search.rungs        // the rates it will try, before anything is sent
+search.worstCase    // 30m of holds, so nobody starts this by accident
+
+val capacity = search.run()
+
+capacity.rate       // the highest rate every goal held at
+capacity.limitedBy  // the goal that stopped it
+capacity.curve      // every rung: its rate, its verdicts and its result
+```
+
+It climbs a coarse ladder and then bisects between the last rung that passed
+and the first that did not, so the resolution goes where the knee is and
+nothing is spent on the flat left-hand side. It carries on two rungs past the
+first failure, because the shape past the knee is what says whether the target
+sheds load or collapses.
+
+A rung where the injector fell behind is **void** rather than failed: the load
+was never offered, so nothing was learned about the target, and the search
+stops rather than publish the generator's own ceiling under the target's name.
+`capacity.voided` says that happened, and `capacity.rate` is then a floor the
+generator reached rather than a ceiling the target could not pass.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

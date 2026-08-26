@@ -1,13 +1,16 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.ArrivalRecorder
+import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
+import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.departures
+import io.github.matthewjones372.kestrel.judgedBy
 import io.github.matthewjones372.kestrel.plan
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -16,6 +19,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+
+/**
+ * Runs the search a rung at a time, and blocks for as long as it takes —
+ * `worstCase` says how long that can be before anybody starts one.
+ */
+fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
 
 /** Sends the simulation and blocks until the last user it started has finished. */
 fun Simulation.run(): RunResult {

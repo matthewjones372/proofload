@@ -23,6 +23,7 @@ private fun InjectionProfile.described(): String = when (this) {
     is InjectionProfile.ConstantRate -> "${perSecond.rate()} held for ${over.forPlan()}"
     is InjectionProfile.RampRate -> "${from.rate()} to ${to.rate()} over ${over.forPlan()}"
     is InjectionProfile.Stages -> stages.joinToString(separator = ", then ") { it.described() }
+    is InjectionProfile.Randomized -> of.described()
 }
 
 private fun Double.rate(): String = "${String.format(Locale.ROOT, "%,.6g", this).trimNumber()}/s"
@@ -77,6 +78,10 @@ private fun InjectionProfile.corners(from: Duration = Duration.ZERO): List<Pair<
                 (at + stage.over) to stage.corners(at)
             }
             .flatMap { (_, corners) -> corners }
+
+    // The rate line is the shape underneath; randomising moves arrivals along
+    // it without moving it.
+    is InjectionProfile.Randomized -> of.corners(from)
 }
 
 private fun String.plural(count: Int): String = plural(count.toLong())

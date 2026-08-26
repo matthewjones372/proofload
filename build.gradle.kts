@@ -82,13 +82,44 @@ kover {
 }
 
 dependencies {
-    // The harness is excluded on purpose: measuring the tool is not testing it,
+    // Measurement is excluded on purpose: measuring the tool is not testing it,
     // and counting its lines would let a benchmark carry the coverage floor.
+    // In `benchmarks` that is the whole module; elsewhere it is a single task,
+    // excluded from instrumentation in the build file that declares it.
     subprojects.filterNot { it.name == "benchmarks" }.forEach { kover(project(it.path)) }
 }
 
 // A floor nobody runs is not a floor: `./gradlew build` checks it.
 tasks.named("check") { dependsOn("koverVerify") }
+
+/**
+ * Derived from the tag rather than kept in a list beside it: a second list is a
+ * thing to forget, and forgetting it puts a wall-clock test back into `build`.
+ */
+fun Test.measuresElapsedTime(): Boolean =
+    (options as? org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions)
+        ?.includeTags
+        ?.contains("timing") == true
+
+// What keeps a wall-clock test out of `./gradlew build` is one line in one
+// module's build file, and every route back in is indirect: Kover pulls in the
+// test tasks it instruments, so a module added to the aggregation brings its
+// own. Asserting the graph is the only thing that notices. This runs once the
+// graph is known, before `--dry-run` prints it and before any task starts.
+gradle.taskGraph.whenReady {
+    val testTasks = allTasks.filterIsInstance<Test>()
+    val measuring = testTasks.filter { it.measuresElapsedTime() }
+    val sharing = testTasks - measuring.toSet()
+    if (measuring.isNotEmpty() && sharing.isNotEmpty()) {
+        throw GradleException(
+            "${measuring.joinToString { it.path }} measures elapsed time and cannot share a " +
+                "machine, but this build also runs ${sharing.size} other test task(s): " +
+                "${sharing.joinToString { it.path }}. Exclude it from Kover instrumentation " +
+                "in its own build file, and run it alone with " +
+                "`./gradlew ${measuring.first().path}`.",
+        )
+    }
+}
 
 /** Every module is published unless it is listed here. */
 val publishedModules = subprojects.map { it.name } - "examples" - "benchmarks"

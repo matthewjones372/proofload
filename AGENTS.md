@@ -190,6 +190,14 @@ Work out which of these a change can break:
   measured 161 ms during a parallel build. Tag those `timing`, keep them out of
   `test`, and run them alone with `./gradlew :examples:timingTests`.
 
+  The tag is not what keeps them out of `./gradlew build`. Kover instruments
+  every test task in a module it aggregates and `check` depends on
+  `koverVerify`, so the task has to be excluded from instrumentation in its own
+  build file as well — `examples/build.gradle.kts` shows the shape. Gradle
+  fails the build when a tagged task shares a task graph with any other test
+  task, so this is a gate rather than a convention. CI runs them after `build`,
+  in a step of their own.
+
 ## Verifying
 
 `./gradlew build` runs tests, detekt and spotless. Run it before saying
@@ -210,6 +218,7 @@ Gates that sit beyond the tests:
 | detekt | any finding | a suppression with no reason |
 | Kover | aggregate line coverage under the floor | lowering the floor |
 | `NoThirdPartyDependenciesTest` | core grew a dependency | adding it to the allowlist |
+| wall-clock isolation | a `timing` task is in the same task graph as another test task | dropping the tag |
 
 Before saying it is done:
 

@@ -29,6 +29,7 @@ built. Each row links the spec that argued for it.
 | [0020](0020-what-good-looks-like.md) | goals, verdicts, and the margin they missed by |
 | [0021](0021-worse-than-last-time.md) | sampling intervals and baseline comparison |
 | [0035](0035-a-tail-you-can-see.md) | `p999`, any percentile off the frozen buckets |
+| [0034](0034-arrivals-that-are-not-a-metronome.md) | Poisson arrivals from a seed, and the CoV they produced |
 
 ## Drafted, not built
 

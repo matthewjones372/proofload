@@ -58,12 +58,12 @@ telling them to.
 
 ## Stack
 
-- [ ] **`spec-0034-randomized`** — the wrapper, window-at-a-time generation, and
+- [x] **`spec-0034-randomized`** ([#4](https://github.com/matthewjones372/kestrel/pull/4)) — the wrapper, window-at-a-time generation, and
       `userCount` and `over` unchanged through it.
       Done when: a randomised hold departs the same number of users inside the
       same window, two runs with one seed produce identical offsets, and two
       seeds do not.
-- [ ] **`spec-0034-reported`** — the achieved mean and CoV on the result and the
+- [x] **`spec-0034-reported`** ([#9](https://github.com/matthewjones372/kestrel/pull/9)) — the achieved mean and CoV on the result and the
       page.
       Done when: an even profile reports a CoV near zero, a randomised one near
       one, and the page names which was asked for.

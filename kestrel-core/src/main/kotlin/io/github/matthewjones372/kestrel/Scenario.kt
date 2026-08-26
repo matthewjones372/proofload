@@ -21,6 +21,13 @@ sealed interface Step {
     val name: String
 
     data class Exec(override val name: String, val action: Action) : Step
+
+    /**
+     * A step that departs and does not wait. The publish is timed here; the
+     * answer is matched at the sink the simulation names, under a step of its
+     * own, so a slow producer and a slow pipeline are never added together.
+     */
+    data class Emit(override val name: String, val action: Action, val correlation: Correlation) : Step
 }
 
 /**
@@ -48,6 +55,14 @@ class ScenarioBuilder internal constructor(private val name: String) {
 
     fun exec(name: StepName, block: StepScope.() -> Unit) {
         steps += Step.Exec(name.name, action(block))
+    }
+
+    fun emit(name: String, action: Action, keyedBy: Correlation) {
+        steps += Step.Emit(name, action, keyedBy)
+    }
+
+    fun emit(name: StepName, action: Action, keyedBy: Correlation) {
+        steps += Step.Emit(name.name, action, keyedBy)
     }
 
     // Frozen rather than copied: a copy is still an ArrayList to a Java caller

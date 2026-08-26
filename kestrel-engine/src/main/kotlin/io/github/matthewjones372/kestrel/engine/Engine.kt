@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.RunResult
@@ -125,13 +126,23 @@ private fun Scenario.runOneUser(recorders: Recorders, schedulingDelay: Duration,
     steps.fold<Step, Session?>(started) { session, step ->
         session?.let {
             when (step) {
-                is Step.Exec -> step.runOn(it, recorders, schedulingDelay)
+                is Step.Exec -> step.action.runOn(step.name, it, recorders, schedulingDelay)
+
+                // What is timed here is the publish, which is all that leaves.
+                // The answer is the sink's, and is recorded under the step a
+                // simulation names for it.
+                is Step.Emit -> step.action.runOn(step.name, it, recorders, schedulingDelay)
             }
         }
     }
 }
 
-private fun Step.Exec.runOn(session: Session, recorders: Recorders, schedulingDelay: Duration): Session? {
+private fun Action.runOn(
+    name: String,
+    session: Session,
+    recorders: Recorders,
+    schedulingDelay: Duration,
+): Session? {
     val startedAt = System.nanoTime()
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
@@ -144,8 +155,8 @@ private fun Step.Exec.runOn(session: Session, recorders: Recorders, schedulingDe
 // the caller wrote against a target the caller does not control, so a throw out
 // of it is a request that failed, to be measured and named — not a bug in the
 // engine and not a reason to lose the rest of the run.
-private fun Step.Exec.attempt(session: Session): StepResult = try {
-    action.run(session)
+private fun Action.attempt(session: Session): StepResult = try {
+    run(session)
 } catch (throwable: Throwable) {
     StepResult.Failed(session, throwable.javaClass.name)
 }

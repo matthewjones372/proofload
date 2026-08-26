@@ -3,8 +3,11 @@ package io.github.matthewjones372.kestrel.examples
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.fedBy
+import io.github.matthewjones372.kestrel.feed
 import io.github.matthewjones372.kestrel.http.http
 import io.github.matthewjones372.kestrel.http.send
+import io.github.matthewjones372.kestrel.http.status
 import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.report.appendToStepSummary
@@ -24,6 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val orderId = sessionKey<String>("orderId")
+private val customer = sessionKey<String>("customer")
 
 private val browse = step("browse")
 private val placeOrder = step("place order")
@@ -41,10 +45,16 @@ class CheckoutLoadTest {
 
     private lateinit var server: HttpServer
 
+    /** What the target was actually asked for, so "every user is different" is checked rather than claimed. */
+    private val seenCustomers = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     @BeforeEach
     fun start() {
         server = HttpServer.create(InetSocketAddress(0), 0)
-        server.createContext("/products") { it.respond(status = 200, body = """{"items":2}""") }
+        server.createContext("/products") { exchange ->
+            seenCustomers.add(exchange.requestURI.path)
+            exchange.respond(status = 200, body = """{"items":2}""")
+        }
         server.createContext("/orders") { exchange ->
             exchange.responseHeaders.add("location", "/orders/1")
             exchange.respond(status = 201, body = """{"id":1}""")
@@ -74,7 +84,10 @@ class CheckoutLoadTest {
 
         val checkout = scenario("checkout") {
             // A step that is one request is that request.
-            exec(browse, api.get("/products"))
+            // The template is filled from the session the feeder seeded, so
+            // every user asks for its own page and a cache in front of the
+            // target cannot answer for all of them.
+            exec(browse, api.get("/products/{customer}"))
             exec(
                 placeOrder,
                 api.post("/orders")
@@ -91,9 +104,13 @@ class CheckoutLoadTest {
             }
         }
 
-        val result = kestrel.run(checkout.at(50.perSecond, over = 1.seconds))
+        val result = kestrel.run(
+            checkout.at(50.perSecond, over = 1.seconds)
+                .fedBy(feed(customer) { user -> "customer-$user" }),
+        )
 
         result[browse].count shouldBe 50L
+        seenCustomers.size shouldBe 50
         result[placeOrder].failed shouldBe 0L
         result[pay].serviceTime.p99 shouldBeLessThan 500.milliseconds
 
@@ -115,7 +132,7 @@ class CheckoutLoadTest {
 
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))
 
-        result[pay].failures shouldBe mapOf("status 503" to 10L)
-        result.steps.containsKey("confirm") shouldBe false
+        result[pay].failedWith(status(503)) shouldBe 10L
+        result.ran(confirm) shouldBe false
     }
 }

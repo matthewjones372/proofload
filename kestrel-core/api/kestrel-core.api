@@ -139,6 +139,8 @@ public final class io/github/matthewjones372/kestrel/RunResult {
 	public final fun getStartedAt ()Ljava/time/Instant;
 	public final fun getSteps ()Ljava/util/Map;
 	public fun hashCode ()I
+	public final fun ran (Ljava/lang/String;)Z
+	public final fun ran-Z5c0mbc (Ljava/lang/String;)Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -294,6 +296,7 @@ public final class io/github/matthewjones372/kestrel/StepStats {
 	public final fun copy (Ljava/lang/String;JJLjava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Timing;)Lio/github/matthewjones372/kestrel/StepStats;
 	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/StepStats;Ljava/lang/String;JJLjava/util/Map;Lio/github/matthewjones372/kestrel/Timing;Lio/github/matthewjones372/kestrel/Timing;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/StepStats;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun failedWith (Ljava/lang/String;)J
 	public final fun getCount ()J
 	public final fun getFailed ()J
 	public final fun getFailures ()Ljava/util/Map;

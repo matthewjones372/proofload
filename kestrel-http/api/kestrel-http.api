@@ -21,6 +21,7 @@ public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github
 public final class io/github/matthewjones372/kestrel/http/HttpActionKt {
 	public static final fun exec (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Lio/github/matthewjones372/kestrel/http/HttpAction;)V
 	public static final fun send (Lio/github/matthewjones372/kestrel/StepScope;Lio/github/matthewjones372/kestrel/http/HttpAction;)Lio/github/matthewjones372/kestrel/http/Response;
+	public static final fun status (I)Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/kestrel/http/HttpKt {

@@ -55,6 +55,22 @@ class RunResultTest {
     }
 
     @Test
+    fun `a step says how many failed for one reason, without a map to compare against`() {
+        result["pay"].failedWith("status 503") shouldBe 3L
+    }
+
+    @Test
+    fun `a reason nothing failed for is none of them, not an absent one`() {
+        result["pay"].failedWith("timeout") shouldBe 0L
+    }
+
+    @Test
+    fun `a run says whether a step ran, rather than being asked for its map`() {
+        result.ran("pay") shouldBe true
+        result.ran(step("confirm")) shouldBe false
+    }
+
+    @Test
     fun `a run totals its steps so a summary line does not have to`() {
         val browse = pay.copy(name = "browse", count = 10L, ok = 10L, failures = emptyMap())
         val both = result.copy(steps = mapOf("pay" to pay, "browse" to browse))

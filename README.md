@@ -55,6 +55,24 @@ passes against a step nobody runs. `at` is Gatling's `setUp`, `inject` and
 `protocols` in one call, and what it returns is an ordinary value —
 `simulation.profile.userCount()` is 3000 before anything has been sent.
 
+Every virtual user starts with its own data, so a cache in front of the target
+cannot answer for all of them:
+
+```kotlin
+val customer = sessionKey<String>("customer")
+
+val checkout = scenario("checkout") {
+    exec(browse, api.get("/products/{customer}"))    // filled from the session
+}
+
+checkout.at(50.perSecond, over = 1.minutes)
+    .fedBy(feed(customer) { user -> "customer-$user" })
+```
+
+A feeder is a function of the user's number rather than a cursor over a source,
+so there is nothing to lock on the path every request takes, nothing to run out
+of, and user 4,001 gets the same data tomorrow as it did today.
+
 A load shape is stages in order, and still a value — so it composes, and it
 answers before a request leaves:
 

@@ -34,6 +34,9 @@ data class StepStats(
     val responseTime: Timing,
 ) {
     val failed: Long get() = count - ok
+
+    /** How many failed for [reason]; none is zero rather than absent. */
+    fun failedWith(reason: String): Long = failures[reason] ?: 0L
 }
 
 /** What a run measured, as a value: assert on it, diff it, hand it to a report. */
@@ -58,6 +61,15 @@ data class RunResult(
      * reached, so this still throws when nothing ran under it.
      */
     operator fun get(step: StepName): StepStats = get(step.name)
+
+    /**
+     * Whether anything was recorded under [step]. Beside `get` rather than
+     * instead of it: a step that never ran is a different fact from one that
+     * ran and failed, and a test asking this is making the first claim.
+     */
+    fun ran(step: String): Boolean = steps.containsKey(step)
+
+    fun ran(step: StepName): Boolean = ran(step.name)
 }
 
 /**

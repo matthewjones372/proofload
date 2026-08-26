@@ -25,10 +25,10 @@ fun Simulation.run(): RunResult {
     // cannot push a departure back.
     val scheduler = Executors.newSingleThreadScheduledExecutor(::schedulerThread)
     try {
-        profile.departures().forEach { departure ->
+        profile.departures().forEachIndexed { user, departure ->
             users.starting()
             scheduler.schedule(
-                { scenario.depart(recorders, runStart, departure, users) },
+                { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong())) },
                 // Relative to now, but the offset is from the run's start, and
                 // booking a million of these is not instant. Subtracting what
                 // has already elapsed is what stops every departure inheriting
@@ -45,13 +45,19 @@ fun Simulation.run(): RunResult {
     return recorders.freeze()
 }
 
-private fun Scenario.depart(recorders: Recorders, runStart: Long, departure: Duration, users: Departures) {
+private fun Scenario.depart(
+    recorders: Recorders,
+    runStart: Long,
+    departure: Duration,
+    users: Departures,
+    session: Session,
+) {
     Thread.ofVirtual().start {
         try {
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(recorders, lateness(runStart, departure))
+            runOneUser(recorders, lateness(runStart, departure), session)
         } finally {
             users.finished()
         }
@@ -97,8 +103,8 @@ private fun lateness(runStart: Long, departure: Duration): Duration =
 // the fold: the steps after it are not run, and are not counted as anything.
 // Counting a payment that never had a cart as a success reports a service that
 // answered nobody.
-private fun Scenario.runOneUser(recorders: Recorders, schedulingDelay: Duration) {
-    steps.fold<Step, Session?>(Session.empty) { session, step ->
+private fun Scenario.runOneUser(recorders: Recorders, schedulingDelay: Duration, started: Session) {
+    steps.fold<Step, Session?>(started) { session, step ->
         session?.let {
             when (step) {
                 is Step.Exec -> step.runOn(it, recorders, schedulingDelay)

@@ -186,6 +186,9 @@ Work out which of these a change can break:
   is intended; do not regenerate for green.
 - **Timing claims** need a gate, not a sleep. Assert that the first result
   arrives well before the last, rather than that a run took N seconds.
+- **A test that measures elapsed time cannot share a machine.** A 40 ms target
+  measured 161 ms during a parallel build. Tag those `timing`, keep them out of
+  `test`, and run them alone with `./gradlew :examples:timingTests`.
 
 ## Verifying
 

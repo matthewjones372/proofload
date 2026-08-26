@@ -12,6 +12,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.milliseconds
@@ -27,6 +28,7 @@ private val slow = step("/slow")
  * sleeps for a fixed time — and checks that the report says so. A load tool
  * whose numbers are self-consistent but wrong is the failure mode that matters.
  */
+@Tag("timing")
 class CalibrationTest {
 
     private lateinit var server: HttpServer

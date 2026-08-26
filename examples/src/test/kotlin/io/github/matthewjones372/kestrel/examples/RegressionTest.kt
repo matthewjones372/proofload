@@ -17,6 +17,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.io.TempDir
 import java.net.InetSocketAddress
 import java.nio.file.Path
@@ -31,6 +32,7 @@ import kotlin.time.Duration.Companion.seconds
  * The target here gets slower on purpose between the two runs, so the answer is
  * known before the tool is asked.
  */
+@Tag("timing")
 class RegressionTest {
 
     private lateinit var server: HttpServer

@@ -1,7 +1,16 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/kestrel-mark-dark.svg">
+  <img src="docs/assets/kestrel-mark-light.svg" width="88" height="88" alt="">
+</picture>
+
 # Kestrel
 
 **Load testing for Kotlin, without the ceremony.** A scenario is an ordinary
 Kotlin value: build it, inspect it, split it across files, run it.
+
+</div>
 
 > [!NOTE]
 > Early, but it runs. Ten specs are built and green; nothing is released yet.

@@ -17,7 +17,51 @@ sealed interface InjectionProfile {
     data class ConstantRate(val perSecond: Double, override val over: Duration) : InjectionProfile
 
     data class RampRate(val from: Double, val to: Double, override val over: Duration) : InjectionProfile
+
+    /**
+     * Stages in order: each departs at its own offsets, shifted by the ones
+     * before it. A shape rather than a run, so it can still be compared and
+     * counted before anything is sent.
+     */
+    data class Stages(val stages: List<InjectionProfile>) : InjectionProfile {
+        override val over: Duration get() = stages.fold(Duration.ZERO) { total, stage -> total + stage.over }
+    }
 }
+
+/**
+ * This shape, then [next].
+ *
+ * Flattened rather than nested: two ways of writing one shape have to compare
+ * equal, or a profile is only half a value.
+ */
+infix fun InjectionProfile.then(next: InjectionProfile): InjectionProfile =
+    InjectionProfile.Stages(asStages() + next.asStages())
+
+private fun InjectionProfile.asStages(): List<InjectionProfile> = when (this) {
+    is InjectionProfile.Stages -> stages
+    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> listOf(this)
+}
+
+/** [constantRate], under the name it reads as in a chain. */
+fun hold(rate: Rate, over: Duration): InjectionProfile.ConstantRate = constantRate(rate, over)
+
+/**
+ * This shape, then a ramp from whatever it was running at to [rate].
+ *
+ * The name says it reads the receiver. A bare `rampTo` would start from one
+ * rate in a chain and another on its own, which makes a DSL guessable rather
+ * than readable.
+ */
+fun InjectionProfile.thenRampTo(rate: Rate, over: Duration): InjectionProfile =
+    then(rampRate(from = endRate, to = rate, over = over))
+
+/** What this shape is running at when it finishes. */
+val InjectionProfile.endRate: Rate
+    get() = when (this) {
+        is InjectionProfile.ConstantRate -> perSecond.perSecond
+        is InjectionProfile.RampRate -> to.perSecond
+        is InjectionProfile.Stages -> stages.lastOrNull()?.endRate ?: 0.perSecond
+    }
 
 fun constantRate(rate: Rate, over: Duration): InjectionProfile.ConstantRate {
     requireRate(rate.perSecond, "rate")
@@ -36,6 +80,7 @@ fun rampRate(from: Rate, to: Rate, over: Duration): InjectionProfile.RampRate {
 fun InjectionProfile.userCount(): Long = when (this) {
     is InjectionProfile.ConstantRate -> (perSecond * over.seconds()).toLong()
     is InjectionProfile.RampRate -> ((from + to) / 2 * over.seconds()).toLong()
+    is InjectionProfile.Stages -> stages.sumOf { it.userCount() }
 }
 
 /**
@@ -44,31 +89,36 @@ fun InjectionProfile.userCount(): Long = when (this) {
  * Lazy, because a ten-minute run at a thousand a second is six hundred
  * thousand of these and an engine only needs the next one.
  */
-fun InjectionProfile.departures(): Sequence<Duration> {
-    val count = userCount()
-    if (count == 0L) return emptySequence()
-    return (0 until count).asSequence().map { index -> departureOf(index) }
-}
+fun InjectionProfile.departures(): Sequence<Duration> = when (this) {
+    is InjectionProfile.Stages ->
+        stages
+            .runningFold(Duration.ZERO to emptySequence<Duration>()) { (start, _), stage ->
+                (start + stage.over) to stage.departures().map { start + it }
+            }
+            .asSequence()
+            .flatMap { (_, departures) -> departures }
 
-// Each offset is computed from its own index rather than added to the one
-// before it. Accumulating a floating-point interval drifts, and a generator
-// that drifts reports the drift as the target's latency.
-private fun InjectionProfile.departureOf(index: Long): Duration = when (this) {
-    is InjectionProfile.ConstantRate -> atRate(index, perSecond)
+    is InjectionProfile.ConstantRate -> indices().map { index -> atRate(index, perSecond) }
 
     is InjectionProfile.RampRate -> {
         val acceleration = (to - from) / over.seconds()
         if (acceleration == 0.0) {
-            atRate(index, from)
+            indices().map { index -> atRate(index, from) }
         } else {
             // Solve from*t + acceleration*t^2/2 = index for t: the time by
             // which the area under the rate line has delivered `index` users.
-            val seconds = (-from + sqrt(from * from + 2 * acceleration * index)) / acceleration
-            seconds.toDuration()
+            indices().map { index ->
+                ((-from + sqrt(from * from + 2 * acceleration * index)) / acceleration).toDuration()
+            }
         }
     }
 }
 
+private fun InjectionProfile.indices(): Sequence<Long> = (0 until userCount()).asSequence()
+
+// Each offset is computed from its own index rather than added to the one
+// before it. Accumulating a floating-point interval drifts, and a generator
+// that drifts reports the drift as the target's latency.
 private fun atRate(index: Long, perSecond: Double): Duration = (index / perSecond).toDuration()
 
 private fun Double.toDuration(): Duration = (this * NANOS_PER_SECOND).toLong().nanoseconds

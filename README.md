@@ -55,6 +55,17 @@ passes against a step nobody runs. `at` is Gatling's `setUp`, `inject` and
 `protocols` in one call, and what it returns is an ordinary value —
 `simulation.profile.userCount()` is 3000 before anything has been sent.
 
+A load shape is stages in order, and still a value — so it composes, and it
+answers before a request leaves:
+
+```kotlin
+val soak = rampRate(from = 0.perSecond, to = 200.perSecond, over = 1.minutes)
+    .then(hold(200.perSecond, over = 10.minutes))
+    .thenRampTo(0.perSecond, over = 1.minutes)
+
+checkout.injecting(soak).profile.userCount()   // 132,000, before anything is sent
+```
+
 Two latencies come back from every step. `serviceTime` is what the target took;
 `responseTime` counts from the departure the profile promised, so a generator
 that fell behind reports its own backlog rather than a fast target. When that

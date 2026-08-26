@@ -13,6 +13,11 @@
     "p999": null,
     "max": 801112063
   },
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
   "steps": [
     {
       "name": "browse",

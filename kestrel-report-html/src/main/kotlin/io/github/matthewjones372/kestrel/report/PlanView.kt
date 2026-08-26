@@ -1,12 +1,14 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.seeds
 import java.util.Locale
 import kotlin.time.Duration
 
 /** The run as it was asked for: the scenario, the shape, and what that adds up to. */
-internal fun Plan.headerLines(): List<String> {
+internal fun Plan.headerLines(arrivals: Arrivals): List<String> {
     val shape = profile ?: return emptyList()
 
     return listOf(
@@ -15,8 +17,25 @@ internal fun Plan.headerLines(): List<String> {
             "${shape.described()}. Planned ${plannedUsers.grouped()} " +
             "${"user".plural(plannedUsers)}, ${plannedRequests.grouped()} " +
             "${"request".plural(plannedRequests)}.</p>",
+        """    <p class="arrivals">${shape.arrivalProcess()}${arrivals.achieved()}</p>""",
     ) + shape.shapeChart() + listOf("  </section>")
 }
+
+/**
+ * A line rather than a warning. Even arrivals are not wrong, they are a choice
+ * whose consequence — a p99 that is optimistic against the same mean rate in
+ * production — is invisible unless the page names which was asked for.
+ */
+private fun InjectionProfile.arrivalProcess(): String =
+    seeds.takeIf { it.isNotEmpty() }
+        ?.let { drawn -> "Arrivals were drawn from ${"seed".plural(drawn.size)} ${drawn.joinToString(", ")}." }
+        ?: "Arrivals were evenly spaced, which understates queueing against the same mean rate in production."
+
+/** Measured from the departures that went out, so the claim above it has a number under it. */
+private fun Arrivals.achieved(): String =
+    if (count < 2L) ""
+    else " Measured ${mean.forReport()} between departures, coefficient of variation " +
+        "${String.format(Locale.ROOT, "%.2f", cov)}."
 
 /** The shape in words, one clause per stage, in the order they run. */
 private fun InjectionProfile.described(): String = when (this) {

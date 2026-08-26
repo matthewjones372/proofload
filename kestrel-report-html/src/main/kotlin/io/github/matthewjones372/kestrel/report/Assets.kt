@@ -138,6 +138,7 @@ internal val REPORT_CSS: String = """
     .change-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .plan { margin: 0 0 1.5rem; }
     .plan p { margin: 0 0 0.5rem; }
+    .plan p.arrivals { color: var(--muted); font-size: 0.82rem; }
     .chart.shape svg { height: 4.5rem; }
     .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
     .shape-area { fill: var(--fg); opacity: 0.09; }

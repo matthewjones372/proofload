@@ -32,7 +32,7 @@ private fun RunResult.documentLines(changes: List<Change>): List<String> =
         headLines(),
         verdictLines(),
         changes.comparisonLines(),
-        plan.headerLines(),
+        plan.headerLines(arrivals),
         behindLines(),
         totalsLines(),
         readingLines(),

@@ -21,6 +21,20 @@ sealed interface Tail {
     data class Absent(val because: String) : Tail
 }
 
+/**
+ * A share of samples a run may have taken none of: absent carries the reason,
+ * so no reader has to invent one.
+ *
+ * Its own type rather than [Tail]'s, which measures a duration; this measures a
+ * fraction of the samples, and one type holding either would say neither.
+ */
+sealed interface Met {
+
+    data class Measured(val fraction: Double) : Met
+
+    data class Absent(val because: String) : Met
+}
+
 /** A histogram read once and frozen: percentiles that cannot move under a reader. */
 data class Timing(
     val count: Long,
@@ -54,6 +68,24 @@ data class Timing(
         if (count == 0L || distribution.isEmpty()) return Duration.ZERO
 
         return valueAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong()))
+    }
+
+    /**
+     * The share of samples that came back at or below [under], read off
+     * [distribution].
+     *
+     * The bucket [under] falls inside counts as having missed it. Every sample
+     * in that bucket is reported at its top, which is above the target, so this
+     * rounds the way [percentile] does: away from the target rather than
+     * towards it, which is the direction an approximation can be quoted in.
+     */
+    fun share(under: Duration): Met {
+        if (count == 0L || distribution.isEmpty()) {
+            return Met.Absent("nothing was recorded, so no share of it met anything")
+        }
+
+        val met = distribution.takeWhile { it.upperBound <= under }.sumOf { it.count }
+        return Met.Measured(met.toDouble() / count)
     }
 
     companion object {

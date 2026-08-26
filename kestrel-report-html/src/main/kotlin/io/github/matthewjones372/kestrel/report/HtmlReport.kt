@@ -40,6 +40,7 @@ private fun RunResult.documentLines(comparison: Comparison?): List<String> =
         behindLines(),
         totalsLines(),
         goodputLines(),
+        hiccupLines(),
         readingLines(),
         stepsLines(),
         tailLines(),
@@ -110,6 +111,7 @@ private fun RunResult.totalsLines(): List<String> =
         tile("Failed", failed.grouped(), " failed") +
         lostTiles() +
         tile("Behind schedule, p99", behind.p99OrNothing(), "") +
+        hiccupTile() +
         listOf("  </section>")
 
 // Absent when there is nothing to say: a run with no emit steps would otherwise
@@ -117,6 +119,23 @@ private fun RunResult.totalsLines(): List<String> =
 private fun RunResult.lostTiles(): List<String> =
     if (unanswered.isEmpty()) emptyList()
     else tile("Unmatched", unmatched.grouped(), " failed") + tile("In flight", inFlight.grouped(), "")
+
+/**
+ * Beside the backlog rather than under the table, because the two are read
+ * together: what the injector stalled for is the size of tail this machine can
+ * produce on its own. Absent when nothing watched, which is every result
+ * assembled from samples rather than run.
+ */
+private fun RunResult.hiccupTile(): List<String> =
+    if (hiccups.count == 0L) emptyList() else tile("Injector stalled, p99", hiccups.p99.forReport(), "")
+
+private fun RunResult.hiccupLines(): List<String> =
+    if (hiccups.count == 0L) emptyList()
+    else listOf(
+        """  <p class="note" id="kestrel-hiccups">The injector's own JVM stalled for """ +
+            "${hiccups.p99.forReport()} at p99 and ${hiccups.max.forReport()} at worst, measured on a thread " +
+            "no request ran on. A tail that size is this machine as readily as the target.</p>",
+    )
 
 private fun tile(label: String, value: String, extraClass: String): List<String> =
     listOf(

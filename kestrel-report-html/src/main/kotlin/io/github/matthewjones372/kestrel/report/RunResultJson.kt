@@ -29,6 +29,7 @@ internal fun RunResult.toJson(): String = jsonObject(
         "ok" to ok.toString(),
         "failed" to failed.toString(),
         "behind" to behind.toJson(depth = 1),
+        "hiccups" to hiccups.toJson(depth = 1),
         "arrivals" to arrivals.toJson(depth = 1),
         "steps" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
     ),

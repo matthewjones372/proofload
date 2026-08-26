@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -31,6 +32,24 @@ class HtmlReportTest {
 
         page shouldNotContain "Records that never arrived"
         page shouldNotContain "In flight"
+    }
+
+    @Test
+    fun `what the injector itself stalled for is on the page beside the backlog it could have caused`() {
+        val page = Fixtures.stalled.toHtmlReport()
+
+        page shouldContain "Injector stalled, p99"
+        page shouldContain "stalled for 14.0 ms at p99 and 30.0 ms at worst"
+        withClue("the stall belongs beside the backlog tile, not below the table") {
+            page.indexOf("Injector stalled") shouldBeLessThan page.indexOf("<h2>Steps</h2>")
+        }
+    }
+
+    @Test
+    fun `a run nobody watched claims no stalls rather than showing a zero`() {
+        val page = Fixtures.fellBehind.toHtmlReport()
+
+        page shouldNotContain "Injector stalled"
     }
 
     @Test

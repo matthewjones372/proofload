@@ -23,7 +23,8 @@ private fun RunResult.blocks(): List<String> =
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), behindWarning()) + stepTable() + failureBlocks() + totals() +
+        listOfNotNull(lostWarning(), behindWarning()) + stepTable() +
+            listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
 
@@ -40,6 +41,17 @@ private fun RunResult.lostWarning(): String? {
     return "> **Records that never arrived:** $where. " +
         "An unmatched record is one the sink had the whole drain window to answer for and did not; " +
         "an in-flight one left too late to be given that window."
+}
+
+/**
+ * Under the table rather than over it, because it is what the tail above is
+ * measured against. Absent when nothing watched: a result assembled from
+ * samples has no injector to have stalled.
+ */
+private fun RunResult.hiccupLine(): String? {
+    if (hiccups.count == 0L) return null
+    return "The injector's own JVM stalled for ${hiccups.p99.report()} at p99 and ${hiccups.max.report()} at " +
+        "worst, measured on a thread no request ran on. A tail that size is this machine as readily as the target."
 }
 
 /**

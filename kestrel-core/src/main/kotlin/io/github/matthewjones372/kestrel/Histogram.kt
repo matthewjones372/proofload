@@ -13,27 +13,55 @@ import kotlin.time.Duration.Companion.nanoseconds
  * The write side of a measurement. It is a mutable accumulator on purpose —
  * recording a sample must not contend on a lock, or the tool starts measuring
  * itself — and it is read into an immutable `Timing` before it escapes.
+ *
+ * [precision] is a property of the instance rather than of the type, because a
+ * run keeps two sizes of these: one per step at [PRECISION] for the summary,
+ * and one per second per step at [COARSE_PRECISION] for the timeline, where a
+ * full table a second would be tens of megabytes of counters.
  */
-class Histogram {
+class Histogram private constructor(private val subBucketMagnitude: Int) {
+
+    constructor() : this(FULL_SUB_BUCKET_MAGNITUDE)
+
+    private val subBucketCount = 1 shl subBucketMagnitude
+    private val subBucketHalf = subBucketCount / 2
+    private val overflow = subBucketCount + BUCKET_COUNT * subBucketHalf
 
     // The one mutable thing here, and the reason is the measurement: a
     // histogram that allocated per sample would be timed as the target's
     // latency. Everything read off it is derived rather than counted twice.
-    private val counts = LongArray(SUB_BUCKET_COUNT + BUCKET_COUNT * SUB_BUCKET_HALF + 1)
+    //
+    // The buckets, and then one slot past them holding the overflow count.
+    // Keeping it in the same array is what lets `merge` be one loop over one
+    // array.
+    private val counts = LongArray(overflow + 1)
 
-    val count: Long get() = counts.take(BUCKETS).sum()
+    /** Worst relative error of any percentile this one reports. */
+    val precision: Double get() = 1.0 / subBucketHalf
+
+    /** What the counter table costs, which is what buys a histogram a second. */
+    internal val counterBytes: Long get() = counts.size.toLong() * Long.SIZE_BYTES
+
+    val count: Long get() = counts.take(overflow).sum()
 
     /** Samples that arrived past the ceiling, counted at it rather than dropped. */
-    val overflowed: Long get() = counts[OVERFLOW]
+    val overflowed: Long get() = counts[overflow]
 
     fun record(value: Duration) {
         val nanos = value.inWholeNanoseconds
         require(nanos >= 0) { "a latency cannot be negative, but was $value" }
-        if (nanos > CEILING_NANOS) counts[OVERFLOW]++
+        if (nanos > CEILING_NANOS) counts[overflow]++
         counts[indexOf(minOf(nanos, CEILING_NANOS))]++
     }
 
+    /**
+     * Refused across precisions: the two tables index differently, so adding
+     * one to the other slot by slot would report a latency nothing measured.
+     */
     fun merge(other: Histogram) {
+        require(other.subBucketMagnitude == subBucketMagnitude) {
+            "a histogram good to $precision cannot take one good to ${other.precision}"
+        }
         for (index in counts.indices) counts[index] += other.counts[index]
     }
 
@@ -52,7 +80,7 @@ class Histogram {
         // runningFold is lazy, so this walks only as far as the bucket the
         // percentile falls in; the leading zero it emits is why the index
         // steps back by one.
-        val bucket = counts.asSequence().take(BUCKETS)
+        val bucket = counts.asSequence().take(overflow)
             .runningFold(0L) { seen, inBucket -> seen + inBucket }
             .indexOfFirst { it >= wanted } - 1
 
@@ -66,7 +94,7 @@ class Histogram {
      * fills tens of them, and a report that carried the rest would be mostly
      * zeroes on the wire.
      */
-    fun distribution(): List<Bucket> = counts.asSequence().take(BUCKETS)
+    fun distribution(): List<Bucket> = counts.asSequence().take(overflow)
         .mapIndexedNotNull { index, seen ->
             if (seen == 0L) null else Bucket(highestEquivalentOf(index).nanoseconds, seen)
         }
@@ -75,23 +103,29 @@ class Histogram {
     private fun indexOf(nanos: Long): Int {
         val bucket = bucketOf(nanos)
         val subBucket = (nanos ushr bucket).toInt()
-        return if (bucket == 0) subBucket else (bucket + 1) * SUB_BUCKET_HALF + (subBucket - SUB_BUCKET_HALF)
+        return if (bucket == 0) subBucket else (bucket + 1) * subBucketHalf + (subBucket - subBucketHalf)
     }
 
     private fun highestEquivalentOf(index: Int): Long {
-        val bucket = if (index < SUB_BUCKET_COUNT) 0 else index / SUB_BUCKET_HALF - 1
-        val subBucket = if (bucket == 0) index else index - (bucket + 1) * SUB_BUCKET_HALF + SUB_BUCKET_HALF
+        val bucket = if (index < subBucketCount) 0 else index / subBucketHalf - 1
+        val subBucket = if (bucket == 0) index else index - (bucket + 1) * subBucketHalf + subBucketHalf
         return ((subBucket.toLong() + 1L) shl bucket) - 1L
     }
 
     private fun bucketOf(nanos: Long): Int {
         val magnitude = MAX_BIT - (nanos or 1L).countLeadingZeroBits()
-        return maxOf(0, magnitude - (SUB_BUCKET_MAGNITUDE - 1))
+        return maxOf(0, magnitude - (subBucketMagnitude - 1))
     }
 
     companion object {
-        /** Worst relative error of any reported percentile. */
-        const val PRECISION: Double = 1.0 / SUB_BUCKET_HALF
+        /** Worst relative error of any percentile a full histogram reports. */
+        const val PRECISION: Double = 1.0 / FULL_SUB_BUCKET_HALF
+
+        /** The same for [coarse], which is what the page has to print beside a timeline. */
+        const val COARSE_PRECISION: Double = 1.0 / COARSE_SUB_BUCKET_HALF
+
+        /** Thirty-two sub-buckets rather than two hundred and fifty-six: an eighth of the counters. */
+        fun coarse(): Histogram = Histogram(COARSE_SUB_BUCKET_MAGNITUDE)
 
         val ceiling: Duration get() = CEILING_NANOS.nanoseconds
     }
@@ -99,16 +133,15 @@ class Histogram {
 
 private const val MAX_BIT = 63
 private const val MAX_PERCENTILE = 100.0
-private const val SUB_BUCKET_MAGNITUDE = 8
-private const val SUB_BUCKET_COUNT = 1 shl SUB_BUCKET_MAGNITUDE
-private const val SUB_BUCKET_HALF = SUB_BUCKET_COUNT / 2
+private const val FULL_SUB_BUCKET_MAGNITUDE = 8
+private const val COARSE_SUB_BUCKET_MAGNITUDE = 5
+private const val FULL_SUB_BUCKET_HALF = 1 shl (FULL_SUB_BUCKET_MAGNITUDE - 1)
+private const val COARSE_SUB_BUCKET_HALF = 1 shl (COARSE_SUB_BUCKET_MAGNITUDE - 1)
 
 // One hour. A latency longer than this is a hung connection, not a
 // measurement, and the ceiling keeps the table at a few thousand longs.
 private const val CEILING_NANOS = 3_600L * 1_000_000_000L
-private const val BUCKET_COUNT = 40
 
-// The buckets, and then one slot past them holding the overflow count. Keeping
-// it in the same array is what lets `merge` be one loop over one array.
-private const val BUCKETS = SUB_BUCKET_COUNT + BUCKET_COUNT * SUB_BUCKET_HALF
-private const val OVERFLOW = BUCKETS
+// Enough doublings to reach the ceiling from the coarsest sub-bucket count
+// above, which is the one that needs the most of them.
+private const val BUCKET_COUNT = 40

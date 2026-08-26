@@ -37,6 +37,8 @@ private fun RunResult.documentLines(changes: List<Change>): List<String> =
         totalsLines(),
         readingLines(),
         stepsLines(),
+        tailLines(),
+        listOf("</main>"),
         dataLines(),
         scriptLines(),
     ).flatten()
@@ -108,7 +110,6 @@ private fun RunResult.stepsLines(): List<String> =
             "each is good to ${Histogram.PRECISION.asPercent()}, and rounds away from the target rather " +
             "than towards it.</p>",
         "  </section>",
-        "</main>",
     )
 
 private fun RunResult.chartLines(): List<String> =

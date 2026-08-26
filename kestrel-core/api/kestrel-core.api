@@ -78,6 +78,19 @@ public final class io/github/matthewjones372/kestrel/Rate {
 public final class io/github/matthewjones372/kestrel/Rate$Companion {
 }
 
+public final class io/github/matthewjones372/kestrel/RunRecorder {
+	public static final field Companion Lio/github/matthewjones372/kestrel/RunRecorder$Companion;
+	public static final field MAX_REASONS_PER_STEP I
+	public static final field OTHER_REASONS Ljava/lang/String;
+	public fun <init> (Ljava/time/Instant;)V
+	public final fun freeze ()Lio/github/matthewjones372/kestrel/RunResult;
+	public final fun merge (Lio/github/matthewjones372/kestrel/RunRecorder;)V
+	public final fun record-VTINZ0E (Ljava/lang/String;Ljava/lang/String;JJ)V
+}
+
+public final class io/github/matthewjones372/kestrel/RunRecorder$Companion {
+}
+
 public final class io/github/matthewjones372/kestrel/RunResult {
 	public fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;)V
 	public final fun component1 ()Ljava/time/Instant;

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.fellBehind
 import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
@@ -23,14 +24,8 @@ private fun RunResult.blocks(): List<String> =
         listOfNotNull(behindWarning()) + stepTable() + failureBlocks() + totals() + MEASUREMENT_NOTE
     }
 
-/**
- * Behind when the backlog at p99 is larger than the error bar on the latency it
- * inflates. Under that it cannot move a number this table prints, and a warning
- * that does not show up in the numbers beside it is one people learn to skip.
- */
 private fun RunResult.behindWarning(): String? {
-    val worst = steps.values.maxOfOrNull { it.responseTime.p99 } ?: return null
-    if (behind.p99 <= worst * Histogram.PRECISION) return null
+    if (!fellBehind()) return null
     return "> **Behind schedule:** ${behind.p99.report()} late at p99, ${behind.max.report()} at worst. " +
         "The response times below include that backlog."
 }

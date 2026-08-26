@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -28,6 +29,7 @@ internal fun RunResult.toJson(): String = jsonObject(
         "ok" to ok.toString(),
         "failed" to failed.toString(),
         "behind" to behind.toJson(depth = 1),
+        "arrivals" to arrivals.toJson(depth = 1),
         "steps" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
     ),
 ) + "\n"
@@ -44,6 +46,15 @@ private fun StepStats.toJson(depth: Int): String = jsonObject(
         "failures" to failures.entries.jsonArray(depth + 1) { (reason, seen) ->
             jsonObject(depth + 2, listOf("reason" to jsonString(reason), "count" to seen.toString()))
         },
+    ),
+)
+
+private fun Arrivals.toJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "count" to count.toString(),
+        "mean" to mean.inWholeNanoseconds.toString(),
+        "cov" to cov.toString(),
     ),
 )
 

@@ -1,9 +1,15 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.InjectionProfile
+import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.hold
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.randomized
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -13,6 +19,7 @@ import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class MarkdownTest {
 
@@ -90,4 +97,39 @@ class MarkdownTest {
         result.markdown() shouldContain "No steps ran."
         result.markdown() shouldNotContain "| Step"
     }
+
+    @Test
+    fun `a result nobody planned has no arrival process to name`() {
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
+
+        result.markdown() shouldNotContain "Arrivals were"
+    }
+
+    @Test
+    fun `an even run says so, and says what a reader should read into it`() {
+        val result = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+
+        result.markdown() shouldContain "Arrivals were evenly spaced, which understates queueing against the " +
+            "same mean rate in production. Measured 5.00ms between departures, coefficient of variation 0.00."
+    }
+
+    @Test
+    fun `a randomised run names the seed it was drawn from and the variation it produced`() {
+        val shape = hold(200.perSecond, over = 10.seconds).randomized(seed = 20260826)
+
+        val result = ran(shape, Arrivals(2000L, 5.milliseconds, 0.98))
+
+        result.markdown() shouldContain "Arrivals were drawn from seed 20260826. Measured 5.00ms between " +
+            "departures, coefficient of variation 0.98."
+    }
+
+    private val nothing = listOf(Duration.ZERO)
+
+    private fun ran(profile: InjectionProfile, arrivals: Arrivals) = RunResult(
+        startedAt = startedAt,
+        steps = mapOf("browse" to browse),
+        behind = timingOf(nothing),
+        plan = Plan(scenario = "checkout", steps = listOf("browse"), profile = profile),
+        arrivals = arrivals,
+    )
 }

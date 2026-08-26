@@ -113,7 +113,22 @@ stays inside the window the profile promised. Each stage is seeded from the seed
 and its own index, so a hold after a ramp does not repeat the ramp's draws and
 the whole shape stays a function of the one seed.
 
-Even spacing is still the default.
+Even spacing is still the default. Which of the two a run got is on the page as
+a line rather than a warning, next to the spacing that was actually produced:
+
+```kotlin
+val result = kestrel.run(checkout.injecting(bursty))
+
+result.arrivals.count   // departures the run made
+result.arrivals.mean    // 5.00ms between them
+result.arrivals.cov     // 0.98 — near 1.0 is a Poisson process, 0.0 is a metronome
+```
+
+Those three are measured from the departures that went out, not read back off
+the profile that asked for them, which is the check the standard advice asks a
+load test to make of itself. An even run reports a coefficient of variation of
+zero and the report says what that costs: a p99 measured under even arrivals is
+optimistic against the same mean rate in production.
 
 Two latencies come back from every step. `serviceTime` is what the target took;
 `responseTime` counts from the departure the profile promised, so a generator

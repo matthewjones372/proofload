@@ -61,6 +61,20 @@ fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when 
 }
 
 /**
+ * The seeds this shape draws its arrivals from, in the order its stages run.
+ *
+ * Empty means every arrival is spaced on the interval, which is the fact a
+ * report has to print: a run measured under even arrivals is not comparable
+ * with the same mean rate in production.
+ */
+val InjectionProfile.seeds: List<Long>
+    get() = when (this) {
+        is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> emptyList()
+        is InjectionProfile.Stages -> stages.flatMap { it.seeds }
+        is InjectionProfile.Randomized -> listOf(seed)
+    }
+
+/**
  * This shape, then [next].
  *
  * Flattened rather than nested: two ways of writing one shape have to compare

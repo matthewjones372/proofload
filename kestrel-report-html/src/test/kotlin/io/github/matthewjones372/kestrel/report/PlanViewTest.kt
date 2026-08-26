@@ -1,13 +1,16 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.rampRate
+import io.github.matthewjones372.kestrel.randomized
 import io.github.matthewjones372.kestrel.then
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -65,5 +68,39 @@ class PlanViewTest {
 
         page shouldContain "0/s to 200/s over 1.0 min, then 200/s held for 10.0 min"
         page shouldContain "polyline"
+    }
+
+    @Test
+    fun `the page says arrivals were evenly spaced, and what a reader should read into that`() {
+        val page = pageFor(held)
+
+        page shouldContain "Arrivals were evenly spaced"
+        page shouldContain "understates queueing against the same mean rate in production"
+    }
+
+    @Test
+    fun `the page names the seed a randomised shape drew from`() {
+        val page = pageFor(held.copy(profile = hold(120.perSecond, over = 4.seconds).randomized(seed = 20260826)))
+
+        page shouldContain "Arrivals were drawn from seed 20260826."
+        page shouldNotContain "evenly spaced"
+    }
+
+    @Test
+    fun `the page prints the spacing that was measured, not the one the shape asked for`() {
+        val measured = Arrivals(count = 480L, mean = 5.milliseconds, cov = 0.98)
+
+        val page = Fixtures.fellBehind.copy(plan = held, arrivals = measured).toHtmlReport()
+
+        page shouldContain "120/s held for 4.00 s"
+        page shouldContain "Measured 5.00 ms between departures, coefficient of variation 0.98."
+    }
+
+    @Test
+    fun `a run that departed nobody names what was asked for and measures nothing`() {
+        val page = pageFor(held)
+
+        page shouldContain "Arrivals were evenly spaced"
+        page shouldNotContain "Measured"
     }
 }

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Session
@@ -21,12 +22,19 @@ fun Simulation.run(): RunResult {
     val recorders = Recorders(Instant.now())
     val runStart = System.nanoTime()
     val users = Departures()
+    // Read where the offsets are consumed rather than off the profile: what the
+    // report names is the spacing that was produced, and a profile asked the
+    // same question would answer with its own intention. This is the one thread
+    // that sees every departure exactly once, and folding three numbers here
+    // costs no allocation on a loop whose delay is measured as latency.
+    val arrivals = ArrivalRecorder()
     // One platform thread. Its only job is to start virtual threads at the
     // offsets the profile named; a step never runs on it, so a slow target
     // cannot push a departure back.
     val scheduler = Executors.newSingleThreadScheduledExecutor(::schedulerThread)
     try {
         profile.departures().forEachIndexed { user, departure ->
+            arrivals.record(departure)
             users.starting()
             scheduler.schedule(
                 { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong())) },
@@ -43,7 +51,7 @@ fun Simulation.run(): RunResult {
     } finally {
         scheduler.shutdownNow()
     }
-    return recorders.freeze(plan())
+    return recorders.freeze(plan(), arrivals.freeze())
 }
 
 private fun Scenario.depart(

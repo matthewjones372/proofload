@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
+import io.github.matthewjones372.kestrel.seeds
 import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
@@ -21,8 +22,27 @@ private fun RunResult.blocks(): List<String> =
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(behindWarning()) + stepTable() + failureBlocks() + totals() + MEASUREMENT_NOTE
+        listOfNotNull(behindWarning()) + stepTable() + failureBlocks() + totals() +
+            listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
+
+/**
+ * A line rather than a warning. Even arrivals are not wrong, they are a choice
+ * whose consequence — a p99 that is optimistic against the same mean rate in
+ * production — is invisible unless the report names which was asked for.
+ */
+private fun RunResult.arrivalLine(): String? {
+    val shape = plan.profile ?: return null
+    val drawn = shape.seeds
+    val asked =
+        if (drawn.isEmpty()) "Arrivals were evenly spaced, which understates queueing against the same mean rate " +
+            "in production."
+        else "Arrivals were drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}."
+
+    if (arrivals.count < 2L) return asked
+    return "$asked Measured ${arrivals.mean.report()} between departures, coefficient of variation " +
+        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}."
+}
 
 private fun RunResult.behindWarning(): String? {
     if (!fellBehind()) return null

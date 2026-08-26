@@ -129,6 +129,7 @@ data class RunResult(
     val steps: Map<String, StepStats>,
     val behind: Timing,
     val plan: Plan = Plan.none,
+    val arrivals: Arrivals = Arrivals.none,
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

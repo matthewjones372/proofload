@@ -14,5 +14,24 @@ one.
 
 ## [Unreleased]
 
-Nothing yet. The repository carries its process, its build and its gates; the
-first spec is where the work starts.
+### Added
+
+- **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
+  `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body
+  that names neither the session nor its result.
+- **Open-model injection.** `ConstantRate` and `RampRate` state departure times
+  up front; each offset is computed from its index so a long run cannot drift.
+- **Measurement.** A log-linear `Histogram` written here rather than taken as a
+  dependency, `RunResult`/`StepStats`/`Timing`, and two latencies per step so a
+  generator's own backlog is never reported as the target's speed.
+- **`kestrel-engine`** — one virtual thread per user, departures started by a
+  scheduler, recorders sharded rather than one per user, and a failed step
+  abandoning that user rather than counting its later steps as successes.
+- **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
+- **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
+  framework is already there, with the runner handed over as a parameter.
+- **`kestrel-report-html` and `kestrel-report-github`** — one self-contained
+  interactive page, a markdown summary, `$GITHUB_STEP_SUMMARY`, and a Pages
+  index.
+- **`kestrel-pelican`** — Pelican's `ClientTransport` over the JDK client, so a
+  generated typed client runs inside a load test with no Pekko.

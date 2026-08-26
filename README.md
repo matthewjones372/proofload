@@ -4,32 +4,57 @@
 Kotlin value: build it, inspect it, split it across files, run it.
 
 > [!NOTE]
-> Early. The description model is built and tested; nothing runs it yet. The
-> engine is the next spec in [`specs/`](specs/). See [AGENTS.md](AGENTS.md)
-> before writing code.
+> Early, but it runs. Ten specs are built and green; nothing is released yet.
+> See [AGENTS.md](AGENTS.md) before writing code.
 
 ```kotlin
 import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.kotest.matchers.comparables.shouldBeLessThan
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
-val cart = sessionKey<String>("cart")
+val orderId = sessionKey<String>("orderId")
+val api = http.baseUrl("https://orders.internal")
 
 val checkout = scenario("checkout") {
-    exec("browse") { set(cart, "empty") }
-    exec("add to cart") { set(cart, "1 anvil") }
-    exec("pay") { if (get(cart) == "empty") fail("nothing to pay for") }
+    exec("browse") { api.get("/products").send(this) }
+    exec("place order") {
+        api.post("/orders")
+            .body("""{"cart":"1 anvil"}""")
+            .expecting(201)
+            .capture(orderId) { response -> response.header("location") }
+            .send(this)
+    }
 }
 
-val simulation = checkout.at(50.perSecond, over = 1.minutes)
+class CheckoutLoadTest {
+
+    @LoadTest
+    fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
+        val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
+
+        result["place order"].responseTime.p99 shouldBeLessThan 200.milliseconds
+        result.failed shouldBe 0L
+    }
+}
 ```
 
 No session parameter to name, no result to remember to return, and no cast to
 read one back: a key carries its type. `at` is Gatling's `setUp`, `inject` and
 `protocols` in one call, and what it returns is an ordinary value —
 `simulation.profile.userCount()` is 3000 before anything has been sent.
+
+Two latencies come back from every step. `serviceTime` is what the target took;
+`responseTime` counts from the departure the profile promised, so a generator
+that fell behind reports its own backlog rather than a fast target. When that
+backlog is large enough to have moved a number, `result.fellBehind()` is true
+and every report says so before it prints a percentile.
 
 ## What this is for
 
@@ -61,13 +86,18 @@ The three decisions that shape everything else, and are still open:
 
 | Module | Depends on | For |
 |---|---|---|
-| `kestrel-core` | **nothing** | scenarios as values |
+| `kestrel-core` | **nothing** | scenarios, profiles and results as values |
+| `kestrel-engine` | core | virtual threads, departures on a schedule |
+| `kestrel-http` | core | HTTP steps on `java.net.http` |
+| `kestrel-junit5` | core, engine, JUnit | a load test that is a `@Test` |
+| `kestrel-kotest` | core, engine | the same, in a Kotest spec |
+| `kestrel-report-html` | core | one self-contained, interactive HTML file |
+| `kestrel-report-github` | core | markdown, a job summary, a Pages index |
+| `kestrel-pelican` | core, `pelican-core` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps |
 
-Planned beside it, each a leaf with its own dependency test: `kestrel-engine`
-(virtual threads), `kestrel-http`, `kestrel-report-html`,
-`kestrel-report-github`, `kestrel-junit5`, `kestrel-kotest`, and
-`kestrel-pelican` for [Pelican](https://github.com/matthewjones372/pelican)
-endpoint descriptions.
+Every row is a test, not a promise: each module asserts its own runtime
+classpath, so core cannot grow a dependency and the Kotest module cannot
+quietly start needing the JUnit one.
 
 Core depends on the Kotlin standard library and nothing else, and a test says
 so. Everything with a third-party type in it becomes a leaf module beside it.

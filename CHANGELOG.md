@@ -27,6 +27,12 @@ one.
 - **`kestrel-engine`** — one virtual thread per user, departures started by a
   scheduler, recorders sharded rather than one per user, and a failed step
   abandoning that user rather than counting its later steps as successes.
+- **The rate a scenario sustains.** `Scenario.sustainable(upTo, holding,
+  expecting)` is a `Search`, and a value: it answers `rungs` and `worstCase`
+  before a request leaves. Running one climbs a coarse ladder and bisects at
+  the knee, and returns a `Capacity` — the highest rate every goal held at, the
+  goal that stopped it, and the curve every rung is on. A rung the injector
+  could not offer is void rather than failed, and ends the search.
 - **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
 - **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.

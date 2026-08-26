@@ -54,13 +54,14 @@ class HttpSessionTest {
         serving("/orders" to reply) { server ->
             val checkout = scenario("checkout") {
                 exec("pay") {
-                    http.baseUrl(server.baseUrl)
-                        .post("/orders")
-                        .header("content-type", "application/json")
-                        .body("""{"cart":"1 anvil"}""")
-                        .expecting(201)
-                        .capture(orderId) { response -> response.header("location") }
-                        .send(this)
+                    send(
+                        http.baseUrl(server.baseUrl)
+                            .post("/orders")
+                            .header("content-type", "application/json")
+                            .body("""{"cart":"1 anvil"}""")
+                            .expecting(201)
+                            .capture(orderId) { response -> response.header("location") },
+                    )
                 }
             }
 

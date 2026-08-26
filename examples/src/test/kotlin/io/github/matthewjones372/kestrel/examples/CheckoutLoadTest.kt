@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.http.send
 import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.report.appendToStepSummary
@@ -72,16 +73,22 @@ class CheckoutLoadTest {
         val api = endpoint()
 
         val checkout = scenario("checkout") {
-            exec(browse) { api.get("/products").send(this) }
-            exec(placeOrder) {
+            // A step that is one request is that request.
+            exec(browse, api.get("/products"))
+            exec(
+                placeOrder,
                 api.post("/orders")
                     .header("content-type", "application/json")
                     .body("""{"cart":"1 anvil"}""")
                     .expecting(201)
-                    .capture(orderId) { response -> response.header("location") }
-                    .send(this)
+                    .capture(orderId) { response -> response.header("location") },
+            )
+            // A step that does more than send gets a body, and `send` there
+            // reads as a verb taking the request.
+            exec(pay) {
+                val order = get(orderId)
+                send(api.get("/pay").header("x-order", order.orEmpty()))
             }
-            exec(pay) { api.get("/pay").send(this) }
         }
 
         val result = kestrel.run(checkout.at(50.perSecond, over = 1.seconds))
@@ -102,8 +109,8 @@ class CheckoutLoadTest {
         val api = endpoint()
 
         val checkout = scenario("refused") {
-            exec(pay) { api.get("/pay?id=4").send(this) }
-            exec(confirm) { api.get("/products").send(this) }
+            exec(pay) { send(api.get("/pay?id=4")) }
+            exec(confirm) { send(api.get("/products")) }
         }
 
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))

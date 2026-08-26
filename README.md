@@ -26,14 +26,14 @@ val placeOrder = step("place order")
 val api = http.baseUrl("https://orders.internal")
 
 val checkout = scenario("checkout") {
-    exec(browse) { api.get("/products").send(this) }
-    exec(placeOrder) {
+    exec(browse, api.get("/products"))
+    exec(
+        placeOrder,
         api.post("/orders")
             .body("""{"cart":"1 anvil"}""")
             .expecting(201)
-            .capture(orderId) { response -> response.header("location") }
-            .send(this)
-    }
+            .capture(orderId) { response -> response.header("location") },
+    )
 }
 
 class CheckoutLoadTest {

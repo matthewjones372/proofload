@@ -48,20 +48,21 @@ class HttpAction internal constructor(
     fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction =
         copy(captures = captures + Capture(key, extract))
 
-    override fun run(session: Session): StepResult = action { send(this) }.run(session)
+    override fun run(session: Session): StepResult = action { sendTo(this) }.run(session)
 
-    /** Sends, and records what happened on [scope]. For use inside a step body. */
-    fun send(scope: StepScope) {
-        val url = path.fill(scope) ?: return
-        val response = exchange(request(url), scope) ?: return
+    /** Sends, and records what happened on [scope]. Reached through [send]. */
+    internal fun sendTo(scope: StepScope): Response? {
+        val url = path.fill(scope) ?: return null
+        val response = exchange(request(url), scope) ?: return null
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
             // reappears as a stranger, several steps later.
             scope.fail("status ${response.status}")
-            return
+            return null
         }
         captures.forEach { it.applyTo(scope, response) }
+        return response
     }
 
     private fun copy(
@@ -90,3 +91,13 @@ class HttpAction internal constructor(
 fun ScenarioBuilder.exec(request: HttpAction) {
     exec(request.name, request)
 }
+
+/**
+ * Sends [request] and records what happened on this step.
+ *
+ * The verb takes the request because the request is the thing being sent; the
+ * scope it reports to is the one the step body is already running in. The
+ * response comes back for a step that needs to read it, and is ignored by the
+ * many that do not.
+ */
+fun StepScope.send(request: HttpAction): Response? = request.sendTo(this)

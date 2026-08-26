@@ -7,6 +7,45 @@ public final class io/github/matthewjones372/kestrel/ActionKt {
 	public static final fun ok (Lio/github/matthewjones372/kestrel/Session;)Lio/github/matthewjones372/kestrel/StepResult;
 }
 
+public abstract interface class io/github/matthewjones372/kestrel/InjectionProfile {
+	public abstract fun getOver-UwyO8pc ()J
+}
+
+public final class io/github/matthewjones372/kestrel/InjectionProfile$ConstantRate : io/github/matthewjones372/kestrel/InjectionProfile {
+	public synthetic fun <init> (DJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-HG0u8IE (DJ)Lio/github/matthewjones372/kestrel/InjectionProfile$ConstantRate;
+	public static synthetic fun copy-HG0u8IE$default (Lio/github/matthewjones372/kestrel/InjectionProfile$ConstantRate;DJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/InjectionProfile$ConstantRate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getOver-UwyO8pc ()J
+	public final fun getPerSecond ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/InjectionProfile$RampRate : io/github/matthewjones372/kestrel/InjectionProfile {
+	public synthetic fun <init> (DDJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-SxA4cEA (DDJ)Lio/github/matthewjones372/kestrel/InjectionProfile$RampRate;
+	public static synthetic fun copy-SxA4cEA$default (Lio/github/matthewjones372/kestrel/InjectionProfile$RampRate;DDJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/InjectionProfile$RampRate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()D
+	public fun getOver-UwyO8pc ()J
+	public final fun getTo ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/InjectionProfileKt {
+	public static final fun constantRate-HG0u8IE (DJ)Lio/github/matthewjones372/kestrel/InjectionProfile$ConstantRate;
+	public static final fun departures (Lio/github/matthewjones372/kestrel/InjectionProfile;)Lkotlin/sequences/Sequence;
+	public static final fun rampRate-SxA4cEA (DDJ)Lio/github/matthewjones372/kestrel/InjectionProfile$RampRate;
+	public static final fun userCount (Lio/github/matthewjones372/kestrel/InjectionProfile;)J
+}
+
 public final class io/github/matthewjones372/kestrel/Scenario {
 	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
 	public final fun component1 ()Ljava/lang/String;

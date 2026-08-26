@@ -59,6 +59,7 @@ val moduleDescriptions = mapOf(
     "kestrel-core" to "Load scenarios as values. No dependencies.",
     "kestrel-engine" to "Runs a Kestrel simulation on virtual threads. Depends on kestrel-core.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
+    "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",
 )
 

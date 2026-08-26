@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.http
 import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.Session
+import io.github.matthewjones372.kestrel.SessionKey
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.StepScope
 import io.github.matthewjones372.kestrel.action
@@ -25,6 +26,7 @@ class HttpAction internal constructor(
     private val body: String? = null,
     private val expected: Int = OK,
     private val timeout: Duration = requestTimeout,
+    private val captures: List<Capture<*>> = emptyList(),
 ) : Action {
 
     /**
@@ -42,12 +44,24 @@ class HttpAction internal constructor(
 
     fun timeout(timeout: Duration): HttpAction = copy(timeout = timeout)
 
+    /** Takes a value out of the response and puts it in the session under [key]. */
+    fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction =
+        copy(captures = captures + Capture(key, extract))
+
     override fun run(session: Session): StepResult = action { send(this) }.run(session)
 
     /** Sends, and records what happened on [scope]. For use inside a step body. */
     fun send(scope: StepScope) {
-        val response = exchange(request(), scope) ?: return
-        if (response.status != expected) scope.fail("status ${response.status}")
+        val url = path.fill(scope) ?: return
+        val response = exchange(request(url), scope) ?: return
+        if (response.status != expected) {
+            // Nothing is captured out of a response the request did not ask
+            // for: a body from an error page in the session is a failure that
+            // reappears as a stranger, several steps later.
+            scope.fail("status ${response.status}")
+            return
+        }
+        captures.forEach { it.applyTo(scope, response) }
     }
 
     private fun copy(
@@ -55,13 +69,14 @@ class HttpAction internal constructor(
         body: String? = this.body,
         expected: Int = this.expected,
         timeout: Duration = this.timeout,
-    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout)
+        captures: List<Capture<*>> = this.captures,
+    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, captures)
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.
-    private fun request(): HttpRequest = headers.entries
+    private fun request(url: String): HttpRequest = headers.entries
         .fold(
-            HttpRequest.newBuilder(URI.create(baseUrl + path))
+            HttpRequest.newBuilder(URI.create(baseUrl + url))
                 .timeout(timeout)
                 .method(method, publisher()),
         ) { builder, (name, value) -> builder.header(name, value) }

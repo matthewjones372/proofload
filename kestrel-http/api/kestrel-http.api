@@ -10,6 +10,7 @@ public final class io/github/matthewjones372/kestrel/http/Http {
 
 public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github/matthewjones372/kestrel/Action {
 	public final fun body (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/HttpAction;
+	public final fun capture (Lio/github/matthewjones372/kestrel/SessionKey;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun expecting (I)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun getName ()Ljava/lang/String;
 	public final fun header (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/HttpAction;

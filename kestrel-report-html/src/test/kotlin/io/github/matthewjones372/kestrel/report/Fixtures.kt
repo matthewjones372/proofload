@@ -20,6 +20,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Results built by hand, sample by sample. No engine runs here, so the
@@ -70,6 +71,27 @@ internal object Fixtures {
     /** The same run, with a backlog too small to have moved anything it prints. */
     val keptSchedule: RunResult = fellBehind.copy(
         behind = timingOf(listOf(1.milliseconds, 1.milliseconds, 2.milliseconds)),
+    )
+
+    /** A hundred requests over a planned ten seconds, one of them failed and one of them slow. */
+    val metItsTarget: RunResult = RunResult(
+        startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+        steps = linkedMapOf(
+            "pay" to StepStats(
+                name = "pay",
+                count = 100L,
+                ok = 99L,
+                failures = linkedMapOf("status 503" to 1L),
+                serviceTime = timingOf(List(99) { 20.milliseconds } + List(1) { 800.milliseconds }),
+                responseTime = timingOf(List(99) { 50.milliseconds } + List(1) { 900.milliseconds }),
+            ),
+        ),
+        behind = timingOf(listOf(1.milliseconds)),
+        plan = Plan(
+            scenario = "checkout",
+            steps = listOf("pay"),
+            profile = constantRate(10.perSecond, over = 10.seconds),
+        ),
     )
 
     /** Long enough that a p99.9 has a sample to rest on, with one request in a thousand slow. */

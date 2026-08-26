@@ -146,6 +146,9 @@ data class Plan(
 ) {
     val plannedUsers: Long get() = profile?.userCount() ?: 0L
 
+    /** The window the profile asked for, and zero when no profile was named. */
+    val plannedWindow: Duration get() = profile?.over ?: Duration.ZERO
+
     /** An upper bound: a scenario that abandons users sends fewer, which is the point of showing it. */
     val plannedRequests: Long get() = plannedUsers * steps.size
 

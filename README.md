@@ -206,6 +206,24 @@ generator reached rather than a ceiling the target could not pass.
 every rung, what it was judged to be, and the operating point marked on the
 chart and in the table.
 
+The same buckets answer the other question a team promised its users: what
+share of the requests came back inside the target at all.
+
+```kotlin
+import io.github.matthewjones372.kestrel.Met
+
+when (val met = result[placeOrder].responseTime.share(under = 200.milliseconds)) {
+    is Met.Measured -> met.fraction   // 0.994
+    is Met.Absent -> met.because      // "nothing was recorded, …"
+}
+```
+
+The bucket the target falls inside counts as having missed it, in the direction
+every percentile here already rounds: a share is never larger than the share
+that really met the target, so it is a number that can be quoted. A step that
+recorded nothing says so rather than reporting a zero somebody reads as a
+service that met nothing.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

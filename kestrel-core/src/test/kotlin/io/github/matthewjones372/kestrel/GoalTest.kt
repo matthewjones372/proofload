@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -69,6 +70,33 @@ class GoalTest {
     fun `a failure rate goal counts the whole run unless it names a step`() {
         resultOf(listOf(failureRate under 5.percent)).verdicts.single().met shouldBe true
         resultOf(listOf(failureRate under 1.percent)).verdicts.single().met shouldBe false
+    }
+
+    @Test
+    fun `a goodput goal counts the requests that both succeeded and came back in time`() {
+        val goals = listOf(goodput(pay, under = 200.milliseconds) atLeast 95.percent)
+
+        resultOf(goals, failures = 3L).verdicts.single().met shouldBe true
+        resultOf(goals, failures = 8L).verdicts.single().met shouldBe false
+    }
+
+    @Test
+    fun `a missed goodput goal shows the share it measured, not just that it missed`() {
+        val verdict = resultOf(listOf(goodput(pay, under = 200.milliseconds) atLeast 99.percent)).verdicts.single()
+
+        verdict.met shouldBe false
+        withClue("3 of 100 failed, and none of the rest was slow") {
+            verdict.measured.shouldBeInstanceOf<Measurement.Share>().percent shouldBe (97.0 plusOrMinus 1e-9)
+        }
+    }
+
+    @Test
+    fun `a goodput goal reads response time, so a target it misses by waiting still misses`() {
+        val goals = listOf(goodput(pay, under = 100.milliseconds) atLeast 90.percent)
+
+        resultOf(goals).verdicts.single().met shouldBe false
+        resultOf(listOf(goodput(pay, under = 100.milliseconds, of = Clock.ServiceTime) atLeast 90.percent))
+            .verdicts.single().met shouldBe true
     }
 
     @Test

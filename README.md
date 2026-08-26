@@ -224,6 +224,31 @@ that really met the target, so it is a number that can be quoted. A step that
 recorded nothing says so rather than reporting a zero somebody reads as a
 service that met nothing.
 
+A share of requests and a rate of them are the two halves of the same promise,
+so `goodput` answers both: the requests that succeeded *and* came back inside
+the target, and what that comes to per second.
+
+```kotlin
+import io.github.matthewjones372.kestrel.goodput
+import io.github.matthewjones372.kestrel.percent
+import kotlin.time.Duration.Companion.milliseconds
+
+result[pay].met(under = 200.milliseconds)     // Met.Measured(0.98)
+result.goodput(under = 200.milliseconds)      // 4,973/s across every step
+
+checkout.at(5_000.perSecond, over = 2.minutes)
+    .expecting(goodput(pay, under = 200.milliseconds) atLeast 99.percent)
+```
+
+The rate is over the window the plan asked for rather than the span the run
+took, which is what makes two runs comparable; a run that did not keep to its
+window is already saying so through `fellBehind()`. A histogram counts failed
+requests beside successful ones, so a request that missed the target is charged
+against the ones that succeeded: the share is the lowest the two counts allow,
+and the report says as much where it prints it. A user abandoned after a failed
+step counts against the step that failed, and not again against the steps it
+never reached.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

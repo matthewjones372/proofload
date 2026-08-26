@@ -35,6 +35,7 @@ private fun RunResult.documentLines(changes: List<Change>): List<String> =
         plan.headerLines(arrivals),
         behindLines(),
         totalsLines(),
+        goodputLines(),
         readingLines(),
         stepsLines(),
         tailLines(),

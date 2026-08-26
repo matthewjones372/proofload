@@ -46,11 +46,7 @@ sealed interface Goal {
         override fun judge(result: RunResult): Verdict {
             val stats = result.steps[step.name]
                 ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
-            val timing = when (clock) {
-                Clock.ServiceTime -> stats.serviceTime
-                Clock.ResponseTime -> stats.responseTime
-            }
-            return when (val measured = timing.at(percentile)) {
+            return when (val measured = stats.timing(clock).at(percentile)) {
                 is Tail.Absent -> Verdict.missed(this, Measurement.Absent(measured.because))
 
                 is Tail.Measured -> verdictFor(
@@ -75,6 +71,32 @@ sealed interface Goal {
             val failed = counts?.failed ?: result.failed
             val measured = if (total == 0L) 0.0 else failed.toDouble() / total * HUNDRED
             return verdictFor(measured <= share.percent, measured, share.percent, Measurement.Share(measured))
+        }
+    }
+
+    data class GoodputAtLeast(
+        val step: StepName,
+        val under: Duration,
+        val clock: Clock,
+        val share: Share,
+    ) : Goal {
+        override val described: String get() =
+            "${step.name} goodput under $under at least ${share.percent}%"
+
+        override fun judge(result: RunResult): Verdict {
+            val stats = result.steps[step.name]
+                ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
+            return when (val met = stats.met(under, clock)) {
+                is Met.Absent -> Verdict.missed(this, Measurement.Absent(met.because))
+
+                // No margin: a verdict's margin is how far a limit was
+                // exceeded, and a share that fell short of one is not that.
+                is Met.Measured -> {
+                    val measured = met.fraction * HUNDRED
+                    if (measured >= share.percent) Verdict.met(this, Measurement.Share(measured))
+                    else Verdict.missed(this, Measurement.Share(measured))
+                }
+            }
         }
     }
 
@@ -154,6 +176,23 @@ data class FailuresOf internal constructor(private val step: StepName?) {
 val failureRate: FailuresOf get() = FailuresOf(null)
 
 fun failureRate(step: StepName): FailuresOf = FailuresOf(step)
+
+/** A step's good requests, waiting for the share of them the run has to reach. */
+data class GoodputOf internal constructor(
+    private val step: StepName,
+    private val under: Duration,
+    private val clock: Clock,
+) {
+    infix fun atLeast(share: Share): Goal = Goal.GoodputAtLeast(step, under, clock, share)
+}
+
+/**
+ * The requests that succeeded and came back inside [under]. Reads response time
+ * unless told otherwise, for the reason the percentile goals do: a share of
+ * service times can be met by a generator that never sent the load.
+ */
+fun goodput(step: StepName, under: Duration, of: Clock = Clock.ResponseTime): GoodputOf =
+    GoodputOf(step, under, of)
 
 val keptSchedule: Goal get() = Goal.KeptSchedule
 

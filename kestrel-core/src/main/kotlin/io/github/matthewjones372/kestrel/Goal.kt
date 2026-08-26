@@ -50,13 +50,16 @@ sealed interface Goal {
                 Clock.ServiceTime -> stats.serviceTime
                 Clock.ResponseTime -> stats.responseTime
             }
-            val measured = timing.at(percentile)
-            return verdictFor(
-                met = measured <= limit,
-                measured = measured.inWholeNanoseconds.toDouble(),
-                limit = limit.inWholeNanoseconds.toDouble(),
-                shown = Measurement.Took(measured),
-            )
+            return when (val measured = timing.at(percentile)) {
+                is Tail.Absent -> Verdict.missed(this, Measurement.Absent(measured.because))
+
+                is Tail.Measured -> verdictFor(
+                    met = measured.duration <= limit,
+                    measured = measured.duration.inWholeNanoseconds.toDouble(),
+                    limit = limit.inWholeNanoseconds.toDouble(),
+                    shown = Measurement.Took(measured.duration),
+                )
+            }
         }
     }
 
@@ -140,6 +143,9 @@ fun p95(step: StepName, of: Clock = Clock.ResponseTime): PercentileOf = Percenti
 
 fun p99(step: StepName, of: Clock = Clock.ResponseTime): PercentileOf = PercentileOf(step, "p99", of)
 
+/** The tail, which a step under [Timing.SAMPLES_FOR_P999] samples misses for want of having measured it. */
+fun p999(step: StepName, of: Clock = Clock.ResponseTime): PercentileOf = PercentileOf(step, P999, of)
+
 /** How much of the run may fail, waiting for the share it has to stay under. */
 data class FailuresOf internal constructor(private val step: StepName?) {
     infix fun under(share: Share): Goal = Goal.FailureRateUnder(step, share)
@@ -151,10 +157,20 @@ fun failureRate(step: StepName): FailuresOf = FailuresOf(step)
 
 val keptSchedule: Goal get() = Goal.KeptSchedule
 
-internal fun Timing.at(percentile: String): Duration = when (percentile) {
-    "p50" -> p50
-    "p95" -> p95
-    else -> p99
+/**
+ * The percentile a goal named. Only the four the builders above write can
+ * arrive here, so an unknown one is a bug rather than a percentile to guess at.
+ */
+internal fun Timing.at(percentile: String): Tail = when (percentile) {
+    "p50" -> Tail.Measured(p50)
+    "p95" -> Tail.Measured(p95)
+    "p99" -> Tail.Measured(p99)
+    P999 -> p999
+    else -> error("no percentile named '$percentile'")
 }
 
 private const val HUNDRED = 100.0
+
+// Written as it reads on a report rather than as the builder is spelled: a
+// verdict prints this, and "p999" is a name for a function, not for a number.
+private const val P999 = "p99.9"

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.Tail
 import io.github.matthewjones372.kestrel.Timing
 
 /**
@@ -53,9 +54,17 @@ private fun Timing.toJson(depth: Int): String = jsonObject(
         "p50" to p50.inWholeNanoseconds.toString(),
         "p95" to p95.inWholeNanoseconds.toString(),
         "p99" to p99.inWholeNanoseconds.toString(),
+        "p999" to p999.toJson(),
         "max" to max.inWholeNanoseconds.toString(),
     ),
 )
+
+// Null rather than a missing key: a step too thin to have measured its tail
+// still has a tail field, and `count` beside it says why it is empty.
+private fun Tail.toJson(): String = when (this) {
+    is Tail.Measured -> duration.inWholeNanoseconds.toString()
+    is Tail.Absent -> "null"
+}
 
 /**
  * Indented two spaces per level. The golden files are read in a diff, and a

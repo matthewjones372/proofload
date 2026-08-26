@@ -71,7 +71,7 @@ there so the cost is a decision rather than a surprise.
 
 ## Stack
 
-- [ ] **`spec-0031-search`** — `Search` and `Capacity` as values: rungs,
+- [x] **`spec-0031-search`** ([#2](https://github.com/matthewjones372/kestrel/pull/2)) — `Search` and `Capacity` as values: rungs,
       `worstCase`, and the ladder-then-bisect strategy over a supplied judge.
       Done when: the rungs of a search are answerable without running it, and a
       synthetic judge that fails above a known rate is found within one step.

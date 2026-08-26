@@ -58,11 +58,11 @@ is a number nobody measured, and printing it invites a decision it cannot carry.
 
 ## Stack
 
-- [ ] **`spec-0035-percentile`** — `Timing.percentile(Double)` off the frozen
+- [x] **`spec-0035-percentile`** ([#3](https://github.com/matthewjones372/kestrel/pull/3)) — `Timing.percentile(Double)` off the frozen
       buckets, and `p999` beside `p99`.
       Done when: `percentile(99.0)` equals `p99` for the same timing, and a
       timing under a thousand samples reports `p999` absent with its reason.
-- [ ] **`spec-0035-goal-and-page`** — the `p999` goal builder, and the tail on
+- [x] **`spec-0035-goal-and-page`** ([#8](https://github.com/matthewjones372/kestrel/pull/8)) — the `p999` goal builder, and the tail on
       the report with its interval.
       Done when: a `p999` goal is judged and rendered like any other, and the
       golden holds the absent case.

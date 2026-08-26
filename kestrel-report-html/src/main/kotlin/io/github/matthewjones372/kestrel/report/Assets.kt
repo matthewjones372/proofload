@@ -125,6 +125,17 @@ internal val REPORT_CSS: String = """
     .verdict-list li.missed::before { content: "missed"; color: var(--failed); }
     .verdict-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
     .verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .changes { margin: 0 0 1.5rem; }
+    .change-headline { margin: 0 0 0.5rem; }
+    .change-list { list-style: none; margin: 0; padding: 0; }
+    .change-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+    .change-list li::before { content: "same"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--muted); }
+    .change-list li.worse::before { content: "worse"; color: var(--failed); }
+    .change-list li.better::before { content: "better"; color: var(--ok); }
+    .change-list li.new::before { content: "new"; }
+    .change-list li.gone::before { content: "gone"; color: var(--failed); }
+    .change-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+    .change-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .plan { margin: 0 0 1.5rem; }
     .plan p { margin: 0 0 0.5rem; }
     .chart.shape svg { height: 4.5rem; }

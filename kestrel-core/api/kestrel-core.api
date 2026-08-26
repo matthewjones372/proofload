@@ -19,12 +19,92 @@ public final class io/github/matthewjones372/kestrel/Bucket {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/github/matthewjones372/kestrel/Change {
+	public abstract fun getStep ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Change$Added : io/github/matthewjones372/kestrel/Change {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Change$Added;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Change$Added;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Change$Added;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getStep ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Change$Better : io/github/matthewjones372/kestrel/Change {
+	public synthetic fun <init> (Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-UwyO8pc ()J
+	public final fun component3-UwyO8pc ()J
+	public final fun component4 ()Lio/github/matthewjones372/kestrel/Interval;
+	public final fun copy-vLdBGDU (Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;)Lio/github/matthewjones372/kestrel/Change$Better;
+	public static synthetic fun copy-vLdBGDU$default (Lio/github/matthewjones372/kestrel/Change$Better;Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Change$Better;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBefore-UwyO8pc ()J
+	public final fun getInterval ()Lio/github/matthewjones372/kestrel/Interval;
+	public final fun getNow-UwyO8pc ()J
+	public fun getStep ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Change$Gone : io/github/matthewjones372/kestrel/Change {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Change$Gone;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Change$Gone;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Change$Gone;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getStep ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Change$Indistinguishable : io/github/matthewjones372/kestrel/Change {
+	public synthetic fun <init> (Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-UwyO8pc ()J
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-5qebJ5I (Ljava/lang/String;JJ)Lio/github/matthewjones372/kestrel/Change$Indistinguishable;
+	public static synthetic fun copy-5qebJ5I$default (Lio/github/matthewjones372/kestrel/Change$Indistinguishable;Ljava/lang/String;JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Change$Indistinguishable;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBefore-UwyO8pc ()J
+	public final fun getNow-UwyO8pc ()J
+	public fun getStep ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Change$Worse : io/github/matthewjones372/kestrel/Change {
+	public synthetic fun <init> (Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-UwyO8pc ()J
+	public final fun component3-UwyO8pc ()J
+	public final fun component4 ()Lio/github/matthewjones372/kestrel/Interval;
+	public final fun copy-vLdBGDU (Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;)Lio/github/matthewjones372/kestrel/Change$Worse;
+	public static synthetic fun copy-vLdBGDU$default (Lio/github/matthewjones372/kestrel/Change$Worse;Ljava/lang/String;JJLio/github/matthewjones372/kestrel/Interval;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Change$Worse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBefore-UwyO8pc ()J
+	public final fun getInterval ()Lio/github/matthewjones372/kestrel/Interval;
+	public final fun getNow-UwyO8pc ()J
+	public fun getStep ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/matthewjones372/kestrel/Clock : java/lang/Enum {
 	public static final field ResponseTime Lio/github/matthewjones372/kestrel/Clock;
 	public static final field ServiceTime Lio/github/matthewjones372/kestrel/Clock;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Clock;
 	public static fun values ()[Lio/github/matthewjones372/kestrel/Clock;
+}
+
+public final class io/github/matthewjones372/kestrel/ComparisonKt {
+	public static final fun against (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/RunResult;D)Ljava/util/List;
+	public static synthetic fun against$default (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/RunResult;DILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class io/github/matthewjones372/kestrel/FailuresOf {
@@ -182,6 +262,24 @@ public final class io/github/matthewjones372/kestrel/InjectionProfileKt {
 	public static final fun then (Lio/github/matthewjones372/kestrel/InjectionProfile;Lio/github/matthewjones372/kestrel/InjectionProfile;)Lio/github/matthewjones372/kestrel/InjectionProfile;
 	public static final fun thenRampTo-AEjiQCc (Lio/github/matthewjones372/kestrel/InjectionProfile;DJ)Lio/github/matthewjones372/kestrel/InjectionProfile;
 	public static final fun userCount (Lio/github/matthewjones372/kestrel/InjectionProfile;)J
+}
+
+public final class io/github/matthewjones372/kestrel/Interval {
+	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-QTBD994 (JJ)Lio/github/matthewjones372/kestrel/Interval;
+	public static synthetic fun copy-QTBD994$default (Lio/github/matthewjones372/kestrel/Interval;JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Interval;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHigh-UwyO8pc ()J
+	public final fun getLow-UwyO8pc ()J
+	public fun hashCode ()I
+	public final fun overlaps (Lio/github/matthewjones372/kestrel/Interval;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/IntervalKt {
+	public static final fun interval (Lio/github/matthewjones372/kestrel/Timing;D)Lio/github/matthewjones372/kestrel/Interval;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/Measurement {

@@ -56,6 +56,7 @@ spotless {
 
 /** One line per module, so a Maven search result says what the artifact is. */
 val moduleDescriptions = mapOf(
+    "kestrel-baseline" to "Keeps a run on disk, so the next one can be compared to it.",
     "kestrel-core" to "Load scenarios as values. No dependencies.",
     "kestrel-engine" to "Runs a Kestrel simulation on virtual threads. Depends on kestrel-core.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",

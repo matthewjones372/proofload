@@ -3,6 +3,7 @@
 // test here runs against a JDK HttpServer, so it needs no network and no
 // container.
 dependencies {
+    testImplementation(project(":kestrel-baseline"))
     testImplementation(project(":kestrel-core"))
     testImplementation(project(":kestrel-engine"))
     testImplementation(project(":kestrel-http"))

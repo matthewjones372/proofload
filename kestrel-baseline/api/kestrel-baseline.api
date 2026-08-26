@@ -1,0 +1,5 @@
+public final class io/github/matthewjones372/kestrel/baseline/BaselineKt {
+	public static final fun readBaseline (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/RunResult;
+	public static final fun writeBaseline (Lio/github/matthewjones372/kestrel/RunResult;Ljava/nio/file/Path;)Ljava/nio/file/Path;
+}
+

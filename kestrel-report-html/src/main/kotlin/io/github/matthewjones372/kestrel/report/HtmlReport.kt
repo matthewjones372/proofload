@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -14,22 +15,23 @@ import kotlin.time.Duration
  * in the same file, so it opens from a `file://` URL and uploads as a CI
  * artifact unchanged.
  */
-public fun RunResult.toHtmlReport(): String =
-    documentLines().joinToString(separator = "\n", postfix = "\n")
+public fun RunResult.toHtmlReport(changes: List<Change> = emptyList()): String =
+    documentLines(changes).joinToString(separator = "\n", postfix = "\n")
 
 /**
  * Writes [toHtmlReport] to [path], creating the directories above it, and
  * returns the path written.
  */
-public fun RunResult.writeHtmlReport(path: Path): Path {
+public fun RunResult.writeHtmlReport(path: Path, changes: List<Change> = emptyList()): Path {
     path.parent?.let { Files.createDirectories(it) }
-    return Files.writeString(path, toHtmlReport(), Charsets.UTF_8)
+    return Files.writeString(path, toHtmlReport(changes), Charsets.UTF_8)
 }
 
-private fun RunResult.documentLines(): List<String> =
+private fun RunResult.documentLines(changes: List<Change>): List<String> =
     listOf(
         headLines(),
         verdictLines(),
+        changes.comparisonLines(),
         plan.headerLines(),
         behindLines(),
         totalsLines(),

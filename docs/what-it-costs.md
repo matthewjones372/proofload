@@ -55,6 +55,18 @@ Subtracting the elapsed time at booking took the median at a hundred thousand a
 second from 45 ms to 10 µs. `ScheduleDriftTest` in `kestrel-engine` is the
 regression test.
 
+## Comparing two runs
+
+A baseline taken from a cold JVM will make the next release look like an
+improvement. The first run in a process pays for class loading, JIT and opening
+connections, and in this repository's own regression test it measured a p99 of
+327 ms where every run after it measured 28 ms — a tenfold difference with no
+change to the target at all.
+
+Discard a run before keeping one. `kestrel-baseline` does not do this for you,
+because a tool that quietly threw away the first run of a two-run session would
+be deciding which measurements count.
+
 ## What is not measured here
 
 - **No socket.** A real target's latency would dominate, and the question here

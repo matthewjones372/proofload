@@ -94,6 +94,32 @@ internal object Fixtures {
         ),
     )
 
+    /** A pipeline that answered for most of what it was sent, and lost the rest. */
+    val lostRecords: RunResult = RunResult(
+        startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+        steps = linkedMapOf(
+            "submitted" to StepStats(
+                name = "submitted",
+                count = 113L,
+                ok = 113L,
+                failures = emptyMap(),
+                serviceTime = timingOf(listOf(2.milliseconds, 3.milliseconds, 4.milliseconds)),
+                responseTime = timingOf(listOf(2.milliseconds, 3.milliseconds, 4.milliseconds)),
+            ),
+            "settled" to StepStats(
+                name = "settled",
+                count = 60L,
+                ok = 60L,
+                failures = emptyMap(),
+                serviceTime = timingOf(listOf(400.milliseconds, 900.milliseconds, 1400.milliseconds)),
+                responseTime = timingOf(listOf(400.milliseconds, 900.milliseconds, 1400.milliseconds)),
+                unmatched = 41L,
+                inFlight = 12L,
+            ),
+        ),
+        behind = timingOf(listOf(1.milliseconds)),
+    )
+
     /** Long enough that a p99.9 has a sample to rest on, with one request in a thousand slow. */
     val longEnoughForATail: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),

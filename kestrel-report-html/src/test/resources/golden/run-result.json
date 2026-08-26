@@ -24,6 +24,8 @@
       "count": 4,
       "ok": 4,
       "failed": 0,
+      "unmatched": 0,
+      "inFlight": 0,
       "serviceTime": {
         "count": 4,
         "p50": 12058623,
@@ -47,6 +49,8 @@
       "count": 5,
       "ok": 2,
       "failed": 3,
+      "unmatched": 0,
+      "inFlight": 0,
       "serviceTime": {
         "count": 5,
         "p50": 60030975,

@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.seeds
+import io.github.matthewjones372.kestrel.unanswered
 import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
@@ -22,9 +23,24 @@ private fun RunResult.blocks(): List<String> =
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(behindWarning()) + stepTable() + failureBlocks() + totals() +
+        listOfNotNull(lostWarning(), behindWarning()) + stepTable() + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
+
+/**
+ * Above the backlog warning and above the table, because a record that never
+ * arrived is not a missing sample: every throughput number under it is counting
+ * work the target may never have finished.
+ */
+private fun RunResult.lostWarning(): String? {
+    if (unanswered.isEmpty()) return null
+    val where = unanswered.joinToString(separator = "; ") { step ->
+        "${step.name.escapeMarkdown()} — ${step.unmatched} unmatched, ${step.inFlight} in flight"
+    }
+    return "> **Records that never arrived:** $where. " +
+        "An unmatched record is one the sink had the whole drain window to answer for and did not; " +
+        "an in-flight one left too late to be given that window."
+}
 
 /**
  * A line rather than a warning. Even arrivals are not wrong, they are a choice

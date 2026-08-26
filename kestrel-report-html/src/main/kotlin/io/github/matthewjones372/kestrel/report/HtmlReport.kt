@@ -6,6 +6,9 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.fellBehind
+import io.github.matthewjones372.kestrel.inFlight
+import io.github.matthewjones372.kestrel.unanswered
+import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -33,6 +36,7 @@ private fun RunResult.documentLines(comparison: Comparison?): List<String> =
         verdictLines(),
         comparison.comparisonLines(),
         plan.headerLines(arrivals),
+        lostLines(),
         behindLines(),
         totalsLines(),
         goodputLines(),
@@ -43,6 +47,25 @@ private fun RunResult.documentLines(comparison: Comparison?): List<String> =
         dataLines(),
         scriptLines(),
     ).flatten()
+
+/**
+ * Above the backlog warning and above every count on the page. A record that
+ * never arrived is not a missing sample: the throughput underneath it is
+ * counting work the target may never have finished.
+ */
+private fun RunResult.lostLines(): List<String> =
+    if (unanswered.isEmpty()) emptyList()
+    else listOf(
+        """  <p class="behind" id="kestrel-lost" role="status">""",
+        "    <strong>Records that never arrived.</strong> " +
+            unanswered.joinToString(separator = "; ") { step ->
+                "${step.name.escapedForHtml()} — ${step.unmatched.grouped()} unmatched, " +
+                    "${step.inFlight.grouped()} in flight"
+            } +
+            ". An unmatched record is one the sink had the whole drain window to answer for and did not; " +
+            "an in-flight one left too late to be given that window.",
+        "  </p>",
+    )
 
 /**
  * First thing on the page when it applies, because every percentile below it
@@ -85,8 +108,15 @@ private fun RunResult.totalsLines(): List<String> =
         tile("Requests", count.grouped(), "") +
         tile("OK", ok.grouped(), " ok") +
         tile("Failed", failed.grouped(), " failed") +
+        lostTiles() +
         tile("Behind schedule, p99", behind.p99OrNothing(), "") +
         listOf("  </section>")
+
+// Absent when there is nothing to say: a run with no emit steps would otherwise
+// carry two tiles reading zero on every page anyone ever opens.
+private fun RunResult.lostTiles(): List<String> =
+    if (unanswered.isEmpty()) emptyList()
+    else tile("Unmatched", unmatched.grouped(), " failed") + tile("In flight", inFlight.grouped(), "")
 
 private fun tile(label: String, value: String, extraClass: String): List<String> =
     listOf(

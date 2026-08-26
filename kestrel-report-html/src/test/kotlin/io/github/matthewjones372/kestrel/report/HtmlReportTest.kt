@@ -21,6 +21,19 @@ class HtmlReportTest {
     }
 
     @Test
+    fun `the page for a run that lost records matches its golden`() {
+        Fixtures.lostRecords.toHtmlReport() shouldBe Golden.text("report-lost.html")
+    }
+
+    @Test
+    fun `a run that lost nothing is not made to print a zero for it`() {
+        val page = Fixtures.fellBehind.toHtmlReport()
+
+        page shouldNotContain "Records that never arrived"
+        page shouldNotContain "In flight"
+    }
+
+    @Test
     fun `nothing on the page is fetched from anywhere`() {
         val page = Fixtures.fellBehind.toHtmlReport()
 

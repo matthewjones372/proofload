@@ -1,0 +1,4 @@
+public final class io/github/matthewjones372/kestrel/engine/EngineKt {
+	public static final fun run (Lio/github/matthewjones372/kestrel/Simulation;)Lio/github/matthewjones372/kestrel/RunResult;
+}
+

@@ -42,6 +42,9 @@ class Session private constructor(private val values: Map<String, Any>) {
 
     fun <T : Any> set(key: SessionKey<T>, value: T): Session = Session(values + (key.name to value))
 
+    /** This session, with [other]'s values over the top. */
+    internal fun and(other: Session): Session = Session(values + other.values)
+
     override fun equals(other: Any?): Boolean = other is Session && other.values == values
 
     override fun hashCode(): Int = values.hashCode()

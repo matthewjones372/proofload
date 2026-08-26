@@ -19,8 +19,15 @@ val Number.perSecond: Rate get() = Rate.ofPerSecond(toDouble())
 
 val Number.perMinute: Rate get() = Rate.ofPerSecond(toDouble() / SECONDS_PER_MINUTE)
 
-/** A scenario and the rate it is sent at: everything a run needs, as one value. */
-data class Simulation(val scenario: Scenario, val profile: InjectionProfile)
+/** A scenario, the rate it is sent at and what its users start with: a run, as one value. */
+data class Simulation(
+    val scenario: Scenario,
+    val profile: InjectionProfile,
+    val feeder: Feeder = Feeder.empty,
+)
+
+/** The same run, with each user seeded from [feeder] before its first step. */
+fun Simulation.fedBy(feeder: Feeder): Simulation = copy(feeder = feeder)
 
 /** Gatling's `setUp` / `inject` / `protocols`, in one call. */
 fun Scenario.at(rate: Rate, over: Duration): Simulation = Simulation(this, constantRate(rate, over))

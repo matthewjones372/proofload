@@ -57,6 +57,7 @@ spotless {
 /** One line per module, so a Maven search result says what the artifact is. */
 val moduleDescriptions = mapOf(
     "kestrel-core" to "Load scenarios as values. No dependencies.",
+    "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
 )
 
 // Coverage, aggregated across the modules rather than per-module: a line in

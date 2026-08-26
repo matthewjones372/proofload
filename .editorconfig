@@ -1,0 +1,93 @@
+# Formatting rules for the repo. Spotless reads this file for its ktlint step,
+# and so does IntelliJ, so the editor and the build agree without anyone having
+# to remember a setting.
+#
+# The disabled rules below are not a wish list of things to switch back on.
+# Each is off because it rewrites deliberately laid-out code into a different
+# house style. A formatter is here to settle whitespace arguments, not to
+# relitigate the shape of the source. Delete an entry the day this codebase
+# stops relying on the layout it protects — but read the code first.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+
+# `intellij_idea`, not `ktlint_official`. gradle.properties already declares
+# `kotlin.code.style=official`, and this is the ktlint style that matches it.
+ktlint_code_style = intellij_idea
+
+# The default of 100 rewraps prose-heavy KDoc and long descriptive strings for
+# no benefit.
+max_line_length = 120
+
+# Trailing commas are written here, on declarations and at call sites both.
+# Say so explicitly: `intellij_idea` defaults these to false, which has ktlint
+# strip every one of them.
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# No wildcard imports, anywhere, and no unused ones. An explicit import list is
+# the one place a reader sees where every name in a file comes from, and it is
+# what keeps the documentation's examples honest: each one names exactly what
+# it needs. detekt's `WildcardImport` and `UnusedImport` fail the build on
+# either; this tells ktlint and the IDE the same thing, so an optimize-imports
+# cannot put a star back.
+ij_kotlin_name_count_to_use_star_import = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members = 2147483647
+
+# Aligned assignments and trailing comments are used on purpose — a scenario
+# DSL reads as a table, and collapsing the columns makes it harder to scan.
+ktlint_standard_no-multi-spaces = disabled
+
+# A lambda labelled with the types its parameters carry, in a comment off the
+# right of the arrow, is worth more than the rule that moves the comment onto
+# its own line.
+ktlint_standard_function-literal = disabled
+
+# A formatter that demands a file rename is not a formatter. A file named for
+# the idea it holds — the type plus the declarations that go with it — is the
+# name a reader wants.
+ktlint_standard_filename = disabled
+
+# These four each re-wrap code that is already wrapped by hand to say exactly
+# the same thing: signatures broken across lines get pulled back onto one,
+# expression bodies get pushed onto a line of their own, and every `->`
+# followed by a call chain grows a line break.
+ktlint_standard_function-signature = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_function-expression-body = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+
+# A family of arities — `scenario(a, b, c, ...)` — reads as a table when the
+# parameters are grouped by line. One parameter per line makes that many lines
+# of the same thing, and the grouping is the part worth seeing.
+ktlint_standard_parameter-list-wrapping = disabled
+ktlint_standard_argument-list-wrapping = disabled
+
+# `if (cond) valueA` / `else valueB` as a two-line expression is the readable
+# form when the `if` produces a value. Bracing it costs three lines each time
+# and reads as a statement instead.
+ktlint_standard_multiline-if-else = disabled
+
+# One-line block bodies are used as a table. Exploding each into three lines
+# turns a block you take in at a glance into a page you scroll.
+ktlint_standard_statement-wrapping = disabled
+
+# `rampTo(users, /* over = */ 30.seconds)` — labelling a bare positional
+# argument at the call site is worth more than the rule forbidding a block
+# comment in that position.
+ktlint_standard_comment-wrapping = disabled
+ktlint_standard_discouraged-comment-location = disabled
+
+# A file that opens with a KDoc block about the *file* — what this seam is for,
+# why these types live together — is how this repository explains itself.
+# ktlint calls that a "dangling toplevel KDoc" and wants it attached to a
+# declaration, which would say the paragraph is about that declaration.
+ktlint_standard_kdoc = disabled

@@ -1,0 +1,47 @@
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    # Job-level rather than per-step: the credentials are the same for every
+    # step that needs any of them.
+    env:
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The version is derived from the nearest `v` tag, and a shallow
+          # checkout has no tags to derive it from.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The same gate a pull request goes through. A release that cannot build
+      # is worth finding out about before it is on Maven Central for good,
+      # which is why this runs the tests rather than skipping them.
+      - name: Build and test
+        run: ./gradlew build --stacktrace
+
+      # Uploads a bundle to the Central Portal and leaves it staged. Releasing
+      # it is a click there: a staged bundle can be dropped, a released one is
+      # permanent. Set `mavenCentralAutomaticPublishing` to skip the click.
+      - name: Publish the modules to Maven Central
+        run: ./gradlew publishToMavenCentral --no-configuration-cache

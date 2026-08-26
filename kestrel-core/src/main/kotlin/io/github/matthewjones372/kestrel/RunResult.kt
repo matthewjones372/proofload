@@ -165,6 +165,8 @@ data class RunResult(
     val behind: Timing,
     val plan: Plan = Plan.none,
     val arrivals: Arrivals = Arrivals.none,
+    /** What measured it, so a comparison against a run from another machine can say so. */
+    val machine: Machine = Machine.here(),
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

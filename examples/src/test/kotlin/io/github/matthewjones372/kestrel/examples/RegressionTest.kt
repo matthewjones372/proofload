@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.examples
 
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.Change
+import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.baseline.readBaseline
@@ -76,7 +77,10 @@ class RegressionTest {
 
         val unchanged = measure(kestrel).against(readBaseline(baseline))
         withClue("same target twice: $unchanged") {
-            unchanged.single().shouldBeInstanceOf<Change.Indistinguishable>()
+            unchanged.shouldBeInstanceOf<Comparison.Compared>()
+                .changes
+                .single()
+                .shouldBeInstanceOf<Change.Indistinguishable>()
         }
 
         // The deploy that made it worse.
@@ -84,7 +88,10 @@ class RegressionTest {
 
         val slower = measure(kestrel).against(readBaseline(baseline))
         withClue("target ten times slower: $slower") {
-            val worse = slower.single().shouldBeInstanceOf<Change.Worse>()
+            val worse = slower.shouldBeInstanceOf<Comparison.Compared>()
+                .changes
+                .single()
+                .shouldBeInstanceOf<Change.Worse>()
             (worse.now > worse.before) shouldBe true
         }
     }

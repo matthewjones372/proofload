@@ -249,6 +249,55 @@ and the report says as much where it prints it. A user abandoned after a failed
 step counts against the step that failed, and not again against the steps it
 never reached.
 
+## Worse than last time?
+
+`kestrel-baseline` keeps a run in a file so the next one can be compared to it.
+The file carries the buckets rather than five percentiles — an interval cannot
+be rebuilt from those — and the plan and machine the run was measured under:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Change
+import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.against
+import io.github.matthewjones372.kestrel.baseline.readBaseline
+import io.github.matthewjones372.kestrel.baseline.writeBaseline
+import java.nio.file.Path
+
+val baseline = Path.of("build/kestrel/checkout.kestrel")
+
+when (val comparison = result.against(readBaseline(baseline))) {
+    is Comparison.NotComparable -> println(comparison.why)
+    is Comparison.Compared -> {
+        comparison.caveat?.let(::println)
+        comparison.changes.forEach { change ->
+            when (change) {
+                is Change.Worse -> println("${change.step}: ${change.before} → ${change.now}")
+                is Change.Better, is Change.Indistinguishable, is Change.Added, is Change.Gone -> Unit
+            }
+        }
+    }
+}
+
+result.writeBaseline(baseline)
+```
+
+A run of a different plan is not compared at all: `NotComparable` names what
+differs — the scenario, its steps or its rate line — because comparing a smoke
+run to a soak undoes every interval and bucket underneath it, and no statistics
+rescue it. A run on a different machine *is* compared, with `caveat` naming the
+two runners and saying every delta may be one of them: a team whose runners are
+all shared would otherwise never get a comparison at all, and they should get
+one with the caveat attached.
+
+Hand the comparison to the report and the page carries it — including a refusal,
+which is the difference between a first run and a cache key that broke:
+
+```kotlin
+import io.github.matthewjones372.kestrel.report.writeHtmlReport
+
+result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"), comparison)
+```
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario
@@ -284,6 +333,7 @@ The three decisions that shape everything else, and are still open:
 | `kestrel-http` | core | HTTP steps on `java.net.http` |
 | `kestrel-junit5` | core, engine, JUnit | a load test that is a `@Test` |
 | `kestrel-kotest` | core, engine | the same, in a Kotest spec |
+| `kestrel-baseline` | core | a run kept in a file, to compare the next one to |
 | `kestrel-report-html` | core | one self-contained, interactive HTML file |
 | `kestrel-report-github` | core | markdown, a job summary, a Pages index |
 | `kestrel-pelican` | core, `pelican-core` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps |

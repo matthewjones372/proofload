@@ -67,6 +67,12 @@ Discard a run before keeping one. `kestrel-baseline` does not do this for you,
 because a tool that quietly threw away the first run of a two-run session would
 be deciding which measurements count.
 
+The runner is the other half of this. A baseline records the machine it was
+measured on, and a comparison across two of them carries a caveat saying every
+delta may be the runner rather than the service — on shared CI that is most
+runs, not an edge case. It is a warning rather than a refusal; a plan that
+differs is the refusal.
+
 ## What is not measured here
 
 - **No socket.** A real target's latency would dominate, and the question here

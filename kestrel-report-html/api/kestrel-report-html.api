@@ -1,0 +1,5 @@
+public final class io/github/matthewjones372/kestrel/report/HtmlReportKt {
+	public static final fun toHtmlReport (Lio/github/matthewjones372/kestrel/RunResult;)Ljava/lang/String;
+	public static final fun writeHtmlReport (Lio/github/matthewjones372/kestrel/RunResult;Ljava/nio/file/Path;)Ljava/nio/file/Path;
+}
+

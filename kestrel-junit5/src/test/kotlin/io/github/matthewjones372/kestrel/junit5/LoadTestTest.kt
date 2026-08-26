@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.junit5
 
 import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey

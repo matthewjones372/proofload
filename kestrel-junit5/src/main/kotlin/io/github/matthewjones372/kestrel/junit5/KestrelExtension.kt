@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.junit5
 
+import io.github.matthewjones372.kestrel.engine.Kestrel
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver

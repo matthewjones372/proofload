@@ -1,8 +1,7 @@
-package io.github.matthewjones372.kestrel.junit5
+package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Simulation
-import io.github.matthewjones372.kestrel.engine.run
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -10,10 +9,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  * failure can say which step moved without the test having to hold the result
  * itself.
  *
- * One per test method. Two tests in a class are two runs and must not share
- * what they recorded.
+ * One per test. Two tests are two runs and must not share what they recorded:
+ * this lives in the engine rather than in either test-framework module, so
+ * neither of those has to depend on the other to get it.
  */
-class Kestrel internal constructor() {
+class Kestrel {
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
@@ -23,7 +23,7 @@ class Kestrel internal constructor() {
     fun run(simulation: Simulation): RunResult = simulation.run().also { runs += it }
 
     /** What was measured, for a failure message. Empty when nothing ran. */
-    internal fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }
+    fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }
 }
 
 private fun RunResult.lines(): String =

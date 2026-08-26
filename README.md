@@ -249,6 +249,69 @@ and the report says as much where it prints it. A user abandoned after a failed
 step counts against the step that failed, and not again against the steps it
 never reached.
 
+Not every answer comes back where it left. Publish a record to a topic and the
+answer appears at a sink, in another process, seconds later. An `emit` step
+departs and does not wait, and the run drains the sink the simulation names:
+
+```kotlin
+import io.github.matthewjones372.kestrel.InMemoryCompletions
+import io.github.matthewjones372.kestrel.action
+import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.completing
+import io.github.matthewjones372.kestrel.engine.run
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+val tradeId = sessionKey<Long>("tradeId")
+val submitted = step("submitted")
+val settled = step("settled")
+
+// Until a module carries a broker, the sink is in this process: the scenario
+// hands it the ids it published, and the run drains it as it would a topic.
+val settlements = InMemoryCompletions()
+val ids = AtomicLong()
+
+val trades = scenario("trades") {
+    emit(
+        submitted,
+        action {
+            val id = ids.incrementAndGet()
+            set(tradeId, id)
+            settlements.observe(id)
+        },
+        keyedBy = { session -> session[tradeId] ?: 0L },
+    )
+}
+
+val result = trades.at(5_000.perSecond, over = 5.minutes)
+    .completing(settled, from = settlements, drainingFor = 30.seconds)
+    .run()
+
+result[settled].serviceTime.p99   // the sink's observation, minus the intended departure
+result[settled].unmatched         // 41 records never arrived
+result[settled].inFlight          // 12 left too late to be given the whole wait
+```
+
+The latency is the sink's observation minus the departure the profile promised,
+never minus the publish: measured from ingestion a pipeline's latency stays
+flat while the system falls apart, which is why it is the number every
+dashboard shows. The publish is timed too, under the emit step, because a slow
+producer and a slow pipeline are different problems and adding them together
+hides both.
+
+A record that never arrives is the finding rather than a missing sample, so it
+is counted rather than dropped — and counted apart from one the run simply did
+not wait for. `drainingFor` is required and has no default: it is the line
+between the two, and choosing it for you would move records across that line
+without saying so. `result.fellBehind()` stays what it always was, the
+injector's own backlog; the pipeline falling behind is what the latency above
+measures.
+
 ## Worse than last time?
 
 `kestrel-baseline` keeps a run in a file so the next one can be compared to it.

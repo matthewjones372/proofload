@@ -3,6 +3,8 @@ package io.github.matthewjones372.kestrel.engine
 import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
+import io.github.matthewjones372.kestrel.Completing
+import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
@@ -27,7 +29,10 @@ import kotlin.time.Duration.Companion.nanoseconds
  */
 fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
 
-/** Sends the simulation and blocks until the last user it started has finished. */
+/**
+ * Sends the simulation and blocks until the last user it started has finished,
+ * and until the sink it named has had the wait it declared.
+ */
 fun Simulation.run(): RunResult {
     val recorders = Recorders(Instant.now())
     val runStart = System.nanoTime()
@@ -38,6 +43,8 @@ fun Simulation.run(): RunResult {
     // that sees every departure exactly once, and folding three numbers here
     // costs no allocation on a loop whose delay is measured as latency.
     val arrivals = ArrivalRecorder()
+    val drain = completing?.let { Drain(it, recorders, runStart, closesAt = profile.over + it.drainingFor) }
+    drain?.start()
     // One platform thread. Its only job is to start virtual threads at the
     // offsets the profile named; a step never runs on it, so a slow target
     // cannot push a departure back.
@@ -47,7 +54,7 @@ fun Simulation.run(): RunResult {
             arrivals.record(departure)
             users.starting()
             scheduler.schedule(
-                { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong())) },
+                { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain) },
                 // Relative to now, but the offset is from the run's start, and
                 // booking a million of these is not instant. Subtracting what
                 // has already elapsed is what stops every departure inheriting
@@ -61,6 +68,7 @@ fun Simulation.run(): RunResult {
     } finally {
         scheduler.shutdownNow()
     }
+    drain?.close()
     return recorders.freeze(plan(), arrivals.freeze())
 }
 
@@ -70,17 +78,75 @@ private fun Scenario.depart(
     departure: Duration,
     users: Departures,
     session: Session,
+    drain: Drain?,
 ) {
     Thread.ofVirtual().start {
         try {
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(recorders, lateness(runStart, departure), session)
+            runOneUser(recorders, lateness(runStart, departure), departure, session, drain)
         } finally {
             users.finished()
         }
     }
+}
+
+/**
+ * Drains the sink for the wait the simulation declared, on a thread of its own
+ * so an answer that is slow to arrive never holds a departure up.
+ *
+ * The wait closes at the run's scheduled end plus that window, which is a bound
+ * known before anything is sent. A run whose own injector is behind does not get
+ * to extend it: that would turn records it lost into records it merely did not
+ * wait for, which are the two things being told apart here.
+ */
+private class Drain(
+    private val completing: Completing,
+    private val recorders: Recorders,
+    private val runStart: Long,
+    private val closesAt: Duration,
+) {
+
+    private val pending = Pending()
+    private val closed = CountDownLatch(1)
+
+    fun start() {
+        Thread.ofVirtual().start {
+            try {
+                poll()
+            } finally {
+                closed.countDown()
+            }
+        }
+    }
+
+    fun departed(id: Long, intended: Duration) {
+        pending.departed(id, intended, at = elapsed())
+    }
+
+    /** What never came, once nothing more will be drained. */
+    fun close() {
+        closed.await()
+        // Every user has finished by now, so an answer still unpaired here has
+        // a departure registered if it is ever going to have one.
+        record(pending.matched())
+        recorders.outstanding(completing.step, pending.close(closesAt, completing.drainingFor))
+    }
+
+    private tailrec fun poll() {
+        val left = closesAt - elapsed()
+        if (left <= Duration.ZERO) return
+        val observed = completing.from.poll(left)
+        val at = elapsed()
+        record(observed.mapNotNull { id -> pending.observed(id, at) } + pending.matched())
+        poll()
+    }
+
+    private fun record(latencies: List<Duration>) =
+        latencies.forEach { latency -> recorders.arrived(completing.step, latency) }
+
+    private fun elapsed(): Duration = (System.nanoTime() - runStart).nanoseconds
 }
 
 private fun schedulerThread(runnable: Runnable): Thread =
@@ -122,19 +188,38 @@ private fun lateness(runStart: Long, departure: Duration): Duration =
 // the fold: the steps after it are not run, and are not counted as anything.
 // Counting a payment that never had a cart as a success reports a service that
 // answered nobody.
-private fun Scenario.runOneUser(recorders: Recorders, schedulingDelay: Duration, started: Session) {
+private fun Scenario.runOneUser(
+    recorders: Recorders,
+    schedulingDelay: Duration,
+    departure: Duration,
+    started: Session,
+    drain: Drain?,
+) {
     steps.fold<Step, Session?>(started) { session, step ->
         session?.let {
             when (step) {
                 is Step.Exec -> step.action.runOn(step.name, it, recorders, schedulingDelay)
-
-                // What is timed here is the publish, which is all that leaves.
-                // The answer is the sink's, and is recorded under the step a
-                // simulation names for it.
-                is Step.Emit -> step.action.runOn(step.name, it, recorders, schedulingDelay)
+                is Step.Emit -> step.runOn(it, recorders, schedulingDelay, departure, drain)
             }
         }
     }
+}
+
+/**
+ * The publish is timed like any other step, because it is all that leaves here.
+ * What the record answers with is registered against the departure the profile
+ * promised, so the sink's observation has an honest thing to be subtracted from.
+ */
+private fun Step.Emit.runOn(
+    session: Session,
+    recorders: Recorders,
+    schedulingDelay: Duration,
+    departure: Duration,
+    drain: Drain?,
+): Session? {
+    val published = action.runOn(name, session, recorders, schedulingDelay) ?: return null
+    drain?.departed(correlation.of(published), departure)
+    return published
 }
 
 private fun Action.runOn(

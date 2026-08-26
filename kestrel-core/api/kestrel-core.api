@@ -100,6 +100,7 @@ public final class io/github/matthewjones372/kestrel/RunResult {
 	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/kestrel/Timing;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/RunResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepStats;
+	public final fun get-Z5c0mbc (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepStats;
 	public final fun getBehind ()Lio/github/matthewjones372/kestrel/Timing;
 	public final fun getCount ()J
 	public final fun getFailed ()J
@@ -131,10 +132,13 @@ public final class io/github/matthewjones372/kestrel/Scenario {
 public final class io/github/matthewjones372/kestrel/ScenarioBuilder {
 	public final fun exec (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)V
 	public final fun exec (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun exec-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)V
+	public final fun exec-_FgASpo (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class io/github/matthewjones372/kestrel/ScenarioKt {
 	public static final fun scenario (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/Scenario;
+	public static final fun step (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/kestrel/Session {
@@ -194,6 +198,20 @@ public final class io/github/matthewjones372/kestrel/Step$Exec : io/github/matth
 	public fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/StepName {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepName;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/StepResult {

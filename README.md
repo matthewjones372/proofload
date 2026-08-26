@@ -15,16 +15,19 @@ import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
 import io.kotest.matchers.comparables.shouldBeLessThan
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 val orderId = sessionKey<String>("orderId")
+val browse = step("browse")
+val placeOrder = step("place order")
 val api = http.baseUrl("https://orders.internal")
 
 val checkout = scenario("checkout") {
-    exec("browse") { api.get("/products").send(this) }
-    exec("place order") {
+    exec(browse) { api.get("/products").send(this) }
+    exec(placeOrder) {
         api.post("/orders")
             .body("""{"cart":"1 anvil"}""")
             .expecting(201)
@@ -39,14 +42,16 @@ class CheckoutLoadTest {
     fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
         val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
 
-        result["place order"].responseTime.p99 shouldBeLessThan 200.milliseconds
+        result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
         result.failed shouldBe 0L
     }
 }
 ```
 
-No session parameter to name, no result to remember to return, and no cast to
-read one back: a key carries its type. `at` is Gatling's `setUp`, `inject` and
+No session parameter to name, no result to remember to return, no cast to read
+one back, and no step name written twice: a key carries its type and a step
+handle carries its name, so a rename is a compile error rather than a test that
+passes against a step nobody runs. `at` is Gatling's `setUp`, `inject` and
 `protocols` in one call, and what it returns is an ordinary value —
 `simulation.profile.userCount()` is 3000 before anything has been sent.
 

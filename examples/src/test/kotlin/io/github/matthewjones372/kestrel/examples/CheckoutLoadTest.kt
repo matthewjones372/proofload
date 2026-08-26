@@ -11,6 +11,7 @@ import io.github.matthewjones372.kestrel.report.markdown
 import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -22,6 +23,11 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val orderId = sessionKey<String>("orderId")
+
+private val browse = step("browse")
+private val placeOrder = step("place order")
+private val pay = step("pay")
+private val confirm = step("confirm")
 
 /**
  * Every module at once: a scenario of HTTP steps, run by the engine on virtual
@@ -66,8 +72,8 @@ class CheckoutLoadTest {
         val api = endpoint()
 
         val checkout = scenario("checkout") {
-            exec("browse") { api.get("/products").send(this) }
-            exec("place order") {
+            exec(browse) { api.get("/products").send(this) }
+            exec(placeOrder) {
                 api.post("/orders")
                     .header("content-type", "application/json")
                     .body("""{"cart":"1 anvil"}""")
@@ -75,14 +81,14 @@ class CheckoutLoadTest {
                     .capture(orderId) { response -> response.header("location") }
                     .send(this)
             }
-            exec("pay") { api.get("/pay").send(this) }
+            exec(pay) { api.get("/pay").send(this) }
         }
 
         val result = kestrel.run(checkout.at(50.perSecond, over = 1.seconds))
 
-        result["browse"].count shouldBe 50L
-        result["place order"].failed shouldBe 0L
-        result["pay"].serviceTime.p99 shouldBeLessThan 500.milliseconds
+        result[browse].count shouldBe 50L
+        result[placeOrder].failed shouldBe 0L
+        result[pay].serviceTime.p99 shouldBeLessThan 500.milliseconds
 
         val report = Files.createTempDirectory("kestrel").resolve("checkout.html")
         result.writeHtmlReport(report)
@@ -96,13 +102,13 @@ class CheckoutLoadTest {
         val api = endpoint()
 
         val checkout = scenario("refused") {
-            exec("pay") { api.get("/pay?id=4").send(this) }
-            exec("confirm") { api.get("/products").send(this) }
+            exec(pay) { api.get("/pay?id=4").send(this) }
+            exec(confirm) { api.get("/products").send(this) }
         }
 
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))
 
-        result["pay"].failures shouldBe mapOf("status 503" to 10L)
+        result[pay].failures shouldBe mapOf("status 503" to 10L)
         result.steps.containsKey("confirm") shouldBe false
     }
 }

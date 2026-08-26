@@ -51,6 +51,13 @@ data class RunResult(
     operator fun get(step: String): StepStats = requireNotNull(steps[step]) {
         "no step named '$step' ran; this simulation had ${steps.keys.sorted()}"
     }
+
+    /**
+     * The same lookup, through the handle that declared the step. A handle
+     * proves the name was written once; it does not prove the step was
+     * reached, so this still throws when nothing ran under it.
+     */
+    operator fun get(step: StepName): StepStats = get(step.name)
 }
 
 /**

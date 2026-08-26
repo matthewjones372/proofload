@@ -2,6 +2,19 @@ package io.github.matthewjones372.kestrel
 
 import java.util.Collections
 
+/**
+ * A step's name, declared once and shared by the scenario that defines the step
+ * and every assertion about it.
+ *
+ * The same argument as [SessionKey], one layer out: a name written twice is a
+ * name that can disagree with itself, and a scenario split across files has
+ * something to import rather than a literal to copy.
+ */
+@JvmInline
+value class StepName(val name: String)
+
+fun step(name: String): StepName = StepName(name)
+
 /** One thing a virtual user does, named so a report has a row that is not a URL. */
 sealed interface Step {
 
@@ -27,6 +40,14 @@ class ScenarioBuilder internal constructor(private val name: String) {
 
     fun exec(name: String, block: StepScope.() -> Unit) {
         steps += Step.Exec(name, action(block))
+    }
+
+    fun exec(name: StepName, action: Action) {
+        steps += Step.Exec(name.name, action)
+    }
+
+    fun exec(name: StepName, block: StepScope.() -> Unit) {
+        steps += Step.Exec(name.name, action(block))
     }
 
     // Frozen rather than copied: a copy is still an ArrayList to a Java caller

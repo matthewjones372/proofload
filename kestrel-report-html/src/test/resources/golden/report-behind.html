@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kestrel run — 2026-08-26T09:00:00Z</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fdfdfc;
+  --fg: #1b1b19;
+  --muted: #6b6b66;
+  --line: #e2e2dd;
+  --card: #ffffff;
+  --ok: #1c7c4a;
+  --failed: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --fg: #e8e8e4;
+    --muted: #9a9a94;
+    --line: #2c2e33;
+    --card: #1d1f23;
+    --ok: #57c38a;
+    --failed: #f2857c;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+main { max-width: 68rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+h2 { font-size: 1.05rem; margin: 0; }
+.when { color: var(--muted); margin: 0 0 1.5rem; }
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem 0.9rem; }
+.tile-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tile-value { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; margin-top: 0.15rem; }
+.tile.ok .tile-value { color: var(--ok); }
+.tile.failed .tile-value { color: var(--failed); }
+.steps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; }
+thead th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.ok { color: var(--ok); }
+td.failed { color: var(--failed); }
+tr.reasons > td { background: var(--card); }
+.reason-list { list-style: none; margin: 0; padding: 0; }
+.reason-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; }
+.reason { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+.reason { overflow-wrap: anywhere; }
+.reason-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+.note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header class="run">
+    <h1>Kestrel run</h1>
+    <p class="when">Started <time datetime="2026-08-26T09:00:00Z">2026-08-26T09:00:00Z</time></p>
+  </header>
+  <section class="totals" aria-label="Totals">
+    <div class="tile">
+      <span class="tile-label">Requests</span>
+      <span class="tile-value">9</span>
+    </div>
+    <div class="tile ok">
+      <span class="tile-label">OK</span>
+      <span class="tile-value">6</span>
+    </div>
+    <div class="tile failed">
+      <span class="tile-label">Failed</span>
+      <span class="tile-value">3</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Behind schedule, p99</span>
+      <span class="tile-value">801 ms</span>
+    </div>
+  </section>
+  <section class="steps">
+    <div class="steps-head">
+      <h2>Steps</h2>
+      <p class="mode">Showing <strong id="mode-name">service time</strong>.</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Step</th>
+            <th scope="col" class="num">Count</th>
+            <th scope="col" class="num">OK</th>
+            <th scope="col" class="num">Failed</th>
+            <th scope="col" class="num">p50</th>
+            <th scope="col" class="num">p95</th>
+            <th scope="col" class="num">p99</th>
+            <th scope="col" class="num">Max</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="step" data-step="browse">
+            <th scope="row">browse</th>
+            <td class="num">4</td>
+            <td class="num ok">4</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="12.1 ms" data-response="413 ms" data-service-ns="12058623" data-response-ns="413138943">12.1 ms</td>
+            <td class="num time" data-service="90.2 ms" data-response="893 ms" data-service-ns="90177535" data-response-ns="893386751">90.2 ms</td>
+            <td class="num time" data-service="90.2 ms" data-response="893 ms" data-service-ns="90177535" data-response-ns="893386751">90.2 ms</td>
+            <td class="num time" data-service="90.2 ms" data-response="893 ms" data-service-ns="90177535" data-response-ns="893386751">90.2 ms</td>
+          </tr>
+          <tr class="step" data-step="pay">
+            <th scope="row">pay</th>
+            <td class="num">5</td>
+            <td class="num ok">2</td>
+            <td class="num failed">3</td>
+            <td class="num time" data-service="60.0 ms" data-response="663 ms" data-service-ns="60030975" data-response-ns="662700031">60.0 ms</td>
+            <td class="num time" data-service="1.21 s" data-response="2.00 s" data-service-ns="1207959551" data-response-ns="2004877311">1.21 s</td>
+            <td class="num time" data-service="1.21 s" data-response="2.00 s" data-service-ns="1207959551" data-response-ns="2004877311">1.21 s</td>
+            <td class="num time" data-service="1.21 s" data-response="2.00 s" data-service-ns="1207959551" data-response-ns="2004877311">1.21 s</td>
+          </tr>
+          <tr class="reasons" data-for="pay">
+            <td colspan="8">
+              <ul class="reason-list">
+                <li><span class="reason">status 503 &lt;b&gt;&quot;upstream&quot; &amp; &#39;down&#39;&lt;/b&gt;</span><span class="reason-count">2</span></li>
+                <li><span class="reason">&lt;/script&gt; hung up</span><span class="reason-count">1</span></li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+  </section>
+</main>
+<script type="application/json" id="kestrel-run">
+{
+  "startedAt": "2026-08-26T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "count": 9,
+  "ok": 6,
+  "failed": 3,
+  "behind": {
+    "count": 9,
+    "p50": 603979775,
+    "p95": 801112063,
+    "p99": 801112063,
+    "max": 801112063
+  },
+  "steps": [
+    {
+      "name": "browse",
+      "count": 4,
+      "ok": 4,
+      "failed": 0,
+      "serviceTime": {
+        "count": 4,
+        "p50": 12058623,
+        "p95": 90177535,
+        "p99": 90177535,
+        "max": 90177535
+      },
+      "responseTime": {
+        "count": 4,
+        "p50": 413138943,
+        "p95": 893386751,
+        "p99": 893386751,
+        "max": 893386751
+      },
+      "failures": []
+    },
+    {
+      "name": "pay",
+      "count": 5,
+      "ok": 2,
+      "failed": 3,
+      "serviceTime": {
+        "count": 5,
+        "p50": 60030975,
+        "p95": 1207959551,
+        "p99": 1207959551,
+        "max": 1207959551
+      },
+      "responseTime": {
+        "count": 5,
+        "p50": 662700031,
+        "p95": 2004877311,
+        "p99": 2004877311,
+        "max": 2004877311
+      },
+      "failures": [
+        {
+          "reason": "status 503 \u003cb\u003e\"upstream\" \u0026 'down'\u003c/b\u003e",
+          "count": 2
+        },
+        {
+          "reason": "\u003c/script\u003e hung up",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
+</script>
+</body>
+</html>

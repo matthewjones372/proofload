@@ -36,15 +36,6 @@ fun Timing.interval(percentile: Double): Interval? {
     return Interval(low = valueAtRank(lowRank), high = valueAtRank(highRank))
 }
 
-/** The bucket the nth-smallest sample fell in. */
-private fun Timing.valueAtRank(rank: Long): Duration =
-    distribution.asSequence()
-        .runningFold(0L to distribution.first().upperBound) { (seen, _), bucket ->
-            (seen + bucket.count) to bucket.upperBound
-        }
-        .first { (seen, _) -> seen >= rank }
-        .second
-
 private const val HUNDRED = 100.0
 
 /** 1.96 standard deviations: the 95% interval, wide enough not to invite acting on noise. */

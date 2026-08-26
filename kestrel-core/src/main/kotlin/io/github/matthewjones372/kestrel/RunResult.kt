@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import java.time.Instant
+import kotlin.math.ceil
 import kotlin.time.Duration
 
 /**
@@ -12,6 +13,14 @@ import kotlin.time.Duration
  */
 data class Bucket(val upperBound: Duration, val count: Long)
 
+/** A percentile a run may not have the samples for: absent carries the reason, so no reader has to invent one. */
+sealed interface Tail {
+
+    data class Measured(val duration: Duration) : Tail
+
+    data class Absent(val because: String) : Tail
+}
+
 /** A histogram read once and frozen: percentiles that cannot move under a reader. */
 data class Timing(
     val count: Long,
@@ -19,9 +28,39 @@ data class Timing(
     val p95: Duration,
     val p99: Duration,
     val max: Duration,
-    /** What was counted, bucket by bucket, for anything that draws rather than prints. */
-    val distribution: List<Bucket> = emptyList(),
-)
+    /** What was counted, bucket by bucket: what a chart draws, and what [percentile] is read from. */
+    val distribution: List<Bucket>,
+) {
+
+    /**
+     * The 99.9th percentile, which is where two JVM collectors that match to
+     * p99 separate — and the first percentile here a run can be too short to
+     * have measured.
+     */
+    val p999: Tail
+        get() = if (count < SAMPLES_FOR_P999) {
+            Tail.Absent("only $count samples, and under $SAMPLES_FOR_P999 the top bucket holds fewer than one")
+        } else {
+            Tail.Measured(percentile(P999))
+        }
+
+    /**
+     * The top of the bucket [percentile] fell in, read off [distribution] — so
+     * a frozen timing answers a percentile nobody asked for at freeze time, by
+     * the arithmetic that produced the ones that were.
+     */
+    fun percentile(percentile: Double): Duration {
+        require(percentile in 0.0..HUNDRED) { "percentile must be in 0..100, but was $percentile" }
+        if (count == 0L || distribution.isEmpty()) return Duration.ZERO
+
+        return valueAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong()))
+    }
+
+    companion object {
+        /** Below this a p99.9 is one sample in a thousand taken from fewer than a thousand. */
+        const val SAMPLES_FOR_P999: Long = 1_000L
+    }
+}
 
 fun Histogram.timing(): Timing = Timing(
     count = count,
@@ -31,6 +70,15 @@ fun Histogram.timing(): Timing = Timing(
     max = max,
     distribution = distribution(),
 )
+
+/** The bucket the nth-smallest sample fell in. */
+internal fun Timing.valueAtRank(rank: Long): Duration =
+    distribution.asSequence()
+        .runningFold(0L to distribution.first().upperBound) { (seen, _), bucket ->
+            (seen + bucket.count) to bucket.upperBound
+        }
+        .first { (seen, _) -> seen >= rank }
+        .second
 
 /**
  * What one step did. `serviceTime` is what the target took; `responseTime` is
@@ -129,6 +177,8 @@ fun RunResult.fellBehind(): Boolean {
     return behind.p99 > worst * Histogram.PRECISION
 }
 
+private const val HUNDRED = 100.0
 private const val P50 = 50.0
 private const val P95 = 95.0
 private const val P99 = 99.0
+private const val P999 = 99.9

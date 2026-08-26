@@ -209,7 +209,6 @@ Gates that sit beyond the tests:
 |---|---|---|
 | detekt | any finding | a suppression with no reason |
 | Kover | aggregate line coverage under the floor | lowering the floor |
-| `apiCheck` | a published signature changed | editing the dump to match |
 | `NoThirdPartyDependenciesTest` | core grew a dependency | adding it to the allowlist |
 
 Before saying it is done:

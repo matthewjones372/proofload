@@ -35,8 +35,8 @@ rate     users    behind p50   behind p99   behind max   kept schedule
 50,000  50,000       2.10 ms     44.00 ms    210.0 ms     no
 ```
 
-- `benchmarks`, a module that is not published and is excluded from coverage
-  and from `apiCheck`, like `examples` already is.
+- `benchmarks`, a module that is not published and is excluded from coverage,
+  like `examples` already is.
 - A JMH-free harness: this measures a whole run's scheduling behaviour, not a
   method's throughput, and JMH is a dependency and a discipline aimed at the
   other question.

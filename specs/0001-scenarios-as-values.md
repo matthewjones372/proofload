@@ -74,7 +74,8 @@ rather than out of the documentation.
 - [ ] **`spec-0001-scenario`** — `Scenario`, `Step`, `Action`, `Session` in
       `kestrel-core`, with contract tests through the public API.
       Done when: a two-step scenario builds, inspects and compares by value,
-      and `./gradlew build` is green including `apiCheck`.
+      and `./gradlew build` is green. (`apiCheck` was a gate then; it was
+      removed later — see the note at the end of this file.)
 - [ ] **`spec-0001-injection`** — sealed `InjectionProfile`, open-model
       variants, and the profile-to-departure-offsets function.
       Done when: a constant rate yields the expected offsets as values, with
@@ -102,3 +103,9 @@ and the answers are in the shape above:
 3. **`kestrel-core.api` is regenerated in the first PR** and its diff read as a
     golden file, not rubber-stamped.
 4. **`Pause` and `Group` wait** for an engine that can honour them.
+
+---
+
+**Later:** the `.api` dumps and the `apiCheck` gate this spec's stack
+referred to were removed from the build. What a release breaks is recorded in
+`CHANGELOG.md` instead.

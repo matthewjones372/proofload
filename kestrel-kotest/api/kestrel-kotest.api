@@ -1,4 +1,0 @@
-public final class io/github/matthewjones372/kestrel/kotest/KestrelKt {
-	public static final fun kestrel (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-

@@ -29,6 +29,9 @@ sealed interface StepResult {
  */
 class StepScope internal constructor(private var session: Session) {
 
+    // The builder case AGENTS.md allows: a step body is written as statements,
+    // so the session and the reason accumulate across them and are frozen into
+    // a StepResult the moment the body returns. Neither escapes mutable.
     private var reason: String? = null
 
     operator fun <T : Any> get(key: SessionKey<T>): T? = session[key]

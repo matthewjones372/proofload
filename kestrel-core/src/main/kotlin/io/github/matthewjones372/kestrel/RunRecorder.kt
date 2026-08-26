@@ -52,21 +52,22 @@ private class StepRecorder {
     private val serviceTime = Histogram()
     private val responseTime = Histogram()
     private val failures = LinkedHashMap<String, Long>()
-    private var count = 0L
-    private var ok = 0L
+
+    // Both derived rather than counted: a count kept beside the histogram is a
+    // second number to keep in step, and the two disagreeing is a bug nobody
+    // would see until a report looked odd.
+    private val count: Long get() = serviceTime.count
+    private val ok: Long get() = count - failures.values.sum()
 
     fun record(failure: String?, service: Duration, response: Duration) {
         serviceTime.record(service)
         responseTime.record(response)
-        count++
-        if (failure == null) ok++ else countFailure(failure, 1L)
+        if (failure != null) countFailure(failure, 1L)
     }
 
     fun merge(other: StepRecorder) {
         serviceTime.merge(other.serviceTime)
         responseTime.merge(other.responseTime)
-        count += other.count
-        ok += other.ok
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
     }
 

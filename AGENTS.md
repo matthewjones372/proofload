@@ -142,8 +142,16 @@ produces a second error model beside the declared one.
 Never add an `else` to a `when` over a sealed type. The missing branch is the
 compiler naming a case that needs handling.
 
-Public API returns read-only types. A mutable accumulator is allowed inside a
-builder that freezes it before returning.
+Public API returns read-only types.
+
+**`var` is a last resort, not a default.** Prefer `val`, a fold, or a derived
+property over a counter that is incremented. A mutable accumulator is allowed
+in exactly two places: inside a builder that freezes it before returning, and
+on a path whose allocation would be measured as the target's latency. Both
+carry a comment saying which.
+
+A number that can be derived is derived. Two fields that must be kept in step
+are one field and a function.
 
 ## Measurement
 

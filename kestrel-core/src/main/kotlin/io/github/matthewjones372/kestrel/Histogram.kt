@@ -16,27 +16,25 @@ import kotlin.time.Duration.Companion.nanoseconds
  */
 class Histogram {
 
-    private val counts = LongArray(BUCKET_COUNT * SUB_BUCKET_HALF + SUB_BUCKET_COUNT)
+    // The one mutable thing here, and the reason is the measurement: a
+    // histogram that allocated per sample would be timed as the target's
+    // latency. Everything read off it is derived rather than counted twice.
+    private val counts = LongArray(SUB_BUCKET_COUNT + BUCKET_COUNT * SUB_BUCKET_HALF + 1)
 
-    var count: Long = 0L
-        private set
+    val count: Long get() = counts.take(BUCKETS).sum()
 
     /** Samples that arrived past the ceiling, counted at it rather than dropped. */
-    var overflowed: Long = 0L
-        private set
+    val overflowed: Long get() = counts[OVERFLOW]
 
     fun record(value: Duration) {
         val nanos = value.inWholeNanoseconds
         require(nanos >= 0) { "a latency cannot be negative, but was $value" }
-        if (nanos > CEILING_NANOS) overflowed++
+        if (nanos > CEILING_NANOS) counts[OVERFLOW]++
         counts[indexOf(minOf(nanos, CEILING_NANOS))]++
-        count++
     }
 
     fun merge(other: Histogram) {
         for (index in counts.indices) counts[index] += other.counts[index]
-        count += other.count
-        overflowed += other.overflowed
     }
 
     val max: Duration get() = percentile(MAX_PERCENTILE)
@@ -51,12 +49,14 @@ class Histogram {
         if (count == 0L) return Duration.ZERO
 
         val wanted = maxOf(1L, ceil(percentile / MAX_PERCENTILE * count).toLong())
-        var seen = 0L
-        for (index in counts.indices) {
-            seen += counts[index]
-            if (seen >= wanted) return highestEquivalentOf(index).nanoseconds
-        }
-        return CEILING_NANOS.nanoseconds
+        // runningFold is lazy, so this walks only as far as the bucket the
+        // percentile falls in; the leading zero it emits is why the index
+        // steps back by one.
+        val bucket = counts.asSequence().take(BUCKETS)
+            .runningFold(0L) { seen, inBucket -> seen + inBucket }
+            .indexOfFirst { it >= wanted } - 1
+
+        return if (bucket < 0) CEILING_NANOS.nanoseconds else highestEquivalentOf(bucket).nanoseconds
     }
 
     private fun indexOf(nanos: Long): Int {
@@ -94,3 +94,8 @@ private const val SUB_BUCKET_HALF = SUB_BUCKET_COUNT / 2
 // measurement, and the ceiling keeps the table at a few thousand longs.
 private const val CEILING_NANOS = 3_600L * 1_000_000_000L
 private const val BUCKET_COUNT = 40
+
+// The buckets, and then one slot past them holding the overflow count. Keeping
+// it in the same array is what lets `merge` be one loop over one array.
+private const val BUCKETS = SUB_BUCKET_COUNT + BUCKET_COUNT * SUB_BUCKET_HALF
+private const val OVERFLOW = BUCKETS

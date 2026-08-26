@@ -22,6 +22,37 @@ sealed interface StepResult {
     data class Failed(override val session: Session, val reason: String) : StepResult
 }
 
-fun Session.ok(): StepResult = StepResult.Ok(this)
+/**
+ * What a step body runs against. The session is threaded here rather than by
+ * the caller, and the accumulator is frozen into a `StepResult` the moment the
+ * body returns.
+ */
+class StepScope internal constructor(private var session: Session) {
 
-fun Session.failed(reason: String): StepResult = StepResult.Failed(this, reason)
+    private var reason: String? = null
+
+    operator fun <T : Any> get(key: SessionKey<T>): T? = session[key]
+
+    fun <T : Any> set(key: SessionKey<T>, value: T) {
+        session = session.set(key, value)
+    }
+
+    /**
+     * Marks the step failed and returns; it does not stop the body. Throwing
+     * to report a declared failure would put a second error model beside this
+     * one, and the engine would have to catch to measure.
+     */
+    fun fail(reason: String) {
+        // First reason wins: a timeout that follows a 503 is the 503's doing,
+        // and a report that renames it loses which one to go and fix.
+        if (this.reason == null) this.reason = reason
+    }
+
+    internal fun result(): StepResult =
+        reason?.let { StepResult.Failed(session, it) } ?: StepResult.Ok(session)
+}
+
+/** A step body as a value, so one action can be shared by several scenarios. */
+fun action(block: StepScope.() -> Unit): Action = Action { session ->
+    StepScope(session).apply(block).result()
+}

@@ -25,6 +25,10 @@ class ScenarioBuilder internal constructor(private val name: String) {
         steps += Step.Exec(name, action)
     }
 
+    fun exec(name: String, block: StepScope.() -> Unit) {
+        steps += Step.Exec(name, action(block))
+    }
+
     // Frozen rather than copied: a copy is still an ArrayList to a Java caller
     // holding the List, and a scenario that can be added to after it is built
     // is not the value the rest of this design assumes.

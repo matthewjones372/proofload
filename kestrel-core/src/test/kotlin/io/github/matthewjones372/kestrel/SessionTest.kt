@@ -51,14 +51,14 @@ class SessionTest {
 
     @Test
     fun `an action reports success as a value rather than by not throwing`() {
-        val result = Action { session -> session.set(orderId, 1L).ok() }.run(Session.empty)
+        val result = action { set(orderId, 1L) }.run(Session.empty)
 
         result shouldBe StepResult.Ok(Session.empty.set(orderId, 1L))
     }
 
     @Test
     fun `a failed step names its reason and still carries the session on`() {
-        val result = Session.empty.set(orderId, 1L).failed("status 503")
+        val result = action { set(orderId, 1L); fail("status 503") }.run(Session.empty)
 
         result shouldBe StepResult.Failed(Session.empty.set(orderId, 1L), "status 503")
         result.session[orderId] shouldBe 1L

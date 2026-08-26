@@ -5,20 +5,57 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 private val page = sessionKey<String>("page")
+private val orderId = sessionKey<Long>("orderId")
 
 class ScenarioTest {
 
-    private val browse = Action { session -> session.set(page, "home").ok() }
+    private val browse = action { set(page, "home") }
 
     @Test
     fun `a scenario keeps its steps in the order they were declared`() {
         val checkout = scenario("checkout") {
-            exec("browse", browse)
-            exec("add to cart") { session -> session.ok() }
+            exec("browse") { set(page, "home") }
+            exec("add to cart") { set(page, "cart") }
         }
 
         checkout.name shouldBe "checkout"
         checkout.steps.map { it.name } shouldBe listOf("browse", "add to cart")
+    }
+
+    @Test
+    fun `a step body reads and writes the session without naming it`() {
+        val step = action {
+            set(orderId, 7L)
+            set(page, "order ${get(orderId)}")
+        }
+
+        step.run(Session.empty) shouldBe StepResult.Ok(Session.empty.set(orderId, 7L).set(page, "order 7"))
+    }
+
+    @Test
+    fun `a step that says nothing succeeded`() {
+        action { }.run(Session.empty) shouldBe StepResult.Ok(Session.empty)
+    }
+
+    @Test
+    fun `a failed step carries on to the end and keeps what it set`() {
+        val result = action {
+            set(orderId, 7L)
+            fail("status 503")
+            set(page, "error")
+        }.run(Session.empty)
+
+        result shouldBe StepResult.Failed(Session.empty.set(orderId, 7L).set(page, "error"), "status 503")
+    }
+
+    @Test
+    fun `the first reason a step gives is the one it is reported under`() {
+        val result = action {
+            fail("status 503")
+            fail("and then a timeout")
+        }.run(Session.empty)
+
+        result shouldBe StepResult.Failed(Session.empty, "status 503")
     }
 
     @Test
@@ -46,14 +83,5 @@ class ScenarioTest {
         val steps = checkout.steps as MutableList<Step>
 
         shouldThrow<UnsupportedOperationException> { steps.add(Step.Exec("injected", browse)) }
-    }
-
-    @Test
-    fun `a step names itself, so a report has a row that is not a URL`() {
-        val step = scenario("s") { exec("browse", browse) }.steps.single()
-
-        when (step) {
-            is Step.Exec -> step.name shouldBe "browse"
-        }
     }
 }

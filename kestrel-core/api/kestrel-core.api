@@ -3,8 +3,7 @@ public abstract interface class io/github/matthewjones372/kestrel/Action {
 }
 
 public final class io/github/matthewjones372/kestrel/ActionKt {
-	public static final fun failed (Lio/github/matthewjones372/kestrel/Session;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepResult;
-	public static final fun ok (Lio/github/matthewjones372/kestrel/Session;)Lio/github/matthewjones372/kestrel/StepResult;
+	public static final fun action (Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/Action;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/InjectionProfile {
@@ -61,6 +60,7 @@ public final class io/github/matthewjones372/kestrel/Scenario {
 
 public final class io/github/matthewjones372/kestrel/ScenarioBuilder {
 	public final fun exec (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)V
+	public final fun exec (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class io/github/matthewjones372/kestrel/ScenarioKt {
@@ -132,5 +132,11 @@ public final class io/github/matthewjones372/kestrel/StepResult$Ok : io/github/m
 	public fun getSession ()Lio/github/matthewjones372/kestrel/Session;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/StepScope {
+	public final fun fail (Ljava/lang/String;)V
+	public final fun get (Lio/github/matthewjones372/kestrel/SessionKey;)Ljava/lang/Object;
+	public final fun set (Lio/github/matthewjones372/kestrel/SessionKey;Ljava/lang/Object;)V
 }
 

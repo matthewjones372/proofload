@@ -1,8 +1,11 @@
 package io.github.matthewjones372.kestrel
 
+import kotlin.math.ceil
 import kotlin.math.sqrt
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * When virtual users arrive. Open model only: a profile states departure times
@@ -26,6 +29,35 @@ sealed interface InjectionProfile {
     data class Stages(val stages: List<InjectionProfile>) : InjectionProfile {
         override val over: Duration get() = stages.fold(Duration.ZERO) { total, stage -> total + stage.over }
     }
+
+    /**
+     * [of], with its arrivals drawn from [seed] rather than evenly spaced.
+     *
+     * A wrapper rather than a fourth kind of rate line: the shape underneath is
+     * still the thing that says how many users depart and over how long, so it
+     * is still the thing to compare, count and draw.
+     */
+    data class Randomized(val of: InjectionProfile, val seed: Long) : InjectionProfile {
+        override val over: Duration get() = of.over
+    }
+}
+
+/**
+ * The same shape and the same count, with arrivals drawn from [seed] instead of
+ * spaced on the interval.
+ *
+ * Real session arrivals are close to Poisson, and queueing delay scales with
+ * the variability of arrivals rather than only with their mean, so an even
+ * generator understates queueing at the rate it claims to be testing.
+ *
+ * There is no default seed: an unseeded random run is not one anybody can
+ * reproduce.
+ */
+fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when (this) {
+    is InjectionProfile.Randomized -> InjectionProfile.Randomized(of, seed)
+
+    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Stages ->
+        InjectionProfile.Randomized(this, seed)
 }
 
 /**
@@ -39,7 +71,10 @@ infix fun InjectionProfile.then(next: InjectionProfile): InjectionProfile =
 
 private fun InjectionProfile.asStages(): List<InjectionProfile> = when (this) {
     is InjectionProfile.Stages -> stages
-    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> listOf(this)
+
+    // Not opened up: the stages of a randomised shape are randomised by it, and
+    // lifting them out would leave them spaced on the interval again.
+    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Randomized -> listOf(this)
 }
 
 /** [constantRate], under the name it reads as in a chain. */
@@ -61,6 +96,7 @@ val InjectionProfile.endRate: Rate
         is InjectionProfile.ConstantRate -> perSecond.perSecond
         is InjectionProfile.RampRate -> to.perSecond
         is InjectionProfile.Stages -> stages.lastOrNull()?.endRate ?: 0.perSecond
+        is InjectionProfile.Randomized -> of.endRate
     }
 
 fun constantRate(rate: Rate, over: Duration): InjectionProfile.ConstantRate {
@@ -78,9 +114,10 @@ fun rampRate(from: Rate, to: Rate, over: Duration): InjectionProfile.RampRate {
 
 /** How many users the profile describes: the area under its rate line. */
 fun InjectionProfile.userCount(): Long = when (this) {
-    is InjectionProfile.ConstantRate -> (perSecond * over.seconds()).toLong()
-    is InjectionProfile.RampRate -> ((from + to) / 2 * over.seconds()).toLong()
+    is InjectionProfile.ConstantRate -> usersBy(over)
+    is InjectionProfile.RampRate -> usersBy(over)
     is InjectionProfile.Stages -> stages.sumOf { it.userCount() }
+    is InjectionProfile.Randomized -> of.userCount()
 }
 
 /**
@@ -101,7 +138,7 @@ fun InjectionProfile.departures(): Sequence<Duration> = when (this) {
     is InjectionProfile.ConstantRate -> indices().map { index -> atRate(index, perSecond) }
 
     is InjectionProfile.RampRate -> {
-        val acceleration = (to - from) / over.seconds()
+        val acceleration = acceleration()
         if (acceleration == 0.0) {
             indices().map { index -> atRate(index, from) }
         } else {
@@ -112,7 +149,70 @@ fun InjectionProfile.departures(): Sequence<Duration> = when (this) {
             }
         }
     }
+
+    is InjectionProfile.Randomized -> of.drawnWith(seed)
 }
+
+/**
+ * Where the arrivals of [this] fall once they are drawn rather than spaced.
+ *
+ * Seeded per stage by the seed and the stage's index, so a ramp followed by a
+ * hold does not repeat the same draws and the whole shape stays a pure function
+ * of the one seed the caller gave.
+ */
+private fun InjectionProfile.drawnWith(seed: Long): Sequence<Duration> = when (this) {
+    is InjectionProfile.Stages ->
+        InjectionProfile.Stages(stages.mapIndexed { index, stage -> stage.randomized(seed + index) }).departures()
+
+    is InjectionProfile.ConstantRate -> drawnAcross(over, seed) { at -> usersBy(at) }
+
+    is InjectionProfile.RampRate -> drawnAcross(over, seed) { at -> usersBy(at) }
+
+    is InjectionProfile.Randomized -> of.drawnWith(seed)
+}
+
+/**
+ * A Poisson process conditioned on N arrivals in a window puts them exactly
+ * where N sorted uniforms would be. Each window is handed the count [usersBy]
+ * says the rate line owes it, so the total stays exact, every arrival stays
+ * inside the window it was drawn for, and the shape is still followed rather
+ * than flattened.
+ *
+ * Accumulating exponential gaps is the other construction. It drifts, it needs
+ * an accumulator, and it lets the last arrival fall outside the window the
+ * profile promised.
+ *
+ * A window at a time so this stays lazy: a ten-minute run at a thousand a
+ * second must not sort six hundred thousand doubles to answer its first
+ * departure.
+ */
+private fun drawnAcross(over: Duration, seed: Long, usersBy: (Duration) -> Long): Sequence<Duration> =
+    (0 until ceil(over / ARRIVAL_WINDOW).toInt()).asSequence().flatMap { window ->
+        val from = ARRIVAL_WINDOW * window
+        val until = minOf(from + ARRIVAL_WINDOW, over)
+        drawnIn(
+            from = from,
+            until = until,
+            count = (usersBy(until) - usersBy(from)).toInt(),
+            random = Random(seed + window * WINDOW_STRIDE),
+        )
+    }
+
+private fun drawnIn(from: Duration, until: Duration, count: Int, random: Random): List<Duration> {
+    val span = (until - from).inWholeNanoseconds
+    val drawn = DoubleArray(count) { random.nextDouble() }
+    drawn.sort()
+    return drawn.map { (from.inWholeNanoseconds + (it * span).toLong()).nanoseconds }
+}
+
+/** How many users the rate line has delivered by [at]: the area under it up to there. */
+private fun InjectionProfile.ConstantRate.usersBy(at: Duration): Long = (perSecond * at.seconds()).toLong()
+
+private fun InjectionProfile.RampRate.usersBy(at: Duration): Long =
+    at.seconds().let { seconds -> (from * seconds + acceleration() * seconds * seconds / 2).toLong() }
+
+/** How fast the rate line climbs, per second per second. */
+private fun InjectionProfile.RampRate.acceleration(): Double = (to - from) / over.seconds()
 
 private fun InjectionProfile.indices(): Sequence<Long> = (0 until userCount()).asSequence()
 
@@ -134,3 +234,14 @@ private fun requireWindow(over: Duration) {
 }
 
 private const val NANOS_PER_SECOND = 1_000_000_000.0
+
+/**
+ * The window a draw is conditioned on. A second, because that is the unit a
+ * rate is quoted in: each second gets the arrivals its rate asked for, so a
+ * ramp still ramps and the sort is a second's worth rather than a run's.
+ */
+internal val ARRIVAL_WINDOW: Duration = 1.seconds
+
+// Stage seeds step by one and window seeds step by this, so no window of one
+// stage can be handed the seed of a window of another.
+private const val WINDOW_STRIDE = 2_654_435_761L

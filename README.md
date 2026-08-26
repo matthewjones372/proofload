@@ -93,6 +93,28 @@ val soak = rampRate(from = 0.perSecond, to = 200.perSecond, over = 1.minutes)
 checkout.injecting(soak).profile.userCount()   // 132,000, before anything is sent
 ```
 
+Those departures are evenly spaced, which no target ever receives. Real session
+arrivals are close to Poisson, and queueing delay scales with how variable
+arrivals are rather than only with their mean, so an even generator understates
+queueing at the rate it says it is testing. `randomized` draws the arrivals
+instead of spacing them:
+
+```kotlin
+val bursty = soak.randomized(seed = 20260826)
+
+bursty.userCount() shouldBe soak.userCount()   // the count is exact, the spacing moves
+bursty.over shouldBe soak.over
+```
+
+The seed has no default, because an unseeded random run is not one anybody can
+reproduce. Each second of the shape gets the arrivals its rate line owed it,
+placed where sorted uniforms fall, so a ramp still ramps and every departure
+stays inside the window the profile promised. Each stage is seeded from the seed
+and its own index, so a hold after a ramp does not repeat the ramp's draws and
+the whole shape stays a function of the one seed.
+
+Even spacing is still the default.
+
 Two latencies come back from every step. `serviceTime` is what the target took;
 `responseTime` counts from the departure the profile promised, so a generator
 that fell behind reports its own backlog rather than a fast target. When that

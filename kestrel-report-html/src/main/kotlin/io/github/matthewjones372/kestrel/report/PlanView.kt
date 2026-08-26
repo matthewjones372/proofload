@@ -42,16 +42,21 @@ private fun InjectionProfile.shapeChart(): List<String> {
     val peak = points.maxOf { it.second }.takeIf { it > 0.0 } ?: return emptyList()
     val total = over.inWholeNanoseconds.toDouble().takeIf { it > 0.0 } ?: return emptyList()
 
-    val path = points.joinToString(" ") { (at, rate) ->
+    // A little headroom, so a flat hold is a band rather than a line pinned to
+    // the top edge of its own box.
+    val plotted = points.map { (at, rate) ->
         val x = at.inWholeNanoseconds / total * WIDTH
-        val y = PLOT - (rate / peak * PLOT)
-        "${x.round()},${y.round()}"
+        val y = HEADROOM + (1 - rate / peak) * (PLOT - HEADROOM)
+        x to y
     }
+    val path = plotted.joinToString(" ") { (x, y) -> "${x.round()},${y.round()}" }
+    val area = "0.0,${PLOT.round()} $path ${WIDTH.round()},${PLOT.round()}"
 
     return listOf(
         """    <figure class="chart shape">""",
         """      <figcaption>the shape that was asked for — peak ${peak.rate()}</figcaption>""",
         """      <svg viewBox="0 0 $WIDTH $HEIGHT" role="img" preserveAspectRatio="none" aria-label="load shape">""",
+        """        <polygon class="shape-area" points="$area"></polygon>""",
         """        <polyline class="shape-line" points="$path"></polyline>""",
         """        <text class="tick-label shape-start" x="0" y="$HEIGHT">0</text>""",
         """        <text class="tick-label shape-end" x="$WIDTH" y="$HEIGHT">${over.forPlan()}</text>""",
@@ -82,4 +87,5 @@ private fun Double.round(): String = String.format(Locale.ROOT, "%.1f", this)
 
 private const val WIDTH = 640.0
 private const val PLOT = 60.0
+private const val HEADROOM = 8.0
 private const val HEIGHT = 78

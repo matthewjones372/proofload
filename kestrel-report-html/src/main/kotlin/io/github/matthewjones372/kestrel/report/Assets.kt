@@ -112,7 +112,8 @@ internal val REPORT_CSS: String = """
     .plan { margin: 0 0 1.5rem; }
     .plan p { margin: 0 0 0.5rem; }
     .chart.shape svg { height: 4.5rem; }
-    .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.6; }
+    .shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
+    .shape-area { fill: var(--fg); opacity: 0.09; }
     .shape-end { text-anchor: end; }
     .reading { margin: 0 0 2rem; max-width: 46rem; }
     .reading p { margin: 0 0 0.6rem; }

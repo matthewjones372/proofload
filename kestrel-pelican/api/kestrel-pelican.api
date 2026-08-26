@@ -1,0 +1,5 @@
+public final class io/github/matthewjones372/kestrel/pelican/KestrelTransportKt {
+	public static final fun kestrelTransport (Lio/github/matthewjones372/kestrel/RunRecorder;Ljava/util/List;Ljava/time/Duration;)Lio/github/matthewjones372/pelican/ClientTransport;
+	public static synthetic fun kestrelTransport$default (Lio/github/matthewjones372/kestrel/RunRecorder;Ljava/util/List;Ljava/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/pelican/ClientTransport;
+}
+

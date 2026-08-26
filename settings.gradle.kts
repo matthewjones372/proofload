@@ -6,6 +6,7 @@ include(
     "kestrel-http",
     "kestrel-junit5",
     "kestrel-kotest",
+    "kestrel-pelican",
     "kestrel-report-github",
     "kestrel-report-html",
 )

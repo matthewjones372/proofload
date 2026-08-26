@@ -55,6 +55,11 @@ internal object Fixtures {
         ),
     )
 
+    /** The same run, with a backlog too small to have moved anything it prints. */
+    val keptSchedule: RunResult = fellBehind.copy(
+        behind = timingOf(listOf(1.milliseconds, 1.milliseconds, 2.milliseconds)),
+    )
+
     // `vararg Duration` is prohibited: `Duration` is a value class.
     private fun timingOf(samples: List<Duration>): Timing =
         Histogram().apply { samples.forEach { record(it) } }.timing()

@@ -53,6 +53,20 @@ data class RunResult(
     }
 }
 
+/**
+ * Whether the generator's own backlog is large enough to have moved a number a
+ * report prints. The gate is the histogram's error bar: under that the delay
+ * cannot show up in a percentile beside it, and a warning that does not show up
+ * in the numbers next to it is one readers learn to skip.
+ *
+ * Every sink asks this rather than each inventing a threshold, so a run that is
+ * behind on the page is behind in the job summary too.
+ */
+fun RunResult.fellBehind(): Boolean {
+    val worst = steps.values.maxOfOrNull { it.responseTime.p99 } ?: return false
+    return behind.p99 > worst * Histogram.PRECISION
+}
+
 private const val P50 = 50.0
 private const val P95 = 95.0
 private const val P99 = 99.0

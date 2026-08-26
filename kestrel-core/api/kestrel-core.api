@@ -111,6 +111,7 @@ public final class io/github/matthewjones372/kestrel/RunResult {
 }
 
 public final class io/github/matthewjones372/kestrel/RunResultKt {
+	public static final fun fellBehind (Lio/github/matthewjones372/kestrel/RunResult;)Z
 	public static final fun timing (Lio/github/matthewjones372/kestrel/Histogram;)Lio/github/matthewjones372/kestrel/Timing;
 }
 

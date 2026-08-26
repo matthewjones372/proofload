@@ -85,6 +85,111 @@ internal val REPORT_CSS: String = """
     .reason { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
     .reason { overflow-wrap: anywhere; }
     .reason-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+    .behind {
+      background: color-mix(in srgb, var(--failed) 12%, var(--card));
+      border: 1px solid var(--failed);
+      border-radius: 0.5rem;
+      padding: 0.7rem 0.9rem;
+      margin: 0 0 1.5rem;
+    }
+    thead th button {
+      font: inherit;
+      color: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+    thead th[aria-sort="ascending"] button::after { content: " \2191"; }
+    thead th[aria-sort="descending"] button::after { content: " \2193"; }
+    tr.step[aria-expanded] { cursor: pointer; }
+    tr.step[aria-expanded="true"] > th::before { content: "\25BE "; }
+    tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
+    #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
+    #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
     .note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
     .empty { color: var(--muted); }
+""".trimIndent()
+
+/**
+ * The page's behaviour, inlined like everything else it needs.
+ *
+ * Plain DOM against the hooks the markup carries. Both timings already ride on
+ * each cell as text the server formatted, so the toggle swaps an attribute
+ * rather than reformatting nanoseconds — there is one implementation of "three
+ * significant figures" and it is the one under test.
+ */
+internal val REPORT_JS: String = """
+    (function () {
+      var table = document.querySelector('.steps table');
+      if (!table) return;
+      var body = table.tBodies[0];
+
+      function rowsOf(step) {
+        return Array.prototype.filter.call(body.rows, function (row) {
+          return row.dataset.step === step || row.dataset.for === step;
+        });
+      }
+
+      Array.prototype.forEach.call(body.querySelectorAll('tr.reasons'), function (row) {
+        row.hidden = true;
+      });
+
+      body.addEventListener('click', function (event) {
+        var row = event.target.closest('tr.step[aria-expanded]');
+        if (!row) return;
+        var open = row.getAttribute('aria-expanded') === 'true';
+        row.setAttribute('aria-expanded', open ? 'false' : 'true');
+        rowsOf(row.dataset.step).forEach(function (each) {
+          if (each.classList.contains('reasons')) each.hidden = open;
+        });
+      });
+
+      var toggle = document.getElementById('mode-toggle');
+      var name = document.getElementById('mode-name');
+      toggle.addEventListener('click', function () {
+        var showing = table.dataset.mode === 'response' ? 'service' : 'response';
+        table.dataset.mode = showing;
+        name.textContent = showing === 'response' ? 'response time' : 'service time';
+        toggle.textContent = showing === 'response' ? 'Show service time' : 'Show response time';
+        Array.prototype.forEach.call(table.querySelectorAll('td.time'), function (cell) {
+          cell.textContent = showing === 'response' ? cell.dataset.response : cell.dataset.service;
+        });
+      });
+
+      function keyOf(row, column, mode) {
+        var cell = row.cells[column];
+        if (cell.classList.contains('time')) {
+          return Number(mode === 'response' ? cell.dataset.responseNs : cell.dataset.serviceNs);
+        }
+        var text = cell.textContent.replace(/[^0-9.]/g, '');
+        return text === '' ? cell.textContent.toLowerCase() : Number(text);
+      }
+
+      Array.prototype.forEach.call(table.tHead.rows[0].cells, function (header, column) {
+        header.querySelector('button').addEventListener('click', function () {
+          var descending = header.getAttribute('aria-sort') !== 'descending';
+          Array.prototype.forEach.call(table.tHead.rows[0].cells, function (each) {
+            each.setAttribute('aria-sort', 'none');
+          });
+          header.setAttribute('aria-sort', descending ? 'descending' : 'ascending');
+
+          var mode = table.dataset.mode === 'response' ? 'response' : 'service';
+          var steps = Array.prototype.filter.call(body.rows, function (row) {
+            return row.classList.contains('step');
+          });
+          steps.sort(function (left, right) {
+            var a = keyOf(left, column, mode);
+            var b = keyOf(right, column, mode);
+            if (a === b) return 0;
+            return (a < b ? -1 : 1) * (descending ? -1 : 1);
+          });
+          steps.forEach(function (row) {
+            rowsOf(row.dataset.step).forEach(function (each) { body.appendChild(each); });
+          });
+        });
+      });
+    })();
 """.trimIndent()

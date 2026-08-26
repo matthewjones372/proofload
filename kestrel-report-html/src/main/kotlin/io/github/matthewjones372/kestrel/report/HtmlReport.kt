@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.fellBehind
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -26,7 +27,21 @@ public fun RunResult.writeHtmlReport(path: Path): Path {
 }
 
 private fun RunResult.documentLines(): List<String> =
-    listOf(headLines(), totalsLines(), stepsLines(), dataLines()).flatten()
+    listOf(headLines(), behindLines(), totalsLines(), stepsLines(), dataLines(), scriptLines()).flatten()
+
+/**
+ * First thing on the page when it applies, because every percentile below it
+ * counts a wait this tool caused. Absent otherwise: a warning that is always
+ * there is one nobody reads.
+ */
+private fun RunResult.behindLines(): List<String> =
+    if (!fellBehind()) emptyList()
+    else listOf(
+        """  <p class="behind" id="kestrel-behind" role="status">""",
+        "    <strong>Behind schedule.</strong> ${behind.p99.forReport()} late at p99, " +
+            "${behind.max.forReport()} at worst. The response times below include that backlog.",
+        "  </p>",
+    )
 
 private fun RunResult.headLines(): List<String> =
     listOf(
@@ -71,7 +86,8 @@ private fun RunResult.stepsLines(): List<String> =
         """  <section class="steps">""",
         """    <div class="steps-head">""",
         "      <h2>Steps</h2>",
-        """      <p class="mode">Showing <strong id="mode-name">service time</strong>.</p>""",
+        """      <p class="mode">Showing <strong id="mode-name">service time</strong>. """ +
+            """<button type="button" id="mode-toggle">Show response time</button></p>""",
         "    </div>",
     ) + tableLines() + listOf(
         """    <p class="note">Service time is what the target took; response time counts from the """ +
@@ -92,7 +108,8 @@ private fun RunResult.tableLines(): List<String> =
         "          <tr>",
     ) + COLUMNS.map { (heading, numeric) ->
         val classes = if (numeric) """ class="num"""" else ""
-        """            <th scope="col"$classes>${heading.escapedForHtml()}</th>"""
+        """            <th scope="col"$classes data-sort="${heading.sortKey()}" aria-sort="none">""" +
+            """<button type="button">${heading.escapedForHtml()}</button></th>"""
     } + listOf(
         "          </tr>",
         "        </thead>",
@@ -105,7 +122,8 @@ private fun RunResult.tableLines(): List<String> =
 
 private fun StepStats.rowLines(): List<String> =
     listOf(
-        """          <tr class="step" data-step="${name.escapedForHtml()}">""",
+        """          <tr class="step" data-step="${name.escapedForHtml()}"""" +
+            (if (failures.isEmpty()) ">" else """ aria-expanded="false" tabindex="0">"""),
         """            <th scope="row">${name.escapedForHtml()}</th>""",
         """            <td class="num">${count.grouped()}</td>""",
         """            <td class="num ok">${ok.grouped()}</td>""",
@@ -151,7 +169,12 @@ private fun StepStats.reasonLines(): List<String> =
 private fun RunResult.dataLines(): List<String> =
     listOf("""<script type="application/json" id="kestrel-run">""") +
         toJson().trimEnd().lines() +
-        listOf("</script>", "</body>", "</html>")
+        listOf("</script>")
+
+private fun RunResult.scriptLines(): List<String> =
+    listOf("<script>") + REPORT_JS.lines() + listOf("</script>", "</body>", "</html>")
+
+private fun String.sortKey(): String = lowercase().replace(" ", "-")
 
 private fun Timing.p99OrNothing(): String = if (count == 0L) NOTHING_MEASURED else p99.forReport()
 

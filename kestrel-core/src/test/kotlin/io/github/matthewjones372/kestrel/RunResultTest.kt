@@ -65,6 +65,20 @@ class RunResultTest {
     }
 
     @Test
+    fun `a run is behind only when its backlog could move a number the report prints`() {
+        val negligible = result.copy(behind = timingOf(listOf(1.milliseconds)))
+        val serious = result.copy(behind = timingOf(listOf(90.milliseconds)))
+
+        negligible.fellBehind() shouldBe false
+        serious.fellBehind() shouldBe true
+    }
+
+    @Test
+    fun `a run with no steps cannot be behind, because there is nothing to be late for`() {
+        result.copy(steps = emptyMap()).fellBehind() shouldBe false
+    }
+
+    @Test
     fun `a timing over nothing reports nothing rather than a zero somebody reads as fast`() {
         val empty = Histogram().timing()
 

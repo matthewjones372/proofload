@@ -1,0 +1,88 @@
+public abstract interface class io/github/matthewjones372/kestrel/Action {
+	public abstract fun run (Lio/github/matthewjones372/kestrel/Session;)Lio/github/matthewjones372/kestrel/StepResult;
+}
+
+public final class io/github/matthewjones372/kestrel/ActionKt {
+	public static final fun failed (Lio/github/matthewjones372/kestrel/Session;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepResult;
+	public static final fun ok (Lio/github/matthewjones372/kestrel/Session;)Lio/github/matthewjones372/kestrel/StepResult;
+}
+
+public final class io/github/matthewjones372/kestrel/Scenario {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lio/github/matthewjones372/kestrel/Scenario;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Scenario;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Scenario;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSteps ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/ScenarioBuilder {
+	public final fun exec (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)V
+}
+
+public final class io/github/matthewjones372/kestrel/ScenarioKt {
+	public static final fun scenario (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/Scenario;
+}
+
+public final class io/github/matthewjones372/kestrel/Session {
+	public static final field Companion Lio/github/matthewjones372/kestrel/Session$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun get (Ljava/lang/String;)Ljava/lang/Object;
+	public fun hashCode ()I
+	public final fun set (Ljava/lang/String;Ljava/lang/Object;)Lio/github/matthewjones372/kestrel/Session;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Session$Companion {
+	public final fun getEmpty ()Lio/github/matthewjones372/kestrel/Session;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/Step {
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Step$Exec : io/github/matthewjones372/kestrel/Step {
+	public fun <init> (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/matthewjones372/kestrel/Action;
+	public final fun copy (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)Lio/github/matthewjones372/kestrel/Step$Exec;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Step$Exec;Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Step$Exec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAction ()Lio/github/matthewjones372/kestrel/Action;
+	public fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/StepResult {
+	public abstract fun getSession ()Lio/github/matthewjones372/kestrel/Session;
+}
+
+public final class io/github/matthewjones372/kestrel/StepResult$Failed : io/github/matthewjones372/kestrel/StepResult {
+	public fun <init> (Lio/github/matthewjones372/kestrel/Session;Ljava/lang/String;)V
+	public final fun component1 ()Lio/github/matthewjones372/kestrel/Session;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lio/github/matthewjones372/kestrel/Session;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepResult$Failed;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/StepResult$Failed;Lio/github/matthewjones372/kestrel/Session;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/StepResult$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun getSession ()Lio/github/matthewjones372/kestrel/Session;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/StepResult$Ok : io/github/matthewjones372/kestrel/StepResult {
+	public fun <init> (Lio/github/matthewjones372/kestrel/Session;)V
+	public final fun component1 ()Lio/github/matthewjones372/kestrel/Session;
+	public final fun copy (Lio/github/matthewjones372/kestrel/Session;)Lio/github/matthewjones372/kestrel/StepResult$Ok;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/StepResult$Ok;Lio/github/matthewjones372/kestrel/Session;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/StepResult$Ok;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getSession ()Lio/github/matthewjones372/kestrel/Session;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

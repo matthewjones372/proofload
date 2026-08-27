@@ -57,13 +57,13 @@ private fun StepStats.toJson(depth: Int): String = jsonObject(
     fields = listOf(
         "name" to jsonString(name),
         "count" to count.toString(),
-        "ok" to ok.toString(),
-        "failed" to failed.toString(),
+        "ok" to ok.count.toString(),
+        "failed" to failed.count.toString(),
         "unmatched" to unmatched.toString(),
         "inFlight" to inFlight.toString(),
         "serviceTime" to serviceTime.toJson(depth + 1),
         "responseTime" to responseTime.toJson(depth + 1),
-        "failures" to failures.entries.jsonArray(depth + 1) { (reason, seen) ->
+        "failures" to failed.reasons.entries.jsonArray(depth + 1) { (reason, seen) ->
             jsonObject(depth + 2, listOf("reason" to jsonString(reason), "count" to seen.toString()))
         },
     ),

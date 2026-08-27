@@ -51,8 +51,8 @@ class RecordersTest {
 
         val pay = recorders.freeze(Plan.none, Arrivals.none)["pay"]
         pay.count shouldBe 2L
-        pay.ok shouldBe 1L
-        pay.failures shouldBe mapOf("503" to 1L)
+        pay.ok.count shouldBe 1L
+        pay.failed.reasons shouldBe mapOf("503" to 1L)
     }
 
     @Test

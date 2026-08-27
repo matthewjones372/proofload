@@ -13,13 +13,21 @@ class RunResultTest {
     private fun timingOf(values: List<Duration>): Timing =
         Histogram().apply { values.forEach { record(it) } }.timing()
 
+    private fun okOf(samples: Int) = Outcome(
+        serviceTime = timingOf(List(samples) { 20.milliseconds }),
+        responseTime = timingOf(List(samples) { 120.milliseconds }),
+    )
+
     private val pay = StepStats(
         name = "pay",
-        count = 100L,
-        ok = 97L,
-        failures = mapOf("status 503" to 3L),
-        serviceTime = timingOf(listOf(10.milliseconds, 20.milliseconds, 30.milliseconds)),
-        responseTime = timingOf(listOf(110.milliseconds, 120.milliseconds, 130.milliseconds)),
+        ok = okOf(97),
+        failed = Outcome(
+            serviceTime = timingOf(List(3) { 30.milliseconds }),
+            responseTime = timingOf(List(3) { 130.milliseconds }),
+            reasons = mapOf("status 503" to 3L),
+        ),
+        serviceTime = timingOf(List(97) { 20.milliseconds } + List(3) { 30.milliseconds }),
+        responseTime = timingOf(List(97) { 120.milliseconds } + List(3) { 130.milliseconds }),
     )
 
     private val result = RunResult(
@@ -42,8 +50,8 @@ class RunResultTest {
 
     @Test
     fun `a step counts what failed without being told twice`() {
-        result["pay"].failed shouldBe 3L
-        result["pay"].failures["status 503"] shouldBe 3L
+        result["pay"].failed.count shouldBe 3L
+        result["pay"].failed.reasons["status 503"] shouldBe 3L
     }
 
     @Test
@@ -72,7 +80,13 @@ class RunResultTest {
 
     @Test
     fun `a run totals its steps so a summary line does not have to`() {
-        val browse = pay.copy(name = "browse", count = 10L, ok = 10L, failures = emptyMap())
+        val browse = pay.copy(
+            name = "browse",
+            ok = okOf(10),
+            failed = Outcome.none,
+            serviceTime = timingOf(List(10) { 20.milliseconds }),
+            responseTime = timingOf(List(10) { 120.milliseconds }),
+        )
         val both = result.copy(steps = mapOf("pay" to pay, "browse" to browse))
 
         both.count shouldBe 110L

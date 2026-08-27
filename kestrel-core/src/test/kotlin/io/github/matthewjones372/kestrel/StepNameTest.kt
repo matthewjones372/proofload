@@ -19,9 +19,8 @@ class StepNameTest {
 
     private fun statsFor(name: String) = StepStats(
         name = name,
-        count = 1L,
-        ok = 1L,
-        failures = emptyMap(),
+        ok = Outcome.none,
+        failed = Outcome.none,
         serviceTime = Histogram().timing(),
         responseTime = Histogram().timing(),
     )

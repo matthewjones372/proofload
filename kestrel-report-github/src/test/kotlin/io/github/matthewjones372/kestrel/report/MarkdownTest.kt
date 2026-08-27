@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -30,22 +31,30 @@ class MarkdownTest {
     private fun golden(name: String): String =
         checkNotNull(javaClass.getResource("/golden/$name")) { "no golden named $name" }.readText()
 
-    private fun step(name: String, count: Long, ok: Long, failures: Map<String, Long>, response: Timing) =
-        StepStats(
-            name = name,
-            count = count,
-            ok = ok,
-            failures = failures,
-            // The table prints response time; service time is carried so the
-            // value stays a whole StepStats, not so the report reads it.
-            serviceTime = response,
-            responseTime = response,
-        )
+    private fun step(
+        name: String,
+        ok: List<Duration>,
+        failed: List<Duration> = emptyList(),
+        reasons: Map<String, Long> = emptyMap(),
+    ) = StepStats(
+        name = name,
+        ok = Outcome(timingOf(ok), timingOf(ok)),
+        failed = Outcome(timingOf(failed), timingOf(failed), reasons),
+        // The table prints response time; service time is carried so the value
+        // stays a whole StepStats, not so the report reads it.
+        serviceTime = timingOf(ok + failed),
+        responseTime = timingOf(ok + failed),
+    )
 
     private val browse =
-        step("browse", 10L, 10L, emptyMap(), timingOf(listOf(1.milliseconds, 2.milliseconds, 3.milliseconds)))
+        step("browse", List(4) { 1.milliseconds } + List(2) { 2.milliseconds } + List(4) { 3.milliseconds })
 
-    private val payLatency = timingOf(listOf(10.milliseconds, 20.milliseconds, 30.milliseconds))
+    /** Two fifths at 10 ms, two fifths at 20 ms and the rest at 30 ms: a p50 in the middle band, a p95 in the top. */
+    private fun spread(samples: Int): List<Duration> {
+        val fifth = samples / 5
+        return List(fifth * 2) { 10.milliseconds } + List(fifth * 2) { 20.milliseconds } +
+            List(samples - fifth * 4) { 30.milliseconds }
+    }
 
     private val startedAt = Instant.parse("2026-08-26T09:00:00Z")
 
@@ -55,7 +64,12 @@ class MarkdownTest {
             startedAt = startedAt,
             steps = mapOf(
                 "browse" to browse,
-                "pay" to step("pay", 100L, 97L, mapOf("status 503" to 3L), payLatency),
+                "pay" to step(
+                    "pay",
+                    ok = spread(100).dropLast(3),
+                    failed = List(3) { 30.milliseconds },
+                    reasons = mapOf("status 503" to 3L),
+                ),
             ),
             behind = timingOf(listOf(100.milliseconds)),
         )
@@ -69,7 +83,7 @@ class MarkdownTest {
             startedAt = startedAt,
             steps = mapOf(
                 "browse" to browse,
-                "pay" to step("pay", 100L, 100L, emptyMap(), payLatency),
+                "pay" to step("pay", spread(100)),
             ),
             behind = timingOf(listOf(50.microseconds)),
         )
@@ -81,7 +95,12 @@ class MarkdownTest {
     @Test
     fun `a failure reason is arbitrary text, so pipes and tags cannot escape their cell`() {
         val reason = "unexpected `</td>` | status <500>"
-        val hostile = step("GET /a|b", 5L, 2L, mapOf(reason to 3L), timingOf(listOf(1.milliseconds)))
+        val hostile = step(
+            "GET /a|b",
+            ok = List(2) { 1.milliseconds },
+            failed = List(3) { 1.milliseconds },
+            reasons = mapOf(reason to 3L),
+        )
         val result = RunResult(
             startedAt = startedAt,
             steps = mapOf("GET /a|b" to hostile),
@@ -96,8 +115,8 @@ class MarkdownTest {
         val result = RunResult(
             startedAt = startedAt,
             steps = mapOf(
-                "submitted" to step("submitted", 113L, 113L, emptyMap(), payLatency),
-                "settled" to step("settled", 60L, 60L, emptyMap(), payLatency).copy(unmatched = 41L, inFlight = 12L),
+                "submitted" to step("submitted", spread(113)),
+                "settled" to step("settled", spread(60)).copy(unmatched = 41L, inFlight = 12L),
             ),
             behind = timingOf(listOf(50.microseconds)),
         )
@@ -153,7 +172,7 @@ class MarkdownTest {
     fun `what the injector itself stalled for is printed beside the tail it could have caused`() {
         val result = RunResult(
             startedAt = startedAt,
-            steps = mapOf("pay" to step("pay", 100L, 100L, emptyMap(), payLatency)),
+            steps = mapOf("pay" to step("pay", spread(100))),
             behind = timingOf(listOf(50.microseconds)),
             hiccups = timingOf(
                 List(95) { 1.milliseconds } + List(4) { 14.milliseconds } + listOf(30.milliseconds),

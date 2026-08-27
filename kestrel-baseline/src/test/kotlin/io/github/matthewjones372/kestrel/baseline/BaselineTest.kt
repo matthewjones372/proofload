@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -43,19 +44,18 @@ class BaselineTest {
         plan: Plan = Plan.none,
         machine: Machine = here,
     ): RunResult {
-        val timing = Histogram()
-            .apply { repeat(samples) { record(seeded.nextLong(range.first, range.last).milliseconds) } }
-            .timing()
+        val ok = histogramOf(range, samples - FAILURES)
+        val failed = histogramOf(range, FAILURES)
+        val whole = Histogram().apply { merge(ok); merge(failed) }.timing()
         return RunResult(
             startedAt = Instant.parse("2026-08-26T09:00:00Z"),
             steps = mapOf(
                 name to StepStats(
                     name = name,
-                    count = samples.toLong(),
-                    ok = samples - 3L,
-                    failures = mapOf("status 503" to 3L),
-                    serviceTime = timing,
-                    responseTime = timing,
+                    ok = Outcome(ok.timing(), ok.timing()),
+                    failed = Outcome(failed.timing(), failed.timing(), mapOf("status 503" to FAILURES.toLong())),
+                    serviceTime = whole,
+                    responseTime = whole,
                 ),
             ),
             behind = Histogram().timing(),
@@ -63,6 +63,9 @@ class BaselineTest {
             machine = machine,
         )
     }
+
+    private fun histogramOf(range: LongRange, samples: Int) =
+        Histogram().apply { repeat(samples) { record(seeded.nextLong(range.first, range.last).milliseconds) } }
 
     private fun RunResult.throughAFile(dir: Path): RunResult {
         writeBaseline(dir.resolve("b.kestrel"))
@@ -77,6 +80,7 @@ class BaselineTest {
         val read = readBaseline(dir.resolve("baseline.kestrel"))
 
         read["pay"].count shouldBe run["pay"].count
+        read["pay"].failed.count shouldBe run["pay"].failed.count
         read["pay"].responseTime.p99 shouldBe run["pay"].responseTime.p99
         run.against(read).shouldBeInstanceOf<Comparison.Compared>().changes
             .single()
@@ -162,5 +166,10 @@ class BaselineTest {
             .against(readBaseline(dir.resolve("b.kestrel")))
 
         comparison.shouldBeInstanceOf<Comparison.Compared>().before shouldBe here.copy(cores = 4)
+    }
+
+    /** Enough that a baseline has both sides to carry, and few enough that the percentiles stay the run's. */
+    private companion object {
+        const val FAILURES = 3
     }
 }

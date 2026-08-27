@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.timing
@@ -26,9 +27,8 @@ class RunResultJsonTest {
             steps = mapOf(
                 "only" to StepStats(
                     name = "only",
-                    count = 1L,
-                    ok = 1L,
-                    failures = emptyMap(),
+                    ok = Outcome(ten, ten),
+                    failed = Outcome.none,
                     serviceTime = ten,
                     responseTime = ten,
                 ),

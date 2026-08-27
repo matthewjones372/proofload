@@ -20,16 +20,21 @@ class GoalTest {
     private fun timingOf(values: List<Duration>) =
         Histogram().apply { values.forEach { record(it) } }.timing()
 
+    private fun outcomeOf(samples: Int, reasons: Map<String, Long> = emptyMap()) = Outcome(
+        serviceTime = timingOf(List(samples) { 50.milliseconds }),
+        responseTime = timingOf(List(samples) { 150.milliseconds }),
+        reasons = reasons,
+    )
+
     private fun resultOf(goals: List<Goal>, failures: Long = 3L) = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = mapOf(
             "pay" to StepStats(
                 name = "pay",
-                count = 100L,
-                ok = 100L - failures,
-                failures = mapOf("status 503" to failures),
-                serviceTime = timingOf(listOf(50.milliseconds)),
-                responseTime = timingOf(listOf(150.milliseconds)),
+                ok = outcomeOf((100L - failures).toInt()),
+                failed = outcomeOf(failures.toInt(), mapOf("status 503" to failures)),
+                serviceTime = timingOf(List(100) { 50.milliseconds }),
+                responseTime = timingOf(List(100) { 150.milliseconds }),
             ),
         ),
         behind = timingOf(listOf(1.milliseconds)),
@@ -113,9 +118,8 @@ class GoalTest {
         steps = mapOf(
             "pay" to StepStats(
                 name = "pay",
-                count = samples.toLong(),
-                ok = samples.toLong(),
-                failures = emptyMap(),
+                ok = outcomeOf(samples),
+                failed = Outcome.none,
                 serviceTime = timingOf(List(samples) { 50.milliseconds }),
                 responseTime = timingOf(List(samples) { 150.milliseconds }),
             ),

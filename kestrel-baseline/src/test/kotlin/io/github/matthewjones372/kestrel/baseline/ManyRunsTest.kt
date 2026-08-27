@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.baseline
 
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Runs
@@ -35,7 +36,7 @@ class ManyRunsTest {
         val timing = Histogram().apply { repeat(samples) { record(20.milliseconds) } }.timing()
         return RunResult(
             startedAt = startedAt,
-            steps = mapOf("pay" to StepStats("pay", samples.toLong(), samples.toLong(), emptyMap(), timing, timing)),
+            steps = mapOf("pay" to StepStats("pay", Outcome(timing, timing), Outcome.none, timing, timing)),
             behind = Histogram().timing(),
             plan = paying,
             machine = here,

@@ -111,7 +111,7 @@ class CheckoutLoadTest {
 
         result[browse].count shouldBe 50L
         seenCustomers.size shouldBe 50
-        result[placeOrder].failed shouldBe 0L
+        result[placeOrder].failed.count shouldBe 0L
         result[pay].serviceTime.p99 shouldBeLessThan 500.milliseconds
 
         val report = Files.createTempDirectory("kestrel").resolve("checkout.html")

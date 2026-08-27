@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Bucket
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -62,10 +63,14 @@ private fun InjectionProfile?.postfix(): List<String> = when (this) {
     is InjectionProfile.Randomized -> of.postfix() + "random\t$seed"
 }
 
+// The whole-step timings are not written: they are the merge of the two sides,
+// and a file carrying all three could come back holding a step whose parts do
+// not add up to it.
 private fun StepStats.lines(): List<String> =
-    listOf("step\t${name.escaped()}\t$count\t$ok") +
-        serviceTime.lines("service", name) +
-        responseTime.lines("response", name)
+    listOf("step\t${name.escaped()}") + ok.lines("ok", name) + failed.lines("failed", name)
+
+private fun Outcome.lines(side: String, step: String): List<String> =
+    serviceTime.lines("$side-service", step) + responseTime.lines("$side-response", step)
 
 private fun Timing.lines(clock: String, step: String): List<String> =
     distribution.map { bucket -> "$clock\t${step.escaped()}\t${bucket.upperBound.inWholeNanoseconds}\t${bucket.count}" }
@@ -81,22 +86,23 @@ internal fun parseBaseline(text: String): RunResult {
     }
 
     val startedAt = lines.first { it.startsWith("run$SEPARATOR") }.split(SEPARATOR)[1]
-    val counts = lines.filter { it.startsWith("step$SEPARATOR") }.map { it.split(SEPARATOR) }
-    val buckets = lines.filter { it.startsWith("service$SEPARATOR") || it.startsWith("response$SEPARATOR") }
-        .map { it.split(SEPARATOR) }
+    val named = lines.filter { it.startsWith("step$SEPARATOR") }.map { it.split(SEPARATOR) }
+    val buckets = lines.map { it.split(SEPARATOR) }
+        .filter { it[0] in SIDES }
         .groupBy { it[0] to it[1].unescaped() }
 
-    val steps = counts.associate { fields ->
+    val steps = named.associate { fields ->
         val name = fields[1].unescaped()
+        // Reasons are not kept: a baseline exists to answer "did this get
+        // slower", and a failure that mattered is in the run's own report.
+        val ok = buckets.outcome("ok", name)
+        val failed = buckets.outcome("failed", name)
         name to StepStats(
             name = name,
-            count = fields[2].toLong(),
-            ok = fields[3].toLong(),
-            // Reasons are not kept: a baseline exists to answer "did this get
-            // slower", and a failure that mattered is in the run's own report.
-            failures = emptyMap(),
-            serviceTime = buckets["service" to name].orEmpty().asTiming(),
-            responseTime = buckets["response" to name].orEmpty().asTiming(),
+            ok = ok,
+            failed = failed,
+            serviceTime = merged(ok.serviceTime, failed.serviceTime),
+            responseTime = merged(ok.responseTime, failed.responseTime),
         )
     }
 
@@ -147,16 +153,31 @@ private fun List<List<String>>.asProfile(): InjectionProfile? =
         }
     }.lastOrNull()
 
-private fun List<List<String>>.asTiming(): Timing {
-    val buckets = map { fields -> Bucket(fields[2].toLong().nanoseconds, fields[3].toLong()) }
-    val count = buckets.sumOf { it.count }
+private fun Map<Pair<String, String>, List<List<String>>>.outcome(side: String, step: String): Outcome = Outcome(
+    serviceTime = get("$side-service" to step).orEmpty().asTiming(),
+    responseTime = get("$side-response" to step).orEmpty().asTiming(),
+)
+
+private fun List<List<String>>.asTiming(): Timing =
+    map { (_, _, bound, seen) -> Bucket(bound.toLong().nanoseconds, seen.toLong()) }.frozen()
+
+/** The whole step, rebuilt from the two sides it was written as. */
+private fun merged(left: Timing, right: Timing): Timing =
+    (left.distribution + right.distribution)
+        .groupBy { it.upperBound }
+        .map { (bound, sharing) -> Bucket(bound, sharing.sumOf { it.count }) }
+        .sortedBy { it.upperBound }
+        .frozen()
+
+private fun List<Bucket>.frozen(): Timing {
+    val count = sumOf { it.count }
     return Timing(
         count = count,
-        p50 = buckets.at(count, HALF),
-        p95 = buckets.at(count, NINETY_FIVE),
-        p99 = buckets.at(count, NINETY_NINE),
-        max = buckets.lastOrNull()?.upperBound ?: Duration.ZERO,
-        distribution = buckets,
+        p50 = at(count, HALF),
+        p95 = at(count, NINETY_FIVE),
+        p99 = at(count, NINETY_NINE),
+        max = lastOrNull()?.upperBound ?: Duration.ZERO,
+        distribution = this,
     )
 }
 
@@ -175,8 +196,10 @@ private fun String.escaped(): String = replace("\\", "\\\\").replace("\t", "\\t"
 
 private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n").replace("\\\\", "\\")
 
+private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
+
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "2"
+private const val VERSION = "3"
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

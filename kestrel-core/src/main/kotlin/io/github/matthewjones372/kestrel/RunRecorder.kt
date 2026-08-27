@@ -86,8 +86,10 @@ class RunRecorder(private val startedAt: Instant) {
 
 private class StepRecorder {
 
-    private val serviceTime = Histogram()
-    private val responseTime = Histogram()
+    // Four histograms rather than two, and no fifth: the whole-step timings are
+    // these merged at freeze, so they cannot drift from the sides they sum.
+    private val ok = OutcomeRecorder()
+    private val failed = OutcomeRecorder()
     private val failures = LinkedHashMap<String, Long>()
 
     // The accumulator AGENTS.md allows a builder: it is added to as shards are
@@ -96,17 +98,14 @@ private class StepRecorder {
 
     val seconds = Seconds()
 
-    // Both derived rather than counted: a count kept beside the histogram is a
-    // second number to keep in step, and the two disagreeing is a bug nobody
-    // would see until a report looked odd.
-    private val count: Long get() = serviceTime.count
-    private val ok: Long get() = count - failures.values.sum()
-
     fun record(failure: String?, service: Duration, response: Duration, at: Duration) {
-        serviceTime.record(service)
-        responseTime.record(response)
+        if (failure == null) {
+            ok.record(service, response)
+        } else {
+            failed.record(service, response)
+            countFailure(failure, 1L)
+        }
         seconds.record(at, failure, service)
-        if (failure != null) countFailure(failure, 1L)
     }
 
     fun leftOver(more: Outstanding) {
@@ -117,8 +116,8 @@ private class StepRecorder {
     }
 
     fun merge(other: StepRecorder) {
-        serviceTime.merge(other.serviceTime)
-        responseTime.merge(other.responseTime)
+        ok.merge(other.ok)
+        failed.merge(other.failed)
         seconds.merge(other.seconds)
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
         leftOver(other.outstanding)
@@ -126,11 +125,10 @@ private class StepRecorder {
 
     fun freeze(name: String): StepStats = StepStats(
         name = name,
-        count = count,
-        ok = ok,
-        failures = failures.toMap(),
-        serviceTime = serviceTime.timing(),
-        responseTime = responseTime.timing(),
+        ok = ok.freeze(),
+        failed = failed.freeze(failures.toMap()),
+        serviceTime = ok.serviceTime.and(failed.serviceTime).timing(),
+        responseTime = ok.responseTime.and(failed.responseTime).timing(),
         unmatched = outstanding.unmatched,
         inFlight = outstanding.inFlight,
         timeline = seconds.freeze(),
@@ -193,3 +191,26 @@ private class SecondRecorder {
 
     fun freeze(): Second = latency.asSecond(failed)
 }
+
+private class OutcomeRecorder {
+
+    val serviceTime = Histogram()
+    val responseTime = Histogram()
+
+    fun record(service: Duration, response: Duration) {
+        serviceTime.record(service)
+        responseTime.record(response)
+    }
+
+    fun merge(other: OutcomeRecorder) {
+        serviceTime.merge(other.serviceTime)
+        responseTime.merge(other.responseTime)
+    }
+
+    fun freeze(reasons: Map<String, Long> = emptyMap()): Outcome =
+        Outcome(serviceTime.timing(), responseTime.timing(), reasons)
+}
+
+/** A third histogram holding both, allocated at freeze rather than on the timed path. */
+private fun Histogram.and(other: Histogram): Histogram =
+    Histogram().also { both -> both.merge(this); both.merge(other) }

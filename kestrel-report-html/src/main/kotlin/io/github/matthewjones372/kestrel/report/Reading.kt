@@ -64,8 +64,8 @@ private fun RunResult.scheduleSentence(): String =
 
 private fun RunResult.slowestSentence(): String? {
     val slowest = steps.values.maxByOrNull { it.serviceTime.p99 } ?: return null
-    val failures = if (slowest.failed == 0L) "" else
-        ", and it carries ${slowest.failed.grouped()} of the ${failed.grouped()} failures"
+    val failures = if (slowest.failed.count == 0L) "" else
+        ", and it carries ${slowest.failed.count.grouped()} of the ${failed.grouped()} failures"
     return "<strong>${slowest.name.escapedForHtml()} is the slowest step</strong> at " +
         "${slowest.serviceTime.p99.forReport()} p99$failures."
 }

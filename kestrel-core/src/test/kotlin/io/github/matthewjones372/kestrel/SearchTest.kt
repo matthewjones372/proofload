@@ -131,10 +131,15 @@ class SearchTest {
     private fun Simulation.resultOf(took: Duration, behind: Duration): RunResult =
         RunResult(
             startedAt = Instant.EPOCH,
-            steps = mapOf(pay.name to StepStats(pay.name, 1L, 1L, emptyMap(), timingOf(took), timingOf(took))),
+            steps = mapOf(pay.name to stepOf(took)),
             behind = timingOf(behind),
             plan = plan(),
         )
+
+    private fun stepOf(took: Duration): StepStats {
+        val timing = timingOf(took)
+        return StepStats(pay.name, Outcome(timing, timing), Outcome.none, timing, timing)
+    }
 
     private fun timingOf(value: Duration): Timing = Histogram().apply { record(value) }.timing()
 }

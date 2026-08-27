@@ -172,15 +172,39 @@ internal fun Histogram.asSecond(failed: Long): Second = Second(
 )
 
 /**
+ * One side of a step — the requests that worked, or the ones that did not — and
+ * how long that side took.
+ *
+ * A target shedding load answers fast, so a rejection counted in the same
+ * histogram as a success pulls the whole distribution down and the run reports
+ * a percentile nobody experienced.
+ */
+data class Outcome(
+    val serviceTime: Timing,
+    val responseTime: Timing,
+    /** What the target said, counted by reason. Empty on the side that worked. */
+    val reasons: Map<String, Long> = emptyMap(),
+) {
+    val count: Long get() = serviceTime.count
+
+    companion object {
+        /** No request ended this way. */
+        val none: Outcome = Outcome(Timing.none, Timing.none)
+    }
+}
+
+/**
  * What one step did. `serviceTime` is what the target took; `responseTime` is
  * measured from the departure the profile promised, so a generator that fell
  * behind reports it here rather than as the target being fast.
+ *
+ * Both of those count every sample, and [ok] and [failed] hold the same samples
+ * split by how they ended: the whole-step timings are the merge of the two.
  */
 data class StepStats(
     val name: String,
-    val count: Long,
-    val ok: Long,
-    val failures: Map<String, Long>,
+    val ok: Outcome,
+    val failed: Outcome,
     val serviceTime: Timing,
     val responseTime: Timing,
     /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
@@ -190,10 +214,10 @@ data class StepStats(
     /** This step second by second, from the run's start. */
     val timeline: List<Second> = emptyList(),
 ) {
-    val failed: Long get() = count - ok
+    val count: Long get() = ok.count + failed.count
 
     /** How many failed for [reason]; none is zero rather than absent. */
-    fun failedWith(reason: String): Long = failures[reason] ?: 0L
+    fun failedWith(reason: String): Long = failed.reasons[reason] ?: 0L
 }
 
 /**
@@ -245,7 +269,7 @@ data class RunResult(
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 
-    val ok: Long get() = steps.values.sumOf { it.ok }
+    val ok: Long get() = steps.values.sumOf { it.ok.count }
 
     val failed: Long get() = count - ok
 

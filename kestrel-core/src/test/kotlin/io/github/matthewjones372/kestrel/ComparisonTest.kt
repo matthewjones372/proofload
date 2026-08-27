@@ -33,7 +33,7 @@ class ComparisonTest {
             val timing = Histogram()
                 .apply { repeat(samples) { record(seeded.nextLong(range.first, range.last).milliseconds) } }
                 .timing()
-            StepStats(name, samples.toLong(), samples.toLong(), emptyMap(), timing, timing)
+            StepStats(name, Outcome(timing, timing), Outcome.none, timing, timing)
         },
         behind = Histogram().timing(),
         plan = plan,

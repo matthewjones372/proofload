@@ -59,6 +59,7 @@ sealed interface Goal {
         }
     }
 
+    /** A count over a count, so splitting a step's timings into [Outcome]s leaves this exactly as it was. */
     data class FailureRateUnder(val step: StepName?, val share: Share) : Goal {
         override val described: String get() =
             "${step?.name ?: "the run"} failing under ${share.percent}%"
@@ -68,7 +69,7 @@ sealed interface Goal {
                 result.steps[it.name] ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
             }
             val total = counts?.count ?: result.count
-            val failed = counts?.failed ?: result.failed
+            val failed = counts?.failed?.count ?: result.failed
             val measured = if (total == 0L) 0.0 else failed.toDouble() / total * HUNDRED
             return verdictFor(measured <= share.percent, measured, share.percent, Measurement.Share(measured))
         }

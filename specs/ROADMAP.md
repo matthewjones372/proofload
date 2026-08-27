@@ -34,6 +34,8 @@ built. Each row links the spec that argued for it.
 | [0031](0031-the-rate-it-sustains.md) | `sustainable`, the ladder-then-bisect search, and the curve |
 | [0033](0033-the-share-that-met-the-target.md) | `share`, `goodput`, and a goal that reads like an SLI |
 | [0040](0040-an-answer-that-arrives-somewhere-else.md) | `emit`, `completing`, and the records that never arrived |
+| [0025](0025-what-happened-when.md) | a coarse histogram, a per-second timeline, and the charts over it |
+| [0037](0037-more-than-one-run.md) | `Runs`, merged from buckets, refusing unlike plans and machines |
 
 ## Drafted, not built
 
@@ -42,8 +44,8 @@ In the order the architect would take them.
 | Spec | Why it is next |
 |---|---|
 | [0022](0022-a-token-that-stays-fresh.md) | a soak longer than a token's life cannot authenticate |
-| [0025](0025-what-happened-when.md) | a run that degraded halfway looks identical to one that did not |
 | [0030](0030-a-baseline-in-ci.md) | the plan and the machine landed; the probe and the CI recipe have not |
+| [0039](0039-what-this-machine-can-resolve.md) | hiccups and the floor landed; 0038 has yet to consult it |
 | [0024](0024-think-time-and-closed-model.md) | `pause`, and the closed model with its caveat stated |
 | [0026](0026-checks-and-retries.md) | a 200 with an error page in it is counted as a success |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |

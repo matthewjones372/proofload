@@ -65,11 +65,11 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
 
 ## Stack
 
-- [ ] **`spec-0039-hiccups`** — the recorder on the injector JVM, and its
+- [x] **`spec-0039-hiccups`** ([#16](https://github.com/matthewjones372/kestrel/pull/16)) — the recorder on the injector JVM, and its
       distribution on the result and the page.
       Done when: an injected pause in the generator shows up in the hiccup
       distribution and is visible beside the response times of that window.
-- [ ] **`spec-0039-calibrate`** — the null-step calibration and `resolution`.
+- [x] **`spec-0039-calibrate`** ([#23](https://github.com/matthewjones372/kestrel/pull/23)) — the null-step calibration and `resolution`.
       Done when: repeated calibration on one machine reports a stable floor,
       repeats that landed further apart report a larger one, and the number
       lands on the report.

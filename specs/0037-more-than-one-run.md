@@ -59,11 +59,11 @@ this.
 
 ## Stack
 
-- [ ] **`spec-0037-runs`** — `Runs`, the merge, and refusing unlike plans.
+- [x] **`spec-0037-runs`** ([#24](https://github.com/matthewjones372/kestrel/pull/24)) — `Runs`, the merge, and refusing unlike plans.
       Done when: ten runs of one plan merge to a result whose count is the sum,
       whose p99 is read from the merged buckets, and whose merge with a
       different plan fails naming the difference.
-- [ ] **`spec-0037-files`** — reading a directory of results written by 0021's
+- [x] **`spec-0037-files`** ([#25](https://github.com/matthewjones372/kestrel/pull/25)) — reading a directory of results written by 0021's
       format, and a `main` that runs a simulation once and writes one.
       Done when: ten JVM invocations produce ten files that read back as one
       `Runs`.

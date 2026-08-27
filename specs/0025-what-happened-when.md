@@ -57,15 +57,15 @@ percentile.
 
 ## Stack
 
-- [ ] **`spec-0025-coarse`** — a histogram with a chosen precision, so the
+- [x] **`spec-0025-coarse`** ([#14](https://github.com/matthewjones372/kestrel/pull/14)) — a histogram with a chosen precision, so the
       timeline can be cheap and the summary can stay exact.
       Done when: the coarse one reports within its stated precision and the
       existing one is unchanged.
-- [ ] **`spec-0025-timeline`** — per-second recording in `RunRecorder`, merged
+- [x] **`spec-0025-timeline`** ([#19](https://github.com/matthewjones372/kestrel/pull/19)) — per-second recording in `RunRecorder`, merged
       across shards, and `RunResult.timeline`.
       Done when: a four-second run reports four seconds, counts sum to the
       run's total, and an empty second is present rather than missing.
-- [ ] **`spec-0025-charts`** — throughput, latency and failures over time.
+- [x] **`spec-0025-charts`** ([#22](https://github.com/matthewjones372/kestrel/pull/22)) — throughput, latency and failures over time.
       Done when: a run that degraded halfway through looks different on the
       page from one that did not.
 

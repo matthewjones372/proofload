@@ -41,12 +41,18 @@ time, drawn as inline SVG beside the distributions.
 The memory argument decides the design. A `Histogram` is about 43 KB; ten
 minutes of a three-step scenario at full precision is over seventy megabytes of
 counters, which is a load generator competing with its own target for memory. A
-coarse histogram — sixteen sub-buckets rather than two hundred and fifty-six,
-about 3 KB — costs five megabytes for the same run and is good to 6%, which is
-ample for a line on a chart.
+coarse histogram — thirty-two sub-buckets rather than two hundred and fifty-six,
+about 5 KB — costs under ten megabytes for the same run and is good to 6.25%,
+which is ample for a line on a chart.
+
+The draft said sixteen sub-buckets and 6% and could not have both: precision
+here is one over half the sub-bucket count, and this histogram reports bucket
+tops rather than midpoints, so sixteen is 12.5%. The 6% was the promise made to
+whoever reads the page, and the byte count was only ever standing in for "not
+seventy-seven megabytes", so the sub-bucket count is what moved.
 
 The page states that precision beside the timeline, because a number rendered
-to three figures out of a 6% bucket is the same lie as an interpolated
+to three figures out of a 6.25% bucket is the same lie as an interpolated
 percentile.
 
 ## Stack

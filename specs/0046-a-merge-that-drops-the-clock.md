@@ -51,9 +51,9 @@ whole thing.
 **Refuse.** `merged.timeline` is empty and something says so, the way
 `arrivals` does.
 
-Recommend **superimpose**, with refusal as the fallback where runs are of
-different lengths — pad or truncate silently and the last seconds are an
-average of however many runs happened to still be going.
+Recommend **superimpose**, padding the shorter runs with zero seconds up to the
+longest, and refusing only where some runs carry a timeline and others carry
+none at all.
 
 ## Why this shape
 
@@ -76,11 +76,12 @@ holds every run separately for anyone who needs it.
 ## Stack
 
 - [ ] **`spec-0046-superimposed`** — `timeline` in `Runs.merged` and in the step
-      merge, second *n* against second *n*, refusing runs of unequal length.
+      merge, second *n* against second *n*, padding to the longest run.
       Done when: ten runs of the same length merge to a timeline of that length
-      whose counts sum to the merged result's count, runs of different lengths
-      are refused naming the difference, and `runs.merged.steady` finds the
-      segment a single run of the same shape finds.
+      whose counts sum to the merged result's count, a shorter run is padded
+      with zero seconds rather than refused, a run with no timeline beside one
+      with a timeline is refused naming the difference, and `runs.merged.steady`
+      finds the segment a single run of the same shape finds.
 
 ## Acceptance
 
@@ -90,10 +91,21 @@ holds every run separately for anyone who needs it.
 
 ## Open questions
 
-1. **Is refusing unequal lengths too strict?** A run that abandoned users early
-    is shorter through no fault of the plan. Recommend refusing anyway and
-    naming it: the alternative pads with seconds nobody measured, and the whole
-    argument for `Runs` is that pooling unlike things is what it exists to stop.
+1. **Is refusing unequal lengths too strict?** Yes — it refuses the normal case.
+    Timeline length is the last second anything was recorded in, so two honest
+    replications of one two-minute plan routinely freeze at 119 and 120 seconds.
+    Pad to the longest instead. A zero second is a measurement, not an
+    invention: 0025 already writes interior quiet seconds as zeros, and the only
+    reason trailing silence goes unpadded in a single run is that a single run
+    has no defined end — a merge has one. And `Runs` already refuses unlike
+    plans, so every run in one has the same *intended* length by construction;
+    what differs is jitter in where the last response landed, which the plan
+    check has already cleared.
+
+    Refuse only where some runs carry a timeline and others carry none. Padding
+    an absent timeline *would* be an invention: the file format does not carry
+    one, so not knowing what happened in a second is a different fact from
+    knowing nothing happened.
 2. **Should the merged page draw it?** Recommend yes, labelled as the number of
     runs behind it, since 0037's open question already asks the page to say how
     many runs it drew.

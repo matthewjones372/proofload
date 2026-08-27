@@ -207,7 +207,7 @@ private fun Difference.unresolvable(floor: Floor?): Tell.CannotTell? {
 
         !floor.supports(claimed) -> Tell.CannotTell(
             "this machine cannot support a claim about a $claimed ${statistic.described}: between identical " +
-                "runs it moves by more than the ${asShare(Floor.UNUSABLE)} of that a claim would have to clear",
+                "runs it moves by ${floor.movementAt(claimed)}, more than ${asShare(Floor.UNUSABLE)} of it",
             "a quieter machine, or a claim about something this one is steady enough to measure",
         )
 

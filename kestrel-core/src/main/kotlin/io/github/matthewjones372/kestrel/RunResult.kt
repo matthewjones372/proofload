@@ -149,27 +149,30 @@ private fun List<Bucket>.valueAtRank(rank: Long): Duration =
  * A second nothing ran in is present and zero rather than missing: a gap in a
  * line is information and a dropped point is a lie about the shape.
  *
- * The percentiles are the target's service time, read from a histogram good to
- * [Histogram.COARSE_PRECISION] rather than the [Histogram.PRECISION] of the
- * summary above — a full table a second per step is tens of megabytes of
- * counters. Anything quoted from here carries that error bar.
+ * [serviceTime] is what the target took, good to [Histogram.COARSE_PRECISION]
+ * rather than the [Histogram.PRECISION] of the summary above — a full table a
+ * second per step is tens of megabytes of counters. Anything quoted from here
+ * carries that error bar.
+ *
+ * It keeps the buckets and not only the percentiles, because merging several
+ * runs' seconds means adding the buckets and reading the percentiles off the
+ * sum; two seconds' percentiles cannot be averaged into a third.
  */
 data class Second(
-    val count: Long,
-    val ok: Long,
-    val p50: Duration,
-    val p99: Duration,
+    val failed: Long,
+    val serviceTime: Timing,
 ) {
-    val failed: Long get() = count - ok
+    val count: Long get() = serviceTime.count
+
+    val ok: Long get() = count - failed
+
+    val p50: Duration get() = serviceTime.p50
+
+    val p99: Duration get() = serviceTime.p99
 }
 
 /** A second's coarse histogram, read once and frozen. */
-internal fun Histogram.asSecond(failed: Long): Second = Second(
-    count = count,
-    ok = count - failed,
-    p50 = percentile(P50),
-    p99 = percentile(P99),
-)
+internal fun Histogram.asSecond(failed: Long): Second = Second(failed = failed, serviceTime = timing())
 
 /**
  * One side of a step — the requests that worked, or the ones that did not — and

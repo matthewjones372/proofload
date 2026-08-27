@@ -460,6 +460,7 @@ val runs = Runs(listOf(first, second, third))
 
 runs.size                                   // 3
 runs.merged[pay].serviceTime.p99            // the percentile of all three runs' samples
+runs.merged.timeline[0].count               // the first second of all three, superimposed
 runs.each.map { it[pay].serviceTime.p99 }   // and the three it was merged from
 ```
 
@@ -472,8 +473,27 @@ which is what an interval across processes is made of.
 
 A merge is refused where a comparison would only warn. Runs of different plans
 are refused, naming what differs, the way `NotComparable` does — and so are runs
-measured on different machines, which `against` compares with a caveat instead.
-A comparison keeps two populations apart; a merge would pool them.
+measured on different machines, which `against` compares with a caveat instead,
+and so is a run carrying a timeline merged with one carrying none, because
+padding an absent timeline would invent seconds nobody has the data for. A
+comparison keeps two populations apart; a merge would pool them.
+
+The merged timeline is second *n* of every run superimposed, not one run after
+another: ten two-minute runs give two minutes of ten times the load, so ten
+processes warming up land in the same early seconds rather than being smeared
+across the whole thing. That is the experiment the merged percentiles beside it
+already describe. The cost is dilution — a run slow only in its own third second
+is pooled with nine that were not — which is the trade those percentiles make
+too, and `each` still holds every run on its own.
+
+A run that stopped a second short of the longest is padded with the zero
+seconds it recorded rather than refused. Timeline length is wherever the last
+response landed, so two honest replications of the same two-minute plan
+routinely freeze at 119 and 120 seconds; and a zero there is the same
+measurement as the interior zeros a single run already writes, now that the
+merge gives the run an end a single one does not have. A run read back from a
+baseline file has no timeline at all, because the format does not carry one, so
+runs read from a directory merge to a result with none either.
 
 The first run is kept rather than dropped. The classic protocol discards the
 first invocation as the cold one, and `runs.first` and `runs.afterFirst` name

@@ -48,6 +48,7 @@ private fun RunResult.documentLines(comparison: Comparison?, floor: Floor?): Lis
         floor.resolutionLines(),
         hiccupLines(),
         readingLines(),
+        failedLines(),
         stepsLines(),
         timelineLines(),
         tailLines(),

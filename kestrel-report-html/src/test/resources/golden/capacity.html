@@ -147,6 +147,11 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .goodput-step { flex: 1; }
 .goodput-value { font-variant-numeric: tabular-nums; }
 .goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
 .tail { margin: 2rem 0 0; max-width: 46rem; }
 .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }

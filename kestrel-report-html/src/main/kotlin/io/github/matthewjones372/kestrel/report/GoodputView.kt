@@ -29,10 +29,10 @@ internal fun RunResult.goodputLines(): List<String> {
     ) + goals.map { goodputLine(it) } + listOf(
         "    </ul>",
         """    <p class="note">Goodput counts the requests that both succeeded and came back inside the """ +
-            "target, over the window the plan asked for rather than the span the run took. The bucket " +
-            "holding the target counts as having missed it, and a request that missed it is charged " +
-            "against the successes — so each number here is the lowest the counts allow rather than the " +
-            "likeliest.</p>",
+            "target, over the window the plan asked for rather than the span the run took. It is read off " +
+            "the successes' own distribution, so a failure that was also slow is counted out once rather " +
+            "than twice. The bucket holding the target counts as having missed it, which is the direction " +
+            "every percentile here already rounds.</p>",
         "  </section>",
     )
 }

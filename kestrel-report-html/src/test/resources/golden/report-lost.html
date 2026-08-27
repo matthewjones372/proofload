@@ -147,6 +147,11 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .goodput-step { flex: 1; }
 .goodput-value { font-variant-numeric: tabular-nums; }
 .goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
 .tail { margin: 2rem 0 0; max-width: 46rem; }
 .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
@@ -362,8 +367,6 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "submitted",
       "count": 113,
-      "ok": 113,
-      "failed": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -382,13 +385,50 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "p999": null,
         "max": 4014079
       },
-      "failures": []
+      "ok": {
+        "count": 113,
+        "serviceTime": {
+          "count": 113,
+          "p50": 3014655,
+          "p95": 4014079,
+          "p99": 4014079,
+          "p999": null,
+          "max": 4014079
+        },
+        "responseTime": {
+          "count": 113,
+          "p50": 3014655,
+          "p95": 4014079,
+          "p99": 4014079,
+          "p999": null,
+          "max": 4014079
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
     },
     {
       "name": "settled",
       "count": 60,
-      "ok": 60,
-      "failed": 0,
       "unmatched": 41,
       "inFlight": 12,
       "serviceTime": {
@@ -407,7 +447,46 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "p999": null,
         "max": 1400897535
       },
-      "failures": []
+      "ok": {
+        "count": 60,
+        "serviceTime": {
+          "count": 60,
+          "p50": 901775359,
+          "p95": 1400897535,
+          "p99": 1400897535,
+          "p999": null,
+          "max": 1400897535
+        },
+        "responseTime": {
+          "count": 60,
+          "p50": 901775359,
+          "p95": 1400897535,
+          "p99": 1400897535,
+          "p999": null,
+          "max": 1400897535
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
     }
   ],
   "timelinePrecision": 0.0625,

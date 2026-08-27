@@ -67,7 +67,7 @@ that API is worth having.
 
 ## Stack
 
-- [ ] **`spec-0042-resolved`** — `RegressionTest` judges its unchanged pair
+- [x] **`spec-0042-resolved`** ([#34](https://github.com/matthewjones372/kestrel/pull/34)) — `RegressionTest` judges its unchanged pair
       against 0039's measured floor, and says so in its clue.
       Done when: the test passes on a machine under heavy artificial load, still
       fails when the comparison genuinely misses an injected slowdown, and names

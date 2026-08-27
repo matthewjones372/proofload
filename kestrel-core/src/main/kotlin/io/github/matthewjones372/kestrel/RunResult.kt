@@ -251,6 +251,17 @@ data class Plan(
     /** An upper bound: a scenario that abandons users sends fewer, which is the point of showing it. */
     val plannedRequests: Long get() = plannedUsers * steps.size
 
+    /**
+     * How long the profile promised between departures: its window shared out
+     * over the users it named, and zero where it named none.
+     *
+     * The rate line's own arithmetic rather than a second copy of it, so a
+     * shape that spaces its departures some other way is still measured against
+     * the spacing it actually asked for.
+     */
+    val plannedInterval: Duration
+        get() = if (plannedUsers == 0L) Duration.ZERO else plannedWindow / plannedUsers.toDouble()
+
     companion object {
         /** For a result built from samples rather than run, which claims nothing. */
         val none: Plan = Plan(scenario = "", steps = emptyList(), profile = null)
@@ -349,6 +360,19 @@ fun RunResult.fellBehind(): Boolean {
     val worst = steps.values.maxOfOrNull { it.responseTime.p99 } ?: return false
     return behind.p99 > worst * Histogram.PRECISION
 }
+
+/**
+ * Whether the injector lost ground on the rate it promised: a p99 lateness
+ * above one whole [Plan.plannedInterval] is a departure of backlog at the tail,
+ * so the load the profile named is not the load that left.
+ *
+ * The threshold for that judgement, in the one place it is stated. A different
+ * question from [fellBehind], which measures the same backlog against the
+ * target's own slowness: a fast target makes that gate impossible to pass and a
+ * slow one hides real backlog, and neither says anything about the schedule.
+ */
+fun RunResult.lostGround(): Boolean =
+    plan.plannedInterval > Duration.ZERO && behind.p99 > plan.plannedInterval
 
 private const val HUNDRED = 100.0
 private const val P50 = 50.0

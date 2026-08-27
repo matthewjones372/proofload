@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThanOrEqual
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -11,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -86,6 +88,36 @@ class SearchTest {
     }
 
     @Test
+    fun `a rung the generator kept the schedule of is judged, however fast the target answered`() {
+        val kept = rungAt(20.perSecond, took = 100.milliseconds, behind = 10_300.microseconds)
+
+        withClue("a departure every 50 ms, so 10.3 ms of lateness is a fifth of one of them") {
+            kept.outcome shouldBe Rung.Outcome.Passed
+        }
+    }
+
+    @Test
+    fun `a rung is void when the injector's lateness passed one whole departure interval`() {
+        val lost = rungAt(4_800.perSecond, took = 100.milliseconds, behind = 10.milliseconds)
+
+        withClue("a departure every 208 µs, so 10 ms of lateness is fifty departures of backlog") {
+            lost.outcome shouldBe Rung.Outcome.Void
+        }
+    }
+
+    @Test
+    fun `a rung says how much load actually left against what its profile promised`() {
+        val late = rungAt(4_800.perSecond, took = 100.milliseconds, behind = 3.seconds)
+
+        withClue("576,000 departures promised over two minutes, three seconds of them still owed") {
+            late.offered.perSecond shouldBe (576_000.0 / 123.0).plusOrMinus(1.0)
+        }
+        withClue("a rung that kept its schedule offered the rate it asked for") {
+            rungAt(20.perSecond, took = 100.milliseconds, behind = Duration.ZERO).offered shouldBe 20.perSecond
+        }
+    }
+
+    @Test
     fun `a search whose lowest rung already misses reports no sustainable rate`() {
         val capacity = search.judgedBy(failingAbove(0.perSecond))
 
@@ -125,6 +157,10 @@ class SearchTest {
         val behind = if (simulation.rate() <= ceiling.perSecond) Duration.ZERO else 30.seconds
         simulation.resultOf(took = 100.milliseconds, behind = behind)
     }
+
+    /** One rung of [search], where the target took [took] and the injector's tail lateness was [behind]. */
+    private fun rungAt(rate: Rate, took: Duration, behind: Duration): Rung =
+        Rung(rate, search.at(rate).resultOf(took = took, behind = behind))
 
     private fun Simulation.rate(): Double = (profile as InjectionProfile.ConstantRate).perSecond
 

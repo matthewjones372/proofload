@@ -1,12 +1,15 @@
 package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RunResultTest {
 
@@ -107,6 +110,41 @@ class RunResultTest {
     fun `a run with no steps cannot be behind, because there is nothing to be late for`() {
         result.copy(steps = emptyMap()).fellBehind() shouldBe false
     }
+
+    @Test
+    fun `a run lost ground when its lateness passed the interval between the departures it promised`() {
+        withClue("a departure every 200 ms, against 100 ms of lateness at the tail") {
+            result.copy(plan = planAt(5.perSecond)).lostGround() shouldBe false
+        }
+        withClue("a departure every 50 ms, against the same 100 ms") {
+            result.copy(plan = planAt(20.perSecond)).lostGround() shouldBe true
+        }
+    }
+
+    @Test
+    fun `a run nobody planned cannot have lost ground, because no schedule was promised`() {
+        result.lostGround() shouldBe false
+    }
+
+    @Test
+    fun `losing ground asks about the schedule, so a fast target cannot void a run that kept it`() {
+        val measured = RunResult(
+            startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+            steps = mapOf("pay" to pay.copy(responseTime = timingOf(listOf(267.milliseconds)))),
+            behind = timingOf(listOf(10_300.microseconds)),
+            plan = planAt(20.perSecond),
+        )
+
+        withClue("the backlog is above the histogram's error bar on a 267 ms p99, so the footer says so") {
+            measured.fellBehind() shouldBe true
+        }
+        withClue("10.3 ms is a fifth of the 50 ms between departures, so the schedule was kept") {
+            measured.lostGround() shouldBe false
+        }
+    }
+
+    private fun planAt(rate: Rate): Plan =
+        Plan("checkout", listOf("pay"), constantRate(rate, over = 2.seconds))
 
     @Test
     fun `a timing over nothing reports nothing rather than a zero somebody reads as fast`() {

@@ -48,6 +48,28 @@ class CapacityPageTest {
     }
 
     @Test
+    fun `a void rung names the interval it promised, so a reader can check the rule rather than trust it`() {
+        val page = Fixtures.voidedCapacity.toHtmlReport()
+
+        withClue("4,000/s over two minutes is a departure every 250 µs") {
+            page shouldContain "a departure every 250 µs"
+        }
+        withClue("the lateness the rule was applied to is printed beside the threshold") {
+            page shouldContain "80.2 ms at p99"
+        }
+    }
+
+    @Test
+    fun `every rung says how much load actually left against the rate it asked for`() {
+        val page = Fixtures.capacity.toHtmlReport()
+
+        page shouldContain """<th scope="col" class="num">Offered</th>"""
+        withClue("100 µs of backlog still owed at the tail of two minutes held at 1,000/s") {
+            page shouldContain """<td class="num">999.999/s</td>"""
+        }
+    }
+
+    @Test
     fun `nothing on the page is fetched from anywhere`() {
         val page = Fixtures.capacity.toHtmlReport()
 

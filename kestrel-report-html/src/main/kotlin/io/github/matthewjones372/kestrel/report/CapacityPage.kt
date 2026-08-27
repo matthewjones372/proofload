@@ -71,9 +71,11 @@ private fun Capacity.voidLines(): List<String> {
     val voidRung = curve.firstOrNull { it.outcome == Rung.Outcome.Void } ?: return emptyList()
     return listOf(
         """  <p class="behind" id="kestrel-void" role="status">""",
-        "    <strong>Stopped on a void rung.</strong> The injector fell behind at " +
-            "${voidRung.rate.perSecond.asRate()}, so that rung is void: the load was never offered and " +
-            "nothing there was learned about the target. The search stopped rather than climb further.",
+        "    <strong>Stopped on a void rung.</strong> At ${voidRung.rate.perSecond.asRate()} the profile " +
+            "promised a departure every ${voidRung.result.plan.plannedInterval.forReport()}, and the " +
+            "injector's own lateness reached ${voidRung.result.behind.p99.forReport()} at p99 — a whole " +
+            "departure behind at the tail. That rung is void: the load was never offered, so nothing " +
+            "there was learned about the target, and the search stopped rather than climb further.",
         "  </p>",
     )
 }
@@ -187,6 +189,7 @@ private fun Rung.rowLines(chosen: Boolean): List<String> {
         """          <tr class="rung ${outcome.word()}${if (chosen) " chosen" else ""}" """ +
             """data-rate="${rate.perSecond}">""",
         """            <th scope="row">${rate.perSecond.asRate()}</th>""",
+        """            <td class="num">${offered.perSecond.asRate()}</td>""",
         """            <td class="outcome">${outcome.word()}$marked</td>""",
         """            <td class="num">${result.count.grouped()}</td>""",
         """            <td class="num failed">${result.failed.grouped()}</td>""",
@@ -198,7 +201,7 @@ private fun Rung.rowLines(chosen: Boolean): List<String> {
 
 /** What the rung was judged to be, in the words the goals themselves use. */
 private fun Rung.judgement(): String = when (outcome) {
-    Rung.Outcome.Void -> "not judged — the injector fell behind"
+    Rung.Outcome.Void -> "not judged — the injector lost the schedule"
 
     Rung.Outcome.Passed -> "every goal met"
 
@@ -210,9 +213,11 @@ private fun Capacity.noteLines(): List<String> =
     listOf(
         """  <p class="note">Each rung held its rate for the whole window and was judged on all of it; """ +
             "there is no warm-up. Response time counts from the departure the profile promised, so it " +
-            "carries any backlog of the generator's own. A rung whose backlog was large enough to move " +
-            "those numbers is void rather than failed: the load was never offered, so nothing there is " +
-            "the target's.</p>",
+            "carries any backlog of the generator's own. A rung is void rather than failed when the " +
+            "injector's own lateness passed one whole departure interval at p99 — a departure behind at " +
+            "the tail — because the load it asked for was never offered, so nothing there is the " +
+            "target's. Void rungs are still drawn: the rate the generator itself ran out at is worth " +
+            "seeing. Offered is what left, against the rate the rung asked for.</p>",
         "</main>",
         "</body>",
         "</html>",
@@ -234,6 +239,7 @@ private fun Double.round(): String = String.format(Locale.ROOT, "%.1f", this)
 /** Each column, and whether it holds a number. */
 private val COLUMNS = listOf(
     "Rate" to false,
+    "Offered" to true,
     "Verdict" to false,
     "Requests" to true,
     "Failed" to true,

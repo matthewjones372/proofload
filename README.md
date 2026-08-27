@@ -526,6 +526,11 @@ counters for a ten-minute run, and a generator competing with its target for
 memory measures itself. Quote the summary for a number and the timeline for a
 shape; [docs/what-it-costs.md](docs/what-it-costs.md) has the arithmetic.
 
+The HTML report draws all three over the run — requests a second, p50 and p99
+a second, and failures a second — as inline SVG, each second a flat segment
+because nothing was measured between two of them, and that precision printed
+underneath.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

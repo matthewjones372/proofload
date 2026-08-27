@@ -168,6 +168,18 @@ internal val REPORT_CSS: String = """
     .mark-label { fill: var(--failed); font-size: 9px; }
     .tick { stroke: var(--line); stroke-width: 1; }
     .tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
+    .timeline { margin: 2rem 0 0; }
+    .chart.over-time svg { height: 4.5rem; }
+    .series { fill: none; stroke-width: 1.5; }
+    .series.count { stroke: var(--fg); opacity: 0.7; }
+    .series.p50 { stroke: var(--muted); }
+    .series.p99 { stroke: var(--fg); }
+    .series.failed { stroke: var(--failed); }
+    .key { font-weight: 600; }
+    .key.p50 { color: var(--muted); }
+    .key.p99 { color: var(--fg); }
+    .series-start { text-anchor: start; }
+    .series-end { text-anchor: end; }
     .note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
     .operating { margin: 0 0 1.5rem; }
     .operating-rate { font-size: 1.6rem; margin: 0; font-variant-numeric: tabular-nums; }

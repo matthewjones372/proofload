@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kestrel run — 2026-08-26T09:00:00Z</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fdfdfc;
+  --fg: #1b1b19;
+  --muted: #6b6b66;
+  --line: #e2e2dd;
+  --card: #ffffff;
+  --ok: #1c7c4a;
+  --failed: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --fg: #e8e8e4;
+    --muted: #9a9a94;
+    --line: #2c2e33;
+    --card: #1d1f23;
+    --ok: #57c38a;
+    --failed: #f2857c;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+main { max-width: 68rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+h2 { font-size: 1.05rem; margin: 0; }
+.when { color: var(--muted); margin: 0 0 1.5rem; }
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem 0.9rem; }
+.tile-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tile-value { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; margin-top: 0.15rem; }
+.tile.ok .tile-value { color: var(--ok); }
+.tile.failed .tile-value { color: var(--failed); }
+.steps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; }
+thead th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.ok { color: var(--ok); }
+td.failed { color: var(--failed); }
+tr.reasons > td { background: var(--card); }
+.reason-list { list-style: none; margin: 0; padding: 0; }
+.reason-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; }
+.reason { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+.reason { overflow-wrap: anywhere; }
+.reason-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+.behind {
+  background: color-mix(in srgb, var(--failed) 12%, var(--card));
+  border: 1px solid var(--failed);
+  border-radius: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 1.5rem;
+}
+thead th button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+thead th[aria-sort="ascending"] button::after { content: " \2191"; }
+thead th[aria-sort="descending"] button::after { content: " \2193"; }
+tr.step[aria-expanded] { cursor: pointer; }
+tr.step[aria-expanded="true"] > th::before { content: "\25BE "; }
+tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
+#mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
+#mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+.verdicts {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  padding: 0.8rem 1rem;
+  margin: 0 0 1.5rem;
+}
+.verdicts.met { border-left-color: var(--ok); }
+.verdicts.missed { border-left-color: var(--failed); }
+.verdict-headline { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.verdict-list { list-style: none; margin: 0; padding: 0; }
+.verdict-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.verdict-list li::before { content: "met"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--ok); }
+.verdict-list li.missed::before { content: "missed"; color: var(--failed); }
+.verdict-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+.verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.changes { margin: 0 0 1.5rem; }
+.caveat { border: 1px solid var(--muted); border-radius: 0.5rem; padding: 0.6rem 0.8rem; margin: 0 0 0.6rem; }
+.change-headline { margin: 0 0 0.5rem; }
+.change-list { list-style: none; margin: 0; padding: 0; }
+.change-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.change-list li::before { content: "same"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--muted); }
+.change-list li.worse::before { content: "worse"; color: var(--failed); }
+.change-list li.better::before { content: "better"; color: var(--ok); }
+.change-list li.new::before { content: "new"; }
+.change-list li.gone::before { content: "gone"; color: var(--failed); }
+.change-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+.change-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan { margin: 0 0 1.5rem; }
+.plan p { margin: 0 0 0.5rem; }
+.plan p.arrivals { color: var(--muted); font-size: 0.82rem; }
+.chart.shape svg { height: 4.5rem; }
+.shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
+.shape-area { fill: var(--fg); opacity: 0.09; }
+.shape-end, .curve-end { text-anchor: end; }
+.goodput { margin: 0 0 2rem; max-width: 46rem; }
+.goodput-headline { margin: 0.4rem 0 0.6rem; font-size: 1.05rem; }
+.goodput-list { list-style: none; margin: 0; padding: 0; }
+.goodput-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.goodput-step { flex: 1; }
+.goodput-value { font-variant-numeric: tabular-nums; }
+.goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
+.tail { margin: 2rem 0 0; max-width: 46rem; }
+.tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.tail-step { flex: 1; }
+.tail-value { font-variant-numeric: tabular-nums; }
+.tail-value.none, .tail-interval { color: var(--muted); }
+.reading { margin: 0 0 2rem; max-width: 46rem; }
+.reading p { margin: 0 0 0.6rem; }
+.reading strong { font-weight: 600; }
+.chart { margin: 1.5rem 0 0; }
+.chart figcaption { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
+.chart svg { width: 100%; height: 9rem; overflow: visible; }
+.bar { fill: var(--ok); opacity: 0.75; }
+.mark { stroke: var(--failed); stroke-width: 1; stroke-dasharray: 3 2; }
+.mark-label { fill: var(--failed); font-size: 9px; }
+.tick { stroke: var(--line); stroke-width: 1; }
+.tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
+.timeline { margin: 2rem 0 0; }
+.chart.over-time svg { height: 4.5rem; }
+.series { fill: none; stroke-width: 1.5; }
+.series.count { stroke: var(--fg); opacity: 0.7; }
+.series.p50 { stroke: var(--muted); }
+.series.p99 { stroke: var(--fg); }
+.series.failed { stroke: var(--failed); }
+.key { font-weight: 600; }
+.key.p50 { color: var(--muted); }
+.key.p99 { color: var(--fg); }
+.series-start { text-anchor: start; }
+.series-end { text-anchor: end; }
+.note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
+.operating { margin: 0 0 1.5rem; }
+.operating-rate { font-size: 1.6rem; margin: 0; font-variant-numeric: tabular-nums; }
+.operating-limit { color: var(--muted); margin: 0.25rem 0 0; }
+.chart.curve svg { height: 11rem; }
+.curve-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.45; }
+.dot { fill: var(--ok); }
+.dot.failed { fill: var(--failed); }
+.dot.void { fill: var(--muted); }
+.chosen-mark { stroke: var(--ok); stroke-width: 1; stroke-dasharray: 3 2; }
+.chosen-label { fill: var(--ok); font-size: 9px; }
+.chosen-tag { color: var(--ok); font-size: 0.75rem; letter-spacing: 0.05em; margin-left: 0.4rem; }
+tr.rung.chosen > th { font-weight: 700; }
+tr.rung.failed > td.outcome { color: var(--failed); }
+tr.rung.void > td.outcome { color: var(--muted); }
+td.goals { color: var(--muted); font-size: 0.85rem; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header class="run">
+    <h1>Kestrel run</h1>
+    <p class="when">Started <time datetime="2026-08-26T09:00:00Z">2026-08-26T09:00:00Z</time></p>
+  </header>
+  <section class="changes" aria-label="Against the runs before">
+    <p class="change-headline"><strong>2 of 4 statistics moved by more than these runs can tell.</strong></p>
+    <p>pay p99 is <strong>5.17% slower</strong> (4.10% to 6.50%, 10 runs against 10). <strong>Worse</strong> than the 3% that was declared acceptable.</p>
+    <p>pay p95 is <strong>10.00% faster</strong> (-13.00% to -7.00%, 10 runs against 10). <strong>Better</strong> than the 3% that was declared acceptable.</p>
+    <p>pay goodput under 200ms is <strong>0.51% less</strong> (-2.00% to 1.00%, 10 runs against 10). <strong>Cannot tell</strong>: the whole interval is inside the 3% that was declared acceptable. What would change it: a smaller threshold, if a change this size is worth acting on.</p>
+    <p>browse p99: <strong>cannot tell</strong>. only 3 runs here and 10 in the baseline. What would change it: five runs a side, at least.</p>
+    <p class="note">Each interval is ten thousand resamples of the runs themselves, seeded so that reading one set of results twice reaches one verdict. A verdict is that interval against the size a team declared worth acting on, rather than against no change at all.</p>
+  </section>
+  <section class="plan" aria-label="What was asked for">
+    <p><strong>checkout</strong> — 1 step, 10/s held for 10.0 s. Planned 100 users, 100 requests.</p>
+    <p class="arrivals">Arrivals were evenly spaced, which understates queueing against the same mean rate in production.</p>
+    <figure class="chart shape">
+      <figcaption>the shape that was asked for — peak 10/s</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">
+        <polygon class="shape-area" points="0.0,60.0 0.0,8.0 640.0,8.0 640.0,60.0"></polygon>
+        <polyline class="shape-line" points="0.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label shape-start" x="0" y="78">0</text>
+        <text class="tick-label shape-end" x="640.0" y="78">10.0 s</text>
+      </svg>
+    </figure>
+  </section>
+  <p class="behind" id="kestrel-behind" role="status">
+    <strong>Behind schedule.</strong> 1.00 ms late at p99, 1.00 ms at worst. The response times below include that backlog.
+  </p>
+  <section class="totals" aria-label="Totals">
+    <div class="tile">
+      <span class="tile-label">Requests</span>
+      <span class="tile-value">100</span>
+    </div>
+    <div class="tile ok">
+      <span class="tile-label">OK</span>
+      <span class="tile-value">99</span>
+    </div>
+    <div class="tile failed">
+      <span class="tile-label">Failed</span>
+      <span class="tile-value">1</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Behind schedule, p99</span>
+      <span class="tile-value">1.00 ms</span>
+    </div>
+  </section>
+  <section class="reading" aria-label="What these numbers say">
+    <p><strong>100 requests</strong>, <strong>1 failed</strong> (1.0%).</p>
+    <p>The run sent all 100 of them.</p>
+    <p>The generator fell behind its own schedule by 1.00 ms at p99, so the response times below include time this tool spent queueing rather than time the target took.</p>
+    <p><strong>pay is the slowest step</strong> at 20.1 ms p99, and it carries 1 of the 1 failures.</p>
+  </section>
+  <section class="failures" aria-label="What the failures took">
+    <h2>What failed, and how fast</h2>
+    <ul class="failures-list">
+      <li><span class="failures-step">pay</span><span class="failures-value">1 failed at 20.1 ms p99, against 801 ms for the 99 that worked</span></li>
+    </ul>
+    <p class="note">Service time, so this is the target's own speed rather than a wait this tool added. The table below counts these samples alongside the successes, and a target that sheds load answers a rejection at once — the faster it sheds, the better that table looks. A step that failed nothing is not listed.</p>
+  </section>
+  <section class="steps">
+    <div class="steps-head">
+      <h2>Steps</h2>
+      <p class="mode">Showing <strong id="mode-name">service time</strong>. <button type="button" id="mode-toggle">Show response time</button></p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" data-sort="step" aria-sort="none"><button type="button">Step</button></th>
+            <th scope="col" class="num" data-sort="count" aria-sort="none"><button type="button">Count</button></th>
+            <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
+            <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
+            <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
+            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (6)</button></th>
+            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (2)</button></th>
+            <th scope="col" class="num" data-sort="max" aria-sort="none"><button type="button">Max</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="step" data-step="pay" aria-expanded="false" tabindex="0">
+            <th scope="row">pay</th>
+            <td class="num">100</td>
+            <td class="num ok">99</td>
+            <td class="num failed">1</td>
+            <td class="num time" data-service="20.1 ms" data-response="50.1 ms" data-service-ns="20054015" data-response-ns="50069503">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="50.1 ms" data-service-ns="20054015" data-response-ns="50069503">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="50.1 ms" data-service-ns="20054015" data-response-ns="50069503">20.1 ms</td>
+            <td class="num time" data-service="801 ms" data-response="902 ms" data-service-ns="801112063" data-response-ns="901775359">801 ms</td>
+          </tr>
+          <tr class="reasons" data-for="pay">
+            <td colspan="8">
+              <ul class="reason-list">
+                <li><span class="reason">status 503</span><span class="reason-count">1</span></li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      <figure class="chart">
+        <figcaption>pay — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="pay distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>99 at 20.1 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="118.8" width="4.0" height="1.2">
+            <title>1 at 801 ms</title>
+          </rect>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p99</text>
+          <line class="tick" x1="277.1" y1="120.0" x2="277.1" y2="124.0"></line>
+          <text class="tick-label" x="277.1" y="140">100 ms</text>
+        </svg>
+      </figure>
+    <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+  </section>
+  <section class="tail" aria-label="The tail">
+    <h2>p99.9</h2>
+    <ul class="tail-list">
+      <li><span class="tail-step">pay</span><span class="tail-value none">Not measured — only 100 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+    </ul>
+    <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
+  </section>
+</main>
+<script type="application/json" id="kestrel-run">
+{
+  "startedAt": "2026-08-26T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "count": 100,
+  "ok": 99,
+  "failed": 1,
+  "behind": {
+    "count": 1,
+    "p50": 1003519,
+    "p95": 1003519,
+    "p99": 1003519,
+    "p999": null,
+    "max": 1003519
+  },
+  "hiccups": {
+    "count": 0,
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "p999": null,
+    "max": 0
+  },
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
+  "steps": [
+    {
+      "name": "pay",
+      "count": 100,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 100,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 801112063
+      },
+      "responseTime": {
+        "count": 100,
+        "p50": 50069503,
+        "p95": 50069503,
+        "p99": 50069503,
+        "p999": null,
+        "max": 901775359
+      },
+      "ok": {
+        "count": 99,
+        "serviceTime": {
+          "count": 99,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 801112063,
+          "p999": null,
+          "max": 801112063
+        },
+        "responseTime": {
+          "count": 99,
+          "p50": 50069503,
+          "p95": 50069503,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 1,
+        "serviceTime": {
+          "count": 1,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "responseTime": {
+          "count": 1,
+          "p50": 50069503,
+          "p95": 50069503,
+          "p99": 50069503,
+          "p999": null,
+          "max": 50069503
+        },
+        "reasons": [
+          {
+            "reason": "status 503",
+            "count": 1
+          }
+        ]
+      }
+    }
+  ],
+  "timelinePrecision": 0.0625,
+  "timeline": []
+}
+</script>
+<script>
+(function () {
+  var table = document.querySelector('.steps table');
+  if (!table) return;
+  var body = table.tBodies[0];
+
+  function rowsOf(step) {
+    return Array.prototype.filter.call(body.rows, function (row) {
+      return row.dataset.step === step || row.dataset.for === step;
+    });
+  }
+
+  Array.prototype.forEach.call(body.querySelectorAll('tr.reasons'), function (row) {
+    row.hidden = true;
+  });
+
+  body.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.step[aria-expanded]');
+    if (!row) return;
+    var open = row.getAttribute('aria-expanded') === 'true';
+    row.setAttribute('aria-expanded', open ? 'false' : 'true');
+    rowsOf(row.dataset.step).forEach(function (each) {
+      if (each.classList.contains('reasons')) each.hidden = open;
+    });
+  });
+
+  var toggle = document.getElementById('mode-toggle');
+  var name = document.getElementById('mode-name');
+  toggle.addEventListener('click', function () {
+    var showing = table.dataset.mode === 'response' ? 'service' : 'response';
+    table.dataset.mode = showing;
+    name.textContent = showing === 'response' ? 'response time' : 'service time';
+    toggle.textContent = showing === 'response' ? 'Show service time' : 'Show response time';
+    Array.prototype.forEach.call(table.querySelectorAll('td.time'), function (cell) {
+      cell.textContent = showing === 'response' ? cell.dataset.response : cell.dataset.service;
+    });
+  });
+
+  function keyOf(row, column, mode) {
+    var cell = row.cells[column];
+    if (cell.classList.contains('time')) {
+      return Number(mode === 'response' ? cell.dataset.responseNs : cell.dataset.serviceNs);
+    }
+    var text = cell.textContent.replace(/[^0-9.]/g, '');
+    return text === '' ? cell.textContent.toLowerCase() : Number(text);
+  }
+
+  Array.prototype.forEach.call(table.tHead.rows[0].cells, function (header, column) {
+    header.querySelector('button').addEventListener('click', function () {
+      var descending = header.getAttribute('aria-sort') !== 'descending';
+      Array.prototype.forEach.call(table.tHead.rows[0].cells, function (each) {
+        each.setAttribute('aria-sort', 'none');
+      });
+      header.setAttribute('aria-sort', descending ? 'descending' : 'ascending');
+
+      var mode = table.dataset.mode === 'response' ? 'response' : 'service';
+      var steps = Array.prototype.filter.call(body.rows, function (row) {
+        return row.classList.contains('step');
+      });
+      steps.sort(function (left, right) {
+        var a = keyOf(left, column, mode);
+        var b = keyOf(right, column, mode);
+        if (a === b) return 0;
+        return (a < b ? -1 : 1) * (descending ? -1 : 1);
+      });
+      steps.forEach(function (row) {
+        rowsOf(row.dataset.step).forEach(function (each) { body.appendChild(each); });
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

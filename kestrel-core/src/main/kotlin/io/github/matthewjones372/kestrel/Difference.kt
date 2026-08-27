@@ -19,6 +19,11 @@ sealed interface Statistic {
     /** Which way is bad: a slower percentile is worse, and less goodput is worse. */
     val higherIsWorse: Boolean
 
+    /** How a report reads this having gone up, and having gone down: "slower" and "faster". */
+    val moreIs: String
+
+    val lessIs: String
+
     /** What this reads out of one run, or null when that run never ran the step. */
     fun samplesIn(run: RunResult): Samples?
 
@@ -140,6 +145,34 @@ fun Runs.against(baseline: Runs, statistic: Statistic, acceptable: Share = NOTHI
     )
 }
 
+/**
+ * Whether this is not worse than [acceptable].
+ *
+ * A verdict of cannot tell passes unless [orCannotTell] says otherwise. A test
+ * that fails on "cannot tell" fails on a noisy Tuesday and gets deleted on the
+ * Wednesday, so a team that would rather stop and look asks for it.
+ */
+fun Difference.notWorseThan(acceptable: Share, orCannotTell: Boolean = false): Boolean =
+    when (judgedAt(acceptable)) {
+        Tell.Worse -> false
+        Tell.Better -> true
+        is Tell.CannotTell -> !orCannotTell
+    }
+
+/** What these runs said, in the words an assertion fails with. */
+fun Difference.explained(acceptable: Share): String {
+    val counted = "$runs runs against $baselineRuns" + interval?.let { ", ratio ${it.low} to ${it.high}" }.orEmpty()
+    val declared = "the ${acceptable.described} declared acceptable"
+    return when (val told = judgedAt(acceptable)) {
+        Tell.Worse -> "${statistic.described} is worse than $declared ($counted)"
+
+        Tell.Better -> "${statistic.described} is better than $declared ($counted)"
+
+        is Tell.CannotTell ->
+            "${statistic.described} ($counted): cannot tell. ${told.why}. What would change it: ${told.wouldChangeIt}"
+    }
+}
+
 /** Any difference these runs can resolve is one, until a caller declares a size worth acting on. */
 private val NOTHING_DECLARED: Share = Share(0.0)
 
@@ -152,12 +185,12 @@ private fun Spread.tell(acceptable: Share, higherIsWorse: Boolean): Tell {
         high < 1.0 - declared -> if (higherIsWorse) Tell.Better else Tell.Worse
 
         low > 1.0 - declared && high < 1.0 + declared -> Tell.CannotTell(
-            "the whole interval is inside the ${acceptable.percent}% that was declared acceptable",
+            "the whole interval is inside the ${acceptable.described} that was declared acceptable",
             "a smaller threshold, if a change this size is worth acting on",
         )
 
         else -> Tell.CannotTell(
-            "the interval spans the ${acceptable.percent}% that was declared acceptable",
+            "the interval spans the ${acceptable.described} that was declared acceptable",
             "more runs would narrow it",
         )
     }

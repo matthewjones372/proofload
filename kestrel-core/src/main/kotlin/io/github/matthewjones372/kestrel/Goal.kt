@@ -17,7 +17,11 @@ enum class Clock {
 
 /** A share of something, as a percentage. */
 @JvmInline
-value class Share(val percent: Double)
+value class Share(val percent: Double) {
+
+    /** As a team wrote it: `3.percent` reads back as "3%", and `2.5.percent` as "2.5%". */
+    val described: String get() = if (percent % 1.0 == 0.0) "${percent.toLong()}%" else "$percent%"
+}
 
 val Number.percent: Share get() = Share(toDouble())
 
@@ -185,6 +189,10 @@ data class PercentileOf internal constructor(
 
     override val higherIsWorse: Boolean get() = true
 
+    override val moreIs: String get() = "slower"
+
+    override val lessIs: String get() = "faster"
+
     override fun samplesIn(run: RunResult): Samples? =
         run.steps[step.name]?.let { Samples(it.timing(clock), it.count, it.failed.count) }
 
@@ -223,6 +231,10 @@ data class GoodputOf internal constructor(
     override val described: String get() = "${step.name} goodput under $under"
 
     override val higherIsWorse: Boolean get() = false
+
+    override val moreIs: String get() = "more"
+
+    override val lessIs: String get() = "less"
 
     /** The successes' own distribution: what a request that worked took, over every request the step made. */
     override fun samplesIn(run: RunResult): Samples? =

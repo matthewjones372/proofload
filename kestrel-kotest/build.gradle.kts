@@ -11,6 +11,12 @@ dependencies {
     api(project(":kestrel-engine"))
     compileOnly("io.kotest:kotest-framework-engine:6.2.4")
 
+    // The matchers this module publishes are Kotest matchers, so they compile
+    // against its `Matcher` type. Compile-only for the same reason as above: a
+    // spec that uses them already has Kotest, and one that does not should not
+    // be handed it by a load-testing library.
+    compileOnly("io.kotest:kotest-assertions-shared:6.2.4")
+
     // The specs here need a real Kotest to run against, and its JUnit platform
     // runner to be discovered by Gradle. Both are test-only: a consumer brings
     // their own.

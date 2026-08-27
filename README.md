@@ -597,6 +597,43 @@ import kotlin.time.Duration.Companion.milliseconds
 candidate.against(baseline, goodput(pay, under = 200.milliseconds))
 ```
 
+Hand a list of them to the report and the page carries each one — the size, the
+interval, the verdict, and for a verdict that cannot tell, what would change it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.p95
+import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import java.nio.file.Path
+
+candidate.merged.writeHtmlReport(
+    path = Path.of("build/reports/kestrel.html"),
+    differences = listOf(
+        candidate.against(baseline, p99(pay), acceptable = 3.percent),
+        candidate.against(baseline, p95(pay), acceptable = 3.percent),
+    ),
+)
+```
+
+The assertion is in both test frameworks, and the threshold is declared at the
+assertion rather than at the comparison, because that is where somebody decided
+what mattered:
+
+```kotlin
+import io.github.matthewjones372.kestrel.kotest.NotWorseThan
+
+candidate.against(baseline, p99(pay)) shouldBe NotWorseThan(3.percent)
+```
+
+```kotlin
+import io.github.matthewjones372.kestrel.junit5.assertNotWorseThan
+
+candidate.against(baseline, p99(pay)).assertNotWorseThan(3.percent)
+```
+
+A comparison that cannot tell passes both. A test that fails on "cannot tell"
+fails on a noisy Tuesday and gets deleted on the Wednesday — so stopping for one
+is `orCannotTell = true`, asked for by name.
+
 A whole-run p99 cannot tell a target that degraded after ninety seconds from
 one that was evenly slow: both report the same number. `result.timeline` is the
 run second by second, counted from its start:

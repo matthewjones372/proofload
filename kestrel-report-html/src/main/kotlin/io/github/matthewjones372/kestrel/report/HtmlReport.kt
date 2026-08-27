@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Difference
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
@@ -19,8 +20,11 @@ import kotlin.time.Duration
  * in the same file, so it opens from a `file://` URL and uploads as a CI
  * artifact unchanged.
  */
-public fun RunResult.toHtmlReport(comparison: Comparison? = null, floor: Floor? = null): String =
-    documentLines(comparison, floor).joinToString(separator = "\n", postfix = "\n")
+public fun RunResult.toHtmlReport(
+    comparison: Comparison? = null,
+    floor: Floor? = null,
+    differences: List<Difference> = emptyList(),
+): String = documentLines(comparison, floor, differences).joinToString(separator = "\n", postfix = "\n")
 
 /**
  * Writes [toHtmlReport] to [path], creating the directories above it, and
@@ -30,17 +34,23 @@ public fun RunResult.writeHtmlReport(
     path: Path,
     comparison: Comparison? = null,
     floor: Floor? = null,
+    differences: List<Difference> = emptyList(),
 ): Path {
     path.parent?.let { Files.createDirectories(it) }
-    return Files.writeString(path, toHtmlReport(comparison, floor), Charsets.UTF_8)
+    return Files.writeString(path, toHtmlReport(comparison, floor, differences), Charsets.UTF_8)
 }
 
-private fun RunResult.documentLines(comparison: Comparison?, floor: Floor?): List<String> =
+private fun RunResult.documentLines(
+    comparison: Comparison?,
+    floor: Floor?,
+    differences: List<Difference>,
+): List<String> =
     listOf(
         headLines(),
         verdictLines(),
         steadyLines(),
         comparison.comparisonLines(floor),
+        differences.differenceLines(),
         plan.headerLines(arrivals),
         lostLines(),
         behindLines(),

@@ -46,6 +46,13 @@ class DifferenceTest {
         )
     }
 
+    /** A hundred injector stalls: [typically] for ninety-nine of them, and [worst] for the hundredth. */
+    private fun stallsOf(worst: Duration, typically: Duration = worst): Timing =
+        Histogram().apply {
+            repeat(99) { record(typically) }
+            record(worst)
+        }.timing()
+
     private fun runsAt(scale: Double, of: List<Int> = spreadOut, plan: Plan = paying): Runs =
         Runs(of.map { runOf((it * scale).milliseconds, plan = plan) })
 
@@ -157,6 +164,62 @@ class DifferenceTest {
         val difference = runsAt(scale = 1.0).against(runsAt(scale = 1.0), p99(step("browse")))
 
         difference.verdict.shouldBeInstanceOf<Tell.CannotTell>().why shouldContain "browse"
+    }
+
+    @Test
+    fun `a two percent difference on a machine that cannot resolve six percent is not a difference`() {
+        val floor = Floor(resolution = 0.061, hiccups = Timing.none)
+
+        val difference = runsAt(scale = 1.02).against(runsAt(scale = 1.0), p99(pay), floor = floor)
+
+        val verdict = difference.verdict.shouldBeInstanceOf<Tell.CannotTell>()
+        verdict.why shouldContain "6.1%"
+        verdict.wouldChangeIt shouldContain "quieter machine"
+        difference.interval shouldBe null
+    }
+
+    @Test
+    fun `a change smaller than the machine's own stalls is the machine`() {
+        val floor = Floor(resolution = 0.01, hiccups = stallsOf(37.milliseconds))
+
+        val difference = runsAt(scale = 1.04).against(runsAt(scale = 1.0), p99(pay), floor = floor)
+
+        val verdict = difference.verdict.shouldBeInstanceOf<Tell.CannotTell>()
+        withClue("the p99 moved by about 4 ms and this machine stalls for 37: ${verdict.why}") {
+            verdict.why shouldContain "37"
+        }
+        verdict.wouldChangeIt shouldContain "quieter machine"
+    }
+
+    @Test
+    fun `a claim at the median clears the stalls at the median, not the ones at the tail`() {
+        val floor = Floor(resolution = 0.01, hiccups = stallsOf(37.milliseconds, typically = 1.milliseconds))
+
+        val difference = runsAt(scale = 1.04).against(runsAt(scale = 1.0), p50(pay), floor = floor)
+
+        withClue("a stall one request in a hundred waits for cannot have moved a median") {
+            difference.interval.shouldNotBeNull()
+        }
+    }
+
+    @Test
+    fun `a floor too coarse to be a fraction of this claim does not refuse it`() {
+        // What a loaded machine reports: 125% of a null step whose median is
+        // tens of microseconds, which says nothing about a target at 100 ms.
+        val floor = Floor(resolution = 1.25, hiccups = stallsOf(7.milliseconds))
+
+        val difference = runsAt(scale = 1.2).against(runsAt(scale = 1.0), p99(pay), 3.percent, floor)
+
+        difference.verdict shouldBe Tell.Worse
+    }
+
+    @Test
+    fun `a share of requests has no stalls to clear, so only the relative floor can refuse it`() {
+        val floor = Floor(resolution = 1.25, hiccups = stallsOf(37.milliseconds))
+        val fast = Runs(spreadOut.map { runOf(it.milliseconds) })
+        val slow = Runs(spreadOut.map { runOf((it * 10).milliseconds) })
+
+        slow.against(fast, goodput(pay, under = 200.milliseconds), 3.percent, floor).verdict shouldBe Tell.Worse
     }
 
     @Test

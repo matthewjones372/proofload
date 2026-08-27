@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 /** Which clock a percentile goal reads. */
 enum class Clock {
@@ -204,6 +205,8 @@ data class PercentileOf internal constructor(
         is Tail.Measured -> stalls.duration.inWholeNanoseconds.toDouble()
     }
 
+    override fun magnitudeOf(reading: Double): Duration = reading.toLong().nanoseconds
+
     override fun samplesIn(run: RunResult): Samples? =
         run.steps[step.name]?.let { Samples(it.timing(clock), it.count, it.failed.count) }
 
@@ -249,6 +252,9 @@ data class GoodputOf internal constructor(
 
     /** Nothing: a floor is measured in durations, and a share of requests is not one. */
     override fun noiseIn(floor: Floor): Double? = null
+
+    /** Nothing, for the reason [noiseIn] gives: a share of requests is not a length of time. */
+    override fun magnitudeOf(reading: Double): Duration? = null
 
     /** The successes' own distribution: what a request that worked took, over every request the step made. */
     override fun samplesIn(run: RunResult): Samples? =

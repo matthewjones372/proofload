@@ -33,6 +33,16 @@ sealed interface Statistic {
      */
     fun noiseIn(floor: Floor): Double?
 
+    /**
+     * A reading of this, as the duration it is a length of — or null where this
+     * statistic is not a length of anything, and a floor measured in durations
+     * has nothing to say about it.
+     *
+     * A floor is a movement in duration, so it can only be read against a claim
+     * that is one too.
+     */
+    fun magnitudeOf(reading: Double): Duration?
+
     /** What this reads out of one run, or null when that run never ran the step. */
     fun samplesIn(run: RunResult): Samples?
 
@@ -173,9 +183,10 @@ fun Runs.against(
  * [Floor.resolution] is a fraction of what a null step measured, and a fraction
  * does not transfer. A null step whose median moves from 50µs to 110µs reports
  * 120%; a target at 250 ms on the same machine in the same second moved by the
- * same 60µs, which is a fifth of a percent. So it is asked while it is still a
- * bound a claim could clear, and above that it is a statement about the
- * magnitude it was taken at rather than about this comparison.
+ * same 60µs, which is a fifth of a percent. So the movement behind it is taken
+ * in duration and read against the magnitude the claim is made at — the
+ * baseline's, because that is the number the reader already had, and the
+ * candidate's would let a regression widen the band that judges it.
  */
 private fun Difference.unresolvable(floor: Floor?): Tell.CannotTell? {
     if (floor == null) return null
@@ -184,6 +195,7 @@ private fun Difference.unresolvable(floor: Floor?): Tell.CannotTell? {
     // Nanoseconds: only a statistic read in durations has stalls to clear, and
     // that is the only statistic this branch is reached for.
     val stalls = statistic.noiseIn(floor)
+    val claimed = statistic.magnitudeOf(before)
     return when {
         stalls != null && abs(moved) <= stalls -> Tell.CannotTell(
             "${statistic.described} moved by ${moved.toLong().absoluteDuration()} and this machine's own " +
@@ -191,9 +203,18 @@ private fun Difference.unresolvable(floor: Floor?): Tell.CannotTell? {
             "a quieter machine: a change smaller than the measuring process's own stalls is the machine",
         )
 
-        floor.supportsAClaim && !floor.resolves(moved / before) -> Tell.CannotTell(
-            "a ${asShare(moved / before)} difference on a machine whose repeats of one unchanging " +
-                "measurement land ${asShare(floor.resolution)} apart",
+        claimed == null -> null
+
+        !floor.supports(claimed) -> Tell.CannotTell(
+            "this machine cannot support a claim about a $claimed ${statistic.described}: between identical " +
+                "runs it moves by more than the ${asShare(Floor.UNUSABLE)} of that a claim would have to clear",
+            "a quieter machine, or a claim about something this one is steady enough to measure",
+        )
+
+        !floor.resolves(moved / before, of = claimed) -> Tell.CannotTell(
+            "${statistic.described} moved by ${moved.toLong().absoluteDuration()}, and repeats of one " +
+                "unchanging measurement move by ${floor.movementAt(claimed)} here — " +
+                "${asShare(floor.movementAt(claimed) / claimed)} of the $claimed this claim is about",
             "a quieter machine, or a difference larger than the one this machine makes on its own",
         )
 

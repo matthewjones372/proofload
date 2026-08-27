@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -205,21 +206,41 @@ class DifferenceTest {
     @Test
     fun `a floor too coarse to be a fraction of this claim does not refuse it`() {
         // What a loaded machine reports: 125% of a null step whose median is
-        // tens of microseconds, which says nothing about a target at 100 ms.
-        val floor = Floor(resolution = 1.25, hiccups = stallsOf(7.milliseconds))
+        // tens of microseconds, which is 62us of movement and says nothing
+        // about a target at 100 ms.
+        val loaded = Floor(resolution = 1.25, hiccups = stallsOf(7.milliseconds), probe = Probe(50.microseconds))
 
-        val difference = runsAt(scale = 1.2).against(runsAt(scale = 1.0), p99(pay), 3.percent, floor)
+        val difference = runsAt(scale = 1.2).against(runsAt(scale = 1.0), p99(pay), 3.percent, loaded)
 
         difference.verdict shouldBe Tell.Worse
     }
 
+    /**
+     * The same floor, the same machine, two claims. Unusable is a property of
+     * what is being claimed rather than of the machine, and a page that refused
+     * everything on this floor would be refusing the 100 ms claim above.
+     */
     @Test
-    fun `a share of requests has no stalls to clear, so only the relative floor can refuse it`() {
-        val floor = Floor(resolution = 1.25, hiccups = stallsOf(37.milliseconds))
+    fun `a machine that moves by more than two fifths of the claim cannot support that claim`() {
+        val loaded = Floor(resolution = 1.25, hiccups = Timing.none, probe = Probe(50.microseconds))
+        val tiny = spreadOut.map { it.microseconds }
+
+        val difference = Runs(tiny.map { runOf(it * 1.2) })
+            .against(Runs(tiny.map { runOf(it) }), p99(pay), 3.percent, loaded)
+
+        val verdict = difference.verdict.shouldBeInstanceOf<Tell.CannotTell>()
+        withClue("62us of movement against a claim about 102us: ${verdict.why}") {
+            verdict.why shouldContain "cannot support a claim"
+        }
+    }
+
+    @Test
+    fun `a share of requests is not a length of time, so a floor measured in durations cannot refuse it`() {
+        val loaded = Floor(resolution = 1.25, hiccups = stallsOf(37.milliseconds), probe = Probe(50.microseconds))
         val fast = Runs(spreadOut.map { runOf(it.milliseconds) })
         val slow = Runs(spreadOut.map { runOf((it * 10).milliseconds) })
 
-        slow.against(fast, goodput(pay, under = 200.milliseconds), 3.percent, floor).verdict shouldBe Tell.Worse
+        slow.against(fast, goodput(pay, under = 200.milliseconds), 3.percent, loaded).verdict shouldBe Tell.Worse
     }
 
     @Test

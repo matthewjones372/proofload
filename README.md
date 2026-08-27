@@ -193,6 +193,7 @@ class ResolutionTest {
         floor.resolution       // 0.061 — a difference under 6.1% is this machine
         floor.hiccups.p99      // 14ms — what the injector itself stalled for
         floor.resolves(0.03)   // false: a 3% difference is not resolvable here
+        floor.probe            // 50us — what the probe took here, for another machine
     }
 }
 ```
@@ -201,6 +202,9 @@ class ResolutionTest {
 throughput and a fraction of it still means something at another scale. It bounds
 the *size* of a change; a claim about a tail has to clear `hiccups.p99` in
 absolute terms as well, which is the other half of what one calibration measures.
+`probe` is the third question the same repeats answer — the magnitude they were
+measured at, which is what a baseline from another machine can be compared
+against.
 
 The floor is a property of the machine rather than of a run, so it is measured
 once per JVM and kept, bounded at thirty seconds. On a runner somebody has
@@ -409,7 +413,8 @@ measures.
 
 `kestrel-baseline` keeps a run in a file so the next one can be compared to it.
 The file carries the buckets rather than five percentiles — an interval cannot
-be rebuilt from those — and the plan and machine the run was measured under:
+be rebuilt from those — and the plan, the machine and what a calibration probe
+took on it:
 
 ```kotlin
 import io.github.matthewjones372.kestrel.Change
@@ -417,11 +422,18 @@ import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.baseline.readBaseline
 import io.github.matthewjones372.kestrel.baseline.writeBaseline
+import io.github.matthewjones372.kestrel.calibratedBy
+import java.nio.file.Files
 import java.nio.file.Path
 
 val baseline = Path.of("build/kestrel/checkout.kestrel")
 
-when (val comparison = result.against(readBaseline(baseline))) {
+// What the probe took here travels with the run, so the next comparison can
+// ask whether the runner changed under it.
+val measured = result.calibratedBy(kestrel.calibrate())
+val previous = baseline.takeIf { Files.exists(it) }?.let(::readBaseline)
+
+when (val comparison = measured.against(previous)) {
     is Comparison.NotComparable -> println(comparison.why)
     is Comparison.Compared -> {
         comparison.caveat?.let(::println)
@@ -434,16 +446,39 @@ when (val comparison = result.against(readBaseline(baseline))) {
     }
 }
 
-result.writeBaseline(baseline)
+measured.writeBaseline(baseline)
 ```
 
 A run of a different plan is not compared at all: `NotComparable` names what
 differs — the scenario, its steps or its rate line — because comparing a smoke
 run to a soak undoes every interval and bucket underneath it, and no statistics
-rescue it. A run on a different machine *is* compared, with `caveat` naming the
-two runners and saying every delta may be one of them: a team whose runners are
-all shared would otherwise never get a comparison at all, and they should get
-one with the caveat attached.
+rescue it. No baseline at all is `NotComparable` too, rather than a comparison
+quietly left off: a page with nothing on it reads the same whether this was a
+first run or a cache key broke, and those want different fixes. A run on a
+different machine *is* compared, with `caveat` naming the two runners and
+saying every delta may be one of them: a team whose runners are all shared
+would otherwise never get a comparison at all, and they should get one with the
+caveat attached.
+
+The caveat names a *measured* runner before a described one. Two hosted runners
+of the same specification are the same `Machine` and not the same speed, so a
+baseline carries what the calibration probe took on the machine that wrote it
+and a later run compares that against its own:
+
+```kotlin
+comparison.slowdown   // 2.0 — this runner ran the same probe in twice the time
+```
+
+Two probe timings are the same target-free work measured twice, which is the
+one comparison across machines that is like for like. It is not `resolution`:
+that is the *spread* of those repeats as a fraction of a null step's own tiny
+median, so it is a fraction of a different number on every machine. Past a
+quarter slower the caveat leads with the runner, above any step, because the
+runner is then the likelier explanation of everything under it.
+
+The file carries the probe from version 4 on. A version 3 baseline still reads,
+with no probe and so no claim about the runner; a version this build does not
+know is refused by name rather than half-read.
 
 Hand the comparison to the report and the page carries it — including a refusal,
 which is the difference between a first run and a cache key that broke:

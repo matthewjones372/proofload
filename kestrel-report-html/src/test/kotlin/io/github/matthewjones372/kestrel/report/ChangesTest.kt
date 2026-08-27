@@ -4,12 +4,16 @@ import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Probe
+import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 
 class ChangesTest {
@@ -44,6 +48,26 @@ class ChangesTest {
         page shouldContain "1 of 1 step measurably changed"
         page shouldContain "810 ms–960 ms"
         page shouldContain "worse"
+    }
+
+    @Test
+    fun `a runner half as fast is named above the steps it would otherwise be blamed on`() {
+        val interval = Interval(810.milliseconds, 960.milliseconds)
+        val worse = Change.Worse("pay", 290.milliseconds, 890.milliseconds, interval)
+        val page = Fixtures.fellBehind.toHtmlReport(
+            Comparison.Compared(
+                changes = listOf(worse),
+                before = here,
+                now = here,
+                beforeProbe = Probe(50.microseconds),
+                nowProbe = Probe(100.microseconds),
+            ),
+        )
+
+        page shouldContain "ran a fixed probe 2.00 times slower"
+        withClue("the runner is the first thing read, or the step is read as the finding") {
+            page.indexOf("fixed probe") shouldBeLessThan page.indexOf("""<li class="worse">""")
+        }
     }
 
     @Test

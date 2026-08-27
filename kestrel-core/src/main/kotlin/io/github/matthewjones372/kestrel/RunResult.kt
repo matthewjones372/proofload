@@ -287,6 +287,13 @@ data class RunResult(
 
     /** Every step together, second by second, from the run's start. */
     val timeline: List<Second> = emptyList(),
+
+    /**
+     * What a fixed, target-free measurement took on this machine, where one was
+     * taken. It travels into a baseline so a later run can ask whether it is on
+     * a slower machine before it blames a step for the difference.
+     */
+    val probe: Probe? = null,
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

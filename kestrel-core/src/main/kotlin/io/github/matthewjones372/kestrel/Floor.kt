@@ -16,6 +16,16 @@ data class Floor(
     val resolution: Double,
     /** What the injector's own JVM stalled for while the floor was being measured. */
     val hiccups: Timing,
+
+    /**
+     * What the repeats measured, where they were measured rather than declared.
+     *
+     * The same measurement as [resolution] and a different question of it:
+     * [resolution] asks how small a difference this machine can see, and this
+     * asks whether it is the machine a baseline was taken on. Absent for a
+     * floor somebody named instead of measuring, which has no probe behind it.
+     */
+    val probe: Probe? = null,
 ) {
 
     /** Whether a difference of [fraction] — 0.03 for 3% — is larger than this machine's own movement. */

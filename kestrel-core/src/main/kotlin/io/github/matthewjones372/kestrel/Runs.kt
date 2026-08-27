@@ -123,7 +123,10 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
 private fun List<List<Second>>.superimposed(): List<Second> =
     (0 until maxOf { it.size }).map { second ->
         val counted = mapNotNull { it.getOrNull(second) }
-        Second(failed = counted.sumOf { it.failed }, serviceTime = counted.map { it.serviceTime }.merged())
+        Second(
+            okServiceTime = counted.map { it.okServiceTime }.merged(),
+            failedServiceTime = counted.map { it.failedServiceTime }.merged(),
+        )
     }
 
 private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
@@ -133,7 +136,7 @@ private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
 )
 
 /** The buckets of every timing here added together, with the percentiles read off the sum. */
-private fun List<Timing>.merged(): Timing = flatMap { it.distribution }
+internal fun List<Timing>.merged(): Timing = flatMap { it.distribution }
     .groupingBy { it.upperBound }
     .fold(0L) { counted, bucket -> counted + bucket.count }
     .map { (upperBound, count) -> Bucket(upperBound, count) }

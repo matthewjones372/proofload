@@ -206,18 +206,40 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     <h1>Kestrel run</h1>
     <p class="when">Started <time datetime="2026-08-26T09:00:00Z">2026-08-26T09:00:00Z</time></p>
   </header>
+  <section class="verdicts met" aria-label="Goals">
+    <p class="verdict-headline"><strong>1 of 1 goal met.</strong></p>
+    <ul class="verdict-list">
+      <li class="met"><span class="goal">pay p99 under 100ms</span><span class="measured">21.0 ms</span></li>
+    </ul>
+  </section>
+  <p class="note" id="kestrel-steady">
+    <strong>Settled after 10.0 s</strong>, judged over the remaining 10.0 s. The first 10.0 s are drawn on the timeline below and left out of every goal above that reads the counts or the target's service time; response time is not kept second by second, so a goal on that is judged over the whole run. Every percentile in the table below is the whole run: nothing here is discarded. Two windows count as the same within <strong>12.50%</strong> of each other — twice the width of the buckets these seconds are read from, and a default rather than something this run discovered.
+  </p>
+  <section class="plan" aria-label="What was asked for">
+    <p><strong>checkout</strong> — 1 step, 25/s held for 20.0 s. Planned 500 users, 500 requests.</p>
+    <p class="arrivals">Arrivals were evenly spaced, which understates queueing against the same mean rate in production.</p>
+    <figure class="chart shape">
+      <figcaption>the shape that was asked for — peak 25/s</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">
+        <polygon class="shape-area" points="0.0,60.0 0.0,8.0 640.0,8.0 640.0,60.0"></polygon>
+        <polyline class="shape-line" points="0.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label shape-start" x="0" y="78">0</text>
+        <text class="tick-label shape-end" x="640.0" y="78">20.0 s</text>
+      </svg>
+    </figure>
+  </section>
   <section class="totals" aria-label="Totals">
     <div class="tile">
       <span class="tile-label">Requests</span>
-      <span class="tile-value">100</span>
+      <span class="tile-value">500</span>
     </div>
     <div class="tile ok">
       <span class="tile-label">OK</span>
-      <span class="tile-value">95</span>
+      <span class="tile-value">500</span>
     </div>
     <div class="tile failed">
       <span class="tile-label">Failed</span>
-      <span class="tile-value">5</span>
+      <span class="tile-value">0</span>
     </div>
     <div class="tile">
       <span class="tile-label">Behind schedule, p99</span>
@@ -225,16 +247,10 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     </div>
   </section>
   <section class="reading" aria-label="What these numbers say">
-    <p><strong>100 requests</strong>, <strong>5 failed</strong> (5.0%).</p>
+    <p><strong>500 requests</strong>, none failed.</p>
+    <p>The run sent all 500 of them.</p>
     <p>The run kept to its schedule, so these latencies are the target's rather than this tool's.</p>
-    <p><strong>pay is the slowest step</strong> at 902 ms p99, and it carries 5 of the 5 failures.</p>
-  </section>
-  <section class="failures" aria-label="What the failures took">
-    <h2>What failed, and how fast</h2>
-    <ul class="failures-list">
-      <li><span class="failures-step">pay</span><span class="failures-value">5 failed at 902 ms p99, against 401 ms for the 95 that worked</span></li>
-    </ul>
-    <p class="note">Service time, so this is the target's own speed rather than a wait this tool added. The table below counts these samples alongside the successes, and a target that sheds load answers a rejection at once — the faster it sheds, the better that table looks. A step that failed nothing is not listed.</p>
+    <p><strong>pay is the slowest step</strong> at 200 ms p99.</p>
   </section>
   <section class="steps">
     <div class="steps-head">
@@ -250,28 +266,21 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
             <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
             <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
             <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
-            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (6)</button></th>
-            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (2)</button></th>
+            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (26)</button></th>
+            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (6)</button></th>
             <th scope="col" class="num" data-sort="max" aria-sort="none"><button type="button">Max</button></th>
           </tr>
         </thead>
         <tbody>
-          <tr class="step" data-step="pay" aria-expanded="false" tabindex="0">
+          <tr class="step" data-step="pay">
             <th scope="row">pay</th>
-            <td class="num">100</td>
-            <td class="num ok">95</td>
-            <td class="num failed">5</td>
-            <td class="num time" data-service="60.0 ms" data-response="60.0 ms" data-service-ns="60030975" data-response-ns="60030975">60.0 ms</td>
-            <td class="num time" data-service="401 ms" data-response="401 ms" data-service-ns="400556031" data-response-ns="400556031">401 ms</td>
-            <td class="num time" data-service="902 ms" data-response="902 ms" data-service-ns="901775359" data-response-ns="901775359">902 ms</td>
-            <td class="num time" data-service="902 ms" data-response="902 ms" data-service-ns="901775359" data-response-ns="901775359">902 ms</td>
-          </tr>
-          <tr class="reasons" data-for="pay">
-            <td colspan="8">
-              <ul class="reason-list">
-                <li><span class="reason">status 503</span><span class="reason-count">5</span></li>
-              </ul>
-            </td>
+            <td class="num">500</td>
+            <td class="num ok">500</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="200 ms" data-response="200 ms" data-service-ns="200278015" data-response-ns="200278015">200 ms</td>
+            <td class="num time" data-service="200 ms" data-response="200 ms" data-service-ns="200278015" data-response-ns="200278015">200 ms</td>
+            <td class="num time" data-service="200 ms" data-response="200 ms" data-service-ns="200278015" data-response-ns="200278015">200 ms</td>
           </tr>
         </tbody>
       </table>
@@ -280,23 +289,17 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         <figcaption>pay — where the requests landed</figcaption>
         <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="pay distribution">
           <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
-            <title>45 at 20.1 ms</title>
+            <title>250 at 20.1 ms</title>
           </rect>
-          <rect class="bar" x="183.2" y="106.7" width="4.0" height="13.3">
-            <title>5 at 60.0 ms</title>
+          <rect class="bar" x="636.0" y="0.0" width="4.0" height="120.0">
+            <title>250 at 200 ms</title>
           </rect>
-          <rect class="bar" x="500.4" y="0.0" width="4.0" height="120.0">
-            <title>45 at 401 ms</title>
-          </rect>
-          <rect class="bar" x="636.0" y="106.7" width="4.0" height="13.3">
-            <title>5 at 902 ms</title>
-          </rect>
-          <line class="mark" x1="183.2" y1="0" x2="183.2" y2="120.0"></line>
-          <text class="mark-label" x="186.2" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
           <line class="mark" x1="636.0" y1="0" x2="636.0" y2="120.0"></line>
           <text class="mark-label" x="639.0" y="12">p99</text>
-          <line class="tick" x1="268.5" y1="120.0" x2="268.5" y2="124.0"></line>
-          <text class="tick-label" x="268.5" y="140">100 ms</text>
+          <line class="tick" x1="444.1" y1="120.0" x2="444.1" y2="124.0"></line>
+          <text class="tick-label" x="444.1" y="140">100 ms</text>
         </svg>
       </figure>
     <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
@@ -306,26 +309,18 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     <figure class="chart over-time">
       <figcaption>requests a second — peak 25</figcaption>
       <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="requests a second">
-        <polyline class="series count" points="0.0,8.0 160.0,8.0 160.0,8.0 320.0,8.0 320.0,8.0 480.0,8.0 480.0,8.0 640.0,8.0"></polyline>
+        <polyline class="series count" points="0.0,8.0 32.0,8.0 32.0,8.0 64.0,8.0 64.0,8.0 96.0,8.0 96.0,8.0 128.0,8.0 128.0,8.0 160.0,8.0 160.0,8.0 192.0,8.0 192.0,8.0 224.0,8.0 224.0,8.0 256.0,8.0 256.0,8.0 288.0,8.0 288.0,8.0 320.0,8.0 320.0,8.0 352.0,8.0 352.0,8.0 384.0,8.0 384.0,8.0 416.0,8.0 416.0,8.0 448.0,8.0 448.0,8.0 480.0,8.0 480.0,8.0 512.0,8.0 512.0,8.0 544.0,8.0 544.0,8.0 576.0,8.0 576.0,8.0 608.0,8.0 608.0,8.0 640.0,8.0"></polyline>
         <text class="tick-label series-start" x="0" y="78">0</text>
-        <text class="tick-label series-end" x="640.0" y="78">4.00 s</text>
+        <text class="tick-label series-end" x="640.0" y="78">20.0 s</text>
       </svg>
     </figure>
     <figure class="chart over-time">
-      <figcaption>service time — <span class="key p99">p99</span> peaks at 906 ms, <span class="key p50">p50</span> at 403 ms</figcaption>
+      <figcaption>service time — <span class="key p99">p99</span> peaks at 201 ms, <span class="key p50">p50</span> at 201 ms</figcaption>
       <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="service time each second">
-        <polyline class="series p50" points="0.0,58.8 160.0,58.8 160.0,58.8 320.0,58.8 320.0,36.9 480.0,36.9 480.0,36.9 640.0,36.9"></polyline>
-        <polyline class="series p99" points="0.0,56.5 160.0,56.5 160.0,56.5 320.0,56.5 320.0,8.0 480.0,8.0 480.0,8.0 640.0,8.0"></polyline>
+        <polyline class="series p50" points="0.0,8.0 32.0,8.0 32.0,8.0 64.0,8.0 64.0,8.0 96.0,8.0 96.0,8.0 128.0,8.0 128.0,8.0 160.0,8.0 160.0,8.0 192.0,8.0 192.0,8.0 224.0,8.0 224.0,8.0 256.0,8.0 256.0,8.0 288.0,8.0 288.0,8.0 320.0,8.0 320.0,54.6 352.0,54.6 352.0,54.6 384.0,54.6 384.0,54.6 416.0,54.6 416.0,54.6 448.0,54.6 448.0,54.6 480.0,54.6 480.0,54.6 512.0,54.6 512.0,54.6 544.0,54.6 544.0,54.6 576.0,54.6 576.0,54.6 608.0,54.6 608.0,54.6 640.0,54.6"></polyline>
+        <polyline class="series p99" points="0.0,8.0 32.0,8.0 32.0,8.0 64.0,8.0 64.0,8.0 96.0,8.0 96.0,8.0 128.0,8.0 128.0,8.0 160.0,8.0 160.0,8.0 192.0,8.0 192.0,8.0 224.0,8.0 224.0,8.0 256.0,8.0 256.0,8.0 288.0,8.0 288.0,8.0 320.0,8.0 320.0,54.6 352.0,54.6 352.0,54.6 384.0,54.6 384.0,54.6 416.0,54.6 416.0,54.6 448.0,54.6 448.0,54.6 480.0,54.6 480.0,54.6 512.0,54.6 512.0,54.6 544.0,54.6 544.0,54.6 576.0,54.6 576.0,54.6 608.0,54.6 608.0,54.6 640.0,54.6"></polyline>
         <text class="tick-label series-start" x="0" y="78">0</text>
-        <text class="tick-label series-end" x="640.0" y="78">4.00 s</text>
-      </svg>
-    </figure>
-    <figure class="chart over-time">
-      <figcaption>failures a second — peak 3</figcaption>
-      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="failures a second">
-        <polyline class="series failed" points="0.0,60.0 160.0,60.0 160.0,60.0 320.0,60.0 320.0,8.0 480.0,8.0 480.0,25.3 640.0,25.3"></polyline>
-        <text class="tick-label series-start" x="0" y="78">0</text>
-        <text class="tick-label series-end" x="640.0" y="78">4.00 s</text>
+        <text class="tick-label series-end" x="640.0" y="78">20.0 s</text>
       </svg>
     </figure>
     <p class="note">One point a second, counted from the run's start, and a second nothing ran in is drawn as the zero it was. These percentiles come from a coarse histogram — good to 6.25%, against 0.78% for the table above — because a full one a second per step is tens of megabytes of counters. Read a shape here and a number there.</p>
@@ -333,7 +328,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   <section class="tail" aria-label="The tail">
     <h2>p99.9</h2>
     <ul class="tail-list">
-      <li><span class="tail-step">pay</span><span class="tail-value none">Not measured — only 100 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">pay</span><span class="tail-value none">Not measured — only 500 samples, and under 1000 the top bucket holds fewer than one.</span></li>
     </ul>
     <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
   </section>
@@ -343,11 +338,11 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   "startedAt": "2026-08-26T09:00:00Z",
   "durationUnit": "nanoseconds",
   "precision": 0.0078125,
-  "count": 100,
-  "ok": 95,
-  "failed": 5,
+  "count": 500,
+  "ok": 500,
+  "failed": 0,
   "behind": {
-    "count": 100,
+    "count": 500,
     "p50": 0,
     "p95": 0,
     "p99": 0,
@@ -370,106 +365,213 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   "steps": [
     {
       "name": "pay",
-      "count": 100,
+      "count": 500,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
-        "count": 100,
-        "p50": 60030975,
-        "p95": 400556031,
-        "p99": 901775359,
+        "count": 500,
+        "p50": 20054015,
+        "p95": 200278015,
+        "p99": 200278015,
         "p999": null,
-        "max": 901775359
+        "max": 200278015
       },
       "responseTime": {
-        "count": 100,
-        "p50": 60030975,
-        "p95": 400556031,
-        "p99": 901775359,
+        "count": 500,
+        "p50": 20054015,
+        "p95": 200278015,
+        "p99": 200278015,
         "p999": null,
-        "max": 901775359
+        "max": 200278015
       },
       "ok": {
-        "count": 95,
+        "count": 500,
         "serviceTime": {
-          "count": 95,
-          "p50": 60030975,
-          "p95": 400556031,
-          "p99": 400556031,
+          "count": 500,
+          "p50": 20054015,
+          "p95": 200278015,
+          "p99": 200278015,
           "p999": null,
-          "max": 400556031
+          "max": 200278015
         },
         "responseTime": {
-          "count": 95,
-          "p50": 60030975,
-          "p95": 400556031,
-          "p99": 400556031,
+          "count": 500,
+          "p50": 20054015,
+          "p95": 200278015,
+          "p99": 200278015,
           "p999": null,
-          "max": 400556031
+          "max": 200278015
         },
         "reasons": []
       },
       "failed": {
-        "count": 5,
+        "count": 0,
         "serviceTime": {
-          "count": 5,
-          "p50": 901775359,
-          "p95": 901775359,
-          "p99": 901775359,
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
           "p999": null,
-          "max": 901775359
+          "max": 0
         },
         "responseTime": {
-          "count": 5,
-          "p50": 901775359,
-          "p95": 901775359,
-          "p99": 901775359,
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
           "p999": null,
-          "max": 901775359
+          "max": 0
         },
-        "reasons": [
-          {
-            "reason": "status 503",
-            "count": 5
-          }
-        ]
+        "reasons": []
       }
     }
   ],
   "timelinePrecision": 0.0625,
   "steadyState": {
     "tolerance": 0.125,
-    "settledAfter": null,
-    "why": "a run of 4 s has nothing to detect: a verdict needs at least 10 intervals"
+    "settledAfter": 10000000000,
+    "why": null
   },
   "timeline": [
     {
       "count": 25,
       "ok": 25,
       "failed": 0,
-      "p50": 20971519,
-      "p99": 60817407
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 201326591,
+      "p99": 201326591
     },
     {
       "count": 25,
       "ok": 25,
       "failed": 0,
       "p50": 20971519,
-      "p99": 60817407
+      "p99": 20971519
     },
     {
       "count": 25,
-      "ok": 22,
-      "failed": 3,
-      "p50": 402653183,
-      "p99": 905969663
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
     },
     {
       "count": 25,
-      "ok": 23,
-      "failed": 2,
-      "p50": 402653183,
-      "p99": 905969663
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 25,
+      "ok": 25,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
     }
   ]
 }

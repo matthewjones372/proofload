@@ -149,30 +149,37 @@ private fun List<Bucket>.valueAtRank(rank: Long): Duration =
  * A second nothing ran in is present and zero rather than missing: a gap in a
  * line is information and a dropped point is a lie about the shape.
  *
- * [serviceTime] is what the target took, good to [Histogram.COARSE_PRECISION]
- * rather than the [Histogram.PRECISION] of the summary above — a full table a
- * second per step is tens of megabytes of counters. Anything quoted from here
- * carries that error bar.
+ * What the target took is read from a histogram good to
+ * [Histogram.COARSE_PRECISION] rather than the [Histogram.PRECISION] of the
+ * summary above — a full table a second per step is tens of megabytes of
+ * counters. Anything quoted from here carries that error bar.
  *
- * It keeps the buckets and not only the percentiles, because merging several
- * runs' seconds means adding the buckets and reading the percentiles off the
- * sum; two seconds' percentiles cannot be averaged into a third.
+ * The buckets are kept and not only the percentiles read off them, because
+ * every way of adding seconds together adds buckets: a stretch of one run
+ * re-read as its steady segment, and second *n* of ten runs merged into second
+ * *n* of one. Two seconds' percentiles cannot be averaged into a third. Only
+ * the buckets that counted something survive the freeze, which is tens of them
+ * a second rather than the table.
+ *
+ * The two sides are apart here for the reason [StepStats] keeps them apart: a
+ * second of shed load is a second of fast rejections, and one distribution
+ * holding both would report a percentile nobody experienced.
  */
-data class Second(
-    val failed: Long,
-    val serviceTime: Timing,
-) {
-    val count: Long get() = serviceTime.count
+data class Second(val okServiceTime: Timing, val failedServiceTime: Timing) {
 
-    val ok: Long get() = count - failed
+    val ok: Long get() = okServiceTime.count
+
+    val failed: Long get() = failedServiceTime.count
+
+    val count: Long get() = ok + failed
+
+    /** Both sides added back together, which is what a line drawn over the run is. */
+    val serviceTime: Timing get() = listOf(okServiceTime, failedServiceTime).merged()
 
     val p50: Duration get() = serviceTime.p50
 
     val p99: Duration get() = serviceTime.p99
 }
-
-/** A second's coarse histogram, read once and frozen. */
-internal fun Histogram.asSecond(failed: Long): Second = Second(failed = failed, serviceTime = timing())
 
 /**
  * One side of a step — the requests that worked, or the ones that did not — and
@@ -296,8 +303,16 @@ data class RunResult(
 
     fun ran(step: StepName): Boolean = ran(step.name)
 
-    /** Each goal the simulation declared, judged against what happened. */
-    val verdicts: List<Verdict> get() = plan.goals.map { it.judge(this) }
+    /**
+     * Each goal the simulation declared, judged against what happened — over
+     * [steady] where the timeline measured what the goal reads, and over the
+     * whole run otherwise, which is what a run that never settled gets for all
+     * of them.
+     */
+    val verdicts: List<Verdict> get() {
+        val settled = steady
+        return plan.goals.map { it.judge(if (it.overSteadySegment) settled else this) }
+    }
 
     /** True when every goal was met, and when there were none to miss. */
     val metEveryGoal: Boolean get() = verdicts.all { it.met }

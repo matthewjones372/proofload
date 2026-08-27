@@ -49,6 +49,11 @@ class HtmlReportTest {
     }
 
     @Test
+    fun `the page for a run that settled matches its golden`() {
+        Fixtures.settledAfterAWarmUp.toHtmlReport() shouldBe Golden.text("report-settled.html")
+    }
+
+    @Test
     fun `a run that lost nothing is not made to print a zero for it`() {
         val page = Fixtures.fellBehind.toHtmlReport()
 

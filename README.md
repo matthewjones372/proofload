@@ -556,6 +556,8 @@ result.timeline.size                  // seconds the run covered
 result.timeline[0].count              // requests that left in the first second
 result.timeline[0].failed             // how many of those failed
 result.timeline[0].p99                // the target's service time that second
+result.timeline[0].serviceTime        // the buckets that came from, to add up
+result.timeline[0].okServiceTime      // and the two sides, as a step splits them
 result[placeOrder].timeline           // the same, for one step
 
 Histogram.COARSE_PRECISION            // 0.0625 — what a second's percentile is good to
@@ -608,6 +610,26 @@ of it. Two readings of one unchanged latency can land a bucket apart, so a
 tolerance at the width of that bucket would be a detector chasing which bucket a
 sample fell in. It is a default rather than something the run discovered, which
 is why the report prints it beside the verdict.
+
+`result.steady` is the same run over that segment, and the run itself where
+there is no segment. Nothing is discarded: every number above stays where it
+was, and what was left out is reported.
+
+```kotlin
+import io.github.matthewjones372.kestrel.steady
+
+result[placeOrder].serviceTime.p99          // the whole run, cold start included
+result.steady[placeOrder].serviceTime.p99   // the same p99 without the first 20 s
+result.steady.count                         // requests that left inside the segment
+result.steady.startedAt                     // the run's start plus the offset
+```
+
+Goals are judged over the segment where the timeline measured what they read:
+the counts, which are exact, and the target's service time. Response time and
+the generator's own backlog are not kept second by second, so a goal on one of
+those is judged over the whole run rather than narrowed to a segment nothing
+measured — `Goal.overSteadySegment` says which, and the page says so above the
+numbers. A run that never settled has all of its goals judged over all of it.
 
 ## What this is for
 

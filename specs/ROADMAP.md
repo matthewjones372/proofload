@@ -36,6 +36,7 @@ built. Each row links the spec that argued for it.
 | [0040](0040-an-answer-that-arrives-somewhere-else.md) | `emit`, `completing`, and the records that never arrived |
 | [0025](0025-what-happened-when.md) | a coarse histogram, a per-second timeline, and the charts over it |
 | [0037](0037-more-than-one-run.md) | `Runs`, merged from buckets, refusing unlike plans and machines |
+| [0036](0036-a-slow-error-is-not-a-fast-one.md) | `Outcome`: what the failures took, apart from what the successes did |
 
 ## Drafted, not built
 

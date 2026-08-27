@@ -62,12 +62,12 @@ out to matter.
 
 ## Stack
 
-- [ ] **`spec-0036-outcome`** — `Outcome`, the split in `RunRecorder`, and
+- [x] **`spec-0036-outcome`** ([#26](https://github.com/matthewjones372/kestrel/pull/26)) — `Outcome`, the split in `RunRecorder`, and
       `StepStats.ok` and `failed` as values.
       Done when: a run whose failures are all fast reports a low failed p99 and
       an unchanged ok p99, and the whole-step timing still equals the merge of
       the two.
-- [ ] **`spec-0036-callers`** — README, examples, report, JUnit and Kotest
+- [x] **`spec-0036-callers`** ([#28](https://github.com/matthewjones372/kestrel/pull/28)) — README, examples, report, JUnit and Kotest
       modules.
       Done when: the build is green and the golden shows both distributions.
 

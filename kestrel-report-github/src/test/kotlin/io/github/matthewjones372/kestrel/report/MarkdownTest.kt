@@ -1,18 +1,26 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.Change
+import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
+import io.github.matthewjones372.kestrel.Interval
+import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.randomized
 import io.github.matthewjones372.kestrel.timing
+import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -194,7 +202,7 @@ class MarkdownTest {
         val floor = Floor(resolution = 0.061, hiccups = timingOf(List(9) { 1.milliseconds } + 14.milliseconds))
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
 
-        result.markdown(floor) shouldContain "Calibrated on this machine: differences under 6.10% are not " +
+        result.markdown(floor = floor) shouldContain "Calibrated on this machine: differences under 6.10% are not " +
             "resolvable here. The injector's own stalls reached 14.0ms at p99."
     }
 
@@ -203,10 +211,75 @@ class MarkdownTest {
         val floor = Floor(resolution = 0.40, hiccups = Timing.none)
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
 
-        val markdown = result.markdown(floor)
+        val markdown = result.markdown(floor = floor)
         markdown shouldContain "**This machine cannot support a latency claim.**"
         markdown shouldNotContain "are not resolvable here"
     }
+
+    @Test
+    fun `a job summary with no baseline says so rather than leaving the comparison out`() {
+        val summary = compared().markdown(compared().against(null))
+
+        summary shouldContain "Not compared to the last run."
+        summary shouldContain "no baseline to compare against"
+    }
+
+    @Test
+    fun `a run compared to the last one matches its golden`() {
+        compared().markdown(
+            Comparison.Compared(
+                changes = listOf(
+                    Change.Indistinguishable("browse", 3.milliseconds, 3.milliseconds),
+                    Change.Worse("pay", 20.milliseconds, 30.milliseconds, Interval(28.milliseconds, 33.milliseconds)),
+                ),
+                before = here,
+                now = here,
+            ),
+        ) shouldBe golden("compared.md")
+    }
+
+    @Test
+    fun `a runner half as fast is named above the steps it would otherwise be blamed on`() {
+        val summary = compared().markdown(
+            Comparison.Compared(
+                changes = listOf(Change.Worse("pay", 20.milliseconds, 30.milliseconds, interval)),
+                before = here,
+                now = here,
+                beforeProbe = Probe(50.microseconds),
+                nowProbe = Probe(100.microseconds),
+            ),
+        )
+
+        summary shouldContain "ran a fixed probe 2.00 times slower"
+        withClue("a reader who stops after the first line must not stop at the step") {
+            summary.indexOf("fixed probe") shouldBeLessThan summary.indexOf("| Step")
+        }
+    }
+
+    @Test
+    fun `a machine too coarse to bound a claim prints no comparison at all`() {
+        val summary = compared().markdown(
+            comparison = Comparison.Compared(
+                changes = listOf(Change.Worse("pay", 20.milliseconds, 30.milliseconds, interval)),
+                before = here,
+                now = here,
+            ),
+            floor = Floor(resolution = 0.40, hiccups = Timing.none),
+        )
+
+        summary shouldContain "cannot support a latency claim"
+        summary shouldNotContain "measurably changed"
+    }
+
+    private val here = Machine(cores = 8, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")
+
+    private val interval = Interval(28.milliseconds, 33.milliseconds)
+
+    private fun compared() = RunResult(
+        startedAt = startedAt,
+        steps = mapOf("browse" to browse, "pay" to step("pay", spread(100))),
+        behind = timingOf(listOf(50.microseconds)),
+    )
 
     private val nothing = listOf(Duration.ZERO)
 

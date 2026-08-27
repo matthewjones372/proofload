@@ -1,7 +1,10 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Change
+import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
@@ -18,17 +21,72 @@ import kotlin.time.DurationUnit
  * no colour, no emoji, and the columns padded so the numbers line up wherever
  * it lands — a job summary, a PR body or a job log.
  */
-fun RunResult.markdown(floor: Floor? = null): String =
-    blocks(floor).joinToString(separator = "\n\n", postfix = "\n")
+fun RunResult.markdown(comparison: Comparison? = null, floor: Floor? = null): String =
+    blocks(comparison, floor).joinToString(separator = "\n\n", postfix = "\n")
 
-private fun RunResult.blocks(floor: Floor?): List<String> =
+private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<String> =
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + stepTable() +
+        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + comparison.blocks(floor) + stepTable() +
             listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
+
+/**
+ * This run against the last one, directly above the table it is about — and
+ * absent on a machine whose own movement is too large to bound any of it, where
+ * [Floor.line] has already said so in place of a comparison nobody should act
+ * on.
+ *
+ * A refusal is printed rather than left off. A summary with no comparison in it
+ * reads the same whether this was a first run or a cache key broke, and those
+ * want opposite reactions.
+ */
+private fun Comparison?.blocks(floor: Floor?): List<String> {
+    if (floor != null && !floor.supportsAClaim) return emptyList()
+    return when (this) {
+        null -> emptyList()
+
+        is Comparison.NotComparable -> listOf("> **Not compared to the last run.** ${why.escapeMarkdown()}")
+
+        is Comparison.Compared -> if (changes.isEmpty()) emptyList() else
+            listOfNotNull(caveat?.let { "> **${it.escapeMarkdown()}**" }, headline(), changeTable(), COMPARISON_NOTE)
+    }
+}
+
+private fun Comparison.Compared.headline(): String {
+    val moved = changes.count { it is Change.Worse || it is Change.Better }
+    return if (moved == 0) "**Nothing measurably changed since the last run.**"
+    else "**$moved of ${changes.size} step${if (changes.size == 1) "" else "s"} measurably changed " +
+        "since the last run.**"
+}
+
+private fun Comparison.Compared.changeTable(): String = table(
+    columns = listOf(
+        Column("Step", Align.LEFT),
+        Column("Was", Align.RIGHT),
+        Column("Now", Align.RIGHT),
+        Column("Change", Align.LEFT),
+    ),
+    rows = changes.map { it.row() },
+)
+
+private fun Change.row(): List<String> = when (this) {
+    is Change.Indistinguishable -> listOf(step.escapeMarkdown(), before.report(), now.report(), "not distinguishable")
+
+    is Change.Worse ->
+        listOf(step.escapeMarkdown(), before.report(), now.report(), "worse (${interval.report()})")
+
+    is Change.Better ->
+        listOf(step.escapeMarkdown(), before.report(), now.report(), "better (${interval.report()})")
+
+    is Change.Added -> listOf(step.escapeMarkdown(), "—", "—", "did not run last time")
+
+    is Change.Gone -> listOf(step.escapeMarkdown(), "—", "—", "ran last time and did not run now")
+}
+
+private fun Interval.report(): String = "${low.report()}–${high.report()}"
 
 /**
  * Above the backlog warning and above the table, because a record that never
@@ -212,6 +270,10 @@ private const val NANOS_PER_SECOND = 1_000_000_000L
 private const val PERCENT = 100.0
 
 private val PRECISION_PERCENT: String = String.format(Locale.ROOT, "%.2f", Histogram.PRECISION * PERCENT)
+
+private const val COMPARISON_NOTE: String =
+    "Compared at p99 of response time, with 95% sampling intervals. Two runs whose intervals overlap have not " +
+        "been shown to differ — the fix for that is a longer run, not a closer look."
 
 private val MEASUREMENT_NOTE: String =
     "Latency is response time, measured from the departure the profile promised. " +

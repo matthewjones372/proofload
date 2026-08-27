@@ -1,0 +1,65 @@
+name: baseline
+
+# The recipe in docs/cookbook.md, run on this repository's own examples. A pull
+# request restores the baseline main last wrote, compares this run to it, and
+# puts the comparison in its job summary.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One at a time per branch. Two of these on one runner measure each other.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Keyed by run id so the key never hits, and restored by prefix so it
+      # always finds the newest cache that starts the same way. Saving under a
+      # key nobody will ask for again is what makes this a rolling baseline
+      # rather than one frozen the first time it was written.
+      #
+      # A pull request reads main's cache and writes only into its own scope,
+      # which is what makes the comparison "against main" rather than against
+      # whatever ran last anywhere.
+      - name: Restore the last baseline
+        uses: actions/cache@v4
+        with:
+          path: build/kestrel
+          key: kestrel-baseline-${{ github.run_id }}
+          restore-keys: kestrel-baseline-
+
+      # No `continue-on-error` and no threshold: this fails only if requests
+      # failed. Latency does not gate a merge on a shared runner — see the
+      # cookbook for why a gate that flakes takes the useful half with it.
+      - name: Run the example against the baseline
+        run: ./gradlew :examples:againstTheBaseline --stacktrace
+
+      # The fallback for a cache that was evicted: seven days of eviction is
+      # normal on a busy repository, and `gh run download` reaches a baseline
+      # that the cache no longer has. The cookbook has the command.
+      - name: Keep the baseline where a later run can fetch it
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kestrel-baseline
+          path: build/kestrel/*.kestrel
+          retention-days: 90
+          if-no-files-found: error

@@ -40,6 +40,9 @@ built. Each row links the spec that argued for it.
 | [0042](0042-a-test-that-does-not-measure-the-neighbours.md) | the repo's own timing test judged against the machine it runs on |
 | [0046](0046-a-merge-that-drops-the-clock.md) | a merged run keeps its clock, second n against second n |
 | [0032](0032-steady-state-found-rather-than-assumed.md) | `SteadyState`, `result.steady`, and goals judged over the segment |
+| [0038](0038-better-worse-or-cannot-tell.md) | `Difference`: a bootstrap interval, and a verdict that can say it cannot tell |
+| [0043](0043-void-is-not-the-same-question-as-behind.md) | a rung judged on the schedule it kept, not on the target's slowness |
+| [0039](0039-what-this-machine-can-resolve.md) | hiccups, the floor, and a comparison that consults it |
 
 ## Drafted, not built
 
@@ -49,7 +52,6 @@ In the order the architect would take them.
 |---|---|
 | [0022](0022-a-token-that-stays-fresh.md) | a soak longer than a token's life cannot authenticate |
 | [0030](0030-a-baseline-in-ci.md) | the plan and the machine landed; the probe and the CI recipe have not |
-| [0039](0039-what-this-machine-can-resolve.md) | hiccups and the floor landed; 0038 has yet to consult it |
 | [0024](0024-think-time-and-closed-model.md) | `pause`, and the closed model with its caveat stated |
 | [0026](0026-checks-and-retries.md) | a 200 with an error page in it is counted as a success |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |

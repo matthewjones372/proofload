@@ -83,12 +83,12 @@ would make voidness easier to avoid the slower the pipeline got.
 
 ## Stack
 
-- [ ] **`spec-0043-gate`** — the void gate as lateness against the promised
+- [x] **`spec-0043-gate`** ([#27](https://github.com/matthewjones372/kestrel/pull/27)) — the void gate as lateness against the promised
       inter-departure interval, and `Rung.offered`.
       Done when: a rung against a fast in-process target at a rate the generator
       keeps is not void, a rung at a rate it cannot keep is void, and the
       threshold lives in one named place rather than being borrowed.
-- [ ] **`spec-0043-proved`** — an engine test that finds a real rate against a
+- [x] **`spec-0043-proved`** ([#29](https://github.com/matthewjones372/kestrel/pull/29)) — an engine test that finds a real rate against a
       real target, replacing the synthetic-judge-only proof.
       Done when: a search against an in-process target that fails a p99 goal
       above a known rate reports that rate and names the goal, run end to end on

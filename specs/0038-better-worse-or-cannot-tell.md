@@ -73,13 +73,13 @@ arithmetic wearing a lab coat.
 
 ## Stack
 
-- [ ] **`spec-0038-interval`** — the bootstrap over `Runs`, and `Comparison`
+- [x] **`spec-0038-interval`** ([#31](https://github.com/matthewjones372/kestrel/pull/31)) — the bootstrap over `Runs`, and `Comparison`
       with its three verdicts.
       Done when: two sets of runs with a known injected difference report an
       interval containing it, identical sets report an interval containing 1.0,
       and fewer than five runs on either side reports `CannotTell` with that as
       the reason.
-- [ ] **`spec-0038-page`** — the comparison on the report and the assertion in
+- [x] **`spec-0038-page`** ([#35](https://github.com/matthewjones372/kestrel/pull/35)) — the comparison on the report and the assertion in
       the test frameworks.
       Done when: the golden holds all three verdicts and each says what would
       change it.

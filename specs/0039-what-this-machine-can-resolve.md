@@ -83,7 +83,7 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
       enough on a shared machine that a one-sided gate would flake. The
       mechanism is asserted deterministically instead, and the magnitude is left
       unasserted.
-- [ ] **`spec-0039-consulted`** — 0038's comparison returns `CannotTell` below
+- [x] **`spec-0039-consulted`** ([#37](https://github.com/matthewjones372/kestrel/pull/37)) — 0038's comparison returns `CannotTell` below
       the floor, naming it.
       Done when: a 2% difference on a machine with a 6% floor reports cannot
       tell rather than better.

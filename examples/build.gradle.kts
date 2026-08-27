@@ -35,10 +35,13 @@ extensions.configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
 }
 
 dependencies {
-    testImplementation(project(":kestrel-baseline"))
-    testImplementation(project(":kestrel-core"))
-    testImplementation(project(":kestrel-engine"))
-    testImplementation(project(":kestrel-http"))
+    // Main rather than test: `OneRun` is a `main`, because the loop that runs a
+    // simulation ten times is a shell for-loop around one, and a JVM cannot be
+    // invoked ten times from inside a test class.
+    implementation(project(":kestrel-baseline"))
+    implementation(project(":kestrel-core"))
+    implementation(project(":kestrel-engine"))
+    implementation(project(":kestrel-http"))
     testImplementation(project(":kestrel-junit5"))
     testImplementation(project(":kestrel-report-html"))
     testImplementation(project(":kestrel-report-github"))

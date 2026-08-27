@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Second
 import io.github.matthewjones372.kestrel.StepStats
@@ -57,13 +58,24 @@ private fun StepStats.toJson(depth: Int): String = jsonObject(
     fields = listOf(
         "name" to jsonString(name),
         "count" to count.toString(),
-        "ok" to ok.count.toString(),
-        "failed" to failed.count.toString(),
         "unmatched" to unmatched.toString(),
         "inFlight" to inFlight.toString(),
         "serviceTime" to serviceTime.toJson(depth + 1),
         "responseTime" to responseTime.toJson(depth + 1),
-        "failures" to failed.reasons.entries.jsonArray(depth + 1) { (reason, seen) ->
+        "ok" to ok.toJson(depth + 1),
+        "failed" to failed.toJson(depth + 1),
+    ),
+)
+
+// The whole step and the two sides it splits into, because a reader pulling a
+// p99 out of a CI artifact wants to know which requests it describes.
+private fun Outcome.toJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "count" to count.toString(),
+        "serviceTime" to serviceTime.toJson(depth + 1),
+        "responseTime" to responseTime.toJson(depth + 1),
+        "reasons" to reasons.entries.jsonArray(depth + 1) { (reason, seen) ->
             jsonObject(depth + 2, listOf("reason" to jsonString(reason), "count" to seen.toString()))
         },
     ),

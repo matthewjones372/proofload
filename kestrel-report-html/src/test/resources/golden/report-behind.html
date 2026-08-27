@@ -147,6 +147,11 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .goodput-step { flex: 1; }
 .goodput-value { font-variant-numeric: tabular-nums; }
 .goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
 .tail { margin: 2rem 0 0; max-width: 46rem; }
 .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
@@ -228,6 +233,13 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     <p><strong>pay is the slowest step</strong> at 1.21 s p99, and it carries 3 of the 3 failures.</p>
     <p><strong>p99 rests on 1 request</strong> for browse. Treat it as a hint rather than a number: a longer run is the only thing that firms a percentile up.</p>
     <p>A user completes 2 steps, so about <strong>1 user in 50</strong> meets a p99 somewhere in the journey — assuming the steps are independent, which they are not quite. Percentiles do not add: the journey's own p99 is not the sum of the steps'.</p>
+  </section>
+  <section class="failures" aria-label="What the failures took">
+    <h2>What failed, and how fast</h2>
+    <ul class="failures-list">
+      <li><span class="failures-step">pay</span><span class="failures-value">3 failed at 1.21 s p99, against 40.1 ms for the 2 that worked</span></li>
+    </ul>
+    <p class="note">Service time, so this is the target's own speed rather than a wait this tool added. The table below counts these samples alongside the successes, and a target that sheds load answers a rejection at once — the faster it sheds, the better that table looks. A step that failed nothing is not listed.</p>
   </section>
   <section class="steps">
     <div class="steps-head">
@@ -375,8 +387,6 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "browse",
       "count": 4,
-      "ok": 4,
-      "failed": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -395,13 +405,50 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "p999": null,
         "max": 893386751
       },
-      "failures": []
+      "ok": {
+        "count": 4,
+        "serviceTime": {
+          "count": 4,
+          "p50": 12058623,
+          "p95": 90177535,
+          "p99": 90177535,
+          "p999": null,
+          "max": 90177535
+        },
+        "responseTime": {
+          "count": 4,
+          "p50": 413138943,
+          "p95": 893386751,
+          "p99": 893386751,
+          "p999": null,
+          "max": 893386751
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
     },
     {
       "name": "pay",
       "count": 5,
-      "ok": 2,
-      "failed": 3,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -420,16 +467,55 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "p999": null,
         "max": 2004877311
       },
-      "failures": [
-        {
-          "reason": "status 503 \u003cb\u003e\"upstream\" \u0026 'down'\u003c/b\u003e",
-          "count": 2
+      "ok": {
+        "count": 2,
+        "serviceTime": {
+          "count": 2,
+          "p50": 20054015,
+          "p95": 40108031,
+          "p99": 40108031,
+          "p999": null,
+          "max": 40108031
         },
-        {
-          "reason": "\u003c/script\u003e hung up",
-          "count": 1
-        }
-      ]
+        "responseTime": {
+          "count": 2,
+          "p50": 220200959,
+          "p95": 440401919,
+          "p99": 440401919,
+          "p999": null,
+          "max": 440401919
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 3,
+        "serviceTime": {
+          "count": 3,
+          "p50": 801112063,
+          "p95": 1207959551,
+          "p99": 1207959551,
+          "p999": null,
+          "max": 1207959551
+        },
+        "responseTime": {
+          "count": 3,
+          "p50": 1602224127,
+          "p95": 2004877311,
+          "p99": 2004877311,
+          "p999": null,
+          "max": 2004877311
+        },
+        "reasons": [
+          {
+            "reason": "status 503 \u003cb\u003e\"upstream\" \u0026 'down'\u003c/b\u003e",
+            "count": 2
+          },
+          {
+            "reason": "\u003c/script\u003e hung up",
+            "count": 1
+          }
+        ]
+      }
     }
   ],
   "timelinePrecision": 0.0625,

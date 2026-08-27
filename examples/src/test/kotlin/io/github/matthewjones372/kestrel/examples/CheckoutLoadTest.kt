@@ -16,6 +16,7 @@ import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
 import io.github.matthewjones372.kestrel.step
+import io.kotest.assertions.withClue
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -133,6 +134,11 @@ class CheckoutLoadTest {
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))
 
         result[pay].failedWith(status(503)) shouldBe 10L
+        result[pay].failed.count shouldBe 10L
+        withClue("every request was refused, so the whole step is the failed side of it") {
+            result[pay].ok.count shouldBe 0L
+            result[pay].serviceTime.count shouldBe result[pay].failed.serviceTime.count
+        }
         result.ran(confirm) shouldBe false
     }
 }

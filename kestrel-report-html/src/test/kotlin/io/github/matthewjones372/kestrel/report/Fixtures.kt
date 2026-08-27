@@ -92,6 +92,21 @@ internal object Fixtures {
         ),
     )
 
+    /** Every request refused, so there is no successful distribution to hold the failed one against. */
+    val everythingFailed: RunResult = RunResult(
+        startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+        steps = linkedMapOf(
+            "pay" to stepOf(
+                name = "pay",
+                ok = emptyList<Duration>() to emptyList(),
+                failed = List(4) { 20.milliseconds } + 1200.milliseconds to
+                    List(4) { 20.milliseconds } + 1200.milliseconds,
+                reasons = linkedMapOf("status 503" to 5L),
+            ),
+        ),
+        behind = timingOf(listOf(1.milliseconds)),
+    )
+
     /** A pipeline that answered for most of what it was sent, and lost the rest. */
     val lostRecords: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),

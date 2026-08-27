@@ -136,6 +136,30 @@ that fell behind reports its own backlog rather than a fast target. When that
 backlog is large enough to have moved a number, `result.fellBehind()` is true
 and every report says so before it prints a percentile.
 
+A step splits both of those by how the request ended, because a slow error is
+not a fast one. A service shedding load answers a large share of requests with
+an immediate rejection, and counted beside the successes those fast failures
+pull the whole distribution down: the run reports a p99 nobody experienced, and
+the better the shedding the better the number looks.
+
+```kotlin
+result[placeOrder].serviceTime.p99          // every sample, unchanged
+result[placeOrder].ok.serviceTime.p99       // the requests that worked
+result[placeOrder].failed.serviceTime.p99   // the requests that did not
+result[placeOrder].failed.count             // 41
+result[placeOrder].failed.reasons           // {"status 503": 41}
+result[placeOrder].failedWith("status 503") // 41
+```
+
+The whole-step timings are the merge of the two sides, so no number has moved:
+they are what they were, with the question of which requests they describe now
+answerable. The HTML report prints the failed distribution against the
+successful one whenever a step failed something, and prints nothing where
+nothing did. Percentile goals still read the whole step — a p99 over successes
+alone can be met by a target that failed most of the load, which is the mirror
+of the bug this catches — and `failureRate` is a count over a count, so it is
+unchanged.
+
 Every run also watches the machine it is sending from. A task due every
 millisecond records how much later than that it actually ran, so a stall in the
 measuring process arrives beside the tail it caused rather than inside it:
@@ -304,12 +328,11 @@ checkout.at(5_000.perSecond, over = 2.minutes)
 
 The rate is over the window the plan asked for rather than the span the run
 took, which is what makes two runs comparable; a run that did not keep to its
-window is already saying so through `fellBehind()`. A histogram counts failed
-requests beside successful ones, so a request that missed the target is charged
-against the ones that succeeded: the share is the lowest the two counts allow,
-and the report says as much where it prints it. A user abandoned after a failed
-step counts against the step that failed, and not again against the steps it
-never reached.
+window is already saying so through `fellBehind()`. It is read off the
+successes' own distribution over every request the step made, so a failure that
+was also slow is counted out once rather than twice. A user abandoned after a
+failed step counts against the step that failed, and not again against the
+steps it never reached.
 
 Not every answer comes back where it left. Publish a record to a topic and the
 answer appears at a sink, in another process, seconds later. An `emit` step

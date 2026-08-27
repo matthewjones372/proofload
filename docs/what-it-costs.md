@@ -70,9 +70,19 @@ regression test.
 ## What the recorder keeps
 
 Memory is the other overhead. A `Histogram` is a table of counters — 5,377
-longs, 43,016 bytes — and a run keeps two per step, service time and response
-time, plus one for the generator's own lateness. That is fixed per step and
-does not grow with the number of requests.
+longs, 43,016 bytes, and 43,681 bytes retained once the objects around it are
+counted — and a run keeps four per step: service time and response time, each
+split into the requests that worked and the requests that did not, plus one for
+the generator's own lateness. That is fixed per step and does not grow with the
+number of requests.
+
+A recorder is kept per shard and the default shard count is
+`availableProcessors`, so a ten-step scenario on the eight-core machine above
+holds forty histograms eight times over: **14.1 MiB**, measured by holding the
+recorders and reading the heap either side. Splitting a step into the two sides
+doubled that from roughly 7 MiB, and cost nothing on the timed path — a sample
+is still two counter increments, and the histograms describing the whole step
+are merged once, at freeze.
 
 `result.timeline` keeps one more per second per step, and that is the part that
 would grow: ten minutes of a three-step scenario is 1,800 of them, which at the

@@ -147,6 +147,11 @@ tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
 .goodput-step { flex: 1; }
 .goodput-value { font-variant-numeric: tabular-nums; }
 .goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
 .tail { margin: 2rem 0 0; max-width: 46rem; }
 .tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
@@ -223,6 +228,13 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     <p><strong>100 requests</strong>, <strong>5 failed</strong> (5.0%).</p>
     <p>The run kept to its schedule, so these latencies are the target's rather than this tool's.</p>
     <p><strong>pay is the slowest step</strong> at 902 ms p99, and it carries 5 of the 5 failures.</p>
+  </section>
+  <section class="failures" aria-label="What the failures took">
+    <h2>What failed, and how fast</h2>
+    <ul class="failures-list">
+      <li><span class="failures-step">pay</span><span class="failures-value">5 failed at 902 ms p99, against 401 ms for the 95 that worked</span></li>
+    </ul>
+    <p class="note">Service time, so this is the target's own speed rather than a wait this tool added. The table below counts these samples alongside the successes, and a target that sheds load answers a rejection at once — the faster it sheds, the better that table looks. A step that failed nothing is not listed.</p>
   </section>
   <section class="steps">
     <div class="steps-head">
@@ -359,8 +371,6 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "pay",
       "count": 100,
-      "ok": 95,
-      "failed": 5,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -379,12 +389,51 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "p999": null,
         "max": 901775359
       },
-      "failures": [
-        {
-          "reason": "status 503",
-          "count": 5
-        }
-      ]
+      "ok": {
+        "count": 95,
+        "serviceTime": {
+          "count": 95,
+          "p50": 60030975,
+          "p95": 400556031,
+          "p99": 400556031,
+          "p999": null,
+          "max": 400556031
+        },
+        "responseTime": {
+          "count": 95,
+          "p50": 60030975,
+          "p95": 400556031,
+          "p99": 400556031,
+          "p999": null,
+          "max": 400556031
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 5,
+        "serviceTime": {
+          "count": 5,
+          "p50": 901775359,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        },
+        "responseTime": {
+          "count": 5,
+          "p50": 901775359,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        },
+        "reasons": [
+          {
+            "reason": "status 503",
+            "count": 5
+          }
+        ]
+      }
     }
   ],
   "timelinePrecision": 0.0625,

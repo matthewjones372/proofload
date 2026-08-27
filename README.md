@@ -545,6 +545,58 @@ val runs = Runs.readAll(Path.of("build/kestrel"))   // ten files, oldest first
 `readAll` takes a directory rather than a list of paths, so nothing has to agree
 on the names, and it leaves anything in there that is not a run alone.
 
+## Better, worse, or cannot tell
+
+Two sets of runs and one statistic make the statement a single pair cannot: not
+"302 against 290", but how far apart they are and how much of that the runs will
+support.
+
+```kotlin
+import io.github.matthewjones372.kestrel.Tell
+import io.github.matthewjones372.kestrel.against
+import io.github.matthewjones372.kestrel.p99
+import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.kestrel.step
+
+val pay = step("pay")
+
+val difference = candidate.against(baseline, p99(pay), acceptable = 3.percent)
+
+difference.ratio      // 1.04 — four percent slower
+difference.interval   // Spread(low=1.015, high=1.065)
+
+when (val verdict = difference.verdict) {
+    Tell.Worse, Tell.Better -> println("${difference.statistic.described} moved by ${difference.ratio}")
+    is Tell.CannotTell -> println("${verdict.why}. ${verdict.wouldChangeIt}.")
+}
+```
+
+The ratio is read off each side's merged population, because that is where a
+percentile of a population comes from. The interval around it is a bootstrap
+over `each` — ten thousand resamples of the runs themselves, seeded from a
+constant so that reading one set of results twice reaches one verdict. A
+parametric interval would be assuming a shape that latency does not have.
+
+The verdict is that interval against a threshold the caller declares, rather
+than against zero: a team that cares about 1% and a team that cares about 10%
+are asking different questions of the same data. An interval entirely past the
+threshold is `Worse` or `Better`; one that spans it, or sits entirely inside it,
+is `CannotTell` — and every `CannotTell` carries `wouldChangeIt`, because a
+refusal nobody can act on is one a team learns to route around.
+
+Fewer than five runs a side is refused rather than answered. A bootstrap over
+three values is arithmetic wearing a lab coat.
+
+Any statistic a goal can name is one a comparison can read, and it knows which
+way is bad — a slower percentile is worse, and less goodput is worse:
+
+```kotlin
+import io.github.matthewjones372.kestrel.goodput
+import kotlin.time.Duration.Companion.milliseconds
+
+candidate.against(baseline, goodput(pay, under = 200.milliseconds))
+```
+
 A whole-run p99 cannot tell a target that degraded after ninety seconds from
 one that was evenly slow: both report the same number. `result.timeline` is the
 run second by second, counted from its start:

@@ -173,13 +173,25 @@ data class Verdict(val goal: Goal, val met: Boolean, val measured: Measurement, 
     }
 }
 
-/** A percentile of a step, waiting for the limit it has to stay under. */
+/** A percentile of a step: the limit it has to stay under, or the statistic a comparison reads. */
 data class PercentileOf internal constructor(
     private val step: StepName,
     private val percentile: String,
     private val clock: Clock,
-) {
+) : Statistic {
     infix fun under(limit: Duration): Goal = Goal.PercentileUnder(step, percentile, clock, limit)
+
+    override val described: String get() = "${step.name} $percentile"
+
+    override val higherIsWorse: Boolean get() = true
+
+    override fun samplesIn(run: RunResult): Samples? =
+        run.steps[step.name]?.let { Samples(it.timing(clock), it.count, it.failed.count) }
+
+    override fun read(samples: Samples): Double? = when (val measured = samples.timing.at(percentile)) {
+        is Tail.Absent -> null
+        is Tail.Measured -> measured.duration.inWholeNanoseconds.toDouble()
+    }
 }
 
 fun p50(step: StepName, of: Clock = Clock.ResponseTime): PercentileOf = PercentileOf(step, "p50", of)
@@ -200,13 +212,31 @@ val failureRate: FailuresOf get() = FailuresOf(null)
 
 fun failureRate(step: StepName): FailuresOf = FailuresOf(step)
 
-/** A step's good requests, waiting for the share of them the run has to reach. */
+/** A step's good requests: the share of them a run has to reach, or the statistic a comparison reads. */
 data class GoodputOf internal constructor(
     private val step: StepName,
     private val under: Duration,
     private val clock: Clock,
-) {
+) : Statistic {
     infix fun atLeast(share: Share): Goal = Goal.GoodputAtLeast(step, under, clock, share)
+
+    override val described: String get() = "${step.name} goodput under $under"
+
+    override val higherIsWorse: Boolean get() = false
+
+    /** The successes' own distribution: what a request that worked took, over every request the step made. */
+    override fun samplesIn(run: RunResult): Samples? =
+        run.steps[step.name]?.let { Samples(it.ok.timing(clock), it.count, it.failed.count) }
+
+    /**
+     * The share rather than the rate. A comparison is a ratio and both sides
+     * ran the same window — an unlike plan is refused before this is read — so
+     * the window divides out, and a share adds up across runs without one.
+     */
+    override fun read(samples: Samples): Double? = when (val met = samples.met(under)) {
+        is Met.Absent -> null
+        is Met.Measured -> met.fraction
+    }
 }
 
 /**

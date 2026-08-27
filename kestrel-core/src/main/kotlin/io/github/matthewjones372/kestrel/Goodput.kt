@@ -10,14 +10,21 @@ import kotlin.time.Duration
  * Read off the successes' own distribution over every request the step made, so
  * a failure that was also slow is counted out once rather than twice.
  */
-fun StepStats.met(under: Duration, of: Clock = Clock.ResponseTime): Met {
+fun StepStats.met(under: Duration, of: Clock = Clock.ResponseTime): Met =
+    Samples(ok.timing(of), count, failed.count).met(under)
+
+/**
+ * The same share, off counters that may be several runs' added together: the
+ * successes' own distribution, over every request the step made.
+ */
+internal fun Samples.met(under: Duration): Met {
     if (count == 0L) return Met.Absent("nothing was recorded, so no share of it met anything")
 
-    return when (val inside = ok.timing(of).share(under)) {
+    return when (val inside = timing.share(under)) {
         // Every request failed, so none of them was good: measured, not absent.
         is Met.Absent -> Met.Measured(0.0)
 
-        is Met.Measured -> Met.Measured(inside.fraction * ok.count / count)
+        is Met.Measured -> Met.Measured(inside.fraction * (count - failed) / count)
     }
 }
 

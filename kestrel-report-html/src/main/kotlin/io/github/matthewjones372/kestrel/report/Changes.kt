@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Floor
 
 /**
  * This run against the last one.
@@ -13,7 +14,24 @@ import io.github.matthewjones372.kestrel.Comparison
  * A refusal is printed rather than left off. A page with no comparison on it
  * reads the same whether this was the first run or the cache key broke.
  */
-internal fun Comparison?.comparisonLines(): List<String> = when (this) {
+internal fun Comparison?.comparisonLines(floor: Floor?): List<String> =
+    if (floor != null && !floor.supportsAClaim) floor.refusalLines() else comparisonLines()
+
+/**
+ * Where the comparison would have gone, on a machine that moves by
+ * [Floor.UNUSABLE] of itself between identical runs. Such a machine cannot
+ * separate a regression from its own weather, and a delta printed under that is
+ * one somebody goes and acts on.
+ */
+private fun Floor.refusalLines(): List<String> = section(
+    headline = "This machine cannot support a latency claim.",
+    notes = listOf(
+        "Repeats of one unchanging measurement landed ${resolution.asPercent()} apart here, so nothing " +
+            "smaller than that is the code rather than the machine. Nothing is compared.",
+    ),
+)
+
+private fun Comparison?.comparisonLines(): List<String> = when (this) {
     null -> emptyList()
 
     is Comparison.NotComparable -> section(headline = "Not compared to the last run.", notes = listOf(why))

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -17,13 +18,14 @@ import kotlin.time.DurationUnit
  * no colour, no emoji, and the columns padded so the numbers line up wherever
  * it lands — a job summary, a PR body or a job log.
  */
-fun RunResult.markdown(): String = blocks().joinToString(separator = "\n\n", postfix = "\n")
+fun RunResult.markdown(floor: Floor? = null): String =
+    blocks(floor).joinToString(separator = "\n\n", postfix = "\n")
 
-private fun RunResult.blocks(): List<String> =
+private fun RunResult.blocks(floor: Floor?): List<String> =
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), behindWarning()) + stepTable() +
+        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + stepTable() +
             listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
@@ -42,6 +44,24 @@ private fun RunResult.lostWarning(): String? {
         "An unmatched record is one the sink had the whole drain window to answer for and did not; " +
         "an in-flight one left too late to be given that window."
 }
+
+/**
+ * Above the table, because it is the frame for every number under it, and below
+ * the lost records, because a record that never arrived outranks a caveat about
+ * precision. A machine too coarse to bound a claim gets the warning form: this
+ * report has no comparison to withhold, so saying it plainly is all it can do.
+ */
+private fun Floor.line(): String =
+    if (supportsAClaim) {
+        "Calibrated on this machine: differences under ${resolution.asPercent()} are not resolvable here. " +
+            "The injector's own stalls reached ${hiccups.p99.report()} at p99."
+    } else {
+        "> **This machine cannot support a latency claim.** Repeats of one unchanging measurement landed " +
+            "${resolution.asPercent()} apart here, so nothing smaller than that is the code rather than " +
+            "the machine."
+    }
+
+private fun Double.asPercent(): String = String.format(Locale.ROOT, "%.2f%%", this * PERCENT)
 
 /**
  * Under the table rather than over it, because it is what the tail above is

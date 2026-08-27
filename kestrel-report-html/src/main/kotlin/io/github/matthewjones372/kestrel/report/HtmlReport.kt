@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -18,28 +19,33 @@ import kotlin.time.Duration
  * in the same file, so it opens from a `file://` URL and uploads as a CI
  * artifact unchanged.
  */
-public fun RunResult.toHtmlReport(comparison: Comparison? = null): String =
-    documentLines(comparison).joinToString(separator = "\n", postfix = "\n")
+public fun RunResult.toHtmlReport(comparison: Comparison? = null, floor: Floor? = null): String =
+    documentLines(comparison, floor).joinToString(separator = "\n", postfix = "\n")
 
 /**
  * Writes [toHtmlReport] to [path], creating the directories above it, and
  * returns the path written.
  */
-public fun RunResult.writeHtmlReport(path: Path, comparison: Comparison? = null): Path {
+public fun RunResult.writeHtmlReport(
+    path: Path,
+    comparison: Comparison? = null,
+    floor: Floor? = null,
+): Path {
     path.parent?.let { Files.createDirectories(it) }
-    return Files.writeString(path, toHtmlReport(comparison), Charsets.UTF_8)
+    return Files.writeString(path, toHtmlReport(comparison, floor), Charsets.UTF_8)
 }
 
-private fun RunResult.documentLines(comparison: Comparison?): List<String> =
+private fun RunResult.documentLines(comparison: Comparison?, floor: Floor?): List<String> =
     listOf(
         headLines(),
         verdictLines(),
-        comparison.comparisonLines(),
+        comparison.comparisonLines(floor),
         plan.headerLines(arrivals),
         lostLines(),
         behindLines(),
         totalsLines(),
         goodputLines(),
+        floor.resolutionLines(),
         hiccupLines(),
         readingLines(),
         stepsLines(),
@@ -66,6 +72,19 @@ private fun RunResult.lostLines(): List<String> =
             ". An unmatched record is one the sink had the whole drain window to answer for and did not; " +
             "an in-flight one left too late to be given that window.",
         "  </p>",
+    )
+
+/**
+ * What the machine can tell apart, wherever that is small enough to bound a
+ * claim rather than replace one — a floor too large for any claim is said in
+ * place of the comparison instead.
+ */
+private fun Floor?.resolutionLines(): List<String> =
+    if (this == null || !supportsAClaim) emptyList()
+    else listOf(
+        """  <p class="note" id="kestrel-floor">Calibrated on this machine: differences under """ +
+            "<strong>${resolution.asPercent()}</strong> are not resolvable here. The injector's own " +
+            "stalls reached <strong>${hiccups.p99.forReport()}</strong> at p99.</p>",
     )
 
 /**

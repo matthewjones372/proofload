@@ -1,6 +1,11 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Change
+import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Interval
+import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
@@ -13,8 +18,25 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 
 class HtmlReportTest {
+
+    private val stalls = Histogram().apply {
+        repeat(95) { record(1.milliseconds) }
+        repeat(4) { record(14.milliseconds) }
+        record(30.milliseconds)
+    }.timing()
+
+    private val here = Machine(cores = 8, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")
+
+    private val interval = Interval(95.milliseconds, 99.milliseconds)
+
+    private val better = Comparison.Compared(
+        changes = listOf(Change.Better("pay", 100.milliseconds, 97.milliseconds, interval)),
+        before = here,
+        now = here,
+    )
 
     @Test
     fun `the page for a run matches its golden`() {
@@ -50,6 +72,35 @@ class HtmlReportTest {
         val page = Fixtures.fellBehind.toHtmlReport()
 
         page shouldNotContain "Injector stalled"
+    }
+
+    @Test
+    fun `the page says what this machine can resolve, and what it stalled for measuring that`() {
+        val page = Fixtures.fellBehind.toHtmlReport(floor = Floor(resolution = 0.061, hiccups = stalls))
+
+        page shouldContain "Calibrated on this machine: differences under <strong>6.10%</strong>"
+        page shouldContain "stalls reached <strong>14.0 ms</strong> at p99"
+    }
+
+    @Test
+    fun `a machine that cannot support a claim says so where the comparison would have been`() {
+        val floor = Floor(resolution = 0.40, hiccups = stalls)
+
+        val page = Fixtures.fellBehind.toHtmlReport(better, floor)
+
+        page shouldContain "This machine cannot support a latency claim."
+        withClue("a comparison nobody should act on is not printed smaller, it is not printed") {
+            page shouldNotContain "<strong>better</strong>"
+            page shouldNotContain "Calibrated on this machine"
+        }
+    }
+
+    @Test
+    fun `a run nobody calibrated compares as it always did`() {
+        val page = Fixtures.fellBehind.toHtmlReport(better)
+
+        page shouldContain "<strong>better</strong>"
+        page shouldNotContain "cannot support a latency claim"
     }
 
     @Test

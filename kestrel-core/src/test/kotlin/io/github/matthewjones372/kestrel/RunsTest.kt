@@ -2,6 +2,8 @@ package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -142,4 +144,122 @@ class RunsTest {
         runs.merged.plan shouldBe paying
         runs.merged.machine shouldBe here
     }
+
+    private fun recorded(over: Int = 3, slowSecond: Int = NO_SLOW_SECOND): RunResult {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        repeat(over) { second ->
+            val service = if (second == slowSecond) 400.milliseconds else 10.milliseconds
+            repeat(100) { request ->
+                recorder.record(
+                    step = "pay",
+                    failure = null,
+                    serviceTime = service,
+                    schedulingDelay = Duration.ZERO,
+                    at = second.seconds + (request * 10).milliseconds,
+                )
+            }
+        }
+        return recorder.freeze()
+    }
+
+    /** Every field of a [RunResult] and of the [StepStats] under it set to something a default would not give. */
+    private fun everyFieldSet(): RunResult {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        recorder.record("pay", null, 10.milliseconds, schedulingDelay = 2.milliseconds, at = Duration.ZERO)
+        recorder.record("pay", "status 503", 20.milliseconds, schedulingDelay = 3.milliseconds, at = 1.seconds)
+        recorder.outstanding("pay", Outstanding(unmatched = 2L, inFlight = 1L))
+        return recorder.freeze().copy(
+            plan = paying,
+            arrivals = Arrivals(count = 2L, mean = 500.milliseconds, cov = 0.5),
+            machine = here,
+            hiccups = Histogram().apply { record(1.milliseconds) }.timing(),
+        )
+    }
+
+    @Test
+    fun `ten runs of the same length merge to a timeline of that length, counting every request`() {
+        val runs = Runs(List(10) { recorded(over = 3) })
+
+        runs.merged.timeline.size shouldBe 3
+        runs.merged.timeline.sumOf { it.count } shouldBe runs.merged.count
+        runs.merged.timeline.first().count shouldBe 1_000L
+    }
+
+    @Test
+    fun `a step keeps its own seconds through the merge`() {
+        val runs = Runs(List(10) { recorded(over = 3) })
+
+        runs.merged["pay"].timeline.size shouldBe 3
+        runs.merged["pay"].timeline.sumOf { it.count } shouldBe runs.merged["pay"].count
+    }
+
+    @Test
+    fun `a second's percentile is read from the runs' buckets rather than averaged across them`() {
+        val runs = Runs(List(9) { recorded(over = 3) } + recorded(over = 3, slowSecond = 1))
+
+        val averaged = runs.each.map { it.timeline[1].p99 }.reduce(Duration::plus) / runs.size
+        withClue("merged second 1 p99 ${runs.merged.timeline[1].p99}, the average of the ten was $averaged") {
+            runs.merged.timeline[1].p99 shouldBeGreaterThanOrEqualTo 400.milliseconds
+        }
+        runs.merged.timeline[0].p99 shouldBeLessThan 20.milliseconds
+    }
+
+    @Test
+    fun `the shape ten runs settle into is the shape one of them settles into`() {
+        val one = recorded(over = 4, slowSecond = 0)
+
+        val merged = Runs(List(10) { recorded(over = 4, slowSecond = 0) }).merged
+
+        withClue("superimposed, ten identical runs warm up in the same second one of them does") {
+            merged.timeline.map { it.p99 } shouldBe one.timeline.map { it.p99 }
+        }
+    }
+
+    @Test
+    fun `runs of different lengths merge to the longest, counting only the runs that reached each second`() {
+        val runs = Runs(listOf(recorded(over = 2), recorded(over = 4)))
+
+        runs.merged.timeline.map { it.count } shouldBe listOf(200L, 200L, 100L, 100L)
+        runs.merged.timeline.sumOf { it.count } shouldBe runs.merged.count
+    }
+
+    @Test
+    fun `a second a run never reached is the zero it recorded, not its last second held over`() {
+        val short = recorded(over = 2, slowSecond = 1)
+
+        val merged = Runs(listOf(short, recorded(over = 4))).merged
+
+        withClue("the short run's slow last second is in second 1 and nowhere after it") {
+            merged.timeline[1].p99 shouldBeGreaterThanOrEqualTo 400.milliseconds
+            merged.timeline[2].p99 shouldBeLessThan 20.milliseconds
+            merged.timeline[3].p99 shouldBeLessThan 20.milliseconds
+        }
+    }
+
+    @Test
+    fun `runs read back from files carry no timeline, and merge to none rather than being refused`() {
+        val runs = tenRuns()
+
+        runs.merged.timeline shouldBe emptyList()
+    }
+
+    @Test
+    fun `a run with a timeline and one without are not one population`() {
+        val refusal = shouldThrow<IllegalArgumentException> {
+            Runs(listOf(recorded(over = 3), runOf(10.milliseconds, plan = Plan.none, machine = Machine.here())))
+        }
+
+        refusal.message.orEmpty() shouldContain "run 2 has no timeline and the first has 3 seconds"
+    }
+
+    @Test
+    fun `merging one run gives that run back, so a field nobody merged cannot pass unnoticed`() {
+        val one = everyFieldSet()
+
+        withClue("arrivals is the one field a merge drops on purpose, and naming it keeps that a decision") {
+            Runs(listOf(one)).merged shouldBe one.copy(arrivals = Arrivals.none)
+        }
+    }
 }
+
+private const val NO_SLOW_SECOND = -1

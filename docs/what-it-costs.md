@@ -96,6 +96,13 @@ The summary is still read from the full histograms, so nothing on the page
 above the timeline is coarser than it was. `CoarseHistogramTest` asserts both
 sizes; neither is an estimate.
 
+Each frozen second keeps the buckets it counted in and not only its
+percentiles, because merging several runs' seconds means adding the buckets and
+reading the percentiles off the sum — `Runs.merged` has no other honest way to
+answer. Only the non-empty buckets survive the freeze, so a second holds one
+per distinct latency it saw rather than the 672 slots the coarse table
+reserves, and the counter tables go with the recorder that owned them.
+
 ## Comparing two runs
 
 A baseline taken from a cold JVM will make the next release look like an

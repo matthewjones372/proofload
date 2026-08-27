@@ -37,6 +37,14 @@ data class Runs(val each: List<RunResult>) {
      * percentiles read off the sum. A percentile of the whole population
      * cannot be recovered from the percentiles of the runs that made it, so
      * nothing here reads theirs.
+     *
+     * The timeline is superimposed rather than laid end to end: second *n*
+     * here is second *n* of every run, so ten two-minute runs give two minutes
+     * of ten times the load. Concatenating would describe a different
+     * experiment from the percentiles printed beside it, which are already the
+     * runs pooled. The cost is that a run slow only in its own third second is
+     * diluted by nine that were not — the same trade the percentiles make, and
+     * [each] still holds every run on its own.
      */
     val merged: RunResult by lazy {
         RunResult(
@@ -51,6 +59,7 @@ data class Runs(val each: List<RunResult>) {
             // its own on `each`.
             arrivals = Arrivals.none,
             machine = first.machine,
+            timeline = each.map { it.timeline }.superimposed(),
         )
     }
 
@@ -68,7 +77,19 @@ private fun RunResult.unlike(first: RunResult, position: Int): List<String> =
         listOfNotNull(
             "run $position was measured on $machine and the first on ${first.machine}"
                 .takeIf { machine != first.machine },
+            // Lengths that merely differ are padded rather than refused; a run
+            // carrying no timeline at all is a different fact, and padding it
+            // would invent seconds nobody has the data for.
+            "run $position has ${timeline.asLength()} and the first has ${first.timeline.asLength()}"
+                .takeIf { timeline.isEmpty() != first.timeline.isEmpty() },
         )
+
+/**
+ * A run read back from a baseline file has no timeline at all, because the
+ * format does not carry one; that is a different fact from a run that measured
+ * no seconds, and the refusal above should not read as if it were.
+ */
+private fun List<Second>.asLength(): String = if (isEmpty()) "no timeline" else "$size seconds of timeline"
 
 private fun List<StepStats>.merged(): StepStats = StepStats(
     name = first().name,
@@ -78,7 +99,32 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
     responseTime = map { it.responseTime }.merged(),
     unmatched = sumOf { it.unmatched },
     inFlight = sumOf { it.inFlight },
+    timeline = map { it.timeline }.superimposed(),
 )
+
+/**
+ * Second *n* of every run as second *n* of one: the coarse histograms added and
+ * the percentiles read off the sum, which is the only merge of a second there
+ * is. Averaging two seconds' percentiles would answer with a number neither of
+ * them measured.
+ *
+ * A run that stopped short of the longest is padded with the zero seconds it
+ * recorded rather than refused. 0025 already writes an interior quiet second as
+ * a zero, on the grounds that a gap in a line is information; the only reason a
+ * single run does not pad its trailing silence is that a single run has no
+ * defined end, and a merge does — the longest run. A zero here is therefore the
+ * same measurement those interior zeros are, not an invention.
+ *
+ * Nor is a difference in length a difference in the experiment. Unlike plans
+ * are already refused and the plan carries the profile, so every run here was
+ * asked for the same length; what is left is jitter in where the last response
+ * landed, which the plan check has already seen.
+ */
+private fun List<List<Second>>.superimposed(): List<Second> =
+    (0 until maxOf { it.size }).map { second ->
+        val counted = mapNotNull { it.getOrNull(second) }
+        Second(failed = counted.sumOf { it.failed }, serviceTime = counted.map { it.serviceTime }.merged())
+    }
 
 private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
     serviceTime = map { it.serviceTime }.merged(),

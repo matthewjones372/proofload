@@ -37,6 +37,8 @@ built. Each row links the spec that argued for it.
 | [0025](0025-what-happened-when.md) | a coarse histogram, a per-second timeline, and the charts over it |
 | [0037](0037-more-than-one-run.md) | `Runs`, merged from buckets, refusing unlike plans and machines |
 | [0036](0036-a-slow-error-is-not-a-fast-one.md) | `Outcome`: what the failures took, apart from what the successes did |
+| [0042](0042-a-test-that-does-not-measure-the-neighbours.md) | the repo's own timing test judged against the machine it runs on |
+| [0046](0046-a-merge-that-drops-the-clock.md) | a merged run keeps its clock, second n against second n |
 
 ## Drafted, not built
 

@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.at
@@ -37,12 +38,17 @@ fun calibrate(within: Duration = BUDGET): Floor {
     // and JIT, and this repository's own regression test measured a tenfold
     // difference between it and every run after it.
     val measured = List(WARMUP + REPEATS) { nothing.at(RATE, over = window).run() }.drop(WARMUP)
+    val repeats = measured.map { it[STEP].responseTime.p50 }
     return Floor(
-        resolution = resolutionOf(measured.map { it[STEP].responseTime.p50 }),
+        resolution = resolutionOf(repeats),
         // The window that stalled most, rather than a merge across all of them:
         // a frozen timing is not a histogram any more, and the worst window is
         // the one a reader is being warned about.
         hiccups = measured.maxBy { it.hiccups.p99 }.hiccups,
+        // The middle repeat rather than the fastest or the mean: it is the one
+        // reading of the probe that a bad neighbour cannot pull on its own, and
+        // another machine's middle repeat is the same thing measured there.
+        probe = Probe(repeats.sorted()[repeats.size / 2]),
     )
 }
 

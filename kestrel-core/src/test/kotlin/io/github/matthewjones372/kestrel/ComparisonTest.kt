@@ -6,10 +6,12 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -27,6 +29,7 @@ class ComparisonTest {
         samples: Int = 500,
         plan: Plan = Plan.none,
         machine: Machine = here,
+        probe: Probe? = null,
     ): RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = steps.mapValues { (name, range) ->
@@ -38,6 +41,7 @@ class ComparisonTest {
         behind = Histogram().timing(),
         plan = plan,
         machine = machine,
+        probe = probe,
     )
 
     private fun RunResult.changesAgainst(baseline: RunResult): List<Change> =
@@ -130,6 +134,68 @@ class ComparisonTest {
         withClue("a different machine warns rather than refuses") {
             compared.caveat.shouldNotBeNull() shouldContain "may be the runner"
         }
+    }
+
+    @Test
+    fun `a run on a machine half as fast names the runner before it names a step`() {
+        val plan = planAt(100.perSecond)
+        val baseline = runOf(mapOf("pay" to 80L..120L), plan = plan, probe = Probe(50.microseconds))
+        val slower = runOf(mapOf("pay" to 800L..1200L), plan = plan, probe = Probe(100.microseconds))
+
+        val compared = slower.against(baseline).shouldBeInstanceOf<Comparison.Compared>()
+
+        compared.slowdown shouldBe 2.0
+        val caveat = compared.caveat.shouldNotBeNull()
+        withClue(caveat) {
+            caveat shouldStartWith "this machine ran a fixed probe 2.00 times slower"
+            caveat shouldContain "100us"
+            caveat shouldContain "50us"
+        }
+    }
+
+    @Test
+    fun `a probe that landed where the baseline's did leaves the steps to answer for themselves`() {
+        val plan = planAt(100.perSecond)
+        val baseline = runOf(mapOf("pay" to 80L..120L), plan = plan, probe = Probe(50.microseconds))
+        val now = runOf(mapOf("pay" to 80L..120L), plan = plan, probe = Probe(52.microseconds))
+
+        val compared = now.against(baseline).shouldBeInstanceOf<Comparison.Compared>()
+
+        compared.caveat shouldBe null
+    }
+
+    @Test
+    fun `a baseline nobody probed is compared without a claim about the runner`() {
+        val plan = planAt(100.perSecond)
+        val baseline = runOf(mapOf("pay" to 80L..120L), plan = plan)
+        val now = runOf(mapOf("pay" to 80L..120L), plan = plan, probe = Probe(100.microseconds))
+
+        val compared = now.against(baseline).shouldBeInstanceOf<Comparison.Compared>()
+
+        compared.slowdown shouldBe null
+        compared.caveat shouldBe null
+    }
+
+    @Test
+    fun `the runner is named on a machine that reads the same as the baseline's, which is the whole case`() {
+        val plan = planAt(100.perSecond)
+        val baseline = runOf(mapOf("pay" to 80L..120L), plan = plan, machine = here, probe = Probe(40.microseconds))
+        val now = runOf(mapOf("pay" to 80L..120L), plan = plan, machine = here, probe = Probe(90.microseconds))
+
+        val compared = now.against(baseline).shouldBeInstanceOf<Comparison.Compared>()
+
+        withClue("two hosted runners of the same spec are the same Machine and not the same speed") {
+            compared.caveat.shouldNotBeNull() shouldContain "fixed probe"
+        }
+    }
+
+    @Test
+    fun `no baseline at all is reported rather than quietly skipped`() {
+        val why = runOf(mapOf("pay" to 80L..120L)).against(null)
+            .shouldBeInstanceOf<Comparison.NotComparable>()
+            .why
+
+        withClue(why) { why shouldContain "no baseline" }
     }
 
     @Test

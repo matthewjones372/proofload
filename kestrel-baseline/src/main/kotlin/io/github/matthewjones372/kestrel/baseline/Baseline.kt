@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
@@ -39,12 +40,19 @@ internal fun RunResult.asBaseline(): String =
     (
         listOf("$MARKER\t$VERSION", "run\t$startedAt") +
             machine.lines() +
+            probe.lines() +
             plan.lines() +
             steps.values.flatMap { it.lines() }
         ).joinToString(separator = "\n", postfix = "\n")
 
 private fun Machine.lines(): List<String> =
     listOf("machine\t$cores\t${jdk.escaped()}\t${os.escaped()}\t${arch.escaped()}")
+
+// Beside the machine rather than beside the steps: it describes what measured
+// the run, and a run nobody calibrated writes no line at all rather than a zero
+// a later comparison would divide by.
+private fun Probe?.lines(): List<String> =
+    if (this == null) emptyList() else listOf("probe\t${took.inWholeNanoseconds}")
 
 private fun Plan.lines(): List<String> =
     listOf("plan\t${scenario.escaped()}") +
@@ -81,8 +89,12 @@ fun readBaseline(path: Path): RunResult = parseBaseline(Files.readString(path))
 internal fun parseBaseline(text: String): RunResult {
     val lines = text.lineSequence().filter { it.isNotBlank() }.toList()
     val header = lines.firstOrNull()?.split(SEPARATOR).orEmpty()
-    require(header.getOrNull(0) == MARKER && header.getOrNull(1) == VERSION) {
-        "not a Kestrel baseline, or written by a different version: ${lines.firstOrNull()}"
+    require(header.getOrNull(0) == MARKER) { "not a Kestrel baseline: ${lines.firstOrNull()}" }
+    // Named rather than merely refused. A version this build cannot read is a
+    // Kestrel somewhere else, and which one is the only useful thing to say.
+    require(header.getOrNull(1) in READABLE) {
+        "this baseline is version ${header.getOrNull(1)}; this Kestrel reads " +
+            "${READABLE.joinToString(" and ")} and writes $VERSION"
     }
 
     val startedAt = lines.first { it.startsWith("run$SEPARATOR") }.split(SEPARATOR)[1]
@@ -112,8 +124,14 @@ internal fun parseBaseline(text: String): RunResult {
         behind = Histogram().timing(),
         plan = lines.asPlan(),
         machine = lines.asMachine(),
+        probe = lines.asProbe(),
     )
 }
+
+/** Absent in a version 3 file, and in any run whose machine was never calibrated. */
+private fun List<String>.asProbe(): Probe? =
+    firstOrNull { it.startsWith("probe$SEPARATOR") }
+        ?.let { Probe(it.split(SEPARATOR)[1].toLong().nanoseconds) }
 
 private fun List<String>.asMachine(): Machine {
     val (_, cores, jdk, os, arch) = first { it.startsWith("machine$SEPARATOR") }.split(SEPARATOR)
@@ -199,7 +217,11 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "3"
+private const val VERSION = "4"
+
+// 3 is 4 without the probe line, so a file written before there was one still
+// answers every question a comparison asks of it except that one.
+private val READABLE = listOf("3", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

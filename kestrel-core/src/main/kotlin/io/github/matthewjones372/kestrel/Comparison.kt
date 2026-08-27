@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel
 
+import java.util.Locale
 import kotlin.time.Duration
 
 /** What became of one step's percentile between two runs. */
@@ -54,20 +55,61 @@ sealed interface Comparison {
     data class NotComparable(val why: String) : Comparison
 
     /** Every step of a run measured on [now], against a baseline measured on [before]. */
-    data class Compared(val changes: List<Change>, val before: Machine, val now: Machine) : Comparison {
+    data class Compared(
+        val changes: List<Change>,
+        val before: Machine,
+        val now: Machine,
+        /** What the target-free probe took on the machine that made the baseline, where it ran one. */
+        val beforeProbe: Probe? = null,
+        /** What it took on the machine that made this run. */
+        val nowProbe: Probe? = null,
+    ) : Comparison {
 
-        /** What to distrust [changes] by, or null when one machine measured both runs. */
+        /** How many times slower this machine ran the probe, or null where either run has none. */
+        val slowdown: Double?
+            get() = if (beforeProbe == null || nowProbe == null) null else nowProbe.timesSlowerThan(beforeProbe)
+
+        /**
+         * What to distrust [changes] by, or null when nothing about the two
+         * machines argues against them.
+         *
+         * A measured runner comes before a described one: two hosted runners of
+         * the same spec are the same [Machine] and not the same speed, and a
+         * number is a better answer to "was it the runner" than a specification
+         * either way.
+         */
         val caveat: String?
-            get() = if (before == now) {
-                null
-            } else {
-                "measured on $now and the baseline on $before, so every delta here may be the runner"
-            }
+            get() = listOfNotNull(slowerRunner(), otherMachine()).joinToString(separator = " ").ifEmpty { null }
+
+        private fun slowerRunner(): String? {
+            if (beforeProbe == null || nowProbe == null || !nowProbe.materiallySlowerThan(beforeProbe)) return null
+            return "this machine ran a fixed probe ${format(nowProbe.timesSlowerThan(beforeProbe))} times slower " +
+                "than the one that made the baseline (${nowProbe.took} against ${beforeProbe.took}), " +
+                "so a step that reads worse here may be the runner"
+        }
+
+        private fun otherMachine(): String? =
+            if (before == now) null
+            else "measured on $now and the baseline on $before, so every delta here may be the runner"
     }
 }
 
-/** Every step of this run against the same step of [baseline], at [percentile]. */
-fun RunResult.against(baseline: RunResult, percentile: Double = P99): Comparison {
+/**
+ * Every step of this run against the same step of [baseline], at [percentile].
+ *
+ * A null [baseline] is reported rather than ignored: a page with no comparison
+ * on it reads the same whether this was a first run or a cache key broke. The
+ * nullability sits on the argument rather than on a reader that returns null,
+ * because a baseline goes missing in as many ways as there are places to keep
+ * one, and each of them wants the same sentence printed.
+ */
+fun RunResult.against(baseline: RunResult?, percentile: Double = P99): Comparison {
+    if (baseline == null) {
+        return Comparison.NotComparable(
+            "no baseline to compare against: either this is the first run, or wherever it was kept did not have it",
+        )
+    }
+
     val unlike = plan.unlike(baseline.plan)
     if (unlike.isNotEmpty()) {
         return Comparison.NotComparable("these runs were not asked to do the same thing: ${unlike.joinToString()}")
@@ -86,8 +128,12 @@ fun RunResult.against(baseline: RunResult, percentile: Double = P99): Comparison
         },
         before = baseline.machine,
         now = machine,
+        beforeProbe = baseline.probe,
+        nowProbe = probe,
     )
 }
+
+private fun format(times: Double): String = String.format(Locale.ROOT, "%.2f", times)
 
 /**
  * What this plan asked for that [other] did not. Goals are left out: a

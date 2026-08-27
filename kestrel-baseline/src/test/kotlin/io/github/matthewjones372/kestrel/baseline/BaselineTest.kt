@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.against
@@ -18,6 +19,7 @@ import io.github.matthewjones372.kestrel.then
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -43,6 +46,7 @@ class BaselineTest {
         samples: Int = 500,
         plan: Plan = Plan.none,
         machine: Machine = here,
+        probe: Probe? = null,
     ): RunResult {
         val ok = histogramOf(range, samples - FAILURES)
         val failed = histogramOf(range, FAILURES)
@@ -61,6 +65,7 @@ class BaselineTest {
             behind = Histogram().timing(),
             plan = plan,
             machine = machine,
+            probe = probe,
         )
     }
 
@@ -122,8 +127,37 @@ class BaselineTest {
     }
 
     @Test
-    fun `a baseline from a future version is refused rather than guessed at`() {
-        shouldThrow<IllegalArgumentException> { parseBaseline("kestrel-baseline\t99\nrun\t2026-08-26T09:00:00Z\n") }
+    fun `a baseline from a future version is refused, and the refusal names the version`() {
+        val why = shouldThrow<IllegalArgumentException> {
+            parseBaseline("kestrel-baseline\t99\nrun\t2026-08-26T09:00:00Z\n")
+        }.message.orEmpty()
+
+        withClue(why) {
+            why shouldContain "version 99"
+            why shouldContain "4"
+        }
+    }
+
+    @Test
+    fun `the probe travels, so a runner half as fast is named before a step is`(@TempDir dir: Path) {
+        val plan = planOf(constantRate(100.perSecond, over = 2.seconds))
+        runOf(plan = plan, probe = Probe(50.microseconds)).writeBaseline(dir.resolve("b.kestrel"))
+
+        val compared = runOf(plan = plan, probe = Probe(100.microseconds))
+            .against(readBaseline(dir.resolve("b.kestrel")))
+            .shouldBeInstanceOf<Comparison.Compared>()
+
+        compared.slowdown shouldBe 2.0
+        withClue(compared.caveat.orEmpty()) { compared.caveat.shouldNotBeNull() shouldContain "fixed probe" }
+    }
+
+    @Test
+    fun `a baseline written by the version before this one reads, and claims no probe`() {
+        val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
+            .asBaseline()
+            .replaceFirst("kestrel-baseline\t4", "kestrel-baseline\t3")
+
+        parseBaseline(older).probe shouldBe null
     }
 
     @Test

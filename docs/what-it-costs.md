@@ -92,6 +92,17 @@ rather than two hundred and fifty-six, 5,384 bytes — putting the same run
 under ten megabytes, with each second's percentile good to 6.25% instead of
 0.78%.
 
+A second splits its two sides the way a step does, and the table for what
+failed is allocated the first time something in that second does — so a second
+nothing failed in, which is most seconds of most runs, costs exactly what it
+cost before the split.
+
+Freezing a second keeps the buckets that counted something and drops the rest —
+tens of them for a second of load, against the 673 the table has slots for.
+They are kept rather than only the percentiles read off them because a stretch
+of the run, the steady segment among them, has to be added up from buckets: a
+p99 over forty seconds is not something that can be recovered from forty p99s.
+
 The summary is still read from the full histograms, so nothing on the page
 above the timeline is coarser than it was. `CoarseHistogramTest` asserts both
 sizes; neither is an estimate.

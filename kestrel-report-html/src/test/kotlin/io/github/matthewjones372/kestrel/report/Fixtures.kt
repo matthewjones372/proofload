@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Capacity
+import io.github.matthewjones372.kestrel.Clock
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
@@ -182,6 +183,42 @@ internal object Fixtures {
     private val pay = step("pay")
 
     private val goals = listOf(p99(pay) under 200.milliseconds, failureRate under 1.percent)
+
+    /**
+     * Twenty seconds of a target that was ten times slower for the first ten
+     * of them, which is the shape a cold JVM leaves on a timeline.
+     *
+     * Its goal is met over the segment it settled into and missed over the
+     * whole run, so the page has to say which it judged.
+     */
+    val settledAfterAWarmUp: RunResult = settling(degrading = false)
+
+    /** The same twenty seconds on a target that got slower and stayed slower. */
+    val neverSettled: RunResult = settling(degrading = true)
+
+    private fun settling(degrading: Boolean): RunResult {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        repeat(SECONDS_SETTLING * EACH_SECOND) { index ->
+            val early = index < SECONDS_SETTLING * EACH_SECOND / 2
+            recorder.record(
+                step = pay.name,
+                failure = null,
+                serviceTime = if (early == degrading) 20.milliseconds else 200.milliseconds,
+                schedulingDelay = Duration.ZERO,
+                at = (index * MILLIS_A_SECOND / EACH_SECOND).milliseconds,
+            )
+        }
+        return recorder.freeze().copy(
+            plan = Plan(
+                scenario = "checkout",
+                steps = listOf(pay.name),
+                profile = constantRate(EACH_SECOND.perSecond, over = SECONDS_SETTLING.seconds),
+                goals = listOf(p99(pay, of = Clock.ServiceTime) under 100.milliseconds),
+            ),
+        )
+    }
+
+    private const val SECONDS_SETTLING = 20
 
     /** A ladder to 4,000/s, a knee between 3,000 and 4,000, and a bisection that found 3,500. */
     val capacity: Capacity = Capacity(

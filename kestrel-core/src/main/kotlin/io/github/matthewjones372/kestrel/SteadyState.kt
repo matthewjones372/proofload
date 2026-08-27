@@ -50,6 +50,53 @@ sealed interface SteadyState {
 val RunResult.steadyState: SteadyState get() = timeline.steadyState()
 
 /**
+ * This run over the segment it settled into, and the run itself where it never
+ * settled: nothing is discarded by default, and the numbers above stay where
+ * they are.
+ *
+ * What the timeline measured is restricted — the counts, which are exact, and
+ * the target's service time, at the timeline's own precision. What a second
+ * does not keep is absent rather than carried over from the whole run: there
+ * are no response times here, no reason a request failed, and no backlog, and
+ * a goal that reads one of those is judged over the whole run instead.
+ */
+val RunResult.steady: RunResult
+    get() = when (val settled = steadyState) {
+        is SteadyState.NeverSettled -> this
+        is SteadyState.From -> from(settled.offset)
+    }
+
+private fun RunResult.from(offset: Duration): RunResult = RunResult(
+    startedAt = startedAt.plusSeconds(offset.inWholeSeconds),
+    steps = steps.mapValues { (_, step) -> step.from(offset) },
+    behind = Timing.none,
+    plan = plan,
+    arrivals = Arrivals.none,
+    machine = machine,
+    hiccups = Timing.none,
+    timeline = timeline.secondsFrom(offset),
+)
+
+private fun StepStats.from(offset: Duration): StepStats {
+    val seconds = timeline.secondsFrom(offset)
+    val worked = seconds.map { it.okServiceTime }.merged()
+    val failed = seconds.map { it.failedServiceTime }.merged()
+    return StepStats(
+        name = name,
+        // No reasons: a second counts what failed and not what the target
+        // said about it, so the segment can say how many and not which.
+        ok = Outcome(serviceTime = worked, responseTime = Timing.none),
+        failed = Outcome(serviceTime = failed, responseTime = Timing.none),
+        serviceTime = listOf(worked, failed).merged(),
+        responseTime = Timing.none,
+        timeline = seconds,
+    )
+}
+
+/** A step's own seconds can run out before the run's, which is that step having stopped rather than a gap. */
+private fun List<Second>.secondsFrom(offset: Duration): List<Second> = drop(offset.inWholeSeconds.toInt())
+
+/**
  * The earliest second after which no later window is materially better than
  * the last one and the tail holds within [SteadyState.TOLERANCE] of its own
  * mean.
@@ -62,6 +109,9 @@ val RunResult.steadyState: SteadyState get() = timeline.steadyState()
  * mean rather than averaged in: a zero second is not a fast second.
  */
 fun List<Second>.steadyState(): SteadyState {
+    if (isEmpty()) {
+        return SteadyState.NeverSettled("nothing was recorded second by second, so there was no shape to look at")
+    }
     if (size < SteadyState.LEAST_INTERVALS) {
         return SteadyState.NeverSettled(
             "a run of $size s has nothing to detect: a verdict needs at least " +

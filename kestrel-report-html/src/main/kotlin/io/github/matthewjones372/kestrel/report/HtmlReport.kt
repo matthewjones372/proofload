@@ -39,6 +39,7 @@ private fun RunResult.documentLines(comparison: Comparison?, floor: Floor?): Lis
     listOf(
         headLines(),
         verdictLines(),
+        steadyLines(),
         comparison.comparisonLines(floor),
         plan.headerLines(arrivals),
         lostLines(),

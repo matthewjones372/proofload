@@ -172,24 +172,26 @@ private class Seconds {
 
 private class SecondRecorder {
 
-    private val latency = Histogram.coarse()
+    private val ok = Histogram.coarse()
 
-    // A counter rather than a fold over what failed: this is the recording
-    // path, and a reason kept per second would be an allocation the report
-    // then calls the target's latency.
-    private var failed = 0L
+    // The accumulator AGENTS.md allows a builder, and null until something
+    // fails: a second nothing failed in is most seconds of most runs, and the
+    // timeline keeps one of these per second per step. Which reason it was is
+    // not kept — that would be an allocation the report then calls the
+    // target's latency.
+    private var failed: Histogram? = null
 
-    fun record(failure: String?, service: Duration) {
-        latency.record(service)
-        if (failure != null) failed++
-    }
+    fun record(failure: String?, service: Duration) =
+        if (failure == null) ok.record(service) else failing().record(service)
 
     fun merge(other: SecondRecorder) {
-        latency.merge(other.latency)
-        failed += other.failed
+        ok.merge(other.ok)
+        other.failed?.let { failing().merge(it) }
     }
 
-    fun freeze(): Second = latency.asSecond(failed)
+    fun freeze(): Second = Second(ok.timing(), failed?.timing() ?: Timing.none)
+
+    private fun failing(): Histogram = failed ?: Histogram.coarse().also { failed = it }
 }
 
 private class OutcomeRecorder {

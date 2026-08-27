@@ -5,9 +5,11 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Second
+import io.github.matthewjones372.kestrel.SteadyState
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Tail
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.steadyState
 
 /**
  * A `RunResult` as JSON, so the page carries a machine-readable copy of the run
@@ -38,9 +40,30 @@ internal fun RunResult.toJson(): String = jsonObject(
         // histograms the timeline keeps, and a reader pulling one out has no
         // other way to know it is not the `precision` above.
         "timelinePrecision" to Histogram.COARSE_PRECISION.toString(),
+        "steadyState" to steadyState.toJson(depth = 1),
         "timeline" to timeline.jsonArray(depth = 1) { it.toJson(depth = 2) },
     ),
 ) + "\n"
+
+/**
+ * Whichever of the two it is, both keys are here: a reader testing for
+ * `settledAfter` should not have to know that the other case spells it by
+ * leaving the key out.
+ */
+private fun SteadyState.toJson(depth: Int): String {
+    val (settledAfter, why) = when (this) {
+        is SteadyState.From -> offset.inWholeNanoseconds.toString() to "null"
+        is SteadyState.NeverSettled -> "null" to jsonString(why)
+    }
+    return jsonObject(
+        depth = depth,
+        fields = listOf(
+            "tolerance" to SteadyState.TOLERANCE.toString(),
+            "settledAfter" to settledAfter,
+            "why" to why,
+        ),
+    )
+}
 
 private fun Second.toJson(depth: Int): String = jsonObject(
     depth = depth,

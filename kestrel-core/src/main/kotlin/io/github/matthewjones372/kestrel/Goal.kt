@@ -33,6 +33,16 @@ sealed interface Goal {
     /** What this asks for, in the words a report prints. */
     val described: String
 
+    /**
+     * Whether [RunResult.steady] holds what this goal reads, and so whether a
+     * run that settled is judged over its steady segment or over all of
+     * itself. The timeline keeps the counts and the target's service time;
+     * response time and the generator's own backlog are not kept second by
+     * second, and narrowing a goal on those to a segment nothing measured
+     * would be inventing the answer.
+     */
+    val overSteadySegment: Boolean
+
     fun judge(result: RunResult): Verdict
 
     data class PercentileUnder(
@@ -42,6 +52,8 @@ sealed interface Goal {
         val limit: Duration,
     ) : Goal {
         override val described: String get() = "${step.name} $percentile under $limit"
+
+        override val overSteadySegment: Boolean get() = clock == Clock.ServiceTime
 
         override fun judge(result: RunResult): Verdict {
             val stats = result.steps[step.name]
@@ -64,6 +76,10 @@ sealed interface Goal {
         override val described: String get() =
             "${step?.name ?: "the run"} failing under ${share.percent}%"
 
+        // Counted rather than timed: a second's counts are exact, so a share
+        // of them over a segment is the same measurement over less of the run.
+        override val overSteadySegment: Boolean get() = true
+
         override fun judge(result: RunResult): Verdict {
             val counts = step?.let {
                 result.steps[it.name] ?: return Verdict.missed(this, Measurement.Absent("the step never ran"))
@@ -83,6 +99,8 @@ sealed interface Goal {
     ) : Goal {
         override val described: String get() =
             "${step.name} goodput under $under at least ${share.percent}%"
+
+        override val overSteadySegment: Boolean get() = clock == Clock.ServiceTime
 
         override fun judge(result: RunResult): Verdict {
             val stats = result.steps[step.name]
@@ -104,6 +122,10 @@ sealed interface Goal {
     /** That the generator kept to its own schedule, so the rest of the numbers mean what they say. */
     data object KeptSchedule : Goal {
         override val described: String get() = "the generator keeps its schedule"
+
+        // The backlog is the whole run's, and a run that fell behind while it
+        // was warming up fell behind.
+        override val overSteadySegment: Boolean get() = false
 
         override fun judge(result: RunResult): Verdict =
             if (result.fellBehind()) Verdict.missed(this, Measurement.Took(result.behind.p99))

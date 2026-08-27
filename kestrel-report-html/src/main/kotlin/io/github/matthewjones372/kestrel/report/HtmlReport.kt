@@ -209,11 +209,11 @@ private fun RunResult.tableLines(): List<String> =
 private fun StepStats.rowLines(): List<String> =
     listOf(
         """          <tr class="step" data-step="${name.escapedForHtml()}"""" +
-            (if (failures.isEmpty()) ">" else """ aria-expanded="false" tabindex="0">"""),
+            (if (failed.reasons.isEmpty()) ">" else """ aria-expanded="false" tabindex="0">"""),
         """            <th scope="row">${name.escapedForHtml()}</th>""",
         """            <td class="num">${count.grouped()}</td>""",
-        """            <td class="num ok">${ok.grouped()}</td>""",
-        """            <td class="num failed">${failed.grouped()}</td>""",
+        """            <td class="num ok">${ok.count.grouped()}</td>""",
+        """            <td class="num failed">${failed.count.grouped()}</td>""",
         timeCell(serviceTime.p50, responseTime.p50),
         timeCell(serviceTime.p95, responseTime.p95),
         timeCell(serviceTime.p99, responseTime.p99),
@@ -238,12 +238,12 @@ private fun timeCell(service: Duration, response: Duration): String {
 }
 
 private fun StepStats.reasonLines(): List<String> =
-    if (failures.isEmpty()) emptyList()
+    if (failed.reasons.isEmpty()) emptyList()
     else listOf(
         """          <tr class="reasons" data-for="${name.escapedForHtml()}">""",
         """            <td colspan="${COLUMNS.size}">""",
         """              <ul class="reason-list">""",
-    ) + failures.map { (reason, seen) ->
+    ) + failed.reasons.map { (reason, seen) ->
         """                <li><span class="reason">${reason.escapedForHtml()}</span>""" +
             """<span class="reason-count">${seen.grouped()}</span></li>"""
     } + listOf(

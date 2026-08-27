@@ -29,15 +29,19 @@ class RunsTest {
         failures: Map<String, Long> = emptyMap(),
         steps: List<String> = listOf("pay"),
     ): RunResult {
+        val failed = failures.values.sum().toInt()
         val timing = Histogram().apply { repeat(samples) { record(latency) } }.timing()
+        val outcomeOf = { taken: Int, reasons: Map<String, Long> ->
+            val side = Histogram().apply { repeat(taken) { record(latency) } }.timing()
+            Outcome(side, side, reasons)
+        }
         return RunResult(
             startedAt = startedAt,
             steps = steps.associateWith { name ->
                 StepStats(
                     name = name,
-                    count = samples.toLong(),
-                    ok = samples.toLong() - failures.values.sum(),
-                    failures = failures,
+                    ok = outcomeOf(samples - failed, emptyMap()),
+                    failed = outcomeOf(failed, failures),
                     serviceTime = timing,
                     responseTime = timing,
                 )

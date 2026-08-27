@@ -72,13 +72,18 @@ private fun RunResult.unlike(first: RunResult, position: Int): List<String> =
 
 private fun List<StepStats>.merged(): StepStats = StepStats(
     name = first().name,
-    count = sumOf { it.count },
-    ok = sumOf { it.ok },
-    failures = flatMap { it.failures.entries }.groupingBy { it.key }.fold(0L) { total, e -> total + e.value },
+    ok = map { it.ok }.mergedOutcome(),
+    failed = map { it.failed }.mergedOutcome(),
     serviceTime = map { it.serviceTime }.merged(),
     responseTime = map { it.responseTime }.merged(),
     unmatched = sumOf { it.unmatched },
     inFlight = sumOf { it.inFlight },
+)
+
+private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
+    serviceTime = map { it.serviceTime }.merged(),
+    responseTime = map { it.responseTime }.merged(),
+    reasons = flatMap { it.reasons.entries }.groupingBy { it.key }.fold(0L) { total, e -> total + e.value },
 )
 
 /** The buckets of every timing here added together, with the percentiles read off the sum. */

@@ -48,7 +48,7 @@ class Kestrel {
 private fun RunResult.lines(): String =
     (
         listOf("kestrel: ${count.grouped()} requests, ${failed.grouped()} failed") + steps.values.map { step ->
-            "  ${step.name}: ${step.count.grouped()} requests, ${step.failed.grouped()} failed, " +
+            "  ${step.name}: ${step.count.grouped()} requests, ${step.failed.count.grouped()} failed, " +
                 "p99 ${step.responseTime.p99} response, ${step.serviceTime.p99} service"
         }
         ).joinToString(separator = "\n")

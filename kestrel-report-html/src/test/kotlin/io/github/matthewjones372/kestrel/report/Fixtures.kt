@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Rate
 import io.github.matthewjones372.kestrel.RunRecorder
@@ -39,25 +40,17 @@ internal object Fixtures {
     val fellBehind: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = linkedMapOf(
-            "browse" to StepStats(
+            "browse" to stepOf(
                 name = "browse",
-                count = 4L,
-                ok = 4L,
-                failures = emptyMap(),
-                serviceTime = timingOf(listOf(10.milliseconds, 12.milliseconds, 14.milliseconds, 90.milliseconds)),
-                responseTime = timingOf(listOf(210.milliseconds, 412.milliseconds, 614.milliseconds, 890.milliseconds)),
+                ok = listOf(10.milliseconds, 12.milliseconds, 14.milliseconds, 90.milliseconds) to
+                    listOf(210.milliseconds, 412.milliseconds, 614.milliseconds, 890.milliseconds),
             ),
-            "pay" to StepStats(
+            "pay" to stepOf(
                 name = "pay",
-                count = 5L,
-                ok = 2L,
-                failures = linkedMapOf(HOSTILE_REASON to 2L, CLOSING_TAG_REASON to 1L),
-                serviceTime = timingOf(
-                    listOf(20.milliseconds, 40.milliseconds, 60.milliseconds, 800.milliseconds, 1200.milliseconds),
-                ),
-                responseTime = timingOf(
-                    listOf(220.milliseconds, 440.milliseconds, 660.milliseconds, 1600.milliseconds, 2000.milliseconds),
-                ),
+                ok = listOf(20.milliseconds, 40.milliseconds) to listOf(220.milliseconds, 440.milliseconds),
+                failed = listOf(60.milliseconds, 800.milliseconds, 1200.milliseconds) to
+                    listOf(660.milliseconds, 1600.milliseconds, 2000.milliseconds),
+                reasons = linkedMapOf(HOSTILE_REASON to 2L, CLOSING_TAG_REASON to 1L),
             ),
         ),
         behind = timingOf(
@@ -83,13 +76,12 @@ internal object Fixtures {
     val metItsTarget: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = linkedMapOf(
-            "pay" to StepStats(
+            "pay" to stepOf(
                 name = "pay",
-                count = 100L,
-                ok = 99L,
-                failures = linkedMapOf("status 503" to 1L),
-                serviceTime = timingOf(List(99) { 20.milliseconds } + List(1) { 800.milliseconds }),
-                responseTime = timingOf(List(99) { 50.milliseconds } + List(1) { 900.milliseconds }),
+                ok = List(98) { 20.milliseconds } + 800.milliseconds to
+                    List(98) { 50.milliseconds } + 900.milliseconds,
+                failed = listOf(20.milliseconds) to listOf(50.milliseconds),
+                reasons = linkedMapOf("status 503" to 1L),
             ),
         ),
         behind = timingOf(listOf(1.milliseconds)),
@@ -104,24 +96,14 @@ internal object Fixtures {
     val lostRecords: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = linkedMapOf(
-            "submitted" to StepStats(
+            "submitted" to stepOf(
                 name = "submitted",
-                count = 113L,
-                ok = 113L,
-                failures = emptyMap(),
-                serviceTime = timingOf(listOf(2.milliseconds, 3.milliseconds, 4.milliseconds)),
-                responseTime = timingOf(listOf(2.milliseconds, 3.milliseconds, 4.milliseconds)),
+                ok = spread(113, 2.milliseconds, 3.milliseconds, 4.milliseconds).let { it to it },
             ),
-            "settled" to StepStats(
+            "settled" to stepOf(
                 name = "settled",
-                count = 60L,
-                ok = 60L,
-                failures = emptyMap(),
-                serviceTime = timingOf(listOf(400.milliseconds, 900.milliseconds, 1400.milliseconds)),
-                responseTime = timingOf(listOf(400.milliseconds, 900.milliseconds, 1400.milliseconds)),
-                unmatched = 41L,
-                inFlight = 12L,
-            ),
+                ok = spread(60, 400.milliseconds, 900.milliseconds, 1400.milliseconds).let { it to it },
+            ).copy(unmatched = 41L, inFlight = 12L),
         ),
         behind = timingOf(listOf(1.milliseconds)),
     )
@@ -130,13 +112,10 @@ internal object Fixtures {
     val longEnoughForATail: RunResult = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = linkedMapOf(
-            "pay" to StepStats(
+            "pay" to stepOf(
                 name = "pay",
-                count = 2_000L,
-                ok = 2_000L,
-                failures = emptyMap(),
-                serviceTime = timingOf(List(1_997) { 20.milliseconds } + List(3) { 900.milliseconds }),
-                responseTime = timingOf(List(1_997) { 25.milliseconds } + List(3) { 950.milliseconds }),
+                ok = List(1_997) { 20.milliseconds } + List(3) { 900.milliseconds } to
+                    List(1_997) { 25.milliseconds } + List(3) { 950.milliseconds },
             ),
         ),
         behind = timingOf(listOf(1.milliseconds)),
@@ -183,6 +162,7 @@ internal object Fixtures {
     private const val EACH_SECOND = 25
     private const val MILLIS_A_SECOND = 1_000L
     private const val ONE_IN_TEN = 10
+    private const val FIFTHS = 5
 
     private val pay = step("pay")
 
@@ -212,11 +192,14 @@ internal object Fixtures {
             steps = mapOf(
                 pay.name to StepStats(
                     name = pay.name,
-                    count = requests,
-                    ok = requests - failed,
-                    failures = if (failed == 0L) emptyMap() else mapOf("status 503" to failed),
-                    serviceTime = timingOf(listOf(took)),
-                    responseTime = timingOf(listOf(took)),
+                    ok = flatOutcome(requests - failed, took),
+                    failed = flatOutcome(
+                        failed,
+                        took,
+                        if (failed == 0L) emptyMap() else mapOf("status 503" to failed),
+                    ),
+                    serviceTime = flat(requests, took),
+                    responseTime = flat(requests, took),
                 ),
             ),
             behind = timingOf(listOf(behind)),
@@ -226,6 +209,36 @@ internal object Fixtures {
     }
 
     private const val SECONDS_HELD = 120.0
+
+    /** Every request at the same latency: a rung is judged on its percentiles, and a flat run has one. */
+    private fun flatOutcome(samples: Long, took: Duration, reasons: Map<String, Long> = emptyMap()) =
+        Outcome(flat(samples, took), flat(samples, took), reasons)
+
+    private fun flat(samples: Long, took: Duration): Timing =
+        Histogram().apply { repeat(samples.toInt()) { record(took) } }.timing()
+
+    /**
+     * A step from its two sides, each a pair of service and response samples.
+     * The whole-step timings are the merge, which is what the recorder freezes.
+     */
+    private fun stepOf(
+        name: String,
+        ok: Pair<List<Duration>, List<Duration>>,
+        failed: Pair<List<Duration>, List<Duration>> = emptyList<Duration>() to emptyList(),
+        reasons: Map<String, Long> = emptyMap(),
+    ) = StepStats(
+        name = name,
+        ok = Outcome(timingOf(ok.first), timingOf(ok.second)),
+        failed = Outcome(timingOf(failed.first), timingOf(failed.second), reasons),
+        serviceTime = timingOf(ok.first + failed.first),
+        responseTime = timingOf(ok.second + failed.second),
+    )
+
+    /** Two fifths low, two fifths in the middle and the rest high: a p50 in the middle band and a p95 at the top. */
+    private fun spread(samples: Int, low: Duration, middle: Duration, high: Duration): List<Duration> {
+        val fifth = samples / FIFTHS
+        return List(fifth * 2) { low } + List(fifth * 2) { middle } + List(samples - fifth * 4) { high }
+    }
 
     // `vararg Duration` is prohibited: `Duration` is a value class.
     private fun timingOf(samples: List<Duration>): Timing =

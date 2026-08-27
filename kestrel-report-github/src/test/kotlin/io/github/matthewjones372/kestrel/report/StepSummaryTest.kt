@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.timing
@@ -23,7 +24,13 @@ class StepSummaryTest {
     private val result = RunResult(
         startedAt = Instant.parse("2026-08-26T09:00:00Z"),
         steps = mapOf(
-            "pay" to StepStats("pay", 1L, 1L, emptyMap(), serviceTime = latency, responseTime = latency),
+            "pay" to StepStats(
+                "pay",
+                ok = Outcome(latency, latency),
+                failed = Outcome.none,
+                serviceTime = latency,
+                responseTime = latency,
+            ),
         ),
         behind = Histogram().apply { record(10.milliseconds) }.timing(),
     )

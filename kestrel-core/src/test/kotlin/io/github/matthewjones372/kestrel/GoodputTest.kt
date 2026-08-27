@@ -17,15 +17,30 @@ class GoodputTest {
     private fun timingOf(samples: List<Duration>): Timing =
         Histogram().apply { samples.forEach { record(it) } }.timing()
 
-    private fun stepOf(name: String, ok: Long, fast: Int, slow: Int): StepStats {
-        val count = (fast + slow).toLong()
+    private fun outcomeOf(fast: Int, slow: Int, reasons: Map<String, Long>) = Outcome(
+        serviceTime = timingOf(List(fast) { 20.milliseconds } + List(slow) { 800.milliseconds }),
+        responseTime = timingOf(List(fast) { 50.milliseconds } + List(slow) { 900.milliseconds }),
+        reasons = reasons,
+    )
+
+    private fun stepOf(
+        name: String,
+        fast: Int = 0,
+        slow: Int = 0,
+        failedFast: Int = 0,
+        failedSlow: Int = 0,
+    ): StepStats {
+        val failures = (failedFast + failedSlow).toLong()
         return StepStats(
             name = name,
-            count = count,
-            ok = ok,
-            failures = if (count == ok) emptyMap() else mapOf("status 503" to count - ok),
-            serviceTime = timingOf(List(fast) { 20.milliseconds } + List(slow) { 800.milliseconds }),
-            responseTime = timingOf(List(fast) { 50.milliseconds } + List(slow) { 900.milliseconds }),
+            ok = outcomeOf(fast, slow, emptyMap()),
+            failed = outcomeOf(
+                failedFast,
+                failedSlow,
+                if (failures == 0L) emptyMap() else mapOf("status 503" to failures),
+            ),
+            serviceTime = outcomeOf(fast + failedFast, slow + failedSlow, emptyMap()).serviceTime,
+            responseTime = outcomeOf(fast + failedFast, slow + failedSlow, emptyMap()).responseTime,
         )
     }
 
@@ -42,14 +57,14 @@ class GoodputTest {
 
     @Test
     fun `goodput is the successes that came back inside the target, over the window the plan asked for`() {
-        val pay = stepOf("pay", ok = 100L, fast = 100, slow = 0)
+        val pay = stepOf("pay", fast = 100)
 
         pay.goodput(under = target, over = 10.seconds).perSecond shouldBe (10.0 plusOrMinus 1e-9)
     }
 
     @Test
-    fun `a request that missed the target is charged to the successes, so goodput cannot flatter`() {
-        val pay = stepOf("pay", ok = 99L, fast = 99, slow = 1)
+    fun `a slow success and a fast failure are each counted out of goodput`() {
+        val pay = stepOf("pay", fast = 98, slow = 1, failedFast = 1)
 
         val met = pay.met(under = target).shouldBeInstanceOf<Met.Measured>()
         withClue("1% failed and 1% came back slow") {
@@ -58,11 +73,28 @@ class GoodputTest {
     }
 
     @Test
+    fun `a failure that was also slow is counted out once rather than twice`() {
+        val pay = stepOf("pay", fast = 99, failedSlow = 1)
+
+        val met = pay.met(under = target).shouldBeInstanceOf<Met.Measured>()
+        withClue("99 of the 100 requests both succeeded and came back inside the target") {
+            met.fraction shouldBe (0.99 plusOrMinus 1e-9)
+        }
+    }
+
+    @Test
+    fun `a step where everything failed met the target with none of them, which is a measurement`() {
+        val pay = stepOf("pay", failedFast = 100)
+
+        pay.met(under = target).shouldBeInstanceOf<Met.Measured>().fraction shouldBe (0.0 plusOrMinus 1e-9)
+    }
+
+    @Test
     fun `an abandoned user counts against the step that failed, not against the ones that never ran`() {
         val result = runOf(
-            stepOf("browse", ok = 100L, fast = 100, slow = 0),
-            stepOf("pay", ok = 90L, fast = 100, slow = 0),
-            stepOf("confirm", ok = 90L, fast = 90, slow = 0),
+            stepOf("browse", fast = 100),
+            stepOf("pay", fast = 90, failedFast = 10),
+            stepOf("confirm", fast = 90),
         )
 
         result["pay"].met(under = target).shouldBeInstanceOf<Met.Measured>().fraction shouldBe (0.9 plusOrMinus 1e-9)
@@ -75,8 +107,8 @@ class GoodputTest {
     @Test
     fun `a run's goodput counts every step against the one window`() {
         val result = runOf(
-            stepOf("browse", ok = 100L, fast = 100, slow = 0),
-            stepOf("pay", ok = 90L, fast = 100, slow = 0),
+            stepOf("browse", fast = 100),
+            stepOf("pay", fast = 90, failedFast = 10),
         )
 
         // 100 good and 90 good, over ten seconds.
@@ -85,14 +117,14 @@ class GoodputTest {
 
     @Test
     fun `a result that was never planned has no window to be a rate over`() {
-        val fromSamples = runOf(stepOf("pay", ok = 10L, fast = 10, slow = 0)).copy(plan = Plan.none)
+        val fromSamples = runOf(stepOf("pay", fast = 10)).copy(plan = Plan.none)
 
         fromSamples.goodput(under = target) shouldBe null
     }
 
     @Test
     fun `goodput reads response time unless it is told otherwise`() {
-        val pay = stepOf("pay", ok = 100L, fast = 0, slow = 100)
+        val pay = stepOf("pay", slow = 100)
 
         withClue("service time is 800 ms and response time 900 ms, so a 850 ms target separates them") {
             pay.met(under = 850.milliseconds).shouldBeInstanceOf<Met.Measured>().fraction shouldBe
@@ -104,14 +136,14 @@ class GoodputTest {
 
     @Test
     fun `a step that recorded nothing reports its share absent rather than zero`() {
-        val nothing = stepOf("pay", ok = 0L, fast = 0, slow = 0)
+        val nothing = stepOf("pay")
 
         nothing.met(under = target).shouldBeInstanceOf<Met.Absent>()
     }
 
     @Test
     fun `the planned window is the profile's, and nothing when no profile was named`() {
-        runOf(stepOf("pay", ok = 1L, fast = 1, slow = 0), over = 90.seconds).plan.plannedWindow shouldBe 90.seconds
+        runOf(stepOf("pay", fast = 1), over = 90.seconds).plan.plannedWindow shouldBe 90.seconds
         Plan.none.plannedWindow shouldBe Duration.ZERO
     }
 }

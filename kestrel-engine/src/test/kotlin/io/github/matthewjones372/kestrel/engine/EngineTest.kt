@@ -32,7 +32,7 @@ class EngineTest {
             .at(1.perSecond, over = 1.seconds)
             .run()
 
-        result["pay"].failures shouldContainExactly mapOf("503" to 1L)
+        result["pay"].failed.reasons shouldContainExactly mapOf("503" to 1L)
         result.failed shouldBe 1L
     }
 
@@ -42,7 +42,7 @@ class EngineTest {
             .at(1.perSecond, over = 1.seconds)
             .run()
 
-        result["pay"].failures shouldContainExactly mapOf("java.lang.IllegalStateException" to 1L)
+        result["pay"].failed.reasons shouldContainExactly mapOf("java.lang.IllegalStateException" to 1L)
     }
 
     @Test
@@ -52,7 +52,7 @@ class EngineTest {
             exec("pay") { if (this[cart] != "two hats") fail("no cart") }
         }.at(1.perSecond, over = 1.seconds).run()
 
-        result["pay"].ok shouldBe 1L
+        result["pay"].ok.count shouldBe 1L
     }
 
     @Test
@@ -94,7 +94,7 @@ class EngineTest {
         }.at(1.perSecond, over = 1.seconds).run()
 
         result["submitted"].count shouldBe 1L
-        result["submitted"].ok shouldBe 1L
+        result["submitted"].ok.count shouldBe 1L
         result["submitted"].unmatched shouldBe 0L
     }
 }

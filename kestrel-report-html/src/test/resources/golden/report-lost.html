@@ -284,13 +284,13 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         <figcaption>submitted — where the requests landed</figcaption>
         <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="submitted distribution">
           <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
-            <title>1 at 2.01 ms</title>
+            <title>44 at 2.01 ms</title>
           </rect>
           <rect class="bar" x="373.3" y="0.0" width="4.0" height="120.0">
-            <title>1 at 3.01 ms</title>
+            <title>44 at 3.01 ms</title>
           </rect>
-          <rect class="bar" x="636.0" y="0.0" width="4.0" height="120.0">
-            <title>1 at 4.01 ms</title>
+          <rect class="bar" x="636.0" y="51.8" width="4.0" height="68.2">
+            <title>25 at 4.01 ms</title>
           </rect>
           <line class="mark" x1="373.3" y1="0" x2="373.3" y2="120.0"></line>
           <text class="mark-label" x="376.3" y="12">p50</text>
@@ -302,13 +302,13 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         <figcaption>settled — where the requests landed</figcaption>
         <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="settled distribution">
           <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
-            <title>1 at 401 ms</title>
+            <title>24 at 401 ms</title>
           </rect>
           <rect class="bar" x="412.2" y="0.0" width="4.0" height="120.0">
-            <title>1 at 902 ms</title>
+            <title>24 at 902 ms</title>
           </rect>
-          <rect class="bar" x="636.0" y="0.0" width="4.0" height="120.0">
-            <title>1 at 1.40 s</title>
+          <rect class="bar" x="636.0" y="60.0" width="4.0" height="60.0">
+            <title>12 at 1.40 s</title>
           </rect>
           <line class="mark" x1="412.2" y1="0" x2="412.2" y2="120.0"></line>
           <text class="mark-label" x="415.2" y="12">p50</text>
@@ -323,8 +323,8 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   <section class="tail" aria-label="The tail">
     <h2>p99.9</h2>
     <ul class="tail-list">
-      <li><span class="tail-step">submitted</span><span class="tail-value none">Not measured — only 3 samples, and under 1000 the top bucket holds fewer than one.</span></li>
-      <li><span class="tail-step">settled</span><span class="tail-value none">Not measured — only 3 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">submitted</span><span class="tail-value none">Not measured — only 113 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">settled</span><span class="tail-value none">Not measured — only 60 samples, and under 1000 the top bucket holds fewer than one.</span></li>
     </ul>
     <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
   </section>
@@ -367,7 +367,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
-        "count": 3,
+        "count": 113,
         "p50": 3014655,
         "p95": 4014079,
         "p99": 4014079,
@@ -375,7 +375,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "max": 4014079
       },
       "responseTime": {
-        "count": 3,
+        "count": 113,
         "p50": 3014655,
         "p95": 4014079,
         "p99": 4014079,
@@ -392,7 +392,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
       "unmatched": 41,
       "inFlight": 12,
       "serviceTime": {
-        "count": 3,
+        "count": 60,
         "p50": 901775359,
         "p95": 1400897535,
         "p99": 1400897535,
@@ -400,7 +400,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
         "max": 1400897535
       },
       "responseTime": {
-        "count": 3,
+        "count": 60,
         "p50": 901775359,
         "p95": 1400897535,
         "p99": 1400897535,

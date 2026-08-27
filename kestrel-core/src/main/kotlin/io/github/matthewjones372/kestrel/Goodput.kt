@@ -7,16 +7,19 @@ import kotlin.time.Duration
  * [under]: good events over total, which is the shape a latency service-level
  * indicator already has.
  *
- * A lower bound rather than an exact count. A histogram counts failed requests
- * beside successful ones, so every request that missed the target is charged
- * against the ones that succeeded — the smallest overlap the two counts allow,
- * and the direction an approximation can be quoted in.
+ * Read off the successes' own distribution over every request the step made, so
+ * a failure that was also slow is counted out once rather than twice.
  */
-fun StepStats.met(under: Duration, of: Clock = Clock.ResponseTime): Met =
-    when (val inside = timing(of).share(under)) {
-        is Met.Absent -> inside
-        is Met.Measured -> Met.Measured(maxOf(0.0, inside.fraction - failed.toDouble() / count))
+fun StepStats.met(under: Duration, of: Clock = Clock.ResponseTime): Met {
+    if (count == 0L) return Met.Absent("nothing was recorded, so no share of it met anything")
+
+    return when (val inside = ok.timing(of).share(under)) {
+        // Every request failed, so none of them was good: measured, not absent.
+        is Met.Absent -> Met.Measured(0.0)
+
+        is Met.Measured -> Met.Measured(inside.fraction * ok.count / count)
     }
+}
 
 /**
  * The same requests as a rate over [over].
@@ -53,6 +56,12 @@ private fun StepStats.metRequests(under: Duration, clock: Clock): Double = when 
 
 /** Which of a step's two clocks [clock] names. */
 internal fun StepStats.timing(clock: Clock): Timing = when (clock) {
+    Clock.ServiceTime -> serviceTime
+    Clock.ResponseTime -> responseTime
+}
+
+/** The same choice on one side of a step. */
+internal fun Outcome.timing(clock: Clock): Timing = when (clock) {
     Clock.ServiceTime -> serviceTime
     Clock.ResponseTime -> responseTime
 }

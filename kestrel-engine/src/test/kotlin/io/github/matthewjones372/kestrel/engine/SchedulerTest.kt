@@ -43,7 +43,7 @@ class SchedulerTest {
             }
         }.at(10.perSecond, over = 1.seconds).run()
 
-        result["browse"].ok shouldBe users.toLong()
+        result["browse"].ok.count shouldBe users.toLong()
     }
 
     @Test

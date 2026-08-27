@@ -70,8 +70,8 @@ class CalibrationTest {
             result[slow].count shouldBe 40L
         }
 
-        withClue("nothing failed: ${result[slow].failures}") {
-            result[slow].failed shouldBe 0L
+        withClue("nothing failed: ${result[slow].failed.reasons}") {
+            result[slow].failed.count shouldBe 0L
         }
 
         // Response time carries the generator's own lateness on top of service

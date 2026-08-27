@@ -115,8 +115,8 @@ private fun RunResult.stepTable(): String = table(
 private fun StepStats.row(): List<String> = listOf(
     name.escapeMarkdown(),
     count.toString(),
-    ok.toString(),
-    failed.toString(),
+    ok.count.toString(),
+    failed.count.toString(),
     responseTime.p50.report(),
     responseTime.p95.report(),
     responseTime.p99.report(),
@@ -145,7 +145,7 @@ private fun unitOf(nanos: Long): DurationUnit = when {
 
 private fun RunResult.failureBlocks(): List<String> {
     val rows = steps.values.flatMap { step ->
-        step.failures.map { (reason, seen) ->
+        step.failed.reasons.map { (reason, seen) ->
             listOf(step.name.escapeMarkdown(), reason.escapeMarkdown(), seen.toString())
         }
     }

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Second
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Tail
 import io.github.matthewjones372.kestrel.Timing
@@ -32,8 +33,24 @@ internal fun RunResult.toJson(): String = jsonObject(
         "hiccups" to hiccups.toJson(depth = 1),
         "arrivals" to arrivals.toJson(depth = 1),
         "steps" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
+        // Its own precision beside it: these percentiles come from the coarse
+        // histograms the timeline keeps, and a reader pulling one out has no
+        // other way to know it is not the `precision` above.
+        "timelinePrecision" to Histogram.COARSE_PRECISION.toString(),
+        "timeline" to timeline.jsonArray(depth = 1) { it.toJson(depth = 2) },
     ),
 ) + "\n"
+
+private fun Second.toJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "count" to count.toString(),
+        "ok" to ok.toString(),
+        "failed" to failed.toString(),
+        "p50" to p50.inWholeNanoseconds.toString(),
+        "p99" to p99.inWholeNanoseconds.toString(),
+    ),
+)
 
 private fun StepStats.toJson(depth: Int): String = jsonObject(
     depth = depth,

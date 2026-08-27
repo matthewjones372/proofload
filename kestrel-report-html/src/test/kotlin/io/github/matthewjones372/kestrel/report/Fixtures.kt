@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Rate
+import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Rung
 import io.github.matthewjones372.kestrel.StepStats
@@ -140,6 +141,48 @@ internal object Fixtures {
         ),
         behind = timingOf(listOf(1.milliseconds)),
     )
+
+    /**
+     * Four seconds of a target that was fine and then was not.
+     *
+     * Recorded through `RunRecorder` at the offsets the requests left at,
+     * because a timeline built by hand would be asserting the shape of a list
+     * rather than the shape of a run.
+     */
+    val degradedHalfway: RunResult = recorded(degrading = true)
+
+    /** The same load at the same latency throughout, so the shape is the only difference on the page. */
+    val steadyThroughout: RunResult = recorded(degrading = false)
+
+    private fun recorded(degrading: Boolean): RunResult {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        repeat(SECONDS_RECORDED * EACH_SECOND) { index ->
+            val degraded = degrading && index >= SECONDS_RECORDED * EACH_SECOND / 2
+            // One request in ten is the tail, so p50 and p99 are two lines
+            // rather than one drawn twice. In the degraded half the tail is
+            // also where the failures are, which is what a target under
+            // pressure looks like.
+            val tail = index % ONE_IN_TEN == 0
+            recorder.record(
+                step = "pay",
+                failure = if (degraded && tail) "status 503" else null,
+                serviceTime = when {
+                    degraded && tail -> 900.milliseconds
+                    degraded -> 400.milliseconds
+                    tail -> 60.milliseconds
+                    else -> 20.milliseconds
+                },
+                schedulingDelay = Duration.ZERO,
+                at = (index * MILLIS_A_SECOND / EACH_SECOND).milliseconds,
+            )
+        }
+        return recorder.freeze()
+    }
+
+    private const val SECONDS_RECORDED = 4
+    private const val EACH_SECOND = 25
+    private const val MILLIS_A_SECOND = 1_000L
+    private const val ONE_IN_TEN = 10
 
     private val pay = step("pay")
 

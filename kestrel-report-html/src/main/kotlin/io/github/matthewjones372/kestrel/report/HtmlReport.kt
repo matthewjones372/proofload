@@ -49,6 +49,7 @@ private fun RunResult.documentLines(comparison: Comparison?, floor: Floor?): Lis
         hiccupLines(),
         readingLines(),
         stepsLines(),
+        timelineLines(),
         tailLines(),
         listOf("</main>"),
         dataLines(),

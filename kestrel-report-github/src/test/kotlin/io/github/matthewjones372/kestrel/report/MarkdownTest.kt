@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
@@ -167,6 +168,25 @@ class MarkdownTest {
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
 
         result.markdown() shouldNotContain "stalled"
+    }
+
+    @Test
+    fun `a calibrated machine says what it can resolve before it says what it measured`() {
+        val floor = Floor(resolution = 0.061, hiccups = timingOf(List(9) { 1.milliseconds } + 14.milliseconds))
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
+
+        result.markdown(floor) shouldContain "Calibrated on this machine: differences under 6.10% are not " +
+            "resolvable here. The injector's own stalls reached 14.0ms at p99."
+    }
+
+    @Test
+    fun `a machine too coarse to bound a claim says that instead of the number`() {
+        val floor = Floor(resolution = 0.40, hiccups = Timing.none)
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
+
+        val markdown = result.markdown(floor)
+        markdown shouldContain "**This machine cannot support a latency claim.**"
+        markdown shouldNotContain "are not resolvable here"
     }
 
     private val nothing = listOf(Duration.ZERO)

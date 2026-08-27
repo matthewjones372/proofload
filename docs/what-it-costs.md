@@ -43,6 +43,12 @@ of a one-millisecond schedule arrived on the injector's own JVM, and the reports
 print it beside the backlog. Where the two are the same size, the p99 column
 above is this machine.
 
+The same machinery answers the question this table cannot: `calibrate()` runs a
+null step on a fixed schedule several times over and reports how far apart the
+repeats landed, as a fraction. That is the smallest difference this machine can
+tell apart at all, and it is measured on the machine rather than read off a
+table written on somebody else's.
+
 **The first rows are the coldest.** The low rates send the fewest requests, so
 they get the least JIT, and their medians are worse than rates ten times higher.
 Read the table as a shape rather than a ranking.

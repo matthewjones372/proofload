@@ -150,6 +150,54 @@ their histogram is read only once that executor has terminated, so watching
 cannot move the numbers being watched. A tail no larger than `hiccups.p99` is
 this machine as readily as the target, and both reports print the two together.
 
+Before a report compares two runs it can ask what the machine underneath can
+tell apart at all. A calibration runs the ordinary step machinery against an
+action that does nothing — no socket and no target — and reports how far apart
+repeats of that one unchanging thing landed:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.junit5.LoadTest
+
+class ResolutionTest {
+
+    @LoadTest
+    fun `what this machine can tell apart`(kestrel: Kestrel) {
+        val floor: Floor = kestrel.calibrate()
+
+        floor.resolution       // 0.061 — a difference under 6.1% is this machine
+        floor.hiccups.p99      // 14ms — what the injector itself stalled for
+        floor.resolves(0.03)   // false: a 3% difference is not resolvable here
+    }
+}
+```
+
+`resolution` is measured at the median, where the statistic is the machine's own
+throughput and a fraction of it still means something at another scale. It bounds
+the *size* of a change; a claim about a tail has to clear `hiccups.p99` in
+absolute terms as well, which is the other half of what one calibration measures.
+
+The floor is a property of the machine rather than of a run, so it is measured
+once per JVM and kept, bounded at thirty seconds. On a runner somebody has
+already characterised, `-Dkestrel.resolution=0.02` names it instead of measuring
+it again. Hand it to a report and the page says what it can resolve; where the
+floor is too large for any latency claim to rest on, the page says that where
+the comparison would have gone rather than printing one nobody should act on:
+
+```kotlin
+import io.github.matthewjones372.kestrel.against
+import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import java.nio.file.Path
+
+result.writeHtmlReport(Path.of("build/reports/kestrel.html"), result.against(baseline), floor)
+```
+
+A null step is what makes that number mean something. Reading the floor off the
+run's own variance instead would fold the target's variability into it, and a
+genuinely erratic target would raise its own noise floor and hide its own
+regressions.
+
 A timing carries the buckets it was read from, so it answers a percentile
 nobody asked for while the run was going — `p999` among them, which is where
 two JVM collectors that match to p99 come apart:

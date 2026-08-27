@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Capacity
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
@@ -31,6 +32,14 @@ class Kestrel {
      * of it.
      */
     fun run(search: Search): Capacity = search.judgedBy { rung -> run(rung) }
+
+    /**
+     * What this machine can resolve, measured once per JVM and kept afterwards.
+     * A floor is a property of the machine rather than of a run, and one
+     * measured between two runs would be measuring the drift it is there to
+     * bound.
+     */
+    fun calibrate(): Floor = machineFloor()
 
     /** What was measured, for a failure message. Empty when nothing ran. */
     fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }

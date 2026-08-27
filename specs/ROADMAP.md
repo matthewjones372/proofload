@@ -42,6 +42,7 @@ In the order the architect would take them.
 |---|---|
 | [0022](0022-a-token-that-stays-fresh.md) | a soak longer than a token's life cannot authenticate |
 | [0025](0025-what-happened-when.md) | a run that degraded halfway looks identical to one that did not |
+| [0030](0030-a-baseline-in-ci.md) | the plan and the machine landed; the probe and the CI recipe have not |
 | [0024](0024-think-time-and-closed-model.md) | `pause`, and the closed model with its caveat stated |
 | [0026](0026-checks-and-retries.md) | a 200 with an error page in it is counted as a success |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |

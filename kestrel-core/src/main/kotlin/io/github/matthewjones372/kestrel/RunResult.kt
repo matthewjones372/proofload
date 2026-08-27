@@ -113,12 +113,33 @@ fun Histogram.timing(): Timing = Timing(
     distribution = distribution(),
 )
 
+/**
+ * A timing over buckets that were counted somewhere else — added together from
+ * several runs, or read back out of a file — with every percentile read off
+ * them rather than carried alongside them.
+ */
+fun List<Bucket>.timing(): Timing {
+    val counted = sumOf { it.count }
+    if (counted == 0L) return Timing.none
+    return Timing(
+        count = counted,
+        p50 = at(counted, P50),
+        p95 = at(counted, P95),
+        p99 = at(counted, P99),
+        max = at(counted, HUNDRED),
+        distribution = this,
+    )
+}
+
+private fun List<Bucket>.at(count: Long, percentile: Double): Duration =
+    valueAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong()))
+
 /** The bucket the nth-smallest sample fell in. */
-internal fun Timing.valueAtRank(rank: Long): Duration =
-    distribution.asSequence()
-        .runningFold(0L to distribution.first().upperBound) { (seen, _), bucket ->
-            (seen + bucket.count) to bucket.upperBound
-        }
+internal fun Timing.valueAtRank(rank: Long): Duration = distribution.valueAtRank(rank)
+
+private fun List<Bucket>.valueAtRank(rank: Long): Duration =
+    asSequence()
+        .runningFold(0L to first().upperBound) { (seen, _), bucket -> (seen + bucket.count) to bucket.upperBound }
         .first { (seen, _) -> seen >= rank }
         .second
 

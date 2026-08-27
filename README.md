@@ -375,6 +375,44 @@ import io.github.matthewjones372.kestrel.report.writeHtmlReport
 result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"), comparison)
 ```
 
+## More than one run
+
+On the JVM the process is the unit of replication. JIT profile, code cache and
+heap layout differ between invocations, and the same benchmark on the same VM
+reaches a steady state in some processes and not others, so a single run
+attributes all of that to the code. `Runs` holds several and answers as one:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Runs
+
+val runs = Runs(listOf(first, second, third))
+
+runs.size                                   // 3
+runs.merged[pay].serviceTime.p99            // the percentile of all three runs' samples
+runs.each.map { it[pay].serviceTime.p99 }   // and the three it was merged from
+```
+
+Both, because they answer different questions. `merged` adds the buckets and
+reads the percentile off the sum, which is the only honest way to combine two
+histograms: a percentile of the whole population cannot be recovered from the
+percentiles of the parts, and an average of ten p99s is not a p99 of anything.
+There is no API here that takes the second route. `each` keeps the runs apart,
+which is what an interval across processes is made of.
+
+A merge is refused where a comparison would only warn. Runs of different plans
+are refused, naming what differs, the way `NotComparable` does — and so are runs
+measured on different machines, which `against` compares with a caveat instead.
+A comparison keeps two populations apart; a merge would pool them.
+
+The first run is kept rather than dropped. The classic protocol discards the
+first invocation as the cold one, and `runs.first` and `runs.afterFirst` name
+both halves, so discarding it is a caller's decision on the record rather than
+data this tool quietly threw away.
+
+Spend repetitions where the variance is. For JVM work that is between processes
+rather than inside them, which argues for more short runs over fewer long ones:
+ten two-second runs say more about the spread than one twenty-second run.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

@@ -93,7 +93,7 @@ fun RunResult.against(baseline: RunResult, percentile: Double = P99): Comparison
  * What this plan asked for that [other] did not. Goals are left out: a
  * threshold is what a team wanted of the numbers, not work sent at the target.
  */
-private fun Plan.unlike(other: Plan): List<String> = listOfNotNull(
+internal fun Plan.unlike(other: Plan): List<String> = listOfNotNull(
     "scenario".difference(other.scenario, scenario),
     "steps".difference(other.steps, steps),
     "profile".difference(other.profile, profile),

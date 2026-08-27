@@ -461,6 +461,47 @@ Spend repetitions where the variance is. For JVM work that is between processes
 rather than inside them, which argues for more short runs over fewer long ones:
 ten two-second runs say more about the spread than one twenty-second run.
 
+Ten runs is one `main` and a shell for-loop. There is no forking launcher here
+and CI does not need one: the part a shell cannot do is a file per invocation that does
+not overwrite the last, and that is `writeInto`, which names each file for when
+the run started and which process measured it.
+
+```kotlin
+import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.baseline.writeInto
+import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.step
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
+
+val pay = step("pay")
+
+fun main() {
+    val api = http.baseUrl("http://localhost:8080")
+    val paying = scenario("paying") { exec(pay, api.get("/pay")) }
+
+    Kestrel().run(paying.at(50.perSecond, over = 2.seconds)).writeInto(Path.of("build/kestrel"))
+}
+```
+
+```bash
+for i in $(seq 1 10); do java -cp "$classpath" com.example.PayingKt; done
+```
+
+```kotlin
+import io.github.matthewjones372.kestrel.Runs
+import io.github.matthewjones372.kestrel.baseline.readAll
+import java.nio.file.Path
+
+val runs = Runs.readAll(Path.of("build/kestrel"))   // ten files, oldest first
+```
+
+`readAll` takes a directory rather than a list of paths, so nothing has to agree
+on the names, and it leaves anything in there that is not a run alone.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

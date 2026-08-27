@@ -198,22 +198,31 @@ class MarkdownTest {
     }
 
     @Test
-    fun `a calibrated machine says what it can resolve before it says what it measured`() {
-        val floor = Floor(resolution = 0.061, hiccups = timingOf(List(9) { 1.milliseconds } + 14.milliseconds))
+    fun `a calibrated machine says what it moved by, and what fraction of the measurement that was`() {
+        val floor = Floor(
+            resolution = 0.061,
+            hiccups = timingOf(List(9) { 1.milliseconds } + 14.milliseconds),
+            probe = Probe(100.milliseconds),
+        )
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
 
-        result.markdown(floor = floor) shouldContain "Calibrated on this machine: differences under 6.10% are not " +
-            "resolvable here. The injector's own stalls reached 14.0ms at p99."
+        result.markdown(floor = floor) shouldContain "Calibrated on this machine: repeats of one unchanging " +
+            "measurement moved by 6.10ms, which is 6.10% of the 100ms they measured."
     }
 
+    /**
+     * A fraction and no magnitude behind it, so there is no duration to quote:
+     * the number is applied to whatever the reader who declared it reads it
+     * off.
+     */
     @Test
-    fun `a machine too coarse to bound a claim says that instead of the number`() {
+    fun `a floor somebody declared is quoted as the fraction it is`() {
         val floor = Floor(resolution = 0.40, hiccups = Timing.none)
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
 
         val markdown = result.markdown(floor = floor)
-        markdown shouldContain "**This machine cannot support a latency claim.**"
-        markdown shouldNotContain "are not resolvable here"
+        markdown shouldContain "Declared for this machine: differences under 40.00% of whatever they are read off"
+        markdown shouldNotContain "cannot support a latency claim"
     }
 
     @Test
@@ -257,18 +266,20 @@ class MarkdownTest {
     }
 
     @Test
-    fun `a machine too coarse to bound a claim prints no comparison at all`() {
+    fun `a coarse floor no longer replaces the comparison, because it is not one number for every claim`() {
         val summary = compared().markdown(
             comparison = Comparison.Compared(
                 changes = listOf(Change.Worse("pay", 20.milliseconds, 30.milliseconds, interval)),
                 before = here,
                 now = here,
             ),
-            floor = Floor(resolution = 0.40, hiccups = Timing.none),
+            floor = Floor(resolution = 1.25, hiccups = Timing.none, probe = Probe(50.microseconds)),
         )
 
-        summary shouldContain "cannot support a latency claim"
-        summary shouldNotContain "measurably changed"
+        withClue("62us of movement is the whole of a null step and nothing of a 20 ms one: $summary") {
+            summary shouldContain "measurably changed"
+        }
+        summary shouldNotContain "cannot support a latency claim"
     }
 
     private val here = Machine(cores = 8, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")

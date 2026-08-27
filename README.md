@@ -183,6 +183,7 @@ repeats of that one unchanging thing landed:
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.junit5.LoadTest
+import kotlin.time.Duration.Companion.milliseconds
 
 class ResolutionTest {
 
@@ -190,28 +191,37 @@ class ResolutionTest {
     fun `what this machine can tell apart`(kestrel: Kestrel) {
         val floor: Floor = kestrel.calibrate()
 
-        floor.resolution       // 0.061 — a difference under 6.1% is this machine
+        floor.absolute         // 61us — how far a repeat of one measurement moved here
+        floor.resolution       // 1.25 — the same, as a fraction of what it was read off
         floor.hiccups.p99      // 14ms — what the injector itself stalled for
-        floor.resolves(0.03)   // false: a 3% difference is not resolvable here
-        floor.probe            // 50us — what the probe took here, for another machine
+        floor.probe            // 49us — what the probe took here, for another machine
+
+        // true: 4% of 250 ms is 10 ms, which is well past 61us
+        floor.resolves(0.04, of = 250.milliseconds)
     }
 }
 ```
 
-`resolution` is measured at the median, where the statistic is the machine's own
-throughput and a fraction of it still means something at another scale. It bounds
-the *size* of a change; a claim about a tail has to clear `hiccups.p99` in
-absolute terms as well, which is the other half of what one calibration measures.
-`probe` is the third question the same repeats answer — the magnitude they were
-measured at, which is what a baseline from another machine can be compared
-against.
+`absolute` is the one that transfers. A null step's median is tens of
+microseconds, so on a busy machine `resolution` reads over 100% — and a 250 ms
+target measured in the same second did not move by 100%, it moved by the same
+handful of microseconds. So a claim is judged in duration, against the magnitude
+it is being made at, and `resolution` is kept for reading it back at the scale
+it was taken at. `absolute` is recovered from the calibration that already ran
+rather than measured a second time: it is the spread `resolution` divides away.
+
+Neither of them watched a target. Both bound the measuring machinery — how far
+its own repeats landed apart, and what its JVM lost to the rest of the machine —
+so a target's own run-to-run drift is outside both, and bounding *that* takes
+repeats of the target rather than of a null step.
 
 The floor is a property of the machine rather than of a run, so it is measured
 once per JVM and kept, bounded at thirty seconds. On a runner somebody has
 already characterised, `-Dkestrel.resolution=0.02` names it instead of measuring
-it again. Hand it to a report and the page says what it can resolve; where the
-floor is too large for any latency claim to rest on, the page says that where
-the comparison would have gone rather than printing one nobody should act on:
+it again — a declared floor is a fraction with no magnitude behind it, so it is
+applied to whatever it is read off rather than re-based. Hand a floor to a
+report and the page says what the machine moved by and what fraction of the
+measurement that came to:
 
 ```kotlin
 import io.github.matthewjones372.kestrel.against

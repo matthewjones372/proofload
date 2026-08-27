@@ -211,7 +211,11 @@ runner whose spread you have already measured, name it instead:
 - run: ./gradlew :examples:againstTheBaseline -Dkestrel.resolution=0.05
 ```
 
-That skips the measurement, and with it the probe — a floor somebody typed has
-no probe behind it, so nothing can compare the runner to the baseline's. Skip
-it where the runners are identical and known; measure it where they are not,
-which on hosted runners is most of the time.
+That skips the measurement, and with it the probe. A floor somebody typed has no
+probe behind it, so nothing can compare the runner to the baseline's — and it
+carries no magnitude either, so the fraction is applied to whatever it is read
+off rather than re-based to the claim's own scale the way a measured one is.
+Pick it against the claims you actually make.
+
+Skip the measurement where the runners are identical and known; measure it where
+they are not, which on hosted runners is most of the time.

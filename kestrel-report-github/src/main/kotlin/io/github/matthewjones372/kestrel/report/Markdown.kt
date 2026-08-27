@@ -28,31 +28,29 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + comparison.blocks(floor) + stepTable() +
+        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + comparison.blocks() + stepTable() +
             listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
 
 /**
- * This run against the last one, directly above the table it is about — and
- * absent on a machine whose own movement is too large to bound any of it, where
- * [Floor.line] has already said so in place of a comparison nobody should act
- * on.
+ * This run against the last one, directly above the table it is about.
  *
  * A refusal is printed rather than left off. A summary with no comparison in it
  * reads the same whether this was a first run or a cache key broke, and those
  * want opposite reactions.
+ *
+ * Whether the machine could support any of this is not asked here. It is a
+ * question per claim rather than per machine, so it is answered beside each
+ * verdict by the code that reaches one.
  */
-private fun Comparison?.blocks(floor: Floor?): List<String> {
-    if (floor != null && !floor.supportsAClaim) return emptyList()
-    return when (this) {
-        null -> emptyList()
+private fun Comparison?.blocks(): List<String> = when (this) {
+    null -> emptyList()
 
-        is Comparison.NotComparable -> listOf("> **Not compared to the last run.** ${why.escapeMarkdown()}")
+    is Comparison.NotComparable -> listOf("> **Not compared to the last run.** ${why.escapeMarkdown()}")
 
-        is Comparison.Compared -> if (changes.isEmpty()) emptyList() else
-            listOfNotNull(caveat?.let { "> **${it.escapeMarkdown()}**" }, headline(), changeTable(), COMPARISON_NOTE)
-    }
+    is Comparison.Compared -> if (changes.isEmpty()) emptyList() else
+        listOfNotNull(caveat?.let { "> **${it.escapeMarkdown()}**" }, headline(), changeTable(), COMPARISON_NOTE)
 }
 
 private fun Comparison.Compared.headline(): String {
@@ -106,18 +104,21 @@ private fun RunResult.lostWarning(): String? {
 /**
  * Above the table, because it is the frame for every number under it, and below
  * the lost records, because a record that never arrived outranks a caveat about
- * precision. A machine too coarse to bound a claim gets the warning form: this
- * report has no comparison to withhold, so saying it plainly is all it can do.
+ * precision.
+ *
+ * In duration and as the fraction it was of what was measured. Only the first
+ * transfers to a claim of another magnitude, and only the second says what it
+ * was a fraction of; a floor somebody declared has no magnitude to quote.
  */
-private fun Floor.line(): String =
-    if (supportsAClaim) {
-        "Calibrated on this machine: differences under ${resolution.asPercent()} are not resolvable here. " +
-            "The injector's own stalls reached ${hiccups.p99.report()} at p99."
-    } else {
-        "> **This machine cannot support a latency claim.** Repeats of one unchanging measurement landed " +
-            "${resolution.asPercent()} apart here, so nothing smaller than that is the code rather than " +
-            "the machine."
-    }
+private fun Floor.line(): String {
+    val measured = probe?.took
+        ?: return "Declared for this machine: differences under ${resolution.asPercent()} of whatever " +
+            "they are read off are not resolvable here."
+    return "Calibrated on this machine: repeats of one unchanging measurement moved by ${absolute.report()}, " +
+        "which is ${resolution.asPercent()} of the ${measured.report()} they measured. A difference smaller " +
+        "than that movement is this machine, whatever percentage of its own statistic it comes to. " +
+        "The injector's own stalls reached ${hiccups.p99.report()} at p99."
+}
 
 private fun Double.asPercent(): String = String.format(Locale.ROOT, "%.2f%%", this * PERCENT)
 

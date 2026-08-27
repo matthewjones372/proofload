@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 
 class HtmlReportTest {
@@ -80,23 +82,31 @@ class HtmlReportTest {
     }
 
     @Test
-    fun `the page says what this machine can resolve, and what it stalled for measuring that`() {
-        val page = Fixtures.fellBehind.toHtmlReport(floor = Floor(resolution = 0.061, hiccups = stalls))
+    fun `the page says what this machine moved by, what fraction that was, and what it stalled for`() {
+        val floor = Floor(resolution = 0.061, hiccups = stalls, probe = Probe(100.milliseconds))
 
-        page shouldContain "Calibrated on this machine: differences under <strong>6.10%</strong>"
+        val page = Fixtures.fellBehind.toHtmlReport(floor = floor)
+
+        page shouldContain "repeats of one unchanging measurement moved by <strong>6.10 ms</strong>"
+        page shouldContain "which is <strong>6.10%</strong> of the 100 ms they measured"
         page shouldContain "stalls reached <strong>14.0 ms</strong> at p99"
     }
 
+    /**
+     * One page, one answer. The blanket refusal contradicted every verdict
+     * printed under it, and whether a claim can be supported is a question per
+     * claim: the movement that swamps a null step is invisible at 20 ms.
+     */
     @Test
-    fun `a machine that cannot support a claim says so where the comparison would have been`() {
-        val floor = Floor(resolution = 0.40, hiccups = stalls)
+    fun `a coarse floor states its movement and leaves the verdicts standing`() {
+        val floor = Floor(resolution = 1.25, hiccups = stalls, probe = Probe(50.microseconds))
 
         val page = Fixtures.fellBehind.toHtmlReport(better, floor)
 
-        page shouldContain "This machine cannot support a latency claim."
-        withClue("a comparison nobody should act on is not printed smaller, it is not printed") {
-            page shouldNotContain "<strong>better</strong>"
-            page shouldNotContain "Calibrated on this machine"
+        page shouldContain "<strong>better</strong>"
+        withClue("the machine is described rather than used to withhold what it measured") {
+            page shouldContain "Calibrated on this machine"
+            page shouldNotContain "This machine cannot support a latency claim."
         }
     }
 

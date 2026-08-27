@@ -53,16 +53,6 @@ data class Floor(
      */
     fun resolves(fraction: Double, of: Duration): Boolean = of * abs(fraction) > movementAt(of)
 
-    /** The same question read at the magnitude this floor was itself measured at. */
-    fun resolves(fraction: Double): Boolean = abs(fraction) > resolution
-
-    /**
-     * Whether a claim at the magnitude this floor was measured at can mean
-     * anything. [supports] is what a comparison asks, at the magnitude its own
-     * claim is made at; this is that question at the null step's.
-     */
-    val supportsAClaim: Boolean get() = resolution < UNUSABLE
-
     /**
      * Whether a claim at [magnitude] can mean anything here. A machine that
      * moves by [UNUSABLE] of what is being claimed cannot separate a regression

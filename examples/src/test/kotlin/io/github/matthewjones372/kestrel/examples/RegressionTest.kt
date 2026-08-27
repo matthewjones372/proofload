@@ -26,7 +26,6 @@ import java.net.InetSocketAddress
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -134,15 +133,6 @@ private fun Change.beyond(floor: Floor): Boolean = when (this) {
     is Change.Added, is Change.Gone -> true
 }
 
-/**
- * Whether this machine can tell [before] from [now] at a tail, which takes both
- * of the floor's gates. `resolution` is measured at the median and bounds the
- * size of a change; a claim about a tail has to clear the injector's own stalls
- * in absolute terms as well, since a p99 that moved by less than those moved by
- * the measuring process rather than by the target.
- */
-private fun Floor.separates(before: Duration, now: Duration): Boolean =
-    resolves((now - before) / before) && (now - before).absoluteValue > hiccups.p99
-
 /** The floor as a failure has to name it: both gates, in the units each is measured in. */
-private val Floor.asAClue: String get() = "resolves $resolution and stalls ${hiccups.p99} at p99"
+private val Floor.asAClue: String
+    get() = "moves by $absolute between repeats and stalls ${hiccups.p99} at p99"

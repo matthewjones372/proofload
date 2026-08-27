@@ -49,7 +49,7 @@ private fun RunResult.documentLines(
         headLines(),
         verdictLines(),
         steadyLines(),
-        comparison.comparisonLines(floor),
+        comparison.comparisonLines(),
         differences.differenceLines(),
         plan.headerLines(arrivals),
         lostLines(),
@@ -88,17 +88,29 @@ private fun RunResult.lostLines(): List<String> =
     )
 
 /**
- * What the machine can tell apart, wherever that is small enough to bound a
- * claim rather than replace one — a floor too large for any claim is said in
- * place of the comparison instead.
+ * What the machine moved by on its own, in duration and as the fraction of the
+ * measurement that was taken of it.
+ *
+ * Both, because only the first transfers to a claim of another magnitude and
+ * only the second says what it was a fraction of. A floor somebody declared has
+ * the fraction and no magnitude behind it to quote.
  */
-private fun Floor?.resolutionLines(): List<String> =
-    if (this == null || !supportsAClaim) emptyList()
-    else listOf(
-        """  <p class="note" id="kestrel-floor">Calibrated on this machine: differences under """ +
-            "<strong>${resolution.asPercent()}</strong> are not resolvable here. The injector's own " +
-            "stalls reached <strong>${hiccups.p99.forReport()}</strong> at p99.</p>",
+private fun Floor?.resolutionLines(): List<String> {
+    if (this == null) return emptyList()
+    val measured = probe?.took ?: return listOf(
+        """  <p class="note" id="kestrel-floor">Declared for this machine: differences under """ +
+            "<strong>${resolution.asPercent()}</strong> of whatever they are read off are not " +
+            "resolvable here.</p>",
     )
+    return listOf(
+        """  <p class="note" id="kestrel-floor">Calibrated on this machine: repeats of one unchanging """ +
+            "measurement moved by <strong>${absolute.forReport()}</strong>, which is " +
+            "<strong>${resolution.asPercent()}</strong> of the ${measured.forReport()} they measured. " +
+            "A difference smaller than that movement is this machine, whatever percentage of its own " +
+            "statistic it comes to. The injector's own stalls reached " +
+            "<strong>${hiccups.p99.forReport()}</strong> at p99.</p>",
+    )
+}
 
 /**
  * First thing on the page when it applies, because every percentile below it

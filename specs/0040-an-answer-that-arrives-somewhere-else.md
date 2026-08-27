@@ -72,16 +72,16 @@ owning.
 
 ## Stack
 
-- [ ] **`spec-0040-emit`** — `Step.Emit`, the intended departure carried with
+- [x] **`spec-0040-emit`** ([#12](https://github.com/matthewjones372/kestrel/pull/12)) — `Step.Emit`, the intended departure carried with
       it, and a result that can hold unmatched and in-flight counts.
       Done when: an emit step with an in-memory completions source records
       latency from the intended departure, and a dropped record is counted as
       unmatched rather than ignored.
-- [ ] **`spec-0040-completing`** — `completing(step, from = ...)` on a
+- [x] **`spec-0040-completing`** ([#17](https://github.com/matthewjones372/kestrel/pull/17)) — `completing(step, from = ...)` on a
       simulation, and the run waiting a bounded time for stragglers at the end.
       Done when: a run whose sink lags reports the stragglers that arrived
       inside the wait and the rest as in flight.
-- [ ] **`spec-0040-page`** — unmatched and in-flight on the report, prominently.
+- [x] **`spec-0040-page`** ([#21](https://github.com/matthewjones372/kestrel/pull/21)) — unmatched and in-flight on the report, prominently.
       Done when: the golden shows a run that lost records and does not bury it.
 
 ## Acceptance

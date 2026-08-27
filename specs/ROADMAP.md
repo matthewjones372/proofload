@@ -33,6 +33,7 @@ built. Each row links the spec that argued for it.
 | [0041](0041-a-clock-test-that-really-runs-alone.md) | the wall-clock tests out of `build`, and a gate that keeps them out |
 | [0031](0031-the-rate-it-sustains.md) | `sustainable`, the ladder-then-bisect search, and the curve |
 | [0033](0033-the-share-that-met-the-target.md) | `share`, `goodput`, and a goal that reads like an SLI |
+| [0040](0040-an-answer-that-arrives-somewhere-else.md) | `emit`, `completing`, and the records that never arrived |
 
 ## Drafted, not built
 

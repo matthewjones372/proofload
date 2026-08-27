@@ -1,8 +1,11 @@
 package io.github.matthewjones372.kestrel
 
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -30,6 +33,15 @@ class PlanTest {
 
         plan.plannedUsers shouldBe 3000L
         plan.plannedRequests shouldBe 6000L
+    }
+
+    @Test
+    fun `a plan says how long the profile promised between departures`() {
+        checkout.at(50.perSecond, over = 1.minutes).plan().plannedInterval shouldBe 20.milliseconds
+
+        withClue("a plan with no profile promised nothing, so there is no interval to keep") {
+            Plan.none.plannedInterval shouldBe Duration.ZERO
+        }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 /**
  * A hunt for the highest rate a scenario sustains: what to send, what it has
@@ -33,9 +34,24 @@ data class Rung(val rate: Rate, val result: RunResult) {
 
     val verdicts: List<Verdict> get() = result.verdicts
 
+    /**
+     * The rate the load actually left at: the departures the profile promised,
+     * over the window plus the backlog the injector still owed at its tail.
+     *
+     * The same fact the void gate tests, said as a count rather than as a time
+     * — a rung is void exactly when this falls a whole departure short of
+     * [rate] over the window.
+     */
+    val offered: Rate
+        get() {
+            val over = result.plan.plannedWindow + result.behind.p99
+            if (over <= Duration.ZERO) return rate
+            return (result.plan.plannedUsers / over.toDouble(DurationUnit.SECONDS)).perSecond
+        }
+
     val outcome: Outcome
         get() = when {
-            result.fellBehind() -> Outcome.Void
+            result.lostGround() -> Outcome.Void
             verdicts.all { it.met } -> Outcome.Passed
             else -> Outcome.Failed
         }
@@ -46,9 +62,10 @@ data class Rung(val rate: Rate, val result: RunResult) {
         Failed,
 
         /**
-         * The injector could not offer the load, so nothing was learned about
-         * the target. Reporting one of these as a rate the target sustained
-         * would publish the generator's own ceiling under the target's name.
+         * The injector lost ground on the rate it promised, so the load was
+         * never offered and nothing was learned about the target. Reporting one
+         * of these as a rate the target sustained would publish the generator's
+         * own ceiling under the target's name.
          */
         Void,
     }

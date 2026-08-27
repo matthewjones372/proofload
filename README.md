@@ -282,11 +282,19 @@ nothing is spent on the flat left-hand side. It carries on two rungs past the
 first failure, because the shape past the knee is what says whether the target
 sheds load or collapses.
 
-A rung where the injector fell behind is **void** rather than failed: the load
-was never offered, so nothing was learned about the target, and the search
-stops rather than publish the generator's own ceiling under the target's name.
-`capacity.voided` says that happened, and `capacity.rate` is then a floor the
-generator reached rather than a ceiling the target could not pass.
+A rung where the injector lost ground on its own rate is **void** rather than
+failed: a p99 lateness above one whole departure interval means the generator
+was a departure behind at the tail, so the load was never offered and nothing
+was learned about the target. The search stops there rather than publish the
+generator's own ceiling under the target's name. `capacity.voided` says that
+happened, `rung.offered` says how much load actually left against what the
+profile promised, and `capacity.rate` is then a floor the generator reached
+rather than a ceiling the target could not pass.
+
+That gate asks about the schedule and nothing else. `result.fellBehind()` asks
+a different question — whether the backlog is large enough to have moved a
+number the page prints — and a rung judged on that one is void whenever the
+target is fast, however well the generator kept time.
 
 `capacity.toHtmlReport()` puts the whole curve on one self-contained page —
 every rung, what it was judged to be, and the operating point marked on the

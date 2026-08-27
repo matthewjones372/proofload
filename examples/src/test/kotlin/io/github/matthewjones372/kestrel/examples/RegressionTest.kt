@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.examples
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.baseline.readBaseline
@@ -17,6 +18,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.io.TempDir
@@ -24,6 +26,8 @@ import java.net.InetSocketAddress
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -37,7 +41,12 @@ import kotlin.time.Duration.Companion.seconds
 class RegressionTest {
 
     private lateinit var server: HttpServer
-    private val latency = AtomicLong(20L)
+
+    private val fast = 20.milliseconds
+
+    private val slow = 200.milliseconds
+
+    private val latency = AtomicLong(fast.inWholeMilliseconds)
 
     @BeforeEach
     fun start() {
@@ -65,6 +74,15 @@ class RegressionTest {
         kestrel: Kestrel,
         @TempDir dir: Path,
     ) {
+        // Measured once and kept, per JVM: a floor measured between the two
+        // runs would be measuring the same drift it is here to bound.
+        val floor = kestrel.calibrate()
+        assumeTrue(
+            floor.separates(fast, slow),
+            "this machine ${floor.asAClue}, which the $fast to $slow slowdown injected here does not clear, " +
+                "so the machine cannot answer the question and is not being asked",
+        )
+
         val baseline = dir.resolve("baseline.kestrel")
 
         // Thrown away. The first run of a JVM pays for class loading, JIT and
@@ -75,19 +93,23 @@ class RegressionTest {
 
         measure(kestrel).writeBaseline(baseline)
 
+        // Judged against what the machine can see rather than against
+        // `Indistinguishable`: two absolute measurements minutes apart differ
+        // by the afternoon as well as by the code, and only a difference the
+        // floor cannot explain is a difference in the target.
         val unchanged = measure(kestrel).against(readBaseline(baseline))
-        withClue("same target twice: $unchanged") {
-            unchanged.shouldBeInstanceOf<Comparison.Compared>()
-                .changes
-                .single()
-                .shouldBeInstanceOf<Change.Indistinguishable>()
+            .shouldBeInstanceOf<Comparison.Compared>()
+            .changes
+            .single()
+        withClue("same target twice, on a machine that ${floor.asAClue}: $unchanged") {
+            unchanged.beyond(floor) shouldBe false
         }
 
         // The deploy that made it worse.
-        latency.set(200L)
+        latency.set(slow.inWholeMilliseconds)
 
         val slower = measure(kestrel).against(readBaseline(baseline))
-        withClue("target ten times slower: $slower") {
+        withClue("target ten times slower, on a machine that ${floor.asAClue}: $slower") {
             val worse = slower.shouldBeInstanceOf<Comparison.Compared>()
                 .changes
                 .single()
@@ -96,3 +118,31 @@ class RegressionTest {
         }
     }
 }
+
+/**
+ * Whether this change is larger than what the machine moves by on its own
+ * between identical runs, which is the only kind that is a property of the
+ * target rather than of the afternoon it was measured in.
+ *
+ * A step that appeared or vanished is not a difference between two numbers, so
+ * there is no size there for a floor to explain away.
+ */
+private fun Change.beyond(floor: Floor): Boolean = when (this) {
+    is Change.Worse -> floor.separates(before, now)
+    is Change.Better -> floor.separates(before, now)
+    is Change.Indistinguishable -> false
+    is Change.Added, is Change.Gone -> true
+}
+
+/**
+ * Whether this machine can tell [before] from [now] at a tail, which takes both
+ * of the floor's gates. `resolution` is measured at the median and bounds the
+ * size of a change; a claim about a tail has to clear the injector's own stalls
+ * in absolute terms as well, since a p99 that moved by less than those moved by
+ * the measuring process rather than by the target.
+ */
+private fun Floor.separates(before: Duration, now: Duration): Boolean =
+    resolves((now - before) / before) && (now - before).absoluteValue > hiccups.p99
+
+/** The floor as a failure has to name it: both gates, in the units each is measured in. */
+private val Floor.asAClue: String get() = "resolves $resolution and stalls ${hiccups.p99} at p99"

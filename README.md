@@ -574,6 +574,41 @@ a second, and failures a second — as inline SVG, each second a flat segment
 because nothing was measured between two of them, and that precision printed
 underneath.
 
+## Did it settle?
+
+The first seconds of a run on the JVM are class loading, compilation and a cold
+connection pool, so a whole-run p99 is partly a measurement of starting up. The
+usual fix is a warm-up setting; the evidence is that the setting is a guess,
+wrong by a median of 28 seconds even when the benchmark's own author wrote it.
+So the segment is found in the timeline instead:
+
+```kotlin
+import io.github.matthewjones372.kestrel.SteadyState
+import io.github.matthewjones372.kestrel.steadyState
+
+when (val settled = result.steadyState) {
+    is SteadyState.From -> settled.offset          // 20s — the run held from here on
+    is SteadyState.NeverSettled -> settled.why     // in the words the report prints
+}
+
+SteadyState.TOLERANCE                              // 0.125 — how far two windows may differ
+SteadyState.LEAST_INTERVALS                        // 10 — under this there is nothing to detect
+```
+
+The run is cut into four windows and the detector looks for the earliest second
+after which no later window is materially better than the last one and the tail
+holds within `TOLERANCE` of its own mean. A run that was still getting faster at
+the end, and one that got slower and stayed slower, both report `NeverSettled` —
+with different reasons, because they are different findings. Neither fails the
+run: a tool that failed a build on a detector's opinion is a tool whose detector
+gets turned off.
+
+`TOLERANCE` is twice `Histogram.COARSE_PRECISION` and is written as a multiple
+of it. Two readings of one unchanged latency can land a bucket apart, so a
+tolerance at the width of that bucket would be a detector chasing which bucket a
+sample fell in. It is a default rather than something the run discovered, which
+is why the report prints it beside the verdict.
+
 ## What this is for
 
 Gatling is the reference point and the thing to be simpler than. Its scenario

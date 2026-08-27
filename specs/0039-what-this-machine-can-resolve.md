@@ -70,9 +70,19 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
       Done when: an injected pause in the generator shows up in the hiccup
       distribution and is visible beside the response times of that window.
 - [ ] **`spec-0039-calibrate`** — the null-step calibration and `resolution`.
-      Done when: repeated calibration on one machine reports a stable floor, a
-      machine with an artificial background load reports a larger one, and the
-      number lands on the report.
+      Done when: repeated calibration on one machine reports a stable floor,
+      repeats that landed further apart report a larger one, and the number
+      lands on the report.
+
+      The done-when originally said "a machine with an artificial background
+      load reports a larger one", and that is not reproducible: CPU-bound
+      spinners at twice the core count do not move the measurement at all, and
+      the loaded reading can come back lower than the idle one. What moves it is
+      a neighbour doing scheduling work — a competing run in the same JVM took
+      it from 0.007-0.046 to 0.132-0.218 — but the idle reading spikes often
+      enough on a shared machine that a one-sided gate would flake. The
+      mechanism is asserted deterministically instead, and the magnitude is left
+      unasserted.
 - [ ] **`spec-0039-consulted`** — 0038's comparison returns `CannotTell` below
       the floor, naming it.
       Done when: a 2% difference on a machine with a 6% floor reports cannot
@@ -89,8 +99,16 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
 1. **How long does calibration take?** Recommend a bounded thirty seconds, run
     once per JVM and cached, with an opt-out for people who have measured their
     machine already.
-2. **Is the floor absolute or relative?** Recommend relative, expressed as a
-    percentage of the statistic, since that is the form a comparison needs.
+2. **Is the floor absolute or relative?** Relative, expressed as a percentage of
+    the statistic, since that is the form a comparison needs — but relative *at
+    the median*. Measured at p99 a null step's floor is 140% to 2400% and swings
+    by twentyfold between calibrations, because a null step's p99 is the
+    machine's stalls sitting on a base of a few milliseconds; that is honest and
+    useless, since no comparison could ever pass it. So `resolution` bounds a
+    median-scale comparison and a tail comparison must additionally clear
+    `hiccups.p99` in absolute terms. Two gates, because there are two questions:
+    how big is the change, and is it bigger than what this machine's own stalls
+    can produce.
 3. **Does the floor belong in the baseline file?** Recommend yes: a baseline
     that carries the floor of the machine that produced it lets a later run say
     which of the two machines was the limiting one.

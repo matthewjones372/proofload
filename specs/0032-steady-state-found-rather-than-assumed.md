@@ -74,11 +74,11 @@ so at the top of the page gets read.
 
 ## Stack
 
-- [ ] **`spec-0032-detect`** — `SteadyState` and the detector over `timeline`.
+- [x] **`spec-0032-detect`** ([#30](https://github.com/matthewjones372/kestrel/pull/30)) — `SteadyState` and the detector over `timeline`.
       Done when: a synthetic timeline that improves and then flattens reports
       the flat point, one that never flattens reports `NeverSettled`, and one
       that degrades reports `NeverSettled` with that as the reason.
-- [ ] **`spec-0032-judge`** — `RunResult.steady`, goals judged over it, and the
+- [x] **`spec-0032-judge`** ([#33](https://github.com/matthewjones372/kestrel/pull/33)) — `RunResult.steady`, goals judged over it, and the
       report saying what was excluded.
       Done when: a run with a slow first 20 s reports a p99 that does not
       include them, and the page names the discarded window.

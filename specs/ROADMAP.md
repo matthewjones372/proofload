@@ -32,6 +32,7 @@ built. Each row links the spec that argued for it.
 | [0034](0034-arrivals-that-are-not-a-metronome.md) | Poisson arrivals from a seed, and the CoV they produced |
 | [0041](0041-a-clock-test-that-really-runs-alone.md) | the wall-clock tests out of `build`, and a gate that keeps them out |
 | [0031](0031-the-rate-it-sustains.md) | `sustainable`, the ladder-then-bisect search, and the curve |
+| [0033](0033-the-share-that-met-the-target.md) | `share`, `goodput`, and a goal that reads like an SLI |
 
 ## Drafted, not built
 
@@ -46,7 +47,6 @@ In the order the architect would take them.
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |
 | [0023](0023-a-number-you-can-follow.md) | exemplars, so a p99 leads somewhere |
 | [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | the whole run is booked before the first request |
-| [0030](0030-a-baseline-in-ci.md) | a baseline from another runner reads as a regression in your service |
 | [0029](0029-cutting-0-1-0.md) | a publishing pipeline that has never run does not work |
 
 ## Known and unwritten

@@ -71,7 +71,7 @@ otherwise answer with a guess.
 
 ## Stack
 
-- [ ] **`spec-0030-provenance`** — the plan and the machine in the baseline
+- [x] **`spec-0030-provenance`** ([#20](https://github.com/matthewjones372/kestrel/pull/20)) — the plan and the machine in the baseline
       format, and `Comparison.NotComparable`.
       Done when: two runs of different profiles refuse to compare and say why,
       and two runs of the same profile on different machines compare with a

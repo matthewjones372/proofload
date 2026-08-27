@@ -489,6 +489,18 @@ import io.github.matthewjones372.kestrel.report.writeHtmlReport
 result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"), comparison)
 ```
 
+The same comparison goes in a GitHub job summary, where a pull request reads it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.report.appendToStepSummary
+
+result.appendToStepSummary(comparison, floor)
+```
+
+Where to keep the file on GitHub — a cache key, an artifact or a branch
+somebody reviews — and why latency should not gate a merge on a shared runner,
+are in [docs/cookbook.md](docs/cookbook.md).
+
 ## More than one run
 
 On the JVM the process is the unit of replication. JIT profile, code cache and

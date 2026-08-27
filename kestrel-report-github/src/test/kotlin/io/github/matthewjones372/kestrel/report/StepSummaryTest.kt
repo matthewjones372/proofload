@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -43,7 +44,7 @@ class StepSummaryTest {
         val file = dir.resolve("summary.md")
         Files.writeString(file, "an earlier step wrote this\n")
 
-        val answer = result.appendToStepSummary(pointingAt(file))
+        val answer = result.appendToStepSummary(environment = pointingAt(file))
 
         answer shouldBe StepSummary.Appended(file)
         Files.readString(file) shouldStartWith "an earlier step wrote this\n"
@@ -54,17 +55,26 @@ class StepSummaryTest {
     fun `two runs in one job leave two tables, not one overwriting the other`(@TempDir dir: Path) {
         val file = dir.resolve("summary.md")
 
-        result.appendToStepSummary(pointingAt(file))
-        result.appendToStepSummary(pointingAt(file))
+        result.appendToStepSummary(environment = pointingAt(file))
+        result.appendToStepSummary(environment = pointingAt(file))
 
         Files.readString(file).windowed(6).count { it == "| Step" } shouldBe 2
+    }
+
+    @Test
+    fun `the comparison reaches the job summary, which is where a pull request reads it`(@TempDir dir: Path) {
+        val file = dir.resolve("summary.md")
+
+        result.appendToStepSummary(comparison = result.against(null), environment = pointingAt(file))
+
+        Files.readString(file) shouldContain "Not compared to the last run."
     }
 
     @Test
     fun `the file GitHub names need not exist yet`(@TempDir dir: Path) {
         val file = dir.resolve("summary.md")
 
-        result.appendToStepSummary(pointingAt(file))
+        result.appendToStepSummary(environment = pointingAt(file))
 
         Files.readString(file) shouldContain "| Step"
     }

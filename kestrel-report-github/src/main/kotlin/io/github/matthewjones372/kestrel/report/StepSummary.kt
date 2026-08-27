@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.RunResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,6 +29,8 @@ sealed interface StepSummary {
  *   mutate the JVM's own environment to reach either path.
  */
 fun RunResult.appendToStepSummary(
+    comparison: Comparison? = null,
+    floor: Floor? = null,
     environment: (String) -> String? = { name -> System.getenv(name) },
 ): StepSummary {
     val named = environment(STEP_SUMMARY_VARIABLE)?.takeIf { it.isNotBlank() }
@@ -36,7 +40,7 @@ fun RunResult.appendToStepSummary(
     // Appended and never truncated: the summary belongs to the whole job, and
     // the steps before this one have already written into it. The trailing
     // blank line keeps this table off the end of whatever comes next.
-    Files.writeString(path, markdown() + "\n", StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+    Files.writeString(path, markdown(comparison, floor) + "\n", StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     return StepSummary.Appended(path)
 }
 

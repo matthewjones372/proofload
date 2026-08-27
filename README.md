@@ -634,6 +634,33 @@ A comparison that cannot tell passes both. A test that fails on "cannot tell"
 fails on a noisy Tuesday and gets deleted on the Wednesday — so stopping for one
 is `orCannotTell = true`, asked for by name.
 
+Hand the comparison the machine's floor and it consults both halves of it
+before it concludes anything:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Floor
+
+candidate.against(baseline, p99(pay), acceptable = 3.percent, floor = kestrel.calibrate())
+```
+
+`hiccups` is absolute, and absolute noise transfers between magnitudes: a p99
+that moved by less than the injector's own stalls moved because of the
+injector, and every claim read in durations has to clear the stalls at its own
+percentile — a stall one request in a hundred waits for moves a p99 and leaves
+a median where it was.
+
+`resolution` is a fraction of what the null step measured, and a fraction does
+not transfer. A null step whose median moves from 50 µs to 110 µs reports 120%,
+while a target at 250 ms on the same machine in the same second moved by the
+same 60 µs — a fifth of a percent. So the relative bound is applied while it is
+still a bound a claim could clear, and above that it is a statement about the
+magnitude it was taken at rather than about the comparison, and the absolute
+gate carries the refusal on its own.
+
+Either way the refusal names the number it failed and what would change it: a
+quieter machine, or a difference larger than the one the machine makes by
+itself.
+
 A whole-run p99 cannot tell a target that degraded after ninety seconds from
 one that was evenly slow: both report the same number. `result.timeline` is the
 run second by second, counted from its start:

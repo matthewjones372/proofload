@@ -193,6 +193,17 @@ data class PercentileOf internal constructor(
 
     override val lessIs: String get() = "faster"
 
+    /**
+     * The injector's own stalls read at the percentile the claim is made at. A
+     * stall one request in a hundred waits for moves a p99 and leaves a median
+     * where it was, so reading them both at p99 would refuse a median claim
+     * for a reason that never touched it.
+     */
+    override fun noiseIn(floor: Floor): Double? = when (val stalls = floor.hiccups.at(percentile)) {
+        is Tail.Absent -> null
+        is Tail.Measured -> stalls.duration.inWholeNanoseconds.toDouble()
+    }
+
     override fun samplesIn(run: RunResult): Samples? =
         run.steps[step.name]?.let { Samples(it.timing(clock), it.count, it.failed.count) }
 
@@ -235,6 +246,9 @@ data class GoodputOf internal constructor(
     override val moreIs: String get() = "more"
 
     override val lessIs: String get() = "less"
+
+    /** Nothing: a floor is measured in durations, and a share of requests is not one. */
+    override fun noiseIn(floor: Floor): Double? = null
 
     /** The successes' own distribution: what a request that worked took, over every request the step made. */
     override fun samplesIn(run: RunResult): Samples? =

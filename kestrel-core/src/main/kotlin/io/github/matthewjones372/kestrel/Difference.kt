@@ -1,8 +1,11 @@
 package io.github.matthewjones372.kestrel
 
+import kotlin.math.abs
+import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * One number a comparison reads off a set of runs, implemented by the same
@@ -23,6 +26,12 @@ sealed interface Statistic {
     val moreIs: String
 
     val lessIs: String
+
+    /**
+     * How far this machine's own noise could move this on its own, in the units
+     * this statistic is read in, or null where a floor says nothing about it.
+     */
+    fun noiseIn(floor: Floor): Double?
 
     /** What this reads out of one run, or null when that run never ran the step. */
     fun samplesIn(run: RunResult): Samples?
@@ -126,12 +135,15 @@ data class Difference(
  * population's percentile cannot be averaged out of its runs', and a merged
  * population has nothing left to say about how far its runs landed apart.
  */
-fun Runs.against(baseline: Runs, statistic: Statistic, acceptable: Share = NOTHING_DECLARED): Difference {
+fun Runs.against(
+    baseline: Runs,
+    statistic: Statistic,
+    acceptable: Share = NOTHING_DECLARED,
+    floor: Floor? = null,
+): Difference {
     val mine = samplesOf(statistic)
     val theirs = baseline.samplesOf(statistic)
-    val refused = refusing(baseline, statistic, mine, theirs)
-
-    return Difference(
+    val measured = Difference(
         statistic = statistic,
         before = theirs.readMerged(statistic),
         now = mine.readMerged(statistic),
@@ -140,10 +152,62 @@ fun Runs.against(baseline: Runs, statistic: Statistic, acceptable: Share = NOTHI
         acceptable = acceptable,
         machine = first.machine,
         baselineMachine = baseline.first.machine,
+    )
+    val refused = refusing(baseline, statistic, mine, theirs) ?: measured.unresolvable(floor)
+
+    return measured.copy(
         interval = if (refused == null && mine != null && theirs != null) bootstrap(mine, theirs, statistic) else null,
         refused = refused,
     )
 }
+
+/**
+ * Whether the machine's own movement could have produced this, which is two
+ * questions rather than one.
+ *
+ * [Floor.hiccups] is absolute, and absolute noise transfers between magnitudes:
+ * a change smaller than what the measuring process stalled for moved because of
+ * the measuring process, whatever the percentages say. Every statistic that is
+ * read in durations is asked it, and there is no argument that skips it.
+ *
+ * [Floor.resolution] is a fraction of what a null step measured, and a fraction
+ * does not transfer. A null step whose median moves from 50µs to 110µs reports
+ * 120%; a target at 250 ms on the same machine in the same second moved by the
+ * same 60µs, which is a fifth of a percent. So it is asked while it is still a
+ * bound a claim could clear, and above that it is a statement about the
+ * magnitude it was taken at rather than about this comparison.
+ */
+private fun Difference.unresolvable(floor: Floor?): Tell.CannotTell? {
+    if (floor == null) return null
+    val moved = now - before
+
+    // Nanoseconds: only a statistic read in durations has stalls to clear, and
+    // that is the only statistic this branch is reached for.
+    val stalls = statistic.noiseIn(floor)
+    return when {
+        stalls != null && abs(moved) <= stalls -> Tell.CannotTell(
+            "${statistic.described} moved by ${moved.toLong().absoluteDuration()} and this machine's own " +
+                "stalls reach ${stalls.toLong().nanoseconds} where the claim is being made",
+            "a quieter machine: a change smaller than the measuring process's own stalls is the machine",
+        )
+
+        floor.supportsAClaim && !floor.resolves(moved / before) -> Tell.CannotTell(
+            "a ${asShare(moved / before)} difference on a machine whose repeats of one unchanging " +
+                "measurement land ${asShare(floor.resolution)} apart",
+            "a quieter machine, or a difference larger than the one this machine makes on its own",
+        )
+
+        else -> null
+    }
+}
+
+private fun Long.absoluteDuration(): Duration = abs(this).nanoseconds
+
+/** To the two figures a floor is quoted in; a third would be a digit nobody measured. */
+private fun asShare(fraction: Double): String =
+    Share(round(fraction * HUNDRED * FIGURES) / FIGURES).described
+
+private const val FIGURES = 100.0
 
 /**
  * Whether this is not worse than [acceptable].

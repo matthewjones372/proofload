@@ -112,8 +112,9 @@ The jar is in each user's own session, not on the client. There is one
 shared by every user — fifty thousand of them taking turns being one logged-in
 person. Name and value only: no expiry, and no path or domain matching, because
 a load test sends to one base URL. It is off unless asked for, so a scenario
-without `withCookies()` sends no cookie header at all, and it does not follow
-redirects: a 302 is still the failure it was, under the step that got it.
+without `withCookies()` sends no cookie header at all. Redirects are off unless
+asked for too: a 302 is the failure it was, under the step that got it, until
+`following()` says otherwise.
 
 A real user reads the page before clicking. `pause` is that gap, and it is a
 value in the scenario like everything else — the wait happens when the run

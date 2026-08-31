@@ -78,8 +78,25 @@ enough to list, and long enough to matter.
   session rather than on the run's shared client, and `traced()` puts a W3C
   `traceparent` and a synthetic-traffic `baggage` entry on every request.
   Redirects are not followed.
-- **`kestrel-websocket`** — `open` and `close` as timed steps on
-  `java.net.http.WebSocket`, one connection per user, held in the session.
+- **`kestrel-websocket`** — `open`, `send`, `awaiting` and `close` as timed
+  steps on `java.net.http.WebSocket`, one connection per user, held in the
+  session. `open` times the upgrade to the 101 alone and `close` the Close frame
+  out and back; `send` is timed for the write and waits for nothing, `awaiting`
+  for the wait alone. Answers pair with sends in departure order, and one that
+  matches no send is counted as `unsolicited` rather than timed.
+- **Redirects, followed in the step.** `following(max)` on an HTTP action walks
+  the chain explicitly, one request per hop, with the shared client still on
+  `Redirect.NEVER` — so a redirect nobody asked to follow stays a finding. 301,
+  302 and 303 go on as a bodyless GET; 307 and 308 keep method and body; cookies
+  carry across hops; `expecting()` judges where the chain lands; and a chain past
+  `max` fails under `TooManyRedirects`.
+- **A feeder straight from a CSV.** `csvFile.feeding(key, ...)` fills each key
+  from the column of the same name, with a conversion overload for a key that is
+  not a `String`. A key naming a column the file lacks fails when the feeder is
+  built, not on user one.
+- **The test frameworks are quiet.** `@LoadTest` and Kotest's `kestrel()` hand
+  the runner `Progress.silent`, and a calibration no longer announces its
+  twenty-four internal runs. A `main` still prints.
   `open` times the upgrade to the server's 101 and `close` times the Close
   frame out to the far end's Close back; neither is a message, and no message
   is timed yet.
@@ -121,14 +138,9 @@ commit this section was written on, not planned or assumed.
 - **No closed model.** Every profile states departure times up front. There is
   no "hold 50 concurrent users", which is the shape a queueing model wants and
   the shape some teams' targets are specified in.
-- **WebSockets connect and disconnect, and carry nothing.** `open` times the
-  upgrade to the server's 101 and `close` times the Close frame out and back.
-  Sending and receiving messages is not there, so a WebSocket load test measures
-  handshakes.
-- **No redirect following.** The HTTP client is built with
-  `Redirect.NEVER` on purpose — a 302 the test did not expect is a finding, not
-  a timing for a page nobody asked for — and there is no opt-in. A step that
-  meets a redirect sees the 3xx and fails its expectation.
+- **A WebSocket wait is one sample, not one per message.** `awaiting(count)`
+  records a single sample for the whole batch, because a step can produce only
+  one sample today. A per-message distribution needs waiting for one at a time.
 - **No Kafka, and no queue or database steps.** HTTP, WebSocket handshakes and
   Pelican endpoints are the protocols. `emit` is the seam for anything else, and
   the caller writes the client.

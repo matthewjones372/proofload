@@ -449,8 +449,23 @@ The jar is in each user's own session, not on the client. There is one
 shared by fifty thousand users taking turns being one logged-in person.
 
 Name and value only: no expiry, no path or domain matching, because a load test
-sends to one base URL. It is off unless asked for, and it does not follow
-redirects: a 302 is still the failure it was, under the step that got it.
+sends to one base URL. It is off unless asked for.
+
+Redirects are off unless asked for too — a 302 is the failure it was, under the
+step that got it — until `following()` says otherwise:
+
+```kotlin
+exec(signIn, api.post("/session").body(credentials).following())
+```
+
+The hops happen in the step, not in the client: the shared `HttpClient` is still
+built with `Redirect.NEVER`, so a redirect this tool did not follow deliberately
+is still a finding rather than a timing for a page nobody asked for. Cookies set
+by a 302 are carried to the page it points at. 301, 302 and 303 are followed as
+a bodyless GET; 307 and 308 keep the method and body. `expecting()` judges the
+response the chain lands on, so a sign-in that ends 200 is written
+`.following()` rather than `.expecting(302)`. A chain longer than `max` fails
+under `TooManyRedirects`.
 
 ## Follow a slow request into your traces
 
@@ -517,6 +532,48 @@ here says when data starts to flow.
 
 `close` times what the target took to let go, not what the write took: the sample
 runs from the Close frame being written to the far end's Close arriving back.
+
+Between them, `send` and `awaiting` are two steps because they are two
+questions:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Correlation
+import io.github.matthewjones372.kestrel.websocket.awaiting
+import io.github.matthewjones372.kestrel.websocket.send
+
+val subscribe = step("subscribe")
+val ticks = step("ticks")
+
+val streaming = scenario("streaming") {
+    open(connect, feed.at("/prices"))
+    send(subscribe, feed.text("SUB ACME"), keyedBy = Correlation { it[order] ?: 0L })
+    awaiting(ticks, count = 100, within = 30.seconds)
+    close(disconnect)
+}
+```
+
+`send` is timed for the write alone and waits for nothing — the sample ends when
+the client reports the frame written. `awaiting` is timed for the wait alone,
+from the step being reached to the last of `count` answers arriving. Keeping
+them apart is what stops a slow target being reported as a slow write.
+
+Answers pair with sends in the order the sends left, which is the order one
+socket delivers them in. A message that arrives with nothing outstanding is
+counted rather than timed, and the counts read off the connection:
+
+```kotlin
+connection.matched
+connection.unsolicited
+connection.outstanding(within)   // Outstanding(unmatched, inFlight), as everywhere else
+```
+
+The wait is bounded and is signalled by the close as well as by an arrival, so a
+far end that hangs up fails the step at once instead of parking a user for the
+rest of the run.
+
+One caveat worth knowing: `awaiting` records **one** sample for the whole batch
+rather than one per message, because a step can produce only one sample today.
+For a per-message distribution, wait for one at a time.
 
 One socket per user, which is the opposite of the shared HTTP client and for the
 opposite reason: a stream test is about how many connections a target holds, so

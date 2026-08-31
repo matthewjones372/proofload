@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.engine
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Said
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -27,13 +28,18 @@ class RecordersTest {
                 ready.countDown()
                 ready.await()
                 repeat(EACH) { at ->
-                    recorders.record("browse", null, 1.milliseconds, Duration.ZERO, (at % SECONDS).seconds)
+                    recorders.record(
+                        "browse", null, 1.milliseconds, Duration.ZERO, (at % SECONDS).seconds, reached = at == 0,
+                    )
                 }
             }
         }.forEach { it.join() }
 
         val result = recorders.freeze(Plan.none, Arrivals.none)
         result["browse"].count shouldBe (WRITERS * EACH).toLong()
+        withClue("each writer is one user, and it reached the step on its first request") {
+            result["browse"].reached shouldBe WRITERS.toLong()
+        }
         result.behind.count shouldBe (WRITERS * EACH).toLong()
 
         result.timeline.size shouldBe SECONDS
@@ -51,7 +57,7 @@ class RecordersTest {
                     if (index ==
                         0
                     ) Said("503") else null,
-                    1.milliseconds, Duration.ZERO, Duration.ZERO,
+                    1.milliseconds, Duration.ZERO, Duration.ZERO, reached = true,
                 )
             }
         }.forEach { it.join() }

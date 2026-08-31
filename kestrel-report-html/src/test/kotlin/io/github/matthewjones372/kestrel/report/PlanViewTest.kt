@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.perSecond
@@ -18,11 +19,10 @@ class PlanViewTest {
 
     private fun pageFor(plan: Plan) = Fixtures.fellBehind.copy(plan = plan).toHtmlReport()
 
-    private val held = Plan(
-        scenario = "checkout",
-        steps = listOf("browse", "pay"),
-        profile = hold(120.perSecond, over = 4.seconds),
-    )
+    private val held = heldAt(hold(120.perSecond, over = 4.seconds))
+
+    /** The same plan, sent at another shape: a plan is one arm here, so the shape is all that moves. */
+    private fun heldAt(profile: InjectionProfile) = Plan("checkout", listOf("browse", "pay"), profile)
 
     @Test
     fun `the page names the scenario and the shape it was asked for`() {
@@ -48,7 +48,7 @@ class PlanViewTest {
 
     @Test
     fun `a run that sent everything says that instead`() {
-        val page = pageFor(held.copy(profile = hold(1.perSecond, over = 4.seconds)))
+        val page = pageFor(heldAt(hold(1.perSecond, over = 4.seconds)))
 
         page shouldContain "The run sent all"
         page shouldNotContain "never went out"
@@ -64,7 +64,7 @@ class PlanViewTest {
         val soak = rampRate(from = 0.perSecond, to = 200.perSecond, over = 1.minutes)
             .then(hold(200.perSecond, over = 10.minutes))
 
-        val page = pageFor(held.copy(profile = soak))
+        val page = pageFor(heldAt(soak))
 
         page shouldContain "0/s to 200/s over 1.0 min, then 200/s held for 10.0 min"
         page shouldContain "polyline"
@@ -80,7 +80,7 @@ class PlanViewTest {
 
     @Test
     fun `the page names the seed a randomised shape drew from`() {
-        val page = pageFor(held.copy(profile = hold(120.perSecond, over = 4.seconds).randomized(seed = 20260826)))
+        val page = pageFor(heldAt(hold(120.perSecond, over = 4.seconds).randomized(seed = 20260826)))
 
         page shouldContain "Arrivals were drawn from seed 20260826."
         page shouldNotContain "evenly spaced"

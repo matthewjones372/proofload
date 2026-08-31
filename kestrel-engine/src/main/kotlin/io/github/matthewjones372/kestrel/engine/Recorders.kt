@@ -16,7 +16,14 @@ import kotlin.time.Duration
  * without a branch on the path a request is timed on.
  */
 internal fun interface StepSink {
-    fun record(step: String, failure: Reason?, serviceTime: Duration, schedulingDelay: Duration, at: Duration)
+    fun record(
+        step: String,
+        failure: Reason?,
+        serviceTime: Duration,
+        schedulingDelay: Duration,
+        at: Duration,
+        reached: Boolean,
+    )
 }
 
 /**
@@ -52,11 +59,12 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         serviceTime: Duration,
         schedulingDelay: Duration,
         at: Duration,
+        reached: Boolean,
     ) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
-        recordFrom(from, step, failure, serviceTime, schedulingDelay, at)
+        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached)
     }
 
     /**
@@ -84,18 +92,19 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
         serviceTime: Duration,
         schedulingDelay: Duration,
         at: Duration,
+        reached: Boolean,
     ) {
         val recorder = slots.getAndSet(index, null)
         if (recorder != null) {
             try {
-                recorder.record(step, failure, serviceTime, schedulingDelay, at)
+                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached)
             } finally {
                 slots.set(index, recorder)
             }
             return
         }
         Thread.onSpinWait()
-        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at)
+        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at, reached)
     }
 
     companion object {

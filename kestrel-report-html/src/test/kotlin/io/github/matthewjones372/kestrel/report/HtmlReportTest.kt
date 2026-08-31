@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class HtmlReportTest {
@@ -51,6 +53,34 @@ class HtmlReportTest {
     @Test
     fun `the page for a run that settled matches its golden`() {
         Fixtures.settledAfterAWarmUp.toHtmlReport() shouldBe Golden.text("report-settled.html")
+    }
+
+    @Test
+    fun `a step row says how many users reached it beside the requests they made`() {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        repeat(10) {
+            repeat(3) { iteration ->
+                recorder.record(
+                    step = "add to cart",
+                    failure = null,
+                    serviceTime = 20.milliseconds,
+                    schedulingDelay = Duration.ZERO,
+                    at = Duration.ZERO,
+                    reached = iteration == 0,
+                )
+            }
+        }
+
+        val page = recorder.freeze().toHtmlReport()
+
+        page shouldContain "<button type=\"button\">Reached</button>"
+        page shouldContain """<td class="num">30</td>"""
+        page shouldContain """<td class="num reached">10</td>"""
+    }
+
+    @Test
+    fun `a result that never counted users prints no reaches rather than a zero nobody measured`() {
+        Fixtures.fellBehind.toHtmlReport() shouldContain """<td class="num reached">—</td>"""
     }
 
     @Test

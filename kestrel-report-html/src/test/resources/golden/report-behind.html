@@ -333,6 +333,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr>
             <th scope="col" data-sort="step" aria-sort="none"><button type="button">Step</button></th>
             <th scope="col" class="num" data-sort="count" aria-sort="none"><button type="button">Count</button></th>
+            <th scope="col" class="num" data-sort="reached" aria-sort="none"><button type="button">Reached</button></th>
             <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
             <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
             <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
@@ -345,6 +346,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr class="step" data-step="browse">
             <th scope="row">browse</th>
             <td class="num">4</td>
+            <td class="num reached">—</td>
             <td class="num ok">4</td>
             <td class="num failed">0</td>
             <td class="num time" data-service="12.1 ms" data-response="413 ms" data-service-ns="12058623" data-response-ns="413138943">12.1 ms</td>
@@ -355,6 +357,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr class="step" data-step="pay" aria-expanded="false" tabindex="0">
             <th scope="row">pay</th>
             <td class="num">5</td>
+            <td class="num reached">—</td>
             <td class="num ok">2</td>
             <td class="num failed">3</td>
             <td class="num time" data-service="60.0 ms" data-response="663 ms" data-service-ns="60030975" data-response-ns="662700031">60.0 ms</td>
@@ -363,7 +366,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
             <td class="num time" data-service="1.21 s" data-response="2.00 s" data-service-ns="1207959551" data-response-ns="2004877311">1.21 s</td>
           </tr>
           <tr class="reasons" data-for="pay">
-            <td colspan="8">
+            <td colspan="9">
               <ul class="reason-list">
                 <li><span class="reason">status 503 &lt;b&gt;&quot;upstream&quot; &amp; &#39;down&#39;&lt;/b&gt;</span><span class="reason-count">2</span></li>
                 <li><span class="reason">&lt;/script&gt; hung up</span><span class="reason-count">1</span></li>
@@ -424,7 +427,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <text class="tick-label" x="606.7" y="140">1.00 s</text>
         </svg>
       </figure>
-    <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+    <p class="note">Count is requests and reached is the users that got here, counted once each: a loop multiplies the first and a condition divides it, and a step that made few requests because few users reached it is a different finding from one they each made few at. Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
   </section>
   <section class="tail" aria-label="The tail">
     <h2>p99.9</h2>
@@ -468,6 +471,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "browse",
       "count": 4,
+      "reached": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -530,6 +534,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "pay",
       "count": 5,
+      "reached": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {

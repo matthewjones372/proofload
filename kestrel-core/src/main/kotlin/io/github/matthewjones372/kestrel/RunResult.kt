@@ -228,6 +228,18 @@ data class StepStats(
     val failed: Outcome,
     val serviceTime: Timing,
     val responseTime: Timing,
+    /**
+     * The users that got this far, counted once each however many requests they
+     * made here.
+     *
+     * Beside [count] rather than instead of it: under a loop [count] is a
+     * multiple of the users and under a condition it is a fraction of them, and
+     * a step that made few requests because few users reached it is a different
+     * finding from one each of them made few requests at. Zero where whatever
+     * recorded the run did not count users, which the report prints as unmeasured
+     * rather than as nobody.
+     */
+    val reached: Long = 0L,
     /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */
@@ -241,6 +253,12 @@ data class StepStats(
     fun failedWith(reason: Reason): Long = failed.reasons[reason] ?: 0L
 }
 
+/** One arm as a plan carries it: what it sends, the names it can record under, and the rate it is sent at. */
+data class PlannedArm(val scenario: String, val steps: List<String>, val profile: InjectionProfile?) {
+
+    val plannedUsers: Long get() = profile?.userCount() ?: 0L
+}
+
 /**
  * What a run was asked to do, carried alongside what it did.
  *
@@ -248,19 +266,35 @@ data class StepStats(
  * without this, and every latency on that page would be describing a lighter
  * test than the one somebody asked for.
  */
-data class Plan(
-    val scenario: String,
-    val steps: List<String>,
-    val profile: InjectionProfile?,
-    val goals: List<Goal> = emptyList(),
-) {
-    val plannedUsers: Long get() = profile?.userCount() ?: 0L
+data class Plan(val arms: List<PlannedArm>, val goals: List<Goal> = emptyList()) {
+
+    constructor(
+        scenario: String,
+        steps: List<String>,
+        profile: InjectionProfile?,
+        goals: List<Goal> = emptyList(),
+    ) : this(listOf(PlannedArm(scenario, steps, profile)), goals)
+
+    init {
+        require(arms.isNotEmpty()) { "a plan describes at least one arm" }
+    }
+
+    /** The first arm's scenario; a mix has one per arm, on [PlannedArm]. */
+    val scenario: String get() = arms.first().scenario
+
+    /** Every name the run can record under, every arm counted: step names are unique across a mix. */
+    val steps: List<String> get() = arms.flatMap { it.steps }
+
+    /** The first arm's rate line, likewise. */
+    val profile: InjectionProfile? get() = arms.first().profile
+
+    val plannedUsers: Long get() = arms.sumOf { it.plannedUsers }
 
     /** The window the profile asked for, and zero when no profile was named. */
-    val plannedWindow: Duration get() = profile?.over ?: Duration.ZERO
+    val plannedWindow: Duration get() = arms.maxOf { it.profile?.over ?: Duration.ZERO }
 
     /** An upper bound: a scenario that abandons users sends fewer, which is the point of showing it. */
-    val plannedRequests: Long get() = plannedUsers * steps.size
+    val plannedRequests: Long get() = arms.sumOf { it.plannedUsers * it.steps.size }
 
     /**
      * How long the profile promised between departures: its window shared out

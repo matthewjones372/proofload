@@ -6,6 +6,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 private val started = Instant.parse("2026-08-26T09:00:00Z")
@@ -33,6 +34,40 @@ class RunRecorderTest {
         result["pay"].ok.count shouldBe 3L
         result["pay"].failed.count shouldBe 1L
         result["pay"].failed.reasons shouldBe mapOf(Said("status 503") to 1L)
+    }
+
+    @Test
+    fun `a step counts a user once, however many requests that user makes under it`() {
+        val recorder = RunRecorder(started)
+        recorder.record("poll", null, 10.milliseconds, Duration.ZERO, Duration.ZERO, reached = true)
+        repeat(2) { recorder.record("poll", null, 10.milliseconds, Duration.ZERO, Duration.ZERO, reached = false) }
+
+        val poll = recorder.freeze()["poll"]
+
+        poll.count shouldBe 3L
+        poll.reached shouldBe 1L
+    }
+
+    @Test
+    fun `the users two shards saw are added together when they merge`() {
+        val one = RunRecorder(started).apply {
+            record("poll", null, 10.milliseconds, Duration.ZERO, Duration.ZERO, reached = true)
+        }
+        val other = RunRecorder(started).apply {
+            record("poll", null, 10.milliseconds, Duration.ZERO, Duration.ZERO, reached = true)
+        }
+
+        one.merge(other)
+
+        one.freeze()["poll"].reached shouldBe 2L
+    }
+
+    @Test
+    fun `a recorder nobody told about users reports none rather than a number it made up`() {
+        val recorder = RunRecorder(started)
+        repeat(3) { recorder.pay() }
+
+        recorder.freeze()["pay"].reached shouldBe 0L
     }
 
     @Test

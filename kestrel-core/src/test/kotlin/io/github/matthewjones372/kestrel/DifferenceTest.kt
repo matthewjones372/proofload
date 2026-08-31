@@ -100,7 +100,7 @@ class DifferenceTest {
 
     @Test
     fun `runs of another plan are not compared at all`() {
-        val other = paying.copy(steps = listOf("browse"))
+        val other = Plan(paying.scenario, listOf("browse"), paying.profile)
 
         val difference = runsAt(scale = 1.0).against(runsAt(scale = 1.0, plan = other), p99(pay))
 

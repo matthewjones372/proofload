@@ -18,7 +18,8 @@ fun step(name: String): StepName = StepName(name)
 
 /**
  * A node of what a virtual user does. [Exec] and [Emit] are the named leaves a
- * report has a row for; [Repeat] and [When] hold steps rather than being one,
+ * report has a row for; [Repeat], [During] and [When] hold steps rather than
+ * being one,
  * so a journey that loops or asks a question is a tree that can be inspected
  * rather than Kotlin control flow that ran while the scenario was built.
  */
@@ -36,6 +37,22 @@ sealed interface Step {
 
     /** [steps], [times] over. */
     data class Repeat(val times: Int, val steps: List<Step>) : Step
+
+    /**
+     * [steps], again from the top for as long as [duration] has left on the
+     * clock the user started the loop by.
+     *
+     * The window is the journey's rather than the run's, so a user still inside
+     * one when the profile's window closes extends the run. Cutting it off
+     * there is the alternative, and that records a failure the target did not
+     * cause.
+     */
+    data class During(val duration: Duration, val steps: List<Step>) : Step {
+
+        init {
+            require(duration >= Duration.ZERO) { "a loop cannot run backwards, but was given $duration" }
+        }
+    }
 
     /**
      * [steps], for a user whose session satisfies [predicate]. The predicate
@@ -83,6 +100,7 @@ private fun Step.names(): List<String> = when (this) {
     is Step.Exec -> listOf(name)
     is Step.Emit -> listOf(name)
     is Step.Repeat -> steps.flatMap { it.names() }
+    is Step.During -> steps.flatMap { it.names() }
     is Step.When -> steps.flatMap { it.names() }
     is Step.Pause -> emptyList()
 }
@@ -111,6 +129,31 @@ class ScenarioBuilder internal constructor(private val name: String) {
         steps += Step.Pause(duration)
     }
 
+    /**
+     * [block], [times] over, under the names it declares once. Shadows
+     * `kotlin.repeat`, which would build the body [times] over instead and give
+     * the report a row per copy.
+     */
+    fun repeat(times: Int, block: ScenarioBuilder.() -> Unit) {
+        require(times > 0) { "a loop runs at least once, but was asked for $times" }
+        steps += Step.Repeat(times, nested(block))
+    }
+
+    /** [block], again from the top for as long as [duration] has left when an iteration is due to start. */
+    fun during(duration: Duration, block: ScenarioBuilder.() -> Unit) {
+        steps += Step.During(duration, nested(block))
+    }
+
+    /**
+     * [block], for a user whose session answers [predicate]. The question is
+     * asked of the session and nothing else: a condition over what a target
+     * answered is a step nobody named, and a run that took one could not say
+     * beforehand what it was going to send.
+     */
+    fun doIf(predicate: (Session) -> Boolean, block: ScenarioBuilder.() -> Unit) {
+        steps += Step.When(predicate, nested(block))
+    }
+
     fun emit(name: String, action: Action, keyedBy: Correlation) {
         steps += Step.Emit(name, action, keyedBy)
     }
@@ -118,6 +161,11 @@ class ScenarioBuilder internal constructor(private val name: String) {
     fun emit(name: StepName, action: Action, keyedBy: Correlation) {
         steps += Step.Emit(name.name, action, keyedBy)
     }
+
+    // Built through a builder of its own, so the body of a loop is frozen the
+    // way the scenario around it is and a name inside it is declared once.
+    private fun nested(block: ScenarioBuilder.() -> Unit): List<Step> =
+        ScenarioBuilder(name).apply(block).build().steps
 
     // Frozen rather than copied: a copy is still an ArrayList to a Java caller
     // holding the List, and a scenario that can be added to after it is built

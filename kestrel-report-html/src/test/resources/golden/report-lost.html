@@ -334,6 +334,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr>
             <th scope="col" data-sort="step" aria-sort="none"><button type="button">Step</button></th>
             <th scope="col" class="num" data-sort="count" aria-sort="none"><button type="button">Count</button></th>
+            <th scope="col" class="num" data-sort="reached" aria-sort="none"><button type="button">Reached</button></th>
             <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
             <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
             <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
@@ -346,6 +347,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr class="step" data-step="submitted">
             <th scope="row">submitted</th>
             <td class="num">113</td>
+            <td class="num reached">—</td>
             <td class="num ok">113</td>
             <td class="num failed">0</td>
             <td class="num time" data-service="3.01 ms" data-response="3.01 ms" data-service-ns="3014655" data-response-ns="3014655">3.01 ms</td>
@@ -356,6 +358,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <tr class="step" data-step="settled">
             <th scope="row">settled</th>
             <td class="num">60</td>
+            <td class="num reached">—</td>
             <td class="num ok">60</td>
             <td class="num failed">0</td>
             <td class="num time" data-service="902 ms" data-response="902 ms" data-service-ns="901775359" data-response-ns="901775359">902 ms</td>
@@ -404,7 +407,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
           <text class="tick-label" x="464.8" y="140">1.00 s</text>
         </svg>
       </figure>
-    <p class="note">Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+    <p class="note">Count is requests and reached is the users that got here, counted once each: a loop multiplies the first and a condition divides it, and a step that made few requests because few users reached it is a different finding from one they each made few at. Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
   </section>
   <section class="tail" aria-label="The tail">
     <h2>p99.9</h2>
@@ -448,6 +451,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "submitted",
       "count": 113,
+      "reached": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -510,6 +514,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     {
       "name": "settled",
       "count": 60,
+      "reached": 0,
       "unmatched": 41,
       "inFlight": 12,
       "serviceTime": {

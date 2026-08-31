@@ -7,12 +7,12 @@ import kotlin.time.Duration
  * [window] of now, so a scheduler holds a window's worth of tasks rather than a
  * whole run's.
  *
- * Offsets are read from the profile's lazy sequence in the order it produced
+ * Offsets are read from the schedule's lazy sequence in the order it produced
  * them, so nothing here recomputes a departure and nothing can hand a recorder
  * a gap that runs backwards.
  */
 internal class BookingWindow(
-    private val departures: Iterator<IndexedValue<Duration>>,
+    private val departures: Iterator<Departure>,
     private val window: Duration,
 ) {
 
@@ -20,7 +20,7 @@ internal class BookingWindow(
     // A sequence cannot be un-consumed, and holding it is cheaper than copying
     // the window out on the thread whose own delay this tool reports as
     // lateness.
-    private var held: IndexedValue<Duration>? = null
+    private var held: Departure? = null
 
     /**
      * Books every departure due by [elapsed] plus a window, and answers with how
@@ -30,20 +30,17 @@ internal class BookingWindow(
      * Those users leave late, which the run's own `behind` series measures; a
      * window that cannot be refilled in time is not a new kind of failure.
      */
-    fun fill(elapsed: Duration, book: (user: Int, departure: Duration) -> Unit): Duration? =
-        fillUntil(elapsed + window, book)?.let { next -> next.value - window - elapsed }
+    fun fill(elapsed: Duration, book: (Departure) -> Unit): Duration? =
+        fillUntil(elapsed + window, book)?.let { next -> next.offset - window - elapsed }
 
-    private tailrec fun fillUntil(
-        until: Duration,
-        book: (user: Int, departure: Duration) -> Unit,
-    ): IndexedValue<Duration>? {
+    private tailrec fun fillUntil(until: Duration, book: (Departure) -> Unit): Departure? {
         val next = held ?: if (departures.hasNext()) departures.next() else return null
-        if (next.value > until) {
+        if (next.offset > until) {
             held = next
             return next
         }
         held = null
-        book(next.index, next.value)
+        book(next)
         return fillUntil(until, book)
     }
 }

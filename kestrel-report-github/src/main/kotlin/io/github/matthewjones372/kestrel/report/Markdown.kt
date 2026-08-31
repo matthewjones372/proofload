@@ -160,6 +160,7 @@ private fun RunResult.stepTable(): String = table(
     columns = listOf(
         Column("Step", Align.LEFT),
         Column("Requests", Align.RIGHT),
+        Column("Reached", Align.RIGHT),
         Column("OK", Align.RIGHT),
         Column("Failed", Align.RIGHT),
         Column("p50", Align.RIGHT),
@@ -173,6 +174,9 @@ private fun RunResult.stepTable(): String = table(
 private fun StepStats.row(): List<String> = listOf(
     name.escapeMarkdown(),
     count.toString(),
+    // A run recorded by something that did not count users has no reaches to
+    // print, and a zero would read as a step nobody took.
+    if (reached == 0L) NOTHING_MEASURED else reached.toString(),
     ok.count.toString(),
     failed.count.toString(),
     responseTime.p50.report(),
@@ -260,6 +264,8 @@ private const val ACTIVE_CHARACTERS = "\\`*_[]<>|"
 
 // Five, so the alignment colon in the rule still has four dashes to sit
 // against and the separator reads as a separator in a terminal.
+private const val NOTHING_MEASURED = "—"
+
 private const val MIN_COLUMN_WIDTH = 5
 
 private const val SIGNIFICANT_DIGITS = 3

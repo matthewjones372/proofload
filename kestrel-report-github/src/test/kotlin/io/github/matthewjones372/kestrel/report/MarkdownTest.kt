@@ -69,6 +69,27 @@ class MarkdownTest {
     private val startedAt = Instant.parse("2026-08-26T09:00:00Z")
 
     @Test
+    fun `the step table says how many users reached a step beside the requests they made`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse.copy(reached = 4L)),
+            behind = Histogram().timing(),
+        )
+
+        val table = result.markdown()
+
+        table shouldContain "| Step   | Requests | Reached |"
+        table shouldContain "| browse |       10 |       4 |"
+    }
+
+    @Test
+    fun `a result that never counted users prints no reaches rather than a zero nobody measured`() {
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = Histogram().timing())
+
+        result.markdown() shouldContain "| browse |       10 |       — |"
+    }
+
+    @Test
     fun `a run that fell behind says so on the first line, above the table`() {
         val result = RunResult(
             startedAt = startedAt,

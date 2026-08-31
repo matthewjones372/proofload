@@ -16,7 +16,6 @@ import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Threw
-import io.github.matthewjones372.kestrel.departures
 import io.github.matthewjones372.kestrel.plan
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -59,10 +58,6 @@ fun Simulation.run(progress: Progress = Progress.lines()): RunResult = VirtualTh
  * [Progress.silent].
  */
 private fun Simulation.send(progress: Progress): RunResult {
-    // One arm: booking a second arm's departures after the first hands the
-    // arrival recorder gaps that run backwards, so a mix waits for a schedule
-    // that merges them.
-    val (scenario, profile, feeder) = arms.single()
     progress.starting(plan())
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
@@ -70,7 +65,9 @@ private fun Simulation.send(progress: Progress): RunResult {
     val users = Departures()
     val departed = Departed()
     val watching = watchProgress(progress, runStart) { ended ->
-        departed.snapshot(users.inFlight(), ended, scheduled = profile.over)
+        // The whole run's window, which is the longest arm's: a mix is over
+        // when its last arm is.
+        departed.snapshot(users.inFlight(), ended, scheduled = over)
     }
     // Read where the offsets are consumed rather than off the profile: what the
     // report names is the spacing that was produced, and a profile asked the
@@ -92,23 +89,32 @@ private fun Simulation.send(progress: Progress): RunResult {
         scheduler.execute(
             Pump(
                 scheduler,
-                BookingWindow(profile.departures().withIndex().iterator(), BOOKING_WINDOW),
+                BookingWindow(arms.schedule().iterator(), BOOKING_WINDOW),
                 runStart,
                 allBooked = users::allScheduled,
-            ) { user, departure ->
-                arrivals.record(departure)
+            ) { departure ->
+                arrivals.record(departure.offset)
                 users.starting()
                 scheduler.schedule(
                     {
-                        scenario.depart(
-                            recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain, departed,
+                        // Each arm's own feeder, asked for its own user number:
+                        // an arm's data is then reproducible whatever rate the
+                        // arms beside it are being sent at.
+                        departure.arm.scenario.depart(
+                            recorders,
+                            runStart,
+                            departure.offset,
+                            users,
+                            departure.arm.feeder.forUser(departure.user),
+                            drain,
+                            departed,
                         )
                     },
                     // Relative to now, but the offset is from the run's start
                     // and a pump books partway through it. Subtracting what has
                     // already elapsed is what stops every departure inheriting
                     // the time its window waited to be booked.
-                    departure.inWholeNanoseconds - (System.nanoTime() - runStart),
+                    departure.offset.inWholeNanoseconds - (System.nanoTime() - runStart),
                     TimeUnit.NANOSECONDS,
                 )
             },
@@ -217,7 +223,7 @@ private class Pump(
     private val booking: BookingWindow,
     private val runStart: Long,
     private val allBooked: () -> Unit,
-    private val book: (user: Int, departure: Duration) -> Unit,
+    private val book: (Departure) -> Unit,
 ) : Runnable {
 
     override fun run() {
@@ -311,6 +317,12 @@ private class UserWalk(
     private val drain: Drain?,
 ) {
 
+    // The one mutable thing a walk keeps, and one per user rather than per
+    // request: `reached` counts users, so the first time this user records
+    // under a name has to be told from every later time, and only the walk
+    // knows which user it is on.
+    private val met = HashSet<String>()
+
     // A failed step abandons the user. A null session carries that decision
     // through the walk and out of any loop it was inside: the steps after it
     // are not run, and are not counted as anything. Counting a payment that
@@ -319,7 +331,7 @@ private class UserWalk(
         steps.fold(from) { session, step -> session?.let { run(step, it) } }
 
     private fun run(step: Step, session: Session): Session? = when (step) {
-        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay)
+        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay, met.add(step.name))
 
         is Step.Emit -> emit(step, session)
 
@@ -328,9 +340,19 @@ private class UserWalk(
         // declared, and the plan can still name it before the run starts.
         is Step.Repeat -> (1..step.times).fold<Int, Session?>(session) { each, _ -> walk(step.steps, each) }
 
+        // A clock of its own, read between iterations rather than waited on:
+        // nothing here parks a carrier, and a loop that outlives the profile's
+        // window extends the run rather than being cut off mid-journey.
+        is Step.During -> looping(step, session, startedAt = System.nanoTime())
+
         is Step.When -> if (step.predicate(session)) walk(step.steps, session) else session
 
         is Step.Pause -> step.thoughtAbout(session)
+    }
+
+    private tailrec fun looping(step: Step.During, session: Session?, startedAt: Long): Session? {
+        if (session == null || (System.nanoTime() - startedAt).nanoseconds >= step.duration) return session
+        return looping(step, walk(step.steps, session), startedAt)
     }
 
     /**
@@ -340,7 +362,9 @@ private class UserWalk(
      * subtracted from.
      */
     private fun emit(step: Step.Emit, session: Session): Session? {
-        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay) ?: return null
+        val reached = met.add(step.name)
+        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay, reached)
+            ?: return null
         drain?.departed(step.correlation.of(published), departure)
         return published
     }
@@ -355,12 +379,13 @@ private fun Action.runOn(
     sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
+    reached: Boolean,
 ): Session? {
     val startedAt = System.nanoTime()
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
     val reason = result.reason()
-    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
+    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds, reached)
     return if (reason == null) result.session else null
 }
 

@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Exclusivity
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
@@ -28,6 +29,14 @@ import java.util.concurrent.CopyOnWriteArrayList
  * measuring each other.
  */
 class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
+
+    /**
+     * The default engine, told what to say while a run is going. Progress is
+     * the engine's to report — it is the thing that knows a departure left —
+     * so naming a reporter names an engine rather than widening the seam that
+     * 0051 kept to one method.
+     */
+    constructor(progress: Progress) : this(VirtualThreads(progress).exclusive())
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from

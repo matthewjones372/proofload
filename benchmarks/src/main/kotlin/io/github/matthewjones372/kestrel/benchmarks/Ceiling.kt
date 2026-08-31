@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.benchmarks
 
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.run
@@ -41,9 +42,11 @@ private fun measure(rate: Int): Measured {
     // Thrown away: the first run pays for class loading and JIT, and charging
     // that to the lowest rate would report a ceiling that moves with the order
     // the rates happen to be in.
-    nothing.at(rate.perSecond, over = WARMUP).run()
+    // Silent: a row measuring this tool should not have this tool talking
+    // over it, and a progress line is a comfort rather than a measurement.
+    nothing.at(rate.perSecond, over = WARMUP).run(Progress.silent)
 
-    val result = nothing.at(rate.perSecond, over = WINDOW).run()
+    val result = nothing.at(rate.perSecond, over = WINDOW).run(Progress.silent)
     return Measured(rate, result)
 }
 

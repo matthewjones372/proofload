@@ -493,6 +493,35 @@ without saying so. `result.fellBehind()` stays what it always was, the
 injector's own backlog; the pipeline falling behind is what the latency above
 measures.
 
+## A run you can watch
+
+A run says what it is doing while it does it, so a ten-minute soak is not ten
+minutes of silence somebody kills:
+
+```
+kestrel: 00:05  departed 25,000  in flight 312  behind 138.797us
+kestrel: 00:10  departed 50,000  in flight 298  behind 1.212604ms
+```
+
+```kotlin
+import io.github.matthewjones372.kestrel.Progress
+import kotlin.time.Duration.Companion.seconds
+
+simulation.run(Progress.lines(every = 30.seconds))   // less often
+simulation.run(Progress.silent)                      // not at all
+```
+
+Every number on the line is one the scheduler already keeps: how many users it
+has sent, how many are still running, and how late the last one left. Requests,
+failures and a percentile are not there, and that is the point — reading a live
+histogram or merging the recorders mid-run would put the watching inside the
+thing being measured, and a load generator that moves what it measures reports
+its own weight as the target's latency. The frozen `RunResult` stays the only
+place a number is quoted from.
+
+`Progress` has one method, so a caller who wants a logger, a metrics sink or a
+line of their own writes `Progress { elapsed, snapshot -> ... }` and passes it.
+
 ## Worse than last time?
 
 `kestrel-baseline` keeps a run in a file so the next one can be compared to it.

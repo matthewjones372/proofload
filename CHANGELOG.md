@@ -56,5 +56,8 @@ one.
 - **`kestrel-report-html` and `kestrel-report-github`** — one self-contained
   interactive page, a markdown summary, `$GITHUB_STEP_SUMMARY`, and a Pages
   index.
+- **`Scenario.trace(feeder)`** — one user walked through the ordinary step
+  machinery and printed, a step to a line. It schedules nothing and returns
+  nothing, so a diagnostic pass cannot be read as a measurement.
 - **`kestrel-pelican`** — Pelican's `ClientTransport` over the JDK client, so a
   generated typed client runs inside a load test with no Pekko.

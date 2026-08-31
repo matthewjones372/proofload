@@ -151,7 +151,7 @@ private fun Scenario.depart(
  * to extend it: that would turn records it lost into records it merely did not
  * wait for, which are the two things being told apart here.
  */
-private class Drain(
+internal class Drain(
     private val completing: Completing,
     private val recorders: Recorders,
     private val runStart: Long,
@@ -265,15 +265,15 @@ private class Departures {
 private fun lateness(runStart: Long, departure: Duration): Duration =
     ((System.nanoTime() - runStart).nanoseconds - departure).coerceAtLeast(Duration.ZERO)
 
-private fun Scenario.runOneUser(
-    recorders: Recorders,
+internal fun Scenario.runOneUser(
+    sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
     departure: Duration,
     started: Session,
     drain: Drain?,
 ) {
-    UserWalk(recorders, runStart, schedulingDelay, departure, drain).walk(steps, started)
+    UserWalk(sink, runStart, schedulingDelay, departure, drain).walk(steps, started)
 }
 
 /**
@@ -299,7 +299,7 @@ private fun Step.Pause.thoughtAbout(session: Session): Session {
  * of it down unchanged.
  */
 private class UserWalk(
-    private val recorders: Recorders,
+    private val sink: StepSink,
     private val runStart: Long,
     private val schedulingDelay: Duration,
     private val departure: Duration,
@@ -314,7 +314,7 @@ private class UserWalk(
         steps.fold(from) { session, step -> session?.let { run(step, it) } }
 
     private fun run(step: Step, session: Session): Session? = when (step) {
-        is Step.Exec -> step.action.runOn(step.name, session, recorders, runStart, schedulingDelay)
+        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay)
 
         is Step.Emit -> emit(step, session)
 
@@ -335,7 +335,7 @@ private class UserWalk(
      * subtracted from.
      */
     private fun emit(step: Step.Emit, session: Session): Session? {
-        val published = step.action.runOn(step.name, session, recorders, runStart, schedulingDelay) ?: return null
+        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay) ?: return null
         drain?.departed(step.correlation.of(published), departure)
         return published
     }
@@ -347,7 +347,7 @@ private class UserWalk(
 private fun Action.runOn(
     name: String,
     session: Session,
-    recorders: Recorders,
+    sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
 ): Session? {
@@ -355,7 +355,7 @@ private fun Action.runOn(
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
     val reason = result.reason()
-    recorders.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
+    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
     return if (reason == null) result.session else null
 }
 

@@ -522,6 +522,41 @@ place a number is quoted from.
 `Progress` has one method, so a caller who wants a logger, a metrics sink or a
 line of their own writes `Progress { elapsed, snapshot -> ... }` and passes it.
 
+## What did that user do?
+
+A scenario that is wrong reports `status 404` and stops there. `trace` walks one
+user through it and prints what each step did, so the authoring loop is not a
+`println` inside a step body that the next run times as part of that step:
+
+```kotlin
+import io.github.matthewjones372.kestrel.engine.trace
+import io.github.matthewjones372.kestrel.feed
+import io.github.matthewjones372.kestrel.sessionKey
+
+val email = sessionKey<String>("email")
+
+checkout.trace(feed(email) { user -> "user$user@example.com" })
+```
+
+```
+kestrel: trace checkout
+kestrel:   browse       ok
+kestrel:   place order  ok
+kestrel:   pay          FAILED status 503 — user abandoned here
+```
+
+One user, one pass, no rate and no duration. It walks the same steps a run
+walks, so a trace cannot disagree with the run it is there to explain, and a
+step that fails abandons the user here exactly as it does under load. The feeder
+is optional; given one, the user starts with the data a real one would have.
+
+A trace is for reading rather than measuring. It schedules nothing and returns
+nothing: every number one pass on a cold JVM could report describes a cold JVM
+sending one request, and a `RunResult` handed back here would reach
+`writeHtmlReport` looking like one from a run that measured something. Inside a
+test, `kestrel.trace(checkout)` is the same call, and leaves the runner's
+summary alone.
+
 ## Worse than last time?
 
 `kestrel-baseline` keeps a run in a file so the next one can be compared to it.

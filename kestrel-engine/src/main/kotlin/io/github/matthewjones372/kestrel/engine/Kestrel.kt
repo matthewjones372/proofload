@@ -3,9 +3,11 @@ package io.github.matthewjones372.kestrel.engine
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Exclusivity
+import io.github.matthewjones372.kestrel.Feeder
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.judgedBy
@@ -55,6 +57,14 @@ class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
      */
     fun run(search: Search): Capacity =
         exclusively(Exclusivity.Running) { search.judgedBy { rung -> run(rung) } }
+
+    /**
+     * Walks one user through [scenario] and prints what each step did.
+     *
+     * Nothing is recorded and nothing is returned: a trace is for reading, so
+     * it is absent from [summary] and from anything a report is made of.
+     */
+    fun trace(scenario: Scenario, feeder: Feeder = Feeder.empty) = scenario.trace(feeder)
 
     /**
      * What this machine can resolve, measured once per JVM and kept afterwards.

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.http
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.stepNames
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Duration
@@ -56,7 +57,7 @@ class HttpRequestTest {
             val browse = scenario("browse") { exec(products) }
 
             products.run(Session.empty) shouldBe StepResult.Ok(Session.empty)
-            browse.steps.single().name shouldBe "/products"
+            browse.stepNames.single() shouldBe "/products"
             server.received.single().path shouldBe "/products"
         }
     }

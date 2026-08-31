@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.stepNames
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
@@ -34,7 +35,7 @@ class HttpSessionTest {
 
             fetch.run(Session.empty.set(orderId, "7"))
 
-            checkout.steps.single().name shouldBe "/orders/{orderId}"
+            checkout.stepNames.single() shouldBe "/orders/{orderId}"
         }
     }
 

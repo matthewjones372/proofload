@@ -28,6 +28,16 @@ class PlanTest {
     }
 
     @Test
+    fun `a plan names every step the tree declares, in order and each of them once`() {
+        val looping = Scenario(
+            "checkout",
+            listOf(Step.Exec("browse", action { }), Step.Repeat(3, listOf(Step.Exec("add to cart", action { })))),
+        )
+
+        looping.at(1.perSecond, over = 1.seconds).plan().steps shouldBe listOf("browse", "add to cart")
+    }
+
+    @Test
     fun `a plan counts the requests the profile is asking for`() {
         val plan = checkout.at(50.perSecond, over = 1.minutes).plan()
 

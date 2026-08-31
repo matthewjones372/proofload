@@ -32,7 +32,7 @@ class StepNameTest {
             exec(pay) { }
         }
 
-        checkout.steps.map { it.name } shouldBe listOf("browse", "pay")
+        checkout.stepNames shouldBe listOf("browse", "pay")
     }
 
     @Test

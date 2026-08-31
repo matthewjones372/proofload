@@ -51,7 +51,7 @@ fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goa
 /** What this run is asking for, before any of it happens. */
 fun Simulation.plan(): Plan = Plan(
     scenario = scenario.name,
-    steps = scenario.steps.map { it.name },
+    steps = scenario.stepNames,
     profile = profile,
     goals = goals,
 )

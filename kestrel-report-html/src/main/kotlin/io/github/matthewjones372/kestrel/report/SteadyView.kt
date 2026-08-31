@@ -27,9 +27,9 @@ private fun RunResult.settledLines(offset: Duration): List<String> = listOf(
     """  <p class="note" id="kestrel-steady">""",
     "    <strong>Settled after ${offset.forPlan()}</strong>, judged over the remaining " +
         "${(timeline.size.seconds - offset).forPlan()}. The first ${offset.forPlan()} are drawn on the timeline " +
-        "below and left out of every goal above that reads the counts or the target's service time; response " +
-        "time is not kept second by second, so a goal on that is judged over the whole run. Every percentile in " +
-        "the table below is the whole run: nothing here is discarded. ${aDefault()}",
+        "below and left out of every goal above that reads the counts or either clock; the generator's own " +
+        "backlog is not kept second by second, so a goal on that is judged over the whole run. Every percentile " +
+        "in the table below is the whole run: nothing here is discarded. ${aDefault()}",
     "  </p>",
 )
 

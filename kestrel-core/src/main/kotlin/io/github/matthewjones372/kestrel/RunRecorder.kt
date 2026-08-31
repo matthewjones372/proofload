@@ -105,7 +105,7 @@ private class StepRecorder {
             failed.record(service, response)
             countFailure(failure, 1L)
         }
-        seconds.record(at, failure, service)
+        seconds.record(at, failure, service, response)
     }
 
     fun leftOver(more: Outstanding) {
@@ -155,8 +155,8 @@ private class Seconds {
 
     private val counted = ArrayList<SecondRecorder>()
 
-    fun record(at: Duration, failure: String?, service: Duration) =
-        reaching(at.inWholeSeconds.toInt()).record(failure, service)
+    fun record(at: Duration, failure: String?, service: Duration, response: Duration) =
+        reaching(at.inWholeSeconds.toInt()).record(failure, service, response)
 
     fun merge(other: Seconds) = other.counted.forEachIndexed { index, theirs -> reaching(index).merge(theirs) }
 
@@ -172,26 +172,55 @@ private class Seconds {
 
 private class SecondRecorder {
 
-    private val ok = Histogram.coarse()
+    private val ok = Clocks()
 
     // The accumulator AGENTS.md allows a builder, and null until something
     // fails: a second nothing failed in is most seconds of most runs, and the
     // timeline keeps one of these per second per step. Which reason it was is
     // not kept — that would be an allocation the report then calls the
     // target's latency.
-    private var failed: Histogram? = null
+    private var failed: Clocks? = null
 
-    fun record(failure: String?, service: Duration) =
-        if (failure == null) ok.record(service) else failing().record(service)
+    fun record(failure: String?, service: Duration, response: Duration) =
+        if (failure == null) ok.record(service, response) else failing().record(service, response)
 
     fun merge(other: SecondRecorder) {
         ok.merge(other.ok)
         other.failed?.let { failing().merge(it) }
     }
 
-    fun freeze(): Second = Second(ok.timing(), failed?.timing() ?: Timing.none)
+    fun freeze(): Second = Second(
+        okServiceTime = ok.serviceTime.timing(),
+        failedServiceTime = failed?.serviceTime?.timing() ?: Timing.none,
+        okResponseTime = ok.responseTime.timing(),
+        failedResponseTime = failed?.responseTime?.timing() ?: Timing.none,
+    )
 
-    private fun failing(): Histogram = failed ?: Histogram.coarse().also { failed = it }
+    private fun failing(): Clocks = failed ?: Clocks().also { failed = it }
+}
+
+/**
+ * One side of one second on both clocks, coarse.
+ *
+ * The pair is allocated together because it is filled together: a request that
+ * has a service time in this second has a response time in it too, so a lazily
+ * allocated second table would be a branch on the timed path buying nothing.
+ */
+private class Clocks {
+
+    val serviceTime = Histogram.coarse()
+
+    val responseTime = Histogram.coarse()
+
+    fun record(service: Duration, response: Duration) {
+        serviceTime.record(service)
+        responseTime.record(response)
+    }
+
+    fun merge(other: Clocks) {
+        serviceTime.merge(other.serviceTime)
+        responseTime.merge(other.responseTime)
+    }
 }
 
 private class OutcomeRecorder {

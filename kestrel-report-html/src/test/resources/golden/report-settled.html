@@ -213,7 +213,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     </ul>
   </section>
   <p class="note" id="kestrel-steady">
-    <strong>Settled after 10.0 s</strong>, judged over the remaining 10.0 s. The first 10.0 s are drawn on the timeline below and left out of every goal above that reads the counts or the target's service time; response time is not kept second by second, so a goal on that is judged over the whole run. Every percentile in the table below is the whole run: nothing here is discarded. Two windows count as the same within <strong>12.50%</strong> of each other — twice the width of the buckets these seconds are read from, and a default rather than something this run discovered.
+    <strong>Settled after 10.0 s</strong>, judged over the remaining 10.0 s. The first 10.0 s are drawn on the timeline below and left out of every goal above that reads the counts or either clock; the generator's own backlog is not kept second by second, so a goal on that is judged over the whole run. Every percentile in the table below is the whole run: nothing here is discarded. Two windows count as the same within <strong>12.50%</strong> of each other — twice the width of the buckets these seconds are read from, and a default rather than something this run discovered.
   </p>
   <section class="plan" aria-label="What was asked for">
     <p><strong>checkout</strong> — 1 step, 25/s held for 20.0 s. Planned 500 users, 500 requests.</p>

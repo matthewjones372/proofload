@@ -126,6 +126,8 @@ private fun List<List<Second>>.superimposed(): List<Second> =
         Second(
             okServiceTime = counted.map { it.okServiceTime }.merged(),
             failedServiceTime = counted.map { it.failedServiceTime }.merged(),
+            okResponseTime = counted.map { it.okResponseTime }.merged(),
+            failedResponseTime = counted.map { it.failedResponseTime }.merged(),
         )
     }
 

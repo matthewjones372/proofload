@@ -41,10 +41,9 @@ sealed interface Goal {
     /**
      * Whether [RunResult.steady] holds what this goal reads, and so whether a
      * run that settled is judged over its steady segment or over all of
-     * itself. The timeline keeps the counts and the target's service time;
-     * response time and the generator's own backlog are not kept second by
-     * second, and narrowing a goal on those to a segment nothing measured
-     * would be inventing the answer.
+     * itself. The timeline keeps the counts and both clocks; the generator's
+     * own backlog is not kept second by second, and narrowing a goal on that
+     * to a segment nothing measured would be inventing the answer.
      */
     val overSteadySegment: Boolean
 
@@ -58,7 +57,9 @@ sealed interface Goal {
     ) : Goal {
         override val described: String get() = "${step.name} $percentile under $limit"
 
-        override val overSteadySegment: Boolean get() = clock == Clock.ServiceTime
+        // Either clock: a second carries both, so a segment narrows a response
+        // time the same way it narrows a service time.
+        override val overSteadySegment: Boolean get() = true
 
         override fun judge(result: RunResult): Verdict {
             val stats = result.steps[step.name]
@@ -105,7 +106,7 @@ sealed interface Goal {
         override val described: String get() =
             "${step.name} goodput under $under at least ${share.percent}%"
 
-        override val overSteadySegment: Boolean get() = clock == Clock.ServiceTime
+        override val overSteadySegment: Boolean get() = true
 
         override fun judge(result: RunResult): Verdict {
             val stats = result.steps[step.name]

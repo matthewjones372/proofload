@@ -88,14 +88,36 @@ are merged once, at freeze.
 would grow: ten minutes of a three-step scenario is 1,800 of them, which at the
 full precision above is over seventy megabytes of counters for three line
 charts. A second's histogram is therefore coarse — thirty-two sub-buckets
-rather than two hundred and fifty-six, 5,384 bytes — putting the same run
-under ten megabytes, with each second's percentile good to 6.25% instead of
-0.78%.
+rather than two hundred and fifty-six, 5,384 bytes — with each second's
+percentile good to 6.25% instead of 0.78%.
 
 A second splits its two sides the way a step does, and the table for what
 failed is allocated the first time something in that second does — so a second
 nothing failed in, which is most seconds of most runs, costs exactly what it
 cost before the split.
+
+A second carries both clocks, because the steady segment is rebuilt from the
+timeline and response time is the clock a percentile goal reads by default: a
+segment without it narrows the statistic nobody wrote a goal on. The two tables
+for one side are allocated together, since a request with a service time in a
+second has a response time in it too.
+
+That doubles the timeline, and the figure is measured rather than reasoned
+about — `./gradlew :benchmarks:timelineCost` holds the recorder and reads the
+heap either side. On the run that costs the most, an hour of ten steps at
+twenty requests a second, which is 36,000 seconds of tables:
+
+| | one clock | both |
+|---|---|---|
+| recording | 190.4 MiB | 377.8 MiB |
+| recorder and frozen seconds | 221.5 MiB | 439.1 MiB |
+| per second of step, recording | 5,546 bytes | 11,005 bytes |
+
+Ten minutes of three steps — 1,800 seconds of tables — is 19 MiB of that, which
+is the case to hold in mind rather than the soak. If the soak figure ever stops
+being affordable, the fallback to argue is a timeline that keeps response time
+only while a response-time goal exists to need it, which the plan knows before
+the run starts.
 
 Freezing a second keeps the buckets that counted something and drops the rest —
 tens of them for a second of load, against the 673 the table has slots for.

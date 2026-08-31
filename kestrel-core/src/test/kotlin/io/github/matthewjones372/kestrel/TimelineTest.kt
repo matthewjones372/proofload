@@ -136,4 +136,50 @@ class TimelineTest {
     fun `a run that recorded nothing has no seconds to report`() {
         RunRecorder(began).freeze().timeline shouldBe emptyList()
     }
+
+    @Test
+    fun `a second carries response time beside service time`() {
+        val recorder = RunRecorder(began)
+        repeat(40) {
+            recorder.record(
+                step = "pay",
+                failure = null,
+                serviceTime = 10.milliseconds,
+                schedulingDelay = 5.milliseconds,
+                at = (it * 20).milliseconds,
+            )
+        }
+
+        val second = recorder.freeze().timeline.single()
+
+        withClue("service time ${second.serviceTime.p99}, response time ${second.responseTime.p99}") {
+            second.responseTime.count shouldBe second.serviceTime.count
+            (second.serviceTime.p99 < 12.milliseconds) shouldBe true
+            (second.responseTime.p99 >= 15.milliseconds) shouldBe true
+        }
+    }
+
+    @Test
+    fun `a second splits response time by how the request ended`() {
+        val recorder = RunRecorder(began)
+        repeat(10) { recorder.pay(at = (it * 20).milliseconds) }
+        repeat(10) {
+            recorder.record(
+                step = "pay",
+                failure = "status 503",
+                serviceTime = 1.milliseconds,
+                schedulingDelay = 400.milliseconds,
+                at = (200 + it * 20).milliseconds,
+            )
+        }
+
+        val second = recorder.freeze().timeline.single()
+
+        withClue("ok ${second.okResponseTime.p99}, failed ${second.failedResponseTime.p99}") {
+            second.okResponseTime.count shouldBe 10L
+            second.failedResponseTime.count shouldBe 10L
+            (second.okResponseTime.p99 < 20.milliseconds) shouldBe true
+            (second.failedResponseTime.p99 >= 400.milliseconds) shouldBe true
+        }
+    }
 }

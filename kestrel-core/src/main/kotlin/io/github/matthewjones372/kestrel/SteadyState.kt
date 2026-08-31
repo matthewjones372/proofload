@@ -55,10 +55,10 @@ val RunResult.steadyState: SteadyState get() = timeline.steadyState()
  * they are.
  *
  * What the timeline measured is restricted — the counts, which are exact, and
- * the target's service time, at the timeline's own precision. What a second
- * does not keep is absent rather than carried over from the whole run: there
- * are no response times here, no reason a request failed, and no backlog, and
- * a goal that reads one of those is judged over the whole run instead.
+ * both clocks, at the timeline's own precision. What a second does not keep is
+ * absent rather than carried over from the whole run: there is no reason a
+ * request failed here and no backlog, and a goal that reads one of those is
+ * judged over the whole run instead.
  */
 val RunResult.steady: RunResult
     get() = when (val settled = steadyState) {
@@ -81,14 +81,16 @@ private fun StepStats.from(offset: Duration): StepStats {
     val seconds = timeline.secondsFrom(offset)
     val worked = seconds.map { it.okServiceTime }.merged()
     val failed = seconds.map { it.failedServiceTime }.merged()
+    val workedResponse = seconds.map { it.okResponseTime }.merged()
+    val failedResponse = seconds.map { it.failedResponseTime }.merged()
     return StepStats(
         name = name,
         // No reasons: a second counts what failed and not what the target
         // said about it, so the segment can say how many and not which.
-        ok = Outcome(serviceTime = worked, responseTime = Timing.none),
-        failed = Outcome(serviceTime = failed, responseTime = Timing.none),
+        ok = Outcome(serviceTime = worked, responseTime = workedResponse),
+        failed = Outcome(serviceTime = failed, responseTime = failedResponse),
         serviceTime = listOf(worked, failed).merged(),
-        responseTime = Timing.none,
+        responseTime = listOf(workedResponse, failedResponse).merged(),
         timeline = seconds,
     )
 }

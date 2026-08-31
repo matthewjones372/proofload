@@ -165,7 +165,12 @@ private fun List<Bucket>.valueAtRank(rank: Long): Duration =
  * second of shed load is a second of fast rejections, and one distribution
  * holding both would report a percentile nobody experienced.
  */
-data class Second(val okServiceTime: Timing, val failedServiceTime: Timing) {
+data class Second(
+    val okServiceTime: Timing,
+    val failedServiceTime: Timing,
+    val okResponseTime: Timing,
+    val failedResponseTime: Timing,
+) {
 
     val ok: Long get() = okServiceTime.count
 
@@ -175,6 +180,12 @@ data class Second(val okServiceTime: Timing, val failedServiceTime: Timing) {
 
     /** Both sides added back together, which is what a line drawn over the run is. */
     val serviceTime: Timing get() = listOf(okServiceTime, failedServiceTime).merged()
+
+    /**
+     * The same requests measured from the departure the profile promised, which
+     * is the clock every percentile goal reads by default.
+     */
+    val responseTime: Timing get() = listOf(okResponseTime, failedResponseTime).merged()
 
     val p50: Duration get() = serviceTime.p50
 

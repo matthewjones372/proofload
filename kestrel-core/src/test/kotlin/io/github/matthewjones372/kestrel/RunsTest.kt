@@ -145,7 +145,11 @@ class RunsTest {
         runs.merged.machine shouldBe here
     }
 
-    private fun recorded(over: Int = 3, slowSecond: Int = NO_SLOW_SECOND): RunResult {
+    private fun recorded(
+        over: Int = 3,
+        slowSecond: Int = NO_SLOW_SECOND,
+        lateBy: Duration = Duration.ZERO,
+    ): RunResult {
         val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
         repeat(over) { second ->
             val service = if (second == slowSecond) 400.milliseconds else 10.milliseconds
@@ -154,7 +158,7 @@ class RunsTest {
                     step = "pay",
                     failure = null,
                     serviceTime = service,
-                    schedulingDelay = Duration.ZERO,
+                    schedulingDelay = lateBy,
                     at = second.seconds + (request * 10).milliseconds,
                 )
             }
@@ -183,6 +187,19 @@ class RunsTest {
         runs.merged.timeline.size shouldBe 3
         runs.merged.timeline.sumOf { it.count } shouldBe runs.merged.count
         runs.merged.timeline.first().count shouldBe 1_000L
+    }
+
+    @Test
+    fun `a merged second superimposes response time as well as service time`() {
+        val runs = Runs(List(10) { recorded(over = 3, lateBy = 40.milliseconds) })
+
+        val second = runs.merged.timeline.first()
+
+        withClue("service ${second.serviceTime.p99}, response ${second.responseTime.p99}") {
+            second.responseTime.count shouldBe second.serviceTime.count
+            (second.serviceTime.p99 < 20.milliseconds) shouldBe true
+            (second.responseTime.p99 >= 40.milliseconds) shouldBe true
+        }
     }
 
     @Test

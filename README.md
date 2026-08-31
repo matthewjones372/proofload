@@ -789,18 +789,19 @@ was, and what was left out is reported.
 ```kotlin
 import io.github.matthewjones372.kestrel.steady
 
-result[placeOrder].serviceTime.p99          // the whole run, cold start included
-result.steady[placeOrder].serviceTime.p99   // the same p99 without the first 20 s
-result.steady.count                         // requests that left inside the segment
-result.steady.startedAt                     // the run's start plus the offset
+result[placeOrder].serviceTime.p99           // the whole run, cold start included
+result.steady[placeOrder].serviceTime.p99    // the same p99 without the first 20 s
+result.steady[placeOrder].responseTime.p99   // and the clock a goal reads by default
+result.steady.count                          // requests that left inside the segment
+result.steady.startedAt                      // the run's start plus the offset
 ```
 
 Goals are judged over the segment where the timeline measured what they read:
-the counts, which are exact, and the target's service time. Response time and
-the generator's own backlog are not kept second by second, so a goal on one of
-those is judged over the whole run rather than narrowed to a segment nothing
-measured — `Goal.overSteadySegment` says which, and the page says so above the
-numbers. A run that never settled has all of its goals judged over all of it.
+the counts, which are exact, and both clocks. The generator's own backlog is
+not kept second by second, so a goal on that is judged over the whole run
+rather than narrowed to a segment nothing measured — `Goal.overSteadySegment`
+says which, and the page says so above the numbers. A run that never settled
+has all of its goals judged over all of it.
 
 ## What this is for
 

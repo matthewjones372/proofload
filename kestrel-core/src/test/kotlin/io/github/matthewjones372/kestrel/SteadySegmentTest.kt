@@ -104,14 +104,17 @@ class SteadySegmentTest {
     }
 
     @Test
-    fun `a goal on response time is judged over the whole run, which is where response time was measured`() {
+    fun `a goal on response time is judged over the segment, which is the clock most goals are written on`() {
         val result = warmedUp(goals = listOf(p99(pay, of = Clock.ResponseTime) under 100.milliseconds))
 
         val verdict = result.verdicts.single()
 
-        withClue("the segment keeps no response times, so a goal on them cannot be quietly narrowed") {
-            verdict.met shouldBe false
-            verdict.measured shouldBe Measurement.Took(result[pay].responseTime.p99)
+        withClue("the whole run, cold start included: ${result[pay].responseTime.p99}") {
+            (result[pay].responseTime.p99 > 100.milliseconds) shouldBe true
+        }
+        withClue("judged over the segment: ${result.steady[pay].responseTime.p99}") {
+            verdict.met shouldBe true
+            verdict.measured shouldBe Measurement.Took(result.steady[pay].responseTime.p99)
         }
     }
 
@@ -123,7 +126,6 @@ class SteadySegmentTest {
         withClue("a second counts what failed and not what the target said about it") {
             result.steady[pay].failed.reasons shouldBe emptyMap()
         }
-        result.steady[pay].responseTime shouldBe Timing.none
     }
 
     @Test
@@ -165,5 +167,26 @@ class SteadySegmentTest {
         val result = recorder.freeze()
 
         result.steady["sign in"].count shouldBe 0L
+    }
+
+    @Test
+    fun `the steady segment narrows response time as well as service time`() {
+        val result = warmedUp()
+        val whole = result[pay].responseTime
+        val settled = result.steady[pay].responseTime
+
+        withClue("the whole run, which keeps the cold start: ${whole.p99}") {
+            (whole.p99 >= 200.milliseconds) shouldBe true
+        }
+        // Asserted before the percentile, because a segment that dropped
+        // response time altogether reports zero and zero is under every bound
+        // this test could name.
+        withClue("the segment counts what its service time counts") {
+            settled.count shouldBe result.steady[pay].serviceTime.count
+            (settled.count > 0L) shouldBe true
+        }
+        withClue("20ms of target and 5ms of lateness, off a coarse table: ${settled.p99}") {
+            (settled.p99 >= 20.milliseconds && settled.p99 < 30.milliseconds) shouldBe true
+        }
     }
 }

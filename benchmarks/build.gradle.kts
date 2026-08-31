@@ -16,3 +16,13 @@ tasks.register<JavaExec>("ceiling") {
     // where that stops keeping up rather than where the heap does.
     jvmArgs("-Xmx2g")
 }
+
+tasks.register<JavaExec>("timelineCost") {
+    group = "verification"
+    description = "Measures what a soak's per-second timeline costs, recording and frozen."
+    mainClass.set("io.github.matthewjones372.kestrel.benchmarks.TimelineCostKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    // The figure being measured is hundreds of megabytes, and a heap that has
+    // to collect to fit it is a heap measuring the collector.
+    jvmArgs("-Xmx6g")
+}

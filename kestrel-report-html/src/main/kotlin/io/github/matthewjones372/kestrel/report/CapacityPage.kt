@@ -21,7 +21,7 @@ public fun Capacity.toHtmlReport(): String =
 /** Writes [toHtmlReport] to [path], creating the directories above it, and returns the path written. */
 public fun Capacity.writeHtmlReport(path: Path): Path {
     path.parent?.let { Files.createDirectories(it) }
-    return Files.writeString(path, toHtmlReport(), Charsets.UTF_8)
+    return announce(Files.writeString(path, toHtmlReport(), Charsets.UTF_8))
 }
 
 private fun Capacity.documentLines(): List<String> =

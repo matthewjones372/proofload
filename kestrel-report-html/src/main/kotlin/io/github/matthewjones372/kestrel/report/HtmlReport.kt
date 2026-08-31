@@ -37,7 +37,20 @@ public fun RunResult.writeHtmlReport(
     differences: List<Difference> = emptyList(),
 ): Path {
     path.parent?.let { Files.createDirectories(it) }
-    return Files.writeString(path, toHtmlReport(comparison, floor, differences), Charsets.UTF_8)
+    return announce(Files.writeString(path, toHtmlReport(comparison, floor, differences), Charsets.UTF_8))
+}
+
+/**
+ * Says where the report went, and returns it so a caller reads as it did.
+ *
+ * A run ends with a page somebody is meant to open, and a path returned to a
+ * variable nobody prints is a page nobody finds. Absolute and as a `file:` URI
+ * because the argument is usually relative to a working directory the reader is
+ * not in, and because a terminal makes that shape clickable.
+ */
+internal fun announce(written: Path): Path {
+    println("kestrel: report at ${written.toAbsolutePath().normalize().toUri()}")
+    return written
 }
 
 private fun RunResult.documentLines(

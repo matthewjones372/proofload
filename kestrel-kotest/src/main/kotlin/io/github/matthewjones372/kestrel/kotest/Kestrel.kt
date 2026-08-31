@@ -1,7 +1,9 @@
 package io.github.matthewjones372.kestrel.kotest
 
+import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.engine.exclusive
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -21,6 +23,23 @@ import kotlin.coroutines.coroutineContext
  * to reach the failure.
  */
 suspend fun kestrel(): Kestrel = coroutineContext[Running]?.kestrel ?: Kestrel(Progress.silent)
+
+/**
+ * A runner for the test this is called from that sends through [engine], as
+ * silent as the one that takes no argument.
+ *
+ * An overload rather than a context element or a spec-level extension:
+ * reading an element back is stdlib, but installing one is `withContext` from
+ * kotlinx-coroutines, and registering an extension is Kotest, neither of which
+ * this module carries at runtime. An engine is a value a spec can hold in a
+ * `val` and hand to each test that wants it, which is what the other two would
+ * have arranged more slowly.
+ *
+ * The machine is taken for a run the same way the default takes it, so two
+ * specs running at once measure the machine one after the other rather than
+ * measuring each other.
+ */
+fun kestrel(engine: Engine): Kestrel = Kestrel(engine.exclusive(), Progress.silent)
 
 internal class Running(val kestrel: Kestrel) : AbstractCoroutineContextElement(Running) {
     companion object Key : CoroutineContext.Key<Running>

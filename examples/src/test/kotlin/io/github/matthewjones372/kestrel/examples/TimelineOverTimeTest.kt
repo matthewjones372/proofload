@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.examples
 
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.run
 import io.github.matthewjones372.kestrel.perSecond
@@ -20,9 +21,11 @@ class TimelineOverTimeTest {
 
     @Test
     fun `a run given three seconds of departures reports a second for each of them`() {
+        // Silent, as the framework modules are: this is a test, and its output
+        // is the JUnit report rather than a terminal somebody is watching.
         val result = scenario("timeline") { exec("browse") { } }
             .at(20.perSecond, over = 3.seconds)
-            .run()
+            .run(Progress.silent)
 
         // At least, rather than exactly: a loaded machine can push the last
         // departures into a fourth second, and that is the timeline reporting

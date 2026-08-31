@@ -328,9 +328,19 @@ private class UserWalk(
         // declared, and the plan can still name it before the run starts.
         is Step.Repeat -> (1..step.times).fold<Int, Session?>(session) { each, _ -> walk(step.steps, each) }
 
+        // A clock of its own, read between iterations rather than waited on:
+        // nothing here parks a carrier, and a loop that outlives the profile's
+        // window extends the run rather than being cut off mid-journey.
+        is Step.During -> looping(step, session, startedAt = System.nanoTime())
+
         is Step.When -> if (step.predicate(session)) walk(step.steps, session) else session
 
         is Step.Pause -> step.thoughtAbout(session)
+    }
+
+    private tailrec fun looping(step: Step.During, session: Session?, startedAt: Long): Session? {
+        if (session == null || (System.nanoTime() - startedAt).nanoseconds >= step.duration) return session
+        return looping(step, walk(step.steps, session), startedAt)
     }
 
     /**

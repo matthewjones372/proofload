@@ -16,6 +16,7 @@ import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
@@ -105,6 +106,37 @@ class EngineTest {
         val result = checkout.at(1.perSecond, over = 1.seconds).run()
 
         result["add to cart"].count shouldBe 1L
+    }
+
+    @Test
+    fun `a during loop runs its body again for as long as its own clock has time left`() {
+        val body = listOf(Step.Exec("poll", action { }), Step.Pause(20.milliseconds))
+        val polling = Scenario("polling", listOf(Step.During(200.milliseconds, body)))
+
+        val result = polling.at(1.perSecond, over = 1.seconds).run()
+
+        withClue("a 200 ms window over a 20 ms pause is ten iterations idle and still two on a loaded machine") {
+            result["poll"].count shouldBeGreaterThanOrEqualTo 2L
+        }
+    }
+
+    @Test
+    fun `a during loop whose window is already spent runs its body no times`() {
+        val polling = Scenario("polling", listOf(Step.During(Duration.ZERO, listOf(Step.Exec("poll", action { })))))
+
+        val result = polling.at(1.perSecond, over = 1.seconds).run()
+
+        result.steps.keys shouldBe emptySet<String>()
+    }
+
+    @Test
+    fun `a failure inside a during loop abandons the user rather than starting another iteration`() {
+        val body = listOf(Step.Exec("poll", action { fail("503") }), Step.Pause(1.milliseconds))
+        val polling = Scenario("polling", listOf(Step.During(200.milliseconds, body)))
+
+        val result = polling.at(1.perSecond, over = 1.seconds).run()
+
+        result["poll"].count shouldBe 1L
     }
 
     @Test

@@ -115,6 +115,55 @@ class ScenarioTest {
     }
 
     @Test
+    fun `a repeat holds its body once, however many times the loop is to run it`() {
+        val checkout = scenario("checkout") {
+            exec("browse", browse)
+            repeat(3) { exec("add to cart", browse) }
+        }
+
+        checkout.steps shouldBe listOf(
+            Step.Exec("browse", browse),
+            Step.Repeat(3, listOf(Step.Exec("add to cart", browse))),
+        )
+        checkout.stepNames shouldBe listOf("browse", "add to cart")
+    }
+
+    @Test
+    fun `a loop that would run no times is refused where it is written`() {
+        shouldThrow<IllegalArgumentException> { scenario("checkout") { repeat(0) { exec("add to cart", browse) } } }
+    }
+
+    @Test
+    fun `a during loop carries the window it runs for beside the steps it runs`() {
+        val polling = scenario("polling") {
+            during(30.seconds) {
+                exec("poll", browse)
+                pause(1.seconds)
+            }
+        }
+
+        polling.steps shouldBe listOf(
+            Step.During(30.seconds, listOf(Step.Exec("poll", browse), Step.Pause(1.seconds))),
+        )
+        polling.stepNames shouldBe listOf("poll")
+    }
+
+    @Test
+    fun `a window that runs backwards is refused where it is written, not where it is run`() {
+        shouldThrow<IllegalArgumentException> { scenario("polling") { during(-(1.seconds)) { exec("poll", browse) } } }
+    }
+
+    @Test
+    fun `the steps inside a loop are frozen with the scenario around them`() {
+        val checkout = scenario("checkout") { repeat(2) { exec("add to cart", browse) } }
+
+        @Suppress("UNCHECKED_CAST")
+        val body = (checkout.steps.single() as Step.Repeat).steps as MutableList<Step>
+
+        shouldThrow<UnsupportedOperationException> { body.add(Step.Exec("injected", browse)) }
+    }
+
+    @Test
     fun `the step list a scenario hands out is frozen`() {
         val checkout = scenario("checkout") { exec("browse", browse) }
 

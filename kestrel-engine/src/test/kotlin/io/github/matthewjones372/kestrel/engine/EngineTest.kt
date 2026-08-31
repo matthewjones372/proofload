@@ -5,9 +5,15 @@ import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
+import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 class EngineTest {
@@ -85,6 +91,31 @@ class EngineTest {
 
         result["browse"].count shouldBe 4L
         result.behind.count shouldBe 4L
+    }
+
+    @Test
+    fun `a pause holds the user up between steps and is measured as nobody's latency`() {
+        val thinking = 300.milliseconds
+        val marks = ConcurrentLinkedQueue<Long>()
+
+        val result = scenario("checkout") {
+            exec("browse") { marks.add(System.nanoTime()) }
+            pause(thinking)
+            exec("pay") { marks.add(System.nanoTime()) }
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        val (browsed, paid) = marks.toList()
+        withClue("the user thought before its next request, so the gap is at least the pause") {
+            (paid - browsed).nanoseconds shouldBeGreaterThanOrEqualTo thinking
+        }
+        withClue("a pause is nobody's request: it has no step of its own and no percentile") {
+            result.steps.keys shouldBe setOf("browse", "pay")
+            result["pay"].serviceTime.max shouldBeLessThan thinking
+            result["pay"].responseTime.max shouldBeLessThan thinking
+        }
+        withClue("the generator is not late for a departure that was meant to wait") {
+            result.behind.count shouldBe 2L
+        }
     }
 
     @Test

@@ -82,6 +82,28 @@ A feeder is a function of the user's number rather than a cursor over a source,
 so there is nothing to lock on the path every request takes, nothing to run out
 of, and user 4,001 gets the same data tomorrow as it did today.
 
+A real user reads the page before clicking. `pause` is that gap, and it is a
+value in the scenario like everything else — the wait happens when the run
+does, not when the file is loaded:
+
+```kotlin
+import kotlin.time.Duration.Companion.seconds
+
+val checkout = scenario("checkout") {
+    exec(browse, api.get("/products"))
+    pause(2.seconds)                     // a user reading the page
+    exec(placeOrder, api.post("/orders"))
+}
+```
+
+Nothing is recorded for it. A pause has no row in the report and no percentile,
+because every number printed under a step name is time the target took, and two
+seconds of somebody reading is not: counted as latency it would invent slowness
+the service never caused, and counted as a fast step it would flatter the tail
+of the ones that are real. It is not lateness either — the generator is not
+behind for a departure that was meant to wait. What it does change is the
+concurrency the same rate produces, which is the reason to write it.
+
 A load shape is stages in order, and still a value — so it composes, and it
 answers before a request leaves:
 

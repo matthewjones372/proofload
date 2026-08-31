@@ -51,7 +51,7 @@ fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goa
 /** What this run is asking for, before any of it happens. */
 fun Simulation.plan(): Plan = Plan(
     scenario = scenario.name,
-    steps = scenario.steps.map { it.name },
+    steps = scenario.steps.mapNotNull { it.requested() },
     profile = profile,
     goals = goals,
 )
@@ -63,5 +63,16 @@ fun Simulation.fedBy(feeder: Feeder): Simulation = copy(feeder = feeder)
 fun Scenario.at(rate: Rate, over: Duration): Simulation = Simulation(this, constantRate(rate, over))
 
 fun Scenario.injecting(profile: InjectionProfile): Simulation = Simulation(this, profile)
+
+/**
+ * The name a step sends something under, and null where it sends nothing. A
+ * plan counts requests, and a scenario that pauses is not asking the target for
+ * more work than one that does not.
+ */
+private fun Step.requested(): String? = when (this) {
+    is Step.Exec -> name
+    is Step.Emit -> name
+    is Step.Pause -> null
+}
 
 private const val SECONDS_PER_MINUTE = 60.0

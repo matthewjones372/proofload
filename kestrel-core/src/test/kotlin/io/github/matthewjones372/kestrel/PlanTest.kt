@@ -36,6 +36,18 @@ class PlanTest {
     }
 
     @Test
+    fun `a pause is not a request, so a plan that thinks does not plan more work`() {
+        val thinking = scenario("checkout") {
+            exec(browse) { }
+            pause(2.seconds)
+            exec(pay) { }
+        }.at(50.perSecond, over = 1.minutes).plan()
+
+        thinking.steps shouldBe listOf("browse", "pay")
+        thinking.plannedRequests shouldBe 6000L
+    }
+
+    @Test
     fun `a plan says how long the profile promised between departures`() {
         checkout.at(50.perSecond, over = 1.minutes).plan().plannedInterval shouldBe 20.milliseconds
 

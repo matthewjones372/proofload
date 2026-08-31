@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import java.util.Collections
+import kotlin.time.Duration
 
 /**
  * A step's name, declared once and shared by the scenario that defines the step
@@ -28,6 +29,27 @@ sealed interface Step {
      * own, so a slow producer and a slow pipeline are never added together.
      */
     data class Emit(override val name: String, val action: Action, val correlation: Correlation) : Step
+
+    /**
+     * Think time: the user is doing something that is not this system, so the
+     * wait is a gap between steps rather than a step with a timing.
+     *
+     * It carries no measurement and never becomes a row in a report, because
+     * every number a report prints under a step name is what the target took.
+     * A pause under one would be a percentile nobody waited on the target for —
+     * either diluting the tail with time it did not cause, or, read as latency,
+     * inventing seconds of slowness out of a user reading a page. The name is
+     * here for the interface and for inspecting a scenario; nothing is keyed by
+     * it.
+     */
+    data class Pause(val duration: Duration) : Step {
+
+        init {
+            require(duration >= Duration.ZERO) { "a pause cannot run backwards, but was $duration" }
+        }
+
+        override val name: String get() = "pause"
+    }
 }
 
 /**
@@ -55,6 +77,10 @@ class ScenarioBuilder internal constructor(private val name: String) {
 
     fun exec(name: StepName, block: StepScope.() -> Unit) {
         steps += Step.Exec(name.name, action(block))
+    }
+
+    fun pause(duration: Duration) {
+        steps += Step.Pause(duration)
     }
 
     fun emit(name: String, action: Action, keyedBy: Correlation) {

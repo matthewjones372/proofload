@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.toJavaDuration
 
 /**
  * Runs the search a rung at a time, and blocks for as long as it takes —
@@ -202,9 +203,27 @@ private fun Scenario.runOneUser(
             when (step) {
                 is Step.Exec -> step.action.runOn(step.name, it, recorders, runStart, schedulingDelay)
                 is Step.Emit -> step.runOn(it, recorders, runStart, schedulingDelay, departure, drain)
+                is Step.Pause -> step.thoughtAbout(it)
             }
         }
     }
+}
+
+/**
+ * The one `Thread.sleep` the library allows, and the reason the ban exists is
+ * the reason this is exempt from it: the ban is against a parked *carrier*, and
+ * on a virtual thread `sleep` unmounts rather than holding one, so the platform
+ * threads stay free to keep the schedule and no other user departs late for it.
+ *
+ * Nothing is recorded. The session passes through untouched, so the next step's
+ * service time starts when it starts; response time is that plus how late the
+ * user departed, so a pause cannot leak into either, and no sample reaches
+ * `behind` — the generator is not late for a departure that was meant to wait.
+ */
+@Suppress("ForbiddenMethodCall")
+private fun Step.Pause.thoughtAbout(session: Session): Session {
+    Thread.sleep(duration.toJavaDuration())
+    return session
 }
 
 /**

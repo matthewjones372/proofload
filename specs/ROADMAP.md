@@ -46,23 +46,33 @@ built. Each row links the spec that argued for it.
 
 ## Drafted, not built
 
-In the order the architect would take them.
+In the order the architect would take them. The eight specs numbered 0052 and
+above were drafted in one pass and their interleaving here is a proposal, not a
+decision.
 
 | Spec | Why it is next |
 |---|---|
+| [0056](0056-a-ceiling-measured-over-a-socket.md) | the published ceiling excludes the socket every user sends through |
+| [0058](0058-what-was-actually-sent.md) | a wrong scenario says `status 404` and nothing else |
+| [0057](0057-a-run-you-can-watch.md) | a ten-minute run prints nothing, so people kill it |
 | [0022](0022-a-token-that-stays-fresh.md) | a soak longer than a token's life cannot authenticate |
 | [0030](0030-a-baseline-in-ci.md) | the plan and the machine landed; the probe and the CI recipe have not |
 | [0024](0024-think-time-and-closed-model.md) | `pause`, and the closed model with its caveat stated |
+| [0053](0053-control-flow-in-a-scenario.md) | every user does every step once, so a cart holds one item |
 | [0026](0026-checks-and-retries.md) | a 200 with an error page in it is counted as a success |
+| [0055](0055-a-session-that-survives-a-redirect.md) | a target with a login form cannot be tested at all |
+| [0052](0052-more-than-one-scenario.md) | a run is one scenario, so a traffic mix cannot be expressed |
+| [0054](0054-a-feeder-that-reads-a-file.md) | a file of real ids is a page of setup in every project |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |
 | [0023](0023-a-number-you-can-follow.md) | exemplars, so a p99 leads somewhere |
 | [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | the whole run is booked before the first request |
+| [0059](0059-an-answer-that-streams.md) | a price feed or a notification channel cannot be loaded |
 | [0029](0029-cutting-0-1-0.md) | a publishing pipeline that has never run does not work |
 
 ## Known and unwritten
 
 Real, small, and not worth a spec each until someone wants them: per-stage
 results, trends across more than one baseline, OpenAPI import for the Pelican
-module, cookies and auth flows in `kestrel-http`, streaming request bodies, and
-a warm-up phase that is excluded from the numbers rather than discarded by
-hand.
+module, streaming request bodies, server-sent events beside the WebSocket
+transport 0059 argues for, and a warm-up phase that is excluded from the
+numbers rather than discarded by hand.

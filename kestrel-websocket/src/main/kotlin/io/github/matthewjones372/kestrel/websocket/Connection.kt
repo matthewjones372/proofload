@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.websocket
 
+import io.github.matthewjones372.kestrel.Outstanding
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.SessionKey
@@ -11,16 +12,16 @@ import io.github.matthewjones372.kestrel.sessionKey
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.WebSocket
-import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 /** How long either handshake is given before it is a failure rather than a slow success. */
-internal val handshakeTimeout: Duration = Duration.ofSeconds(30)
+internal val handshakeTimeout: Duration = 30.seconds
 
 /**
  * A step that needed a connection nothing had opened: a `close` with no `open`
@@ -41,12 +42,18 @@ data object NotConnected : Reason {
  */
 class Connection internal constructor(
     internal val socket: WebSocket,
-    private val closed: CountDownLatch,
+    internal val inbound: Inbound,
 ) {
 
+    /**
+     * Sends this connection has still to see an answer to, split by whether
+     * they were given [window] to be answered in — a send that left too late to
+     * have had it is still moving rather than lost.
+     */
+    fun outstanding(window: Duration): Outstanding = inbound.outstanding(window)
+
     /** Whether the far end answered the Close inside [within]. */
-    internal fun awaitClosed(within: Duration): Boolean =
-        closed.await(within.toMillis(), TimeUnit.MILLISECONDS)
+    internal fun awaitClosed(within: Duration): Boolean = inbound.awaitClosed(within)
 }
 
 /** Where [open] leaves the connection and [close] goes looking for it. */
@@ -84,17 +91,17 @@ fun ScenarioBuilder.close(name: StepName) {
 private val handshakes: HttpClient by lazy { HttpClient.newHttpClient() }
 
 private fun StepScope.openTo(target: WsTarget) {
-    val listener = ClosesOnce()
+    val inbound = Inbound()
     val socket = handshakes.newWebSocketBuilder()
-        .connectTimeout(handshakeTimeout)
-        .buildAsync(URI.create(target.url), listener)
-        .settled(this) ?: return
-    set(connection, Connection(socket, listener.closed))
+        .connectTimeout(handshakeTimeout.toJavaDuration())
+        .buildAsync(URI.create(target.url), inbound)
+        .settled(this, handshakeTimeout) ?: return
+    set(connection, Connection(socket, inbound))
 }
 
 private fun StepScope.closeOpen() {
     val open = this[connection] ?: return fail(NotConnected)
-    open.socket.sendClose(WebSocket.NORMAL_CLOSURE, "").settled(this) ?: return
+    open.socket.sendClose(WebSocket.NORMAL_CLOSURE, "").settled(this, handshakeTimeout) ?: return
     // Waiting here is the measurement, not a stall: the step is timed for the
     // round trip, and the gate is bounded so a peer that never answers is a
     // failure rather than a user parked for the rest of the run.
@@ -102,34 +109,14 @@ private fun StepScope.closeOpen() {
 }
 
 /**
- * The far end's answer to a Close, and a connection that broke before one
- * arrived. Nothing is read here: this module times the two handshakes, and a
- * message has neither a departure to be measured from nor a step to be counted
- * under yet.
+ * Waits for [this] up to [within], turning the client's failures into a failure
+ * on [scope] and returning null. Nothing throws out of here: an engine reads the
+ * step's result to measure a failure, so a target's bad day must not arrive by
+ * the same route as a bug in the generator.
  */
-private class ClosesOnce : WebSocket.Listener {
-
-    val closed = CountDownLatch(1)
-
-    override fun onClose(webSocket: WebSocket, statusCode: Int, reason: String): CompletionStage<*>? {
-        closed.countDown()
-        return null
-    }
-
-    override fun onError(webSocket: WebSocket, error: Throwable) {
-        closed.countDown()
-    }
-}
-
-/**
- * Waits for [this], turning the client's failures into a failure on [scope] and
- * returning null. Nothing throws out of here: an engine reads the step's result
- * to measure a failure, so a target's bad day must not arrive by the same route
- * as a bug in the generator.
- */
-private fun <T> CompletableFuture<T>.settled(scope: StepScope): T? =
+internal fun <T> CompletableFuture<T>.settled(scope: StepScope, within: Duration): T? =
     try {
-        orTimeout(handshakeTimeout.toMillis(), TimeUnit.MILLISECONDS).join()
+        orTimeout(within.inWholeMilliseconds, TimeUnit.MILLISECONDS).join()
     } catch (failure: CompletionException) {
         scope.fail(failure.reason())
         null

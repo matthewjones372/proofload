@@ -3,31 +3,91 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.PlannedArm
+import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.seeds
 import java.util.Locale
 import kotlin.time.Duration
 
-/** The run as it was asked for: the scenario, the shape, and what that adds up to. */
-internal fun Plan.headerLines(arrivals: Arrivals): List<String> {
-    val shape = profile ?: return emptyList()
+/** The run as it was asked for: the arms, the shape of each, and what that adds up to. */
+internal fun RunResult.planLines(): List<String> {
+    if (plan.arms.all { it.profile == null }) return emptyList()
 
     return listOf(
         """  <section class="plan" aria-label="What was asked for">""",
-        """    <p><strong>${scenario.escapedForHtml()}</strong> — ${steps.size} ${"step".plural(steps.size)}, """ +
-            "${shape.described()}. Planned ${plannedUsers.grouped()} " +
-            "${"user".plural(plannedUsers)}, ${plannedRequests.grouped()} " +
-            "${"request".plural(plannedRequests)}.</p>",
-        """    <p class="arrivals">${shape.arrivalProcess()}${arrivals.achieved()}</p>""",
-    ) + shape.shapeChart() + listOf("  </section>")
+        """    <p><strong>${plan.named()}</strong> — ${plan.steps.size} ${"step".plural(plan.steps.size)}, """ +
+            "${plan.asked()}. Planned ${plan.plannedUsers.grouped()} " +
+            "${"user".plural(plan.plannedUsers)}, ${plan.plannedRequests.grouped()} " +
+            "${"request".plural(plan.plannedRequests)}.</p>",
+        """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}</p>""",
+    ) + mixLines() + plan.shapeCharts() + listOf("  </section>")
 }
+
+/** Every arm's scenario: one is the run's name, and several are the mix that ran. */
+private fun Plan.named(): String = arms.joinToString(separator = " + ") { it.scenario.escapedForHtml() }
+
+/** What was asked for: one arm's shape, or how many arms and how long the longest of them runs. */
+private fun Plan.asked(): String =
+    arms.singleOrNull()?.profile?.described() ?: "${arms.size} arms over ${plannedWindow.forPlan()}"
+
+/**
+ * Each arm's share of the run: what the plan asked for, beside what was
+ * counted. Absent for one arm, where both shares are the whole run and the
+ * line would say nothing.
+ */
+private fun RunResult.mixLines(): List<String> {
+    if (plan.arms.size < 2) return emptyList()
+
+    val counted = plan.arms.map { usersCounted(it) }
+    val measured = counted.sum()
+    return listOf("""    <ul class="mix-list">""") +
+        plan.arms.zip(counted) { arm, users -> armLine(arm, users, measured, plan.plannedUsers) } +
+        listOf("    </ul>", """    <p class="note">${mixNote(measured)}</p>""")
+}
+
+private fun armLine(arm: PlannedArm, counted: Long, measured: Long, planned: Long): String =
+    """      <li><span class="mix-arm">${arm.scenario.escapedForHtml()}</span>""" +
+        """<span class="mix-shape">${arm.profile?.described() ?: "no shape"}</span>""" +
+        """<span class="mix-share">${arm.plannedUsers.shareOf(planned)} asked, """ +
+        "${counted.shareOf(measured)} departed</span></li>"
+
+/**
+ * What the two shares are, said where they are printed.
+ *
+ * The departed share is users counted rather than users departed: nothing
+ * records a departure per arm, and the arms' own step counts are the only
+ * split of the run there is.
+ */
+private fun mixNote(measured: Long): String =
+    if (measured == 0L) {
+        "<strong>Asked</strong> is the arm's share of the users the plan named. This run counted no users, so " +
+            "what departed cannot be split by arm and only what was asked for is printed."
+    } else {
+        "<strong>Asked</strong> is the arm's share of the users the plan named. <strong>Departed</strong> is " +
+            "its share of the ${measured.grouped()} users the run counted: the most any one step of the arm " +
+            "was reached by, so an arm whose users abandoned it at its first step reports fewer than left."
+    }
+
+/**
+ * The users the run counted in an arm.
+ *
+ * A user is counted once per step it reaches, and every user of an arm reaches
+ * at least its first step, so the most-reached step of an arm is the users it
+ * saw — and a lower bound where a scenario branches away from its first step.
+ */
+private fun RunResult.usersCounted(arm: PlannedArm): Long =
+    arm.steps.mapNotNull { steps[it]?.reached }.maxOrNull() ?: 0L
+
+private fun Long.shareOf(whole: Long): String =
+    if (whole == 0L) NOTHING_MEASURED else (toDouble() / whole).asPercent()
 
 /**
  * A line rather than a warning. Even arrivals are not wrong, they are a choice
  * whose consequence — a p99 that is optimistic against the same mean rate in
  * production — is invisible unless the page names which was asked for.
  */
-private fun InjectionProfile.arrivalProcess(): String =
-    seeds.takeIf { it.isNotEmpty() }
+private fun Plan.arrivalProcess(): String =
+    arms.mapNotNull { it.profile }.flatMap { it.seeds }.takeIf { it.isNotEmpty() }
         ?.let { drawn -> "Arrivals were drawn from ${"seed".plural(drawn.size)} ${drawn.joinToString(", ")}." }
         ?: "Arrivals were evenly spaced, which understates queueing against the same mean rate in production."
 
@@ -45,6 +105,11 @@ private fun InjectionProfile.described(): String = when (this) {
     is InjectionProfile.Randomized -> of.described()
 }
 
+/** One chart for one arm, and one apiece for a mix: two arms share a window and nothing else. */
+private fun Plan.shapeCharts(): List<String> =
+    arms.singleOrNull()?.profile?.shapeChart()
+        ?: arms.flatMap { arm -> arm.profile?.shapeChart(arm.scenario).orEmpty() }
+
 /**
  * The intent, drawn: rate against time, flat for a hold and sloped for a ramp.
  *
@@ -52,7 +117,7 @@ private fun InjectionProfile.described(): String = when (this) {
  * asked for, and putting it beside what happened is what makes a shortfall
  * something a reader sees rather than works out.
  */
-private fun InjectionProfile.shapeChart(): List<String> {
+private fun InjectionProfile.shapeChart(arm: String? = null): List<String> {
     val points = corners()
     val peak = points.maxOf { it.second }.takeIf { it > 0.0 } ?: return emptyList()
     val total = over.inWholeNanoseconds.toDouble().takeIf { it > 0.0 } ?: return emptyList()
@@ -66,10 +131,11 @@ private fun InjectionProfile.shapeChart(): List<String> {
     }
     val path = plotted.joinToString(" ") { (x, y) -> "${x.round()},${y.round()}" }
     val area = "0.0,${PLOT.round()} $path ${WIDTH.round()},${PLOT.round()}"
+    val named = arm?.let { "${it.escapedForHtml()} — " }.orEmpty()
 
     return listOf(
         """    <figure class="chart shape">""",
-        """      <figcaption>the shape that was asked for — peak ${peak.asRate()}</figcaption>""",
+        """      <figcaption>${named}the shape that was asked for — peak ${peak.asRate()}</figcaption>""",
         """      <svg viewBox="0 0 $WIDTH $HEIGHT" role="img" preserveAspectRatio="none" aria-label="load shape">""",
         """        <polygon class="shape-area" points="$area"></polygon>""",
         """        <polyline class="shape-line" points="$path"></polyline>""",

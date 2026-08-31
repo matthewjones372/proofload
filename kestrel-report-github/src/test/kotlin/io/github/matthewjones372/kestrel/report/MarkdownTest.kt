@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunResult
@@ -293,6 +294,66 @@ class MarkdownTest {
         summary shouldContain "cannot support a latency claim"
         summary shouldNotContain "measurably changed"
     }
+
+    @Test
+    fun `the step table names the arm that sent each step`() {
+        val summary = mixed().markdown()
+
+        summary shouldContain "| Step   | Arm      |"
+        summary shouldContain "| home   | browse   |"
+        summary shouldContain "| cart   | checkout |"
+    }
+
+    @Test
+    fun `a one-armed run carries no arm column, because a column of one repeated value is noise`() {
+        val summary = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0)).markdown()
+
+        summary shouldNotContain "| Arm"
+    }
+
+    @Test
+    fun `the mix names the ratio each arm was asked for beside the one that departed`() {
+        val summary = mixed().markdown()
+
+        // 160 of the 200 users planned browse, and 150 of the 195 counted took it.
+        summary shouldContain "| browse   |           160 | 80.00% |   76.92% |"
+        summary shouldContain "| checkout |            40 | 20.00% |   23.08% |"
+    }
+
+    @Test
+    fun `a run that counted no users names what was asked for and says the rest was not measured`() {
+        val uncounted = mixed().let { run ->
+            run.copy(steps = run.steps.mapValues { (_, step) -> step.copy(reached = 0L) })
+        }
+
+        val summary = uncounted.markdown()
+
+        summary shouldContain "| browse   |           160 | 80.00% |        — |"
+        summary shouldContain "counted no users, so what departed cannot be split by arm"
+    }
+
+    @Test
+    fun `a mix matches its golden`() {
+        mixed().markdown() shouldBe golden("mixed.md")
+    }
+
+    /** Two arms, where the mix that departed is not the mix that was asked for. */
+    private fun mixed() = RunResult(
+        startedAt = startedAt,
+        steps = linkedMapOf(
+            "home" to step("home", spread(150)).copy(reached = 150L),
+            "search" to step("search", spread(240)).copy(reached = 120L),
+            "cart" to step("cart", spread(45)).copy(reached = 45L),
+            "pay" to step("pay", spread(45)).copy(reached = 45L),
+        ),
+        behind = timingOf(listOf(50.microseconds)),
+        plan = Plan(
+            arms = listOf(
+                PlannedArm("browse", listOf("home", "search"), hold(40.perSecond, over = 4.seconds)),
+                PlannedArm("checkout", listOf("cart", "pay"), hold(10.perSecond, over = 4.seconds)),
+            ),
+        ),
+    )
 
     private val here = Machine(cores = 8, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")
 

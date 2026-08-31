@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Difference
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
@@ -64,7 +65,7 @@ private fun RunResult.documentLines(
         steadyLines(),
         comparison.comparisonLines(floor),
         differences.differenceLines(),
-        plan.headerLines(arrivals),
+        planLines(),
         lostLines(),
         behindLines(),
         totalsLines(),
@@ -154,11 +155,17 @@ private fun RunResult.headLines(): List<String> =
     )
 
 /**
- * The scenario, where one was named. A result assembled from samples rather
- * than run has no plan to name, and "Kestrel run" is still true of it.
+ * Every scenario the plan named, where it named any. A result assembled from
+ * samples rather than run has no plan to name, and "Kestrel run" is still true
+ * of it — as is naming one arm of two, which is why both are named.
  */
 private fun RunResult.headline(): String =
-    plan.scenario.takeIf { it.isNotBlank() }?.escapedForHtml() ?: "Kestrel run"
+    plan.arms
+        .map { it.scenario }
+        .filter { it.isNotBlank() }
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(separator = " + ") { it.escapedForHtml() }
+        ?: "Kestrel run"
 
 /**
  * Drawn rather than lettered, so it needs no font, and inert without the
@@ -240,14 +247,16 @@ private fun RunResult.stepsLines(): List<String> =
 private fun RunResult.chartLines(): List<String> =
     steps.values.flatMap { step -> step.serviceTime.distributionChart(step.name) }
 
-private fun RunResult.tableLines(): List<String> =
-    if (steps.isEmpty()) listOf("""    <p class="empty">This run recorded no steps.</p>""")
-    else listOf(
+private fun RunResult.tableLines(): List<String> {
+    if (steps.isEmpty()) return listOf("""    <p class="empty">This run recorded no steps.</p>""")
+
+    val columns = columnsFor(this)
+    return listOf(
         """    <div class="table-scroll">""",
         "      <table>",
         "        <thead>",
         "          <tr>",
-    ) + columnsFor(this).map { (heading, numeric) ->
+    ) + columns.map { (heading, numeric) ->
         val classes = if (numeric) """ class="num"""" else ""
         """            <th scope="col"$classes data-sort="${heading.sortKey()}" aria-sort="none">""" +
             """<button type="button">${heading.escapedForHtml()}</button></th>"""
@@ -255,17 +264,27 @@ private fun RunResult.tableLines(): List<String> =
         "          </tr>",
         "        </thead>",
         "        <tbody>",
-    ) + steps.values.flatMap { it.rowLines() } + listOf(
+    ) + steps.values.flatMap { it.rowLines(plan.armOf(it.name), columns.size) } + listOf(
         "        </tbody>",
         "      </table>",
         "    </div>",
     )
+}
 
-private fun StepStats.rowLines(): List<String> =
+/**
+ * Which arm sent a step, for a run that has more than one. A step name is
+ * unique across a mix, so the arm holding the name is the arm that sent it, and
+ * a name no arm planned belongs to none of them.
+ */
+private fun Plan.armOf(step: String): String? =
+    if (arms.size < 2) null else arms.firstOrNull { step in it.steps }?.scenario ?: NOTHING_MEASURED
+
+private fun StepStats.rowLines(arm: String?, columns: Int): List<String> =
     listOf(
         """          <tr class="step" data-step="${name.escapedForHtml()}"""" +
             (if (failed.reasons.isEmpty()) ">" else """ aria-expanded="false" tabindex="0">"""),
         """            <th scope="row">${name.escapedForHtml()}</th>""",
+    ) + armCell(arm) + listOf(
         """            <td class="num">${count.grouped()}</td>""",
         """            <td class="num reached">${reached.orNothing()}</td>""",
         """            <td class="num ok">${ok.count.grouped()}</td>""",
@@ -275,7 +294,12 @@ private fun StepStats.rowLines(): List<String> =
         timeCell(serviceTime.p99, responseTime.p99),
         timeCell(serviceTime.max, responseTime.max),
         "          </tr>",
-    ) + reasonLines()
+    ) + reasonLines(columns)
+
+// Only for a run that had more than one arm: a column repeating one scenario
+// name down every row is noise on the page it is meant to be missing from.
+private fun armCell(arm: String?): List<String> =
+    if (arm == null) emptyList() else listOf("""            <td class="arm">${arm.escapedForHtml()}</td>""")
 
 /**
  * Both times ride on the cell: the toggle swaps text the server already
@@ -293,11 +317,11 @@ private fun timeCell(service: Duration, response: Duration): String {
     return "            <td $attributes>${service.forReport()}</td>"
 }
 
-private fun StepStats.reasonLines(): List<String> =
+private fun StepStats.reasonLines(columns: Int): List<String> =
     if (failed.reasons.isEmpty()) emptyList()
     else listOf(
         """          <tr class="reasons" data-for="${name.escapedForHtml()}">""",
-        """            <td colspan="${COLUMNS.size}">""",
+        """            <td colspan="$columns">""",
         """              <ul class="reason-list">""",
     ) + failed.reasons.map { (reason, seen) ->
         """                <li><span class="reason">${reason.described.escapedForHtml()}</span>""" +
@@ -342,8 +366,9 @@ private fun htmlEscaped(char: Char): String = when (char) {
  * it is sometimes five requests.
  */
 private fun columnsFor(result: RunResult): List<Pair<String, Boolean>> {
-    val thinnest = result.steps.values.minByOrNull { it.count } ?: return COLUMNS
-    return COLUMNS.map { (heading, numeric) ->
+    val columns = if (result.plan.arms.size < 2) COLUMNS else COLUMNS.take(1) + ("Arm" to false) + COLUMNS.drop(1)
+    val thinnest = result.steps.values.minByOrNull { it.count } ?: return columns
+    return columns.map { (heading, numeric) ->
         when (heading) {
             "p95" -> "p95 (${samplesBeyond(thinnest, PERCENTILE_95).grouped()})" to numeric
             "p99" -> "p99 (${samplesBeyond(thinnest, PERCENTILE_99).grouped()})" to numeric
@@ -368,4 +393,4 @@ private val COLUMNS = listOf(
     "Max" to true,
 )
 
-private const val NOTHING_MEASURED = "—"
+internal const val NOTHING_MEASURED: String = "—"

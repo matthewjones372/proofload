@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Clock
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Rate
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
@@ -221,6 +222,45 @@ internal object Fixtures {
     }
 
     private const val SECONDS_SETTLING = 20
+
+    /**
+     * Two arms sent together, where the mix that departed is not the mix that
+     * was asked for: four browsers to every checkout planned, and rather fewer
+     * browsers than that counted.
+     */
+    val mixed: RunResult = mixing()
+
+    private fun mixing(): RunResult {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
+        recorder.walked(step = "home", users = 150, each = 1)
+        recorder.walked(step = "search", users = 120, each = 2)
+        recorder.walked(step = "cart", users = 45, each = 1)
+        recorder.walked(step = "pay", users = 45, each = 1)
+        return recorder.freeze().copy(plan = mixedPlan())
+    }
+
+    private fun mixedPlan() = Plan(
+        arms = listOf(
+            PlannedArm("browse", listOf("home", "search"), constantRate(40.perSecond, over = SECONDS_MIXED.seconds)),
+            PlannedArm("checkout", listOf("cart", "pay"), constantRate(10.perSecond, over = SECONDS_MIXED.seconds)),
+        ),
+    )
+
+    /** One user's whole visit to a step: [each] requests, of which only the first is a user reaching it. */
+    private fun RunRecorder.walked(step: String, users: Int, each: Int) = repeat(users) { user ->
+        repeat(each) { request ->
+            record(
+                step = step,
+                failure = null,
+                serviceTime = 20.milliseconds,
+                schedulingDelay = Duration.ZERO,
+                at = (user % SECONDS_MIXED).seconds,
+                reached = request == 0,
+            )
+        }
+    }
+
+    private const val SECONDS_MIXED = 4
 
     /** A ladder to 4,000/s, a knee between 3,000 and 4,000, and a bisection that found 3,500. */
     val capacity: Capacity = Capacity(

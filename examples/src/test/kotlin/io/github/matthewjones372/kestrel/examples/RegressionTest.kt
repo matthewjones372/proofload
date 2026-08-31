@@ -1,22 +1,25 @@
 package io.github.matthewjones372.kestrel.examples
 
 import com.sun.net.httpserver.HttpServer
-import io.github.matthewjones372.kestrel.Change
-import io.github.matthewjones372.kestrel.Comparison
-import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Runs
+import io.github.matthewjones372.kestrel.StepName
+import io.github.matthewjones372.kestrel.Tell
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.at
-import io.github.matthewjones372.kestrel.baseline.readBaseline
-import io.github.matthewjones372.kestrel.baseline.writeBaseline
+import io.github.matthewjones372.kestrel.baseline.readAll
+import io.github.matthewjones372.kestrel.baseline.writeInto
 import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.explained
 import io.github.matthewjones372.kestrel.http.exec
 import io.github.matthewjones372.kestrel.http.http
 import io.github.matthewjones372.kestrel.junit5.LoadTest
+import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.scenario
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
@@ -26,7 +29,6 @@ import java.net.InetSocketAddress
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -34,8 +36,16 @@ import kotlin.time.Duration.Companion.seconds
  * The loop a team actually runs: measure, keep the numbers, change the service,
  * measure again, and ask whether anything got worse.
  *
- * The target here gets slower on purpose between the two runs, so the answer is
- * known before the tool is asked.
+ * The target here gets slower on purpose between the two sets of runs, so the
+ * answer is known before the tool is asked.
+ *
+ * Sets of runs rather than single ones, because a single run cannot bound its
+ * own noise. One measurement of a target says nothing about how far a second
+ * would land from it, so the size of a change it reports has to be judged
+ * against a spread borrowed from somewhere else — a null step, the injector's
+ * own stalls — which is a guess wearing a measurement's clothes. `against` over
+ * two populations takes its interval from resampling the runs that made them,
+ * so the spread comes from the thing being compared.
  */
 @Tag("timing")
 class RegressionTest {
@@ -69,21 +79,24 @@ class RegressionTest {
             .at(100.perSecond, over = 2.seconds),
     )
 
+    private fun population(kestrel: Kestrel) = Runs(List(REPEATS) { measure(kestrel) })
+
     @LoadTest
     fun `a service that got slower is reported as worse, and one that did not is not`(
         kestrel: Kestrel,
         @TempDir dir: Path,
     ) {
-        // Measured once and kept, per JVM: a floor measured between the two
-        // runs would be measuring the same drift it is here to bound.
+        // The floor's remaining job, and its only honest one: whether this
+        // machine can support a claim at the magnitude this test makes one at.
+        // It is not asked whether a difference is real — it never watched the
+        // target, and the interval below did.
         val floor = kestrel.calibrate()
         assumeTrue(
-            floor.separates(fast, slow),
-            "this machine ${floor.asAClue}, which the $fast to $slow slowdown injected here does not clear, " +
-                "so the machine cannot answer the question and is not being asked",
+            floor.supports(fast),
+            "this machine moves by ${floor.movementAt(fast)} between identical runs, which is too much of the " +
+                "$fast this test makes its claims about, so the machine cannot answer the question and is not " +
+                "being asked",
         )
-
-        val baseline = dir.resolve("baseline.kestrel")
 
         // Thrown away. The first run of a JVM pays for class loading, JIT and
         // opening connections, and it is measurably slower than every run
@@ -91,58 +104,42 @@ class RegressionTest {
         // next release as an improvement.
         measure(kestrel)
 
-        measure(kestrel).writeBaseline(baseline)
+        // A directory rather than a file: a population is what a comparison
+        // needs, and one file per run is what a team's loop leaves behind.
+        val kept = dir.resolve("baseline")
+        repeat(REPEATS) { measure(kestrel).writeInto(kept) }
+        val before = Runs.readAll(kept)
 
-        // Judged against what the machine can see rather than against
-        // `Indistinguishable`: two absolute measurements minutes apart differ
-        // by the afternoon as well as by the code, and only a difference the
-        // floor cannot explain is a difference in the target.
-        val unchanged = measure(kestrel).against(readBaseline(baseline))
-            .shouldBeInstanceOf<Comparison.Compared>()
-            .changes
-            .single()
-        withClue("same target twice, on a machine that ${floor.asAClue}: $unchanged") {
-            unchanged.beyond(floor) shouldBe false
+        val unchanged = population(kestrel).against(before, p99(PAY), acceptable = ACCEPTABLE)
+        withClue("same target twice: ${unchanged.explained(ACCEPTABLE)}") {
+            // Not worse, rather than better: two sets of runs of one unchanging
+            // target on a busy machine can honestly fail to tell, and a test
+            // that failed on that would be asserting the machine was quiet.
+            unchanged.verdict shouldNotBe Tell.Worse
         }
 
         // The deploy that made it worse.
         latency.set(slow.inWholeMilliseconds)
 
-        val slower = measure(kestrel).against(readBaseline(baseline))
-        withClue("target ten times slower, on a machine that ${floor.asAClue}: $slower") {
-            val worse = slower.shouldBeInstanceOf<Comparison.Compared>()
-                .changes
-                .single()
-                .shouldBeInstanceOf<Change.Worse>()
-            (worse.now > worse.before) shouldBe true
+        val slower = population(kestrel).against(before, p99(PAY), acceptable = ACCEPTABLE)
+        withClue("target ten times slower: ${slower.explained(ACCEPTABLE)}") {
+            slower.verdict shouldBe Tell.Worse
         }
     }
 }
 
-/**
- * Whether this change is larger than what the machine moves by on its own
- * between identical runs, which is the only kind that is a property of the
- * target rather than of the afternoon it was measured in.
- *
- * A step that appeared or vanished is not a difference between two numbers, so
- * there is no size there for a floor to explain away.
- */
-private fun Change.beyond(floor: Floor): Boolean = when (this) {
-    is Change.Worse -> floor.separates(before, now)
-    is Change.Better -> floor.separates(before, now)
-    is Change.Indistinguishable -> false
-    is Change.Added, is Change.Gone -> true
-}
+private val PAY = StepName("/pay")
 
 /**
- * Whether this machine can tell [before] from [now] at a tail, which takes both
- * of the floor's gates. `resolution` is measured at the median and bounds the
- * size of a change; a claim about a tail has to clear the injector's own stalls
- * in absolute terms as well, since a p99 that moved by less than those moved by
- * the measuring process rather than by the target.
+ * Five runs a side, which is the fewest `against` will make an interval out of
+ * and twenty seconds of wall clock in a task nobody puts in `build`.
  */
-private fun Floor.separates(before: Duration, now: Duration): Boolean =
-    resolves((now - before) / before) && (now - before).absoluteValue > hiccups.p99
+private const val REPEATS = 5
 
-/** The floor as a failure has to name it: both gates, in the units each is measured in. */
-private val Floor.asAClue: String get() = "resolves $resolution and stalls ${hiccups.p99} at p99"
+/**
+ * Ten times slower clears this by a distance, and an unchanged target has to
+ * move by more than a fifth before this test calls it a regression — which is
+ * the point: the threshold is declared here, beside the assertion, rather than
+ * inferred from what the machine happened to be doing.
+ */
+private val ACCEPTABLE = 20.percent

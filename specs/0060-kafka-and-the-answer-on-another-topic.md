@@ -28,8 +28,8 @@ an adapter, not a design.
   caller's choice and none of them is this tool's business.
 - No consumer-group lag monitoring. That is observing a system, not generating
   load against one, and it belongs in a spec of its own.
-- **No Docker required.** A container suite exists for anyone who wants the real
-  images, and nothing gates on it.
+- **No Docker required, and no embedded broker.** A container suite exists for
+  whoever wants the real images, and nothing gates on it. See the weights below.
 - No second engine. The producer runs on virtual threads like everything else.
 
 ## Shape
@@ -63,20 +63,29 @@ the measurement honest in a way an owned serializer would not: whatever
 serialization costs, it is the caller's code running on the departure thread,
 and it is visible as such rather than hidden inside a step this tool wrote.
 
-A real broker, started in-process, and Docker optional. Kafka 4 is KRaft only,
-so a broker no longer drags ZooKeeper, and `org.apache.kafka:kafka_2.13` is on
-Central. Started on an ephemeral loopback port it is the shape this repository
-already tests with everywhere — a server the test starts and stops itself,
-needing no network and no container — and it is `testImplementation`, so the
-published module stays `kafka-clients`, core and the JDK. The dependency test
-reads the main runtime classpath and never sees it.
+Nothing heavy on the test classpath, and no Docker in the way. Resolved and
+weighed rather than guessed:
 
-That leaves the registry, which is a REST API and can be answered by the
-`com.sun.net.httpserver` the rest of the repository already tests against: a
-stub serving a schema id is enough to prove a caller's serializer wires up,
-precisely because this module does not own the serializer. Containers stay
-available for whoever wants the real images, and no gate depends on them — a
-suite that half the people who would run it cannot run is not a gate.
+| on the test classpath | size | jars |
+|---|---|---|
+| `kafka-clients`, which the module needs anyway | 19.9 MB | 5 |
+| `kafka_2.13`, a real broker | 42.9 MB | 45 |
+| `embedded-kafka_2.13` | 43.0 MB | 46 |
+| Testcontainers Kafka | 23.0 MB | 13 |
+
+An embedded broker is 23 MB and forty jars on top of what is already there,
+paid by every `./gradlew build` forever, and the wrapper is free — the weight
+is the broker. It buys a real socket, and what actually needs proving over one
+is narrower than it looks: that `kafka-clients` speaks Kafka is Apache's test
+suite, not this repository's, and the registry is answered by a stub on the
+`com.sun.net.httpserver` everything else here tests against, precisely because
+this module does not own the serializer.
+
+What is left, and genuinely Kestrel's, is that a correlation header survives
+from the producing side to the `Completions` side. `MockProducer` and
+`MockConsumer` ship inside `kafka-clients` and can be wired to each other, so
+that round trip costs nothing and stays inside `build`. A real broker is then
+an opt-in tier rather than the price of admission.
 
 One producer, shared. A `KafkaProducer` is thread-safe and built to be shared,
 which is the opposite of 0055's per-user cookie jar and for the opposite reason:
@@ -101,12 +110,13 @@ tunes against them will ship a consumer that cannot keep up.
       `correlatedBy` reading the id from a header.
       Done when: a run whose completions come from a second topic reports
       `unmatched` and `inFlight` as 0040 defines them.
-- [ ] **`spec-0060-embedded`** — a broker started in-process for this module's
-      own tests, and a stub registry on `com.sun.net.httpserver`.
-      Done when: the suite produces and consumes over a real socket with no
-      container and no network; a caller's serializer resolves a schema against
-      the stub; and `NoThirdPartyDependenciesTest` still reports the module's
-      runtime classpath as `kafka-clients`, core and the JDK.
+- [ ] **`spec-0060-round-trip`** — the produced records fed to the consuming
+      side through `MockProducer` and `MockConsumer`, and a stub registry on
+      `com.sun.net.httpserver`.
+      Done when: a correlation header written by an `emit` is the one
+      `Completions` matches on; a caller's serializer resolves a schema against
+      the stub; nothing new is on the test classpath; and this runs inside
+      `./gradlew build`.
 - [ ] **`spec-0060-containers`** — the same suite against the real broker and
       registry images, opted into rather than required.
       Done when: it runs where Docker is present, is skipped rather than failed
@@ -124,7 +134,6 @@ tunes against them will ship a consumer that cannot keep up.
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
-./gradlew :kestrel-kafka:test          # a real broker, in process, no Docker
 ./gradlew :kestrel-kafka:containerTests   # the real images, where Docker exists
 ```
 
@@ -141,12 +150,16 @@ tunes against them will ship a consumer that cannot keep up.
     trip; with `acks=0` it is nothing at all. Recommend recording the ack as the
     step's service time, printing the `acks` setting beside it, and leaning on
     `completing` for the number that matters.
-3. **Which embedded broker?** `embedded-kafka_2.13` is the least code and a
-    Scala API to call from Kotlin; Kafka's own `KafkaClusterTestKit` is a Java
-    one living in a test-jar; formatting a storage directory and starting
-    `KafkaRaftServer` by hand is perhaps sixty lines and needs nothing beyond
-    `kafka_2.13`. Recommend trying the first and measuring its startup, because
-    that number decides question 6.
+3. **Is a socket worth 23 MB?** The alternative nobody has costed is a fake
+    broker built from `kafka-clients`' own protocol classes, which are all
+    present: `RequestHeader.parse` and `AbstractRequest.parseRequest` are public,
+    and a Produce request carries a valid record batch that a Fetch response can
+    hand straight back, so no batch encoding is needed. It would add nothing to
+    the classpath. Against it: `AbstractResponse.serializeWithHeader` is
+    package-private, so responses need a hand-written header, and flexible
+    versions put tagged fields in that header — a thing to get subtly and
+    silently wrong. Recommend a spike before it is promised, and the mock round
+    trip in the meantime, which needs no spike and no jars.
 4. **Where does the correlation id live?** A header keeps it out of the payload
     and needs no deserializer on the completion side, which is the only option
     that does not drag the registry back in. Recommend a header, with the key as
@@ -156,10 +169,9 @@ tunes against them will ship a consumer that cannot keep up.
     intended-departure clock reports it honestly, but it will show up as
     generator lateness rather than target latency. Recommend saying so where
     `fellBehind()` is explained rather than special-casing it.
-6. **Does the embedded suite run inside `build`?** It binds a loopback port and
-    starts nothing a container would, so on principle it belongs there with
-    every other module's tests. The cost is startup on every build and a Scala
-    broker on the test classpath. Recommend measuring rather than guessing: a
-    second or two and it goes in `build`; ten and it gets a tag and widens
-    0041's gate from one tag to a set, which that spec's own second open
-    question already anticipated.
+6. **Does anything real run on this repository's own machine?** With the mock
+    round trip in `build` and containers opted into, the answer on a machine
+    without Docker is no — the wire is exercised nowhere. That is a smaller gap
+    than it sounds, since the wire belongs to `kafka-clients`, but it is a gap
+    and `docs/modules.md` should say so in the row for this module rather than
+    let it read like every other one.

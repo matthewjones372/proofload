@@ -19,6 +19,14 @@ tasks.test {
     inputs.files(rootProject.file("settings.gradle.kts"), rootProject.file("docs/modules.md"))
         .withPropertyName("theModuleLayoutAndItsDocumentation")
     systemProperty("kestrel.repoRoot", rootProject.projectDir.path)
+
+    // `smoke/` is a separate Gradle build, so this one has no project object to
+    // ask what it depends on. `SmokeProjectTest` reads the two files instead.
+    val settings = rootProject.layout.projectDirectory.file("settings.gradle.kts")
+    val smokeBuild = rootProject.layout.projectDirectory.file("smoke/build.gradle.kts")
+    inputs.files(settings, smokeBuild).withPropertyName("smokeProjectCoverage")
+    systemProperty("kestrel.settings", settings.asFile.absolutePath)
+    systemProperty("kestrel.smokeBuild", smokeBuild.asFile.absolutePath)
 }
 
 val timingTests = tasks.register<Test>("timingTests") {

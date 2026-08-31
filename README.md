@@ -853,6 +853,18 @@ The three decisions that shape everything else, and are still open:
 ./gradlew spotlessApply  # and run this last, before you commit
 ```
 
+`smoke/` is a separate Gradle build that depends on the published coordinates
+rather than the projects, so a wrong POM or a missing jar fails at resolution
+instead of being found by a stranger:
+
+```bash
+./gradlew publishToMavenLocal
+cd smoke && ../gradlew test
+```
+
+It resolves `0.1.0-SNAPSHOT` by default; `-PkestrelVersion=0.1.0` points the
+same test at a release.
+
 ## Layout
 
 | Module | Depends on | For |

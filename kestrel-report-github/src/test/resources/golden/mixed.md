@@ -5,7 +5,7 @@
 | browse   |           160 | 80.00% |   76.92% |
 | checkout |            40 | 20.00% |   23.08% |
 
-**Asked** is the arm's share of the users the plan named. **Departed** is its share of the 195 users the run counted: the most any one step of the arm was reached by, so an arm whose users abandoned it at its first step reports fewer than left.
+**Asked** is the arm's share of the users the plan named. **Departed** is its share of the 195 users the run counted: the most any one step of the arm was reached by. A user that failed a step still reached it, so this is exact for a scenario whose steps every user meets, and a floor for one that puts its steps behind a condition.
 
 | Step   | Arm      | Requests | Reached |    OK | Failed |    p50 |    p95 |    p99 |    Max |
 | :----- | :------- | -------: | ------: | ----: | -----: | -----: | -----: | -----: | -----: |

@@ -29,6 +29,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -42,6 +44,23 @@ class MarkdownTest {
 
     private fun golden(name: String): String =
         checkNotNull(javaClass.getResource("/golden/$name")) { "no golden named $name" }.readText()
+
+    /**
+     * This against the golden [name], or a rewrite of it when the run was asked
+     * for one with `-Dkestrel.regenerate=true`.
+     *
+     * The rewrite fails rather than passes. A switch that regenerated and went
+     * green would turn every later regression into a green build for whoever
+     * left it on.
+     */
+    private infix fun String.matches(name: String) {
+        if (System.getProperty("kestrel.regenerate").toBoolean()) {
+            val path = Path.of("src/test/resources/golden", name).toAbsolutePath()
+            Files.writeString(path, this, Charsets.UTF_8)
+            error("rewrote $path from this run. Re-run without -Dkestrel.regenerate and read the diff.")
+        }
+        this shouldBe golden(name)
+    }
 
     private fun step(
         name: String,
@@ -107,7 +126,7 @@ class MarkdownTest {
             behind = timingOf(listOf(100.milliseconds)),
         )
 
-        result.markdown() shouldBe golden("behind-schedule.md")
+        result.markdown() matches "behind-schedule.md"
     }
 
     @Test
@@ -121,7 +140,7 @@ class MarkdownTest {
             behind = timingOf(listOf(50.microseconds)),
         )
 
-        result.markdown() shouldBe golden("kept-up.md")
+        result.markdown() matches "kept-up.md"
         result.markdown() shouldNotContain "Behind schedule"
     }
 
@@ -140,7 +159,7 @@ class MarkdownTest {
             behind = timingOf(listOf(Duration.ZERO)),
         )
 
-        result.markdown() shouldBe golden("hostile-text.md")
+        result.markdown() matches "hostile-text.md"
     }
 
     @Test
@@ -154,7 +173,7 @@ class MarkdownTest {
             behind = timingOf(listOf(50.microseconds)),
         )
 
-        result.markdown() shouldBe golden("records-lost.md")
+        result.markdown() matches "records-lost.md"
     }
 
     @Test
@@ -212,7 +231,7 @@ class MarkdownTest {
             ),
         )
 
-        result.markdown() shouldBe golden("hiccups.md")
+        result.markdown() matches "hiccups.md"
     }
 
     @Test
@@ -260,7 +279,7 @@ class MarkdownTest {
                 before = here,
                 now = here,
             ),
-        ) shouldBe golden("compared.md")
+        ) matches "compared.md"
     }
 
     @Test
@@ -335,7 +354,7 @@ class MarkdownTest {
 
     @Test
     fun `a mix matches its golden`() {
-        mixed().markdown() shouldBe golden("mixed.md")
+        mixed().markdown() matches "mixed.md"
     }
 
     @Test

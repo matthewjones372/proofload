@@ -5,7 +5,6 @@ import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.timing
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
@@ -16,7 +15,7 @@ class RunResultJsonTest {
 
     @Test
     fun `a run result encodes to the JSON its golden holds`() {
-        Fixtures.fellBehind.toJson() shouldBe Golden.text("run-result.json")
+        Fixtures.fellBehind.toJson() matches "run-result.json"
     }
 
     @Test

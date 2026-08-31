@@ -151,9 +151,12 @@ enough to list, and long enough to matter.
 What this does not do yet. Each of these is checked against the tree at the
 commit this section was written on, not planned or assumed.
 
-- **A mix does not say which arm a row belongs to.** Two arms run and are
-  measured, but the plan view and the progress line still name the first arm,
-  so the page does not print the arm beside each step row.
+- **A mix's departed share is a floor, not a count.** The report names the arm
+  on every step row and prints the asked-for share beside the departed one, but
+  nothing records a departure per arm: the departed share is derived from
+  `reached`, the users counted at each step. That is exact for a scenario every
+  user walks and a floor for one that opens with a condition, and the page says
+  so. The progress line still names the first arm of a mix.
 - **No closed model.** Every profile states departure times up front. There is
   no "hold 50 concurrent users", which is the shape a queueing model wants and
   the shape some teams' targets are specified in.

@@ -42,17 +42,17 @@ class HtmlReportTest {
 
     @Test
     fun `the page for a run matches its golden`() {
-        Fixtures.fellBehind.toHtmlReport() shouldBe Golden.text("report-behind.html")
+        Fixtures.fellBehind.toHtmlReport() matches "report-behind.html"
     }
 
     @Test
     fun `the page for a run that lost records matches its golden`() {
-        Fixtures.lostRecords.toHtmlReport() shouldBe Golden.text("report-lost.html")
+        Fixtures.lostRecords.toHtmlReport() matches "report-lost.html"
     }
 
     @Test
     fun `the page for a run that settled matches its golden`() {
-        Fixtures.settledAfterAWarmUp.toHtmlReport() shouldBe Golden.text("report-settled.html")
+        Fixtures.settledAfterAWarmUp.toHtmlReport() matches "report-settled.html"
     }
 
     @Test

@@ -166,6 +166,11 @@ subprojects {
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         systemProperty("junit.jupiter.execution.timeout.default", "60s")
+        // Forwarded to the test JVM, which is where the goldens are compared.
+        // `-Dkestrel.regenerate=true` rewrites them from the run and fails, so
+        // a change to a page is a diff to read rather than a file to hand-edit.
+        providers.systemProperty("kestrel.regenerate").orNull
+            ?.let { asked -> systemProperty("kestrel.regenerate", asked) }
     }
 
     apply(plugin = "org.jetbrains.kotlinx.kover")

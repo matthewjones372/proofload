@@ -21,6 +21,9 @@ import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.step
 import io.github.matthewjones372.kestrel.timing
+import io.kotest.matchers.shouldBe
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -348,4 +351,36 @@ internal object Golden {
         }
         return stream.reader(Charsets.UTF_8).use { it.readText() }
     }
+
+    /**
+     * Rewrites the checked-in golden for [name] from [actual], and fails.
+     *
+     * Run as `./gradlew :kestrel-report-html:test -Dkestrel.regenerate=true`
+     * after a deliberate change to the page, then run again without it and read
+     * the diff. Hand-editing a golden to match the output defeats the point of
+     * having one, and before this existed the only way to move six of them was
+     * a throwaway test somebody wrote and deleted twice in one night.
+     *
+     * It fails rather than passes on purpose. A switch that regenerated and
+     * went green would turn every future regression into a green build for
+     * whoever left it on.
+     */
+    fun regenerate(name: String, actual: String): Nothing {
+        val path = Path.of("src/test/resources/golden", name).toAbsolutePath()
+        Files.writeString(path, actual, Charsets.UTF_8)
+        error("rewrote $path from this run. Re-run without -Dkestrel.regenerate and read the diff.")
+    }
+
+    /** Whether this run was asked to rewrite the goldens rather than check them. */
+    val regenerating: Boolean get() = System.getProperty("kestrel.regenerate").toBoolean()
+}
+
+/**
+ * [actual] against the golden [name], rewriting it instead when this run was
+ * asked to. Every golden assertion goes through here so one switch moves them
+ * all.
+ */
+internal infix fun String.matches(name: String) {
+    if (Golden.regenerating) Golden.regenerate(name, this)
+    this shouldBe Golden.text(name)
 }

@@ -95,7 +95,7 @@ class TimelineViewTest {
 
     @Test
     fun `the page for a run over time matches its golden`() {
-        Fixtures.degradedHalfway.toHtmlReport() shouldBe Golden.text("report-timeline.html")
+        Fixtures.degradedHalfway.toHtmlReport() matches "report-timeline.html"
     }
 
     private fun RunRecorder.pay(at: Duration) = record(

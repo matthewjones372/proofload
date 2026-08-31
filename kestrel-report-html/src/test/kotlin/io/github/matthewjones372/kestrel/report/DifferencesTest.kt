@@ -80,7 +80,7 @@ class DifferencesTest {
 
     @Test
     fun `the page for a run compared against the runs before matches its golden`() {
-        Fixtures.metItsTarget.toHtmlReport(differences = all) shouldBe Golden.text("report-differences.html")
+        Fixtures.metItsTarget.toHtmlReport(differences = all) matches "report-differences.html"
     }
 
     @Test

@@ -65,15 +65,18 @@ private fun mixNote(measured: Long): String =
     } else {
         "<strong>Asked</strong> is the arm's share of the users the plan named. <strong>Departed</strong> is " +
             "its share of the ${measured.grouped()} users the run counted: the most any one step of the arm " +
-            "was reached by, so an arm whose users abandoned it at its first step reports fewer than left."
+            "was reached by. A user that failed a step still reached it, so this is exact for a scenario " +
+            "whose steps every user meets, and a floor for one that puts its steps behind a condition."
     }
 
 /**
  * The users the run counted in an arm.
  *
- * A user is counted once per step it reaches, and every user of an arm reaches
- * at least its first step, so the most-reached step of an arm is the users it
- * saw — and a lower bound where a scenario branches away from its first step.
+ * A user is counted once per step it reaches, so the most-reached step of an
+ * arm is the users that arm saw. Abandonment does not lower it — a user that
+ * failed a step still reached it — so this is exact wherever every user of an
+ * arm meets at least one common step, which is every scenario that does not
+ * open with a condition. Where one does, it is a floor.
  */
 private fun RunResult.usersCounted(arm: PlannedArm): Long =
     arm.steps.mapNotNull { steps[it]?.reached }.maxOrNull() ?: 0L

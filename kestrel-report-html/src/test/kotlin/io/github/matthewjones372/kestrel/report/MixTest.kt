@@ -1,6 +1,5 @@
 package io.github.matthewjones372.kestrel.report
 
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
@@ -55,6 +54,6 @@ class MixTest {
 
     @Test
     fun `the page for a mix matches its golden`() {
-        Fixtures.mixed.toHtmlReport() shouldBe Golden.text("report-mix.html")
+        Fixtures.mixed.toHtmlReport() matches "report-mix.html"
     }
 }

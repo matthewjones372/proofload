@@ -41,6 +41,29 @@ and a single CI runner both look like.
 
 Ceiling: **at least 2,500 a second**, on the machine named above.
 
+### What the last two columns mean
+
+They disagree at every rate, and the disagreement is the point rather than a
+mistake in one of them.
+
+**`p50 within 1ms`** is the rule this page picks a ceiling by: the median
+departure left within a millisecond of when it was due. It asks whether the
+generator was, in the ordinary case, on time.
+
+**`fellBehind()`** is what the library reports on a run, and it asks something
+much stricter: whether the injector's *p99* lateness is larger than the
+precision the report quotes the target's p99 to — 0.78% of it. At a hundred a
+second that threshold is a few microseconds, so any lateness at all trips it.
+Reading a `yes` there as "the tool cannot manage a hundred a second" is exactly
+backwards: it says the generator's own lateness is big enough to be visible
+beside the number being reported, which on a machine at load average 6 it always
+is.
+
+Both are in the table because a reader deserves to see that the strict test says
+yes everywhere here, rather than have this page quietly pick the flattering one.
+On a quiet machine `fellBehind()` goes to `no` at the low rates; it did not on
+this one, and that is a fact about this machine.
+
 ### Why "at least"
 
 `com.sun.net.httpserver` is not a fast server, and this sweep did not

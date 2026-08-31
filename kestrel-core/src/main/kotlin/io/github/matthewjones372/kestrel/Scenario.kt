@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import java.util.Collections
+import kotlin.time.Duration
 
 /**
  * A step's name, declared once and shared by the scenario that defines the step
@@ -42,6 +43,23 @@ sealed interface Step {
      * the value rather than by what a target answered.
      */
     data class When(val predicate: (Session) -> Boolean, val steps: List<Step>) : Step
+
+    /**
+     * Think time: the user is doing something that is not this system, so the
+     * wait is a gap between steps rather than a step with a timing.
+     *
+     * It carries no measurement and no name, because a name here is what a
+     * report writes a row under and every number under one is what the target
+     * took. A pause given a row would be a percentile nobody waited on the
+     * target for — diluting the tail with time it did not cause, or, read as
+     * latency, inventing seconds of slowness out of a user reading a page.
+     */
+    data class Pause(val duration: Duration) : Step {
+
+        init {
+            require(duration >= Duration.ZERO) { "a pause cannot run backwards, but was $duration" }
+        }
+    }
 }
 
 /**
@@ -66,6 +84,7 @@ private fun Step.names(): List<String> = when (this) {
     is Step.Emit -> listOf(name)
     is Step.Repeat -> steps.flatMap { it.names() }
     is Step.When -> steps.flatMap { it.names() }
+    is Step.Pause -> emptyList()
 }
 
 class ScenarioBuilder internal constructor(private val name: String) {
@@ -86,6 +105,10 @@ class ScenarioBuilder internal constructor(private val name: String) {
 
     fun exec(name: StepName, block: StepScope.() -> Unit) {
         steps += Step.Exec(name.name, action(block))
+    }
+
+    fun pause(duration: Duration) {
+        steps += Step.Pause(duration)
     }
 
     fun emit(name: String, action: Action, keyedBy: Correlation) {

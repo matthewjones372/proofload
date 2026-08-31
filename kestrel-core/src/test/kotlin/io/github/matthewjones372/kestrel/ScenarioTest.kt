@@ -3,6 +3,8 @@ package io.github.matthewjones372.kestrel
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 private val page = sessionKey<String>("page")
 private val orderId = sessionKey<Long>("orderId")
@@ -94,6 +96,22 @@ class ScenarioTest {
         val checkout = Scenario("checkout", listOf(Step.Repeat(2, listOf(Step.When({ true }, listOf(place))))))
 
         checkout.stepNames shouldBe listOf("place")
+    }
+
+    @Test
+    fun `a pause is a step value, so building a scenario that waits an hour waits for nothing`() {
+        val checkout = scenario("checkout") {
+            exec("browse", browse)
+            pause(1.hours)
+            exec("pay", browse)
+        }
+
+        checkout.steps shouldBe listOf(Step.Exec("browse", browse), Step.Pause(1.hours), Step.Exec("pay", browse))
+    }
+
+    @Test
+    fun `a pause that runs backwards is refused where it is written, not where it is run`() {
+        shouldThrow<IllegalArgumentException> { scenario("checkout") { pause(-(1.seconds)) } }
     }
 
     @Test

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 /**
  * Sends a simulation on virtual threads, one per user, departing on a schedule
@@ -248,6 +249,23 @@ private fun Scenario.runOneUser(
 }
 
 /**
+ * The one `Thread.sleep` the library allows, and the reason the ban exists is
+ * the reason this is exempt from it: the ban is against a parked *carrier*, and
+ * on a virtual thread `sleep` unmounts rather than holding one, so the platform
+ * threads stay free to keep the schedule and no other user departs late for it.
+ *
+ * Nothing is recorded. The session passes through untouched, so the next step's
+ * service time starts when it starts; response time is that plus how late the
+ * user departed, so a pause cannot leak into either, and no sample reaches
+ * `behind` — the generator is not late for a departure that was meant to wait.
+ */
+@Suppress("ForbiddenMethodCall")
+private fun Step.Pause.thoughtAbout(session: Session): Session {
+    Thread.sleep(duration.toJavaDuration())
+    return session
+}
+
+/**
  * One user's way through the scenario tree. What a step is run against is held
  * here rather than threaded through the walk, because a nested step hands all
  * of it down unchanged.
@@ -278,6 +296,8 @@ private class UserWalk(
         is Step.Repeat -> (1..step.times).fold<Int, Session?>(session) { each, _ -> walk(step.steps, each) }
 
         is Step.When -> if (step.predicate(session)) walk(step.steps, session) else session
+
+        is Step.Pause -> step.thoughtAbout(session)
     }
 
     /**

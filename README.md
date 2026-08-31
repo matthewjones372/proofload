@@ -108,6 +108,28 @@ a load test sends to one base URL. It is off unless asked for, so a scenario
 without `withCookies()` sends no cookie header at all, and it does not follow
 redirects: a 302 is still the failure it was, under the step that got it.
 
+A real user reads the page before clicking. `pause` is that gap, and it is a
+value in the scenario like everything else — the wait happens when the run
+does, not when the file is loaded:
+
+```kotlin
+import kotlin.time.Duration.Companion.seconds
+
+val checkout = scenario("checkout") {
+    exec(browse, api.get("/products"))
+    pause(2.seconds)                     // a user reading the page
+    exec(placeOrder, api.post("/orders"))
+}
+```
+
+Nothing is recorded for it. A pause has no row in the report and no percentile,
+because every number printed under a step name is time the target took, and two
+seconds of somebody reading is not: counted as latency it would invent slowness
+the service never caused, and counted as a fast step it would flatter the tail
+of the ones that are real. It is not lateness either — the generator is not
+behind for a departure that was meant to wait. What it does change is the
+concurrency the same rate produces, which is the reason to write it.
+
 A load shape is stages in order, and still a value — so it composes, and it
 answers before a request leaves:
 

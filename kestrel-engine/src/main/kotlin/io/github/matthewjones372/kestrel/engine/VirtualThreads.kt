@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Completing
+import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
@@ -24,16 +25,28 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**
+ * Sends a simulation on virtual threads, one per user, departing on a schedule
+ * a platform thread of its own keeps.
+ *
+ * It blocks until the last user it started has finished and until the sink the
+ * simulation named has had the wait it declared. Blocking a virtual thread is
+ * what Loom is for, so the caller's thread is where a run is waited on.
+ */
+class VirtualThreads : Engine {
+
+    override fun run(simulation: Simulation): RunResult = simulation.send()
+}
+
+/**
  * Runs the search a rung at a time, and blocks for as long as it takes —
  * `worstCase` says how long that can be before anybody starts one.
  */
 fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
 
-/**
- * Sends the simulation and blocks until the last user it started has finished,
- * and until the sink it named has had the wait it declared.
- */
-fun Simulation.run(): RunResult {
+/** The same run through [VirtualThreads], for a caller with no reason to name an engine. */
+fun Simulation.run(): RunResult = VirtualThreads().run(this)
+
+private fun Simulation.send(): RunResult {
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val runStart = System.nanoTime()

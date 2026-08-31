@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Capacity
+import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Search
@@ -16,15 +17,19 @@ import java.util.concurrent.CopyOnWriteArrayList
  * One per test. Two tests are two runs and must not share what they recorded:
  * this lives in the engine rather than in either test-framework module, so
  * neither of those has to depend on the other to get it.
+ *
+ * [engine] is what sends each simulation. It lives here rather than in core
+ * because a default has to name an implementation, and core naming one would be
+ * the coupling the interface exists to remove.
  */
-class Kestrel {
+class Kestrel(private val engine: Engine = VirtualThreads()) {
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
     // the test thread and read from JUnit's, hence the copy-on-write.
     private val runs = CopyOnWriteArrayList<RunResult>()
 
-    fun run(simulation: Simulation): RunResult = simulation.run().also { runs += it }
+    fun run(simulation: Simulation): RunResult = engine.run(simulation).also { runs += it }
 
     /**
      * Hunts for the rate the scenario sustains. Every rung it ran is kept, so

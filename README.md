@@ -13,8 +13,15 @@ Kotlin value: build it, inspect it, split it across files, run it.
 </div>
 
 > [!NOTE]
-> Early, but it runs. Ten specs are built and green; nothing is released yet.
-> See [AGENTS.md](AGENTS.md) before writing code.
+> Early, but it runs. `specs/` is the record of what is built and what is not;
+> nothing is released yet. See [AGENTS.md](AGENTS.md) before writing code.
+
+> [!TIP]
+> **[docs/cookbook.md](docs/cookbook.md) is thirty recipes** — feeders, ramps,
+> think time, cookies, WebSockets, work that finishes on another topic, goals,
+> capacity searches, steady state, reports and CI. Each is the few lines you
+> would actually write, and the reason it is those lines and not the obvious
+> alternative.
 
 ```kotlin
 import io.github.matthewjones372.kestrel.at
@@ -647,7 +654,8 @@ result.appendToStepSummary(comparison, floor)
 
 Where to keep the file on GitHub — a cache key, an artifact or a branch
 somebody reviews — and why latency should not gate a merge on a shared runner,
-are in [docs/cookbook.md](docs/cookbook.md).
+are in [docs/cookbook.md](docs/cookbook.md), along with publishing the reports
+to Pages and the rest of the thirty recipes.
 
 ## More than one run
 

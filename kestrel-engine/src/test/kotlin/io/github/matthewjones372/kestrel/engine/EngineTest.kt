@@ -1,11 +1,16 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Arm
+import io.github.matthewjones372.kestrel.Rate
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.Scenario
+import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.action
 import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.constantRate
+import io.github.matthewjones372.kestrel.feed
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
@@ -24,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class EngineTest {
 
     private val cart = sessionKey<String>("cart")
+    private val user = sessionKey<Long>("user")
     private val order = sessionKey<Long>("order")
 
     @Test
@@ -252,6 +258,38 @@ class EngineTest {
             result.behind.count shouldBe 2L
         }
     }
+
+    @Test
+    fun `a two-armed run sends both arms, each fed from its own feeder from user zero`() {
+        val numbers = ConcurrentLinkedQueue<Pair<String, Long>>()
+
+        val result = Simulation(listOf(arm("browse", 2.perSecond, numbers), arm("search", 1.perSecond, numbers))).run()
+
+        result["browse"].count shouldBe 2L
+        result["search"].count shouldBe 1L
+        withClue("an arm's data is reproducible whatever rate the arms beside it are sent at") {
+            numbers.filter { (arm, _) -> arm == "browse" }.map { (_, user) -> user }.sorted() shouldBe listOf(0L, 1L)
+            numbers.filter { (arm, _) -> arm == "search" }.map { (_, user) -> user } shouldBe listOf(0L)
+        }
+    }
+
+    @Test
+    fun `a two-armed run departs in the merged order rather than one arm after the other`() {
+        val numbers = ConcurrentLinkedQueue<Pair<String, Long>>()
+
+        val result = Simulation(listOf(arm("browse", 2.perSecond, numbers), arm("search", 1.perSecond, numbers))).run()
+
+        result.arrivals.count shouldBe 3L
+        withClue("0s, 0s and 500ms merged is gaps of 0 and 500ms; booked arm after arm, one runs backwards") {
+            result.arrivals.mean shouldBe 250.milliseconds
+        }
+    }
+
+    private fun arm(name: String, rate: Rate, numbers: ConcurrentLinkedQueue<Pair<String, Long>>) = Arm(
+        scenario(name) { exec(name) { numbers.add(name to (this[user] ?: -1L)) } },
+        constantRate(rate, over = 1.seconds),
+        feed(user) { it },
+    )
 
     @Test
     fun `an emit step is timed by its publish and does not wait for an answer`() {

@@ -61,7 +61,7 @@ the run starts.
 
 ## Stack
 
-- [ ] **`spec-0049-response`** — response time on `Second`, recorded, merged and
+- [x] **`spec-0049-response`** — response time on `Second`, recorded, merged and
       restricted.
       Done when: a run with a slow first twenty seconds reports a steady
       response-time p99 that excludes them, `Runs.merged` superimposes both

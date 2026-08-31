@@ -66,11 +66,11 @@ library in core is a dependency the rule exists to stop.
 
 ## Stack
 
-- [ ] **`spec-0054-csv`** — `csv(path)`, the parse, the header, `rows` and
+- [x] **`spec-0054-csv`** — `csv(path)`, the parse, the header, `rows` and
       `columns` as values.
       Done when: a quoted field containing a comma is one field, a header is
       never row zero, and an empty file is refused by name.
-- [ ] **`spec-0054-feeding`** — `feeding(vararg keys)` and the conversion
+- [x] **`spec-0054-feeding`** — `feeding(vararg keys)` and the conversion
       overload, with the failure when a column is missing.
       Done when: two keys fill from two columns, and a key naming a column that
       is not there fails before the run rather than during it.

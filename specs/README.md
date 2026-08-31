@@ -36,6 +36,15 @@ it before anyone writes code.
 A shipped spec stays in the tree. It is the record of why the code looks the
 way it does, which is why the source comments do not have to be.
 
+> **The boxes lie before 0044.** Step 5 was not kept up to date: specs 0001 to
+> 0043 carry unticked stack entries for work that shipped long ago — scenarios,
+> the engine, HTTP, the reports, the framework modules. An unticked box in that
+> range means nobody ticked it, not that the work is outstanding. From 0044 the
+> boxes were reconciled against the code and are meant to be true; where an
+> entry is half done or was delivered by a later spec, a note under it says so.
+> Anyone taking a box as a status signal should check the tree first, which is
+> the lesson of having had to.
+
 ## What a spec is not
 
 - Not documentation. `docs/` and the README teach the DSL; a spec argues for a

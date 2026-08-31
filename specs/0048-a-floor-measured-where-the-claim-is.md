@@ -88,12 +88,12 @@ relative gate alone would have refused every one.
 
 ## Stack
 
-- [ ] **`spec-0048-absolute`** — the absolute spread on `Floor`, and `resolves`
+- [x] **`spec-0048-absolute`** — the absolute spread on `Floor`, and `resolves`
       taking the magnitude of the claim.
       Done when: a floor measured on a loaded machine refuses a difference of a
       few microseconds at any magnitude, does not refuse a ten-millisecond
       difference at 250 ms, and the page prints both figures.
-- [ ] **`spec-0048-consulted`** — 0038's comparison, 0042's test and the report
+- [x] **`spec-0048-consulted`** — 0038's comparison, 0042's test and the report
       reading the new shape.
       Done when: a comparison on a loaded machine returns a verdict rather than
       refusing everything, a difference genuinely inside the machine's own
@@ -101,6 +101,10 @@ relative gate alone would have refused every one.
       `./gradlew :examples:timingTests` passes ten consecutive times on a loaded
       machine — the count matters, because the present failure rate is about one
       run in three and a single green run proves nothing.
+      Landed, with one caveat: the comparison reads the new shape, but what
+      made `:examples:timingTests` pass ten consecutive times was 0062's
+      rewrite of `RegressionTest` onto `Runs.against`, not this floor. 0062
+      supersedes this entry's claim about that test.
 
 ## Acceptance
 

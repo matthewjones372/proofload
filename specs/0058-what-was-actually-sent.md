@@ -74,7 +74,7 @@ request bodies, and an answer for what a shared report may carry.
 
 ## Stack
 
-- [ ] **`spec-0058-trace`** — `trace(scenario)` in the engine, running one user
+- [x] **`spec-0058-trace`** — `trace(scenario)` in the engine, running one user
       through the ordinary step machinery.
       Done when: a three-step scenario prints three lines in order, and a
       failing step prints the failure and stops.

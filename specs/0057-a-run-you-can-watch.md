@@ -70,12 +70,12 @@ ceiling did not move.
 
 ## Stack
 
-- [ ] **`spec-0057-progress`** — `Progress`, `silent`, `lines()`, wired into
+- [x] **`spec-0057-progress`** — `Progress`, `silent`, `lines()`, wired into
       the engine, reporting only scheduler-side numbers.
       Done when: a run prints a line every five seconds and one at the end, a
       run given `silent` prints nothing, and the ceiling harness reports the
       same ceiling as before.
-- [ ] **`spec-0057-quiet-tests`** — `@LoadTest` and the Kotest extension
+- [x] **`spec-0057-quiet-tests`** — `@LoadTest` and the Kotest extension
       supplying `silent`.
       Done when: neither framework's output gains a line, and a `main` still
       prints.
@@ -83,7 +83,7 @@ ceiling did not move.
       requests and failures.
       Done when: the numbers match the frozen result at the end, and
       `:benchmarks:ceiling` shows no change against the row before it.
-- [ ] **`spec-0057-search`** — a line per rung, with the verdict.
+- [x] **`spec-0057-search`** — a line per rung, with the verdict.
       Done when: a search prints each rung as it finishes, marking void ones.
 
 ## Acceptance

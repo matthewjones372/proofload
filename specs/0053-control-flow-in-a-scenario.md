@@ -68,18 +68,18 @@ needs a decision, which is the reason for the rule.
 
 ## Stack
 
-- [ ] **`spec-0053-tree`** — nested `Step` forms, the engine walking them, and
+- [x] **`spec-0053-tree`** — nested `Step` forms, the engine walking them, and
       `plan()` flattening the tree to the names it carries.
       Done when: a scenario with one nested step runs it, and the plan lists
       its steps in order with the loop's step named once.
-- [ ] **`spec-0053-reached`** — `reached` on `StepStats`, recorded per user
+- [x] **`spec-0053-reached`** — `reached` on `StepStats`, recorded per user
       rather than per request, and on the page.
       Done when: a step run three times by each of ten users reports 30
       requests and 10 reached.
-- [ ] **`spec-0053-repeat`** — `repeat(n)` and `during(duration)`.
+- [x] **`spec-0053-repeat`** — `repeat(n)` and `during(duration)`.
       Done when: three iterations produce three samples under one name, and a
       `during` loop stops on its own clock rather than the profile's.
-- [ ] **`spec-0053-doif`** — `doIf(predicate)` over the session.
+- [x] **`spec-0053-doif`** — `doIf(predicate)` over the session.
       Done when: a step inside a false condition records nothing at all, and is
       not counted as a failure or a skip.
 

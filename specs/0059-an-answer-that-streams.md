@@ -73,15 +73,15 @@ prevent for the cost of a line.
 
 ## Stack
 
-- [ ] **`spec-0059-module`** — `kestrel-websocket`, its dependency test, `ws`,
+- [x] **`spec-0059-module`** — `kestrel-websocket`, its dependency test, `ws`,
       `open` and `close` as timed steps, one connection per user.
       Done when: the module asserts its own classpath, a handshake is one
       sample under the step's name, and a run closes every connection it made.
-- [ ] **`spec-0059-send`** — `send` as a correlated departure, text and binary
+- [x] **`spec-0059-send`** — `send` as a correlated departure, text and binary
       frames.
       Done when: a send is timed for the write and not for any answer, and
       carries its correlation.
-- [ ] **`spec-0059-awaiting`** — receipts matched to sends, `unmatched` and
+- [x] **`spec-0059-awaiting`** — receipts matched to sends, `unmatched` and
       `inFlight`, unsolicited messages counted.
       Done when: a hundred answers to a hundred sends report a hundred matched
       and none outstanding, and a server push with no send reports as

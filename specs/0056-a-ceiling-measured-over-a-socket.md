@@ -67,14 +67,14 @@ laptop run and a single CI runner both look like, and the page says so.
 
 ## Stack
 
-- [ ] **`spec-0056-target`** — the loopback target, its lifecycle, and a check
+- [x] **`spec-0056-target`** — the loopback target, its lifecycle, and a check
       that it answers within a fixed budget at the rates swept.
       Done when: the target starts and stops with the harness, and the harness
       records the target's own service time beside the generator's lateness.
-- [ ] **`spec-0056-sweep`** — the over-the-socket sweep and its table.
+- [x] **`spec-0056-sweep`** — the over-the-socket sweep and its table.
       Done when: `:benchmarks:ceiling` writes both tables and picks a ceiling
       for each.
-- [ ] **`spec-0056-record`** — `docs/what-it-costs.md` carrying both, with the
+- [x] **`spec-0056-record`** — `docs/what-it-costs.md` carrying both, with the
       bound stated.
       Done when: the page leads with the HTTP ceiling, says it is a lower
       bound, and says what each sweep excluded.

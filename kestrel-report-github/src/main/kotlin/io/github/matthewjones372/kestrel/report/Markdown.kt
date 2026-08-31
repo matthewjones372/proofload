@@ -5,6 +5,8 @@ import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Interval
+import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
@@ -14,6 +16,7 @@ import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 /**
@@ -28,8 +31,9 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + comparison.blocks(floor) + stepTable() +
-            listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
+        listOfNotNull(lostWarning(), cutShortWarning(), floor?.line(), behindWarning()) +
+            comparison.blocks(floor) + mixBlocks() +
+            stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
 
@@ -138,8 +142,8 @@ private fun RunResult.hiccupLine(): String? {
  * production — is invisible unless the report names which was asked for.
  */
 private fun RunResult.arrivalLine(): String? {
-    val shape = plan.profile ?: return null
-    val drawn = shape.seeds
+    val shapes = plan.arms.mapNotNull { it.profile }.ifEmpty { return null }
+    val drawn = shapes.flatMap { it.seeds }
     val asked =
         if (drawn.isEmpty()) "Arrivals were evenly spaced, which understates queueing against the same mean rate " +
             "in production."
@@ -150,15 +154,102 @@ private fun RunResult.arrivalLine(): String? {
         "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}."
 }
 
+/**
+ * A run that stopped before its schedule did, naming both windows: every count
+ * under it is over the shorter one, and a summary printing only what it
+ * measured reads exactly like a run that saw its window out.
+ *
+ * Absent otherwise, because a warning on every summary is one readers skip. A
+ * run legitimately outlasts its window while it waits out the users it started,
+ * and a shortfall under [SHORTFALL] of the window is the timeline's own whole
+ * seconds as readily as a run somebody stopped.
+ */
+private fun RunResult.cutShortWarning(): String? {
+    val asked = plan.plannedWindow
+    val recorded = timeline.size.seconds
+    if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return null
+
+    return "> **Cut short:** the schedule asked for ${asked.report()} and the run recorded ${recorded.report()}. " +
+        "Every number below is over the shorter window."
+}
+
 private fun RunResult.behindWarning(): String? {
     if (!fellBehind()) return null
     return "> **Behind schedule:** ${behind.p99.report()} late at p99, ${behind.max.report()} at worst. " +
         "The response times below include that backlog."
 }
 
+/**
+ * Each arm's share of the run: what the plan asked for, beside what was
+ * counted. Absent for one arm, where both shares are the whole run and the
+ * table would say nothing.
+ */
+private fun RunResult.mixBlocks(): List<String> {
+    val arms = plan.arms
+    if (arms.size < 2) return emptyList()
+
+    val counted = arms.map { usersCounted(it) }
+    val measured = counted.sum()
+    val columns = listOf(
+        Column("Arm", Align.LEFT),
+        Column("Planned users", Align.RIGHT),
+        Column("Asked", Align.RIGHT),
+        Column("Departed", Align.RIGHT),
+    )
+    val rows = arms.zip(counted) { arm, users ->
+        listOf(
+            arm.scenario.escapeMarkdown(),
+            arm.plannedUsers.toString(),
+            arm.plannedUsers.shareOf(plan.plannedUsers),
+            users.shareOf(measured),
+        )
+    }
+    return listOf("**Mix**", table(columns, rows), mixNote(measured))
+}
+
+/**
+ * What the two shares are, said where they are printed.
+ *
+ * The departed share is users counted rather than users departed: nothing
+ * records a departure per arm, and the arms' own step counts are the only
+ * split of the run there is.
+ */
+private fun mixNote(measured: Long): String =
+    if (measured == 0L) {
+        "**Asked** is the arm's share of the users the plan named. This run counted no users, so what " +
+            "departed cannot be split by arm and only what was asked for is printed."
+    } else {
+        "**Asked** is the arm's share of the users the plan named. **Departed** is its share of the " +
+            "$measured users the run counted: the most any one step of the arm was reached by, so an arm " +
+            "whose users abandoned it at its first step reports fewer than left."
+    }
+
+/**
+ * The users the run counted in an arm.
+ *
+ * A user is counted once per step it reaches, and every user of an arm reaches
+ * at least its first step, so the most-reached step of an arm is the users it
+ * saw — and a lower bound where a scenario branches away from its first step.
+ */
+private fun RunResult.usersCounted(arm: PlannedArm): Long =
+    arm.steps.mapNotNull { steps[it]?.reached }.maxOrNull() ?: 0L
+
+private fun Long.shareOf(whole: Long): String =
+    if (whole == 0L) NOTHING_MEASURED else (toDouble() / whole).asPercent()
+
+/**
+ * Which arm sent a step, for a run that has more than one. A step name is
+ * unique across a mix, so the arm holding the name is the arm that sent it, and
+ * a name no arm planned belongs to none of them.
+ */
+private fun Plan.armOf(step: String): String? =
+    if (arms.size < 2) null
+    else arms.firstOrNull { step in it.steps }?.scenario?.escapeMarkdown() ?: NOTHING_MEASURED
+
 private fun RunResult.stepTable(): String = table(
     columns = listOf(
         Column("Step", Align.LEFT),
+    ) + armColumn() + listOf(
         Column("Requests", Align.RIGHT),
         Column("Reached", Align.RIGHT),
         Column("OK", Align.RIGHT),
@@ -168,11 +259,17 @@ private fun RunResult.stepTable(): String = table(
         Column("p99", Align.RIGHT),
         Column("Max", Align.RIGHT),
     ),
-    rows = steps.values.map { it.row() },
+    rows = steps.values.map { it.row(plan.armOf(it.name)) },
 )
 
-private fun StepStats.row(): List<String> = listOf(
+// Only for a run that had more than one arm: a column repeating one scenario
+// name down every row is noise in the summary it is meant to be missing from.
+private fun RunResult.armColumn(): List<Column> =
+    if (plan.arms.size < 2) emptyList() else listOf(Column("Arm", Align.LEFT))
+
+private fun StepStats.row(arm: String?): List<String> = listOf(
     name.escapeMarkdown(),
+) + listOfNotNull(arm) + listOf(
     count.toString(),
     // A run recorded by something that did not count users has no reaches to
     // print, and a zero would read as a step nobody took.
@@ -267,6 +364,9 @@ private const val ACTIVE_CHARACTERS = "\\`*_[]<>|"
 private const val NOTHING_MEASURED = "—"
 
 private const val MIN_COLUMN_WIDTH = 5
+
+/** Under this share of the window, a shortfall is the timeline's own whole seconds rather than a run that stopped. */
+private const val SHORTFALL = 0.1
 
 private const val SIGNIFICANT_DIGITS = 3
 private const val NANOS_PER_MICRO = 1_000L

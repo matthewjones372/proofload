@@ -34,6 +34,11 @@ one.
   goal that stopped it, and the curve every rung is on. A rung the injector
   could not offer is void rather than failed, and ends the search.
   `Capacity.toHtmlReport()` draws the curve, with the operating point marked.
+- **A credential that stays fresh.** `refreshing(every) { fetchToken() }` in
+  `kestrel-core` fetches once before the run and again on a daemon scheduler,
+  so a step reads `current` — a volatile read — rather than timing an identity
+  provider. `Refreshing.fixed(value)` is the same value with no scheduler, and
+  `stop()` ends the schedule.
 - **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
 - **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.

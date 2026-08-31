@@ -10,6 +10,15 @@
 // the tool.
 tasks.test {
     useJUnitPlatform { excludeTags("timing") }
+
+    // `ModulesDocTest` reads the module layout and the document describing it,
+    // so both are inputs: editing either re-runs the test rather than being
+    // told the task is up to date. Declared as a file collection because the
+    // document is allowed to be absent — that is a test failure with a message,
+    // not a Gradle error about a missing input.
+    inputs.files(rootProject.file("settings.gradle.kts"), rootProject.file("docs/modules.md"))
+        .withPropertyName("theModuleLayoutAndItsDocumentation")
+    systemProperty("kestrel.repoRoot", rootProject.projectDir.path)
 }
 
 val timingTests = tasks.register<Test>("timingTests") {

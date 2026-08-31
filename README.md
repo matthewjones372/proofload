@@ -874,6 +874,9 @@ quietly start needing the JUnit one.
 Core depends on the Kotlin standard library and nothing else, and a test says
 so. Everything with a third-party type in it becomes a leaf module beside it.
 
+[docs/modules.md](docs/modules.md) names the test behind each row, and the
+coordinates to take them.
+
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).

@@ -7,7 +7,7 @@ uses and inherits no stack it did not ask for.
 
 | Module | What it is | Depends on |
 |---|---|---|
-| `kestrel-core` | scenarios, shapes, goals and results, all as values | **nothing** |
+| `kestrel-core` | scenarios, profiles, goals and results, all as values, and the `Engine` that runs one | **nothing** |
 | `kestrel-engine` | runs a simulation on virtual threads, departures on a schedule | core |
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
@@ -27,6 +27,12 @@ where every module meets, so that they compose is a test rather than a README
 paragraph. `benchmarks` measures what this tool costs, and is kept out of the
 coverage aggregation because measuring the tool is not testing it —
 [what-it-costs.md](what-it-costs.md) is what it produces.
+
+`smoke/` is not in the build at all. It is a Gradle build of its own that
+depends on the coordinates in the next section rather than on the projects that
+produce them, so a wrong POM or a missing jar fails at resolution here instead
+of being found by a stranger. `./gradlew publishToMavenLocal` and then
+`cd smoke && ../gradlew test` is what checks the table below is usable.
 
 ## Taking them
 

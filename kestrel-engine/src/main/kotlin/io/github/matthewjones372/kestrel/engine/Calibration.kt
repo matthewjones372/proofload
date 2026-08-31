@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.engine
 import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Probe
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.at
@@ -37,7 +38,10 @@ fun calibrate(within: Duration = BUDGET): Floor {
     // Discarded, not counted: the first run in a process pays for class loading
     // and JIT, and this repository's own regression test measured a tenfold
     // difference between it and every run after it.
-    val measured = List(WARMUP + REPEATS) { nothing.at(RATE, over = window).run() }.drop(WARMUP)
+    // Silent, always. A calibration is one phase of thirty seconds, not
+    // twenty-four runs anybody wants announced, and there is no reporter a
+    // caller could pass that would make the twenty-four of them worth reading.
+    val measured = List(WARMUP + REPEATS) { nothing.at(RATE, over = window).run(Progress.silent) }.drop(WARMUP)
     val repeats = measured.map { it[STEP].responseTime.p50 }
     return Floor(
         resolution = resolutionOf(repeats),

@@ -36,28 +36,33 @@ The user writes what they already write, and two runs never overlap:
 val result = kestrel.run(checkout.at(500.perSecond, over = 2.minutes))
 ```
 
-In `kestrel-engine`, JDK only, so core's dependency test stays green:
+The protocol is a value in core, like everything else core owns — states and
+the transitions between them, with no clock and no thread in it:
 
 ```kotlin
-object Exclusive {
-    val state: State                                  // what this JVM is doing
-    fun <T> whileAloneOnThisMachine(block: () -> T): T
-}
-
-sealed interface State {
-    data object Idle : State
-    data class Waiting(val since: Instant) : State    // another run has it
-    data object Calibrating : State
-    data object Running : State
-    data object Draining : State                      // 0040's window
+sealed interface Exclusivity {
+    data object Idle : Exclusivity
+    data class Waiting(val since: Instant) : Exclusivity   // another run holds it
+    data object Calibrating : Exclusivity
+    data object Running : Exclusivity
+    data object Draining : Exclusivity                     // 0040's window
 }
 ```
 
-Two locks in that order, because they answer different questions: a
+The effect wraps an `Engine` rather than living inside one, so it is the
+machine's property and not virtual threads':
+
+```kotlin
+fun Engine.exclusive(): Engine       // 0051 declares Engine
+
+val kestrel = Kestrel()              // exclusive by default
+```
+
+Two locks underneath, in this order, because they answer different questions: a
 `ReentrantLock` serialises threads in this JVM and lets a capacity search hold
-it across its rungs, then a `FileLock` on a path under the temp directory
-serialises processes. A lock is taken **before the run's clock starts**, so a
-wait is never inside a measurement.
+it across its rungs, then a `FileLock` under the temp directory serialises
+processes. Both are JDK, so core's dependency test stays green. A lock is taken
+**before the run's clock starts**, so a wait is never inside a measurement.
 
 ## Why this shape
 
@@ -66,6 +71,11 @@ A JVM-scoped singleton alone solves only what `@ResourceLock` solved — two
 tests in one fork — and leaves Gradle's other forks exactly as they were. The
 OS releases a `FileLock` when the process dies, so a crashed run cannot wedge
 the machine, which a lock file with a PID in it could.
+
+Wrapping an engine rather than living in one is what keeps this honest. A lock
+inside `kestrel-engine` would be virtual threads' lock, and two engines in one
+process would not serialise against each other — which is the bug this spec
+exists to remove, reintroduced one layer down.
 
 The state machine is not decoration: it is what lets the wait be reported as a
 measurement rather than disappear. `AGENTS.md` forbids parking a thread because
@@ -81,8 +91,10 @@ succeeded a second apart.
 
 ## Stack
 
-- [ ] **`spec-0050-exclusive`** — the singleton, the states, and the in-JVM
-      lock around `run()` and `calibrate()`.
+Stacks on 0051, which declares the `Engine` this decorates.
+
+- [ ] **`spec-0050-exclusive`** — the states in core, and the in-JVM lock in the
+      decorator around `run()` and `calibrate()`.
       Done when: two threads calling `run()` are shown never to overlap, a
       capacity search's rungs do not deadlock on their own lock, and
       `NoThirdPartyDependenciesTest` still passes.
@@ -118,7 +130,10 @@ succeeded a second apart.
 4. **Should waiting have a ceiling?** An hour of queued runs looks identical to
     a deadlock. Recommend a timeout that fails loudly naming the holder, rather
     than waiting forever or proceeding unsafely.
-5. **Does this make 0041's gate redundant?** No — that gate exists to keep a
+5. **Can this land before 0051?** Only by going inside `kestrel-engine` and
+    moving later. Recommend not: a machine-wide lock that moved is a lock
+    somebody has to re-prove, and 0051 is small.
+6. **Does this make 0041's gate redundant?** No — that gate exists to keep a
     wall-clock task out of Kover's instrumentation, and it should stay. Worth
     saying so in `AGENTS.md` so the next reader does not remove one for the
     other.

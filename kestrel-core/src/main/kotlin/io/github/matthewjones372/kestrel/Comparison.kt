@@ -136,13 +136,27 @@ fun RunResult.against(baseline: RunResult?, percentile: Double = P99): Compariso
 private fun format(times: Double): String = String.format(Locale.ROOT, "%.2f", times)
 
 /**
- * What this plan asked for that [other] did not. Goals are left out: a
- * threshold is what a team wanted of the numbers, not work sent at the target.
+ * What this plan asked for that [other] did not, arm by arm. Goals are left
+ * out: a threshold is what a team wanted of the numbers, not work sent at the
+ * target.
+ *
+ * Arms are matched by the scenario they send rather than by position, so a mix
+ * that gained an arm says which one rather than reporting every arm after it as
+ * changed. The wording says "before" rather than "the baseline": the same
+ * sentences are read by a comparison, by a set of runs merged into one
+ * population, and by an interval across runs.
  */
-internal fun Plan.unlike(other: Plan): List<String> = listOfNotNull(
-    "scenario".difference(other.scenario, scenario),
-    "steps".difference(other.steps, steps),
-    "profile".difference(other.profile, profile),
+internal fun Plan.unlike(other: Plan): List<String> {
+    val mine = arms.associateBy { it.scenario }
+    val theirs = other.arms.associateBy { it.scenario }
+    return (theirs.keys - mine.keys).map { "arm \"$it\" was sent before and is not sent here" } +
+        (mine.keys - theirs.keys).map { "arm \"$it\" is sent here and was not before" } +
+        mine.keys.intersect(theirs.keys).flatMap { arm -> mine.getValue(arm).unlike(theirs.getValue(arm)) }
+}
+
+private fun PlannedArm.unlike(other: PlannedArm): List<String> = listOfNotNull(
+    "arm \"$scenario\" steps".difference(other.steps, steps),
+    "arm \"$scenario\" profile".difference(other.profile, profile),
 )
 
 private fun String.difference(before: Any?, now: Any?): String? =

@@ -11,8 +11,11 @@ import kotlin.time.Duration.Companion.seconds
 
 private val browse = step("browse")
 private val pay = step("pay")
+private val search = step("search")
 
 class PlanTest {
+
+    private val browsing = scenario("browsing") { exec(search) { } }
 
     private val checkout = scenario("checkout") {
         exec(browse) { }
@@ -35,6 +38,28 @@ class PlanTest {
         )
 
         looping.at(1.perSecond, over = 1.seconds).plan().steps shouldBe listOf("browse", "add to cart")
+    }
+
+    @Test
+    fun `a plan carries every arm of a mix, and adds up what all of them asked for`() {
+        val mixed = checkout.at(50.perSecond, over = 1.minutes) + browsing.at(10.perSecond, over = 1.minutes)
+
+        val plan = mixed.plan()
+
+        plan.arms.map { it.scenario } shouldBe listOf("checkout", "browsing")
+        plan.steps shouldBe listOf("browse", "pay", "search")
+        plan.plannedUsers shouldBe 3600L
+        withClue("each arm sends its own users through its own steps") {
+            plan.plannedRequests shouldBe 6600L
+        }
+        plan.plannedWindow shouldBe 1.minutes
+    }
+
+    @Test
+    fun `a one-armed plan reads as the arm it carries`() {
+        val plan = checkout.at(50.perSecond, over = 1.minutes).plan()
+
+        plan.arms.single() shouldBe PlannedArm("checkout", listOf("browse", "pay"), plan.profile)
     }
 
     @Test

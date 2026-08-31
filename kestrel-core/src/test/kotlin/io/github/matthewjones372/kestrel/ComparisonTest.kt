@@ -24,6 +24,13 @@ class ComparisonTest {
     private fun planAt(rate: Rate, scenario: String = "paying"): Plan =
         Plan(scenario = scenario, steps = listOf("pay"), profile = constantRate(rate, over = 2.seconds))
 
+    private fun planOfBoth(browsingAt: Rate = 20.perSecond): Plan = Plan(
+        arms = listOf(
+            PlannedArm("paying", listOf("pay"), constantRate(100.perSecond, over = 2.seconds)),
+            PlannedArm("browsing", listOf("browse"), constantRate(browsingAt, over = 2.seconds)),
+        ),
+    )
+
     private fun runOf(
         steps: Map<String, LongRange>,
         samples: Int = 500,
@@ -120,6 +127,40 @@ class ComparisonTest {
         val why = paying.against(browsing).shouldBeInstanceOf<Comparison.NotComparable>().why
 
         withClue(why) { why shouldContain "browsing" }
+    }
+
+    @Test
+    fun `a mix is not compared against a run of one of its arms, and says which arm is missing`() {
+        val mixed = runOf(mapOf("pay" to 80L..120L), plan = planOfBoth())
+        val alone = runOf(mapOf("pay" to 80L..120L), plan = planAt(100.perSecond))
+
+        val why = mixed.against(alone).shouldBeInstanceOf<Comparison.NotComparable>().why
+
+        withClue(why) {
+            why shouldContain "browsing"
+            why shouldContain "was not before"
+        }
+    }
+
+    @Test
+    fun `a mix compares against the same mix, arm for arm`() {
+        val now = runOf(mapOf("pay" to 80L..120L), plan = planOfBoth())
+        val before = runOf(mapOf("pay" to 80L..120L), plan = planOfBoth())
+
+        now.against(before).shouldBeInstanceOf<Comparison.Compared>()
+    }
+
+    @Test
+    fun `an arm sent at another rate names the arm as well as the rate`() {
+        val faster = runOf(mapOf("pay" to 80L..120L), plan = planOfBoth(browsingAt = 500.perSecond))
+        val slower = runOf(mapOf("pay" to 80L..120L), plan = planOfBoth())
+
+        val why = faster.against(slower).shouldBeInstanceOf<Comparison.NotComparable>().why
+
+        withClue(why) {
+            why shouldContain "arm \"browsing\" profile"
+            why shouldContain "500.0"
+        }
     }
 
     @Test

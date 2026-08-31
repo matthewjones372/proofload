@@ -95,14 +95,14 @@ class RunsTest {
 
     @Test
     fun `runs of two different plans are refused, naming what differs`() {
-        val other = paying.copy(scenario = "browsing")
+        val other = Plan("browsing", paying.steps, paying.profile)
 
         val refusal = shouldThrow<IllegalArgumentException> {
             Runs(listOf(runOf(1.milliseconds), runOf(1.milliseconds, plan = other)))
         }
 
         refusal.message.orEmpty() shouldContain "run 2 was not asked to do the same thing as the first"
-        refusal.message.orEmpty() shouldContain "scenario was paying, now browsing"
+        refusal.message.orEmpty() shouldContain "arm \"browsing\" is sent here and was not before"
     }
 
     @Test

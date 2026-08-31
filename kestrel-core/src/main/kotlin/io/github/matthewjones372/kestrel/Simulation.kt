@@ -95,15 +95,11 @@ fun Simulation.completing(step: StepName, from: Completions, drainingFor: Durati
 /** What this run has to achieve to count as good. */
 fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goals + goals)
 
-/** What this run is asking for, before any of it happens. */
-fun Simulation.plan(): Plan = arms.first().let { arm ->
-    Plan(
-        scenario = arm.scenario.name,
-        steps = arm.scenario.stepNames,
-        profile = arm.profile,
-        goals = goals,
-    )
-}
+/** What this run is asking for, before any of it happens, every arm of it. */
+fun Simulation.plan(): Plan = Plan(
+    arms = arms.map { arm -> PlannedArm(arm.scenario.name, arm.scenario.stepNames, arm.profile) },
+    goals = goals,
+)
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })

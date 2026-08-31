@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Goal
+import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.goodput
 import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.step
@@ -57,7 +58,7 @@ class GoodputViewTest {
     @Test
     fun `a result that was never planned still has a share, and says why it has no rate`() {
         val page = Fixtures.metItsTarget
-            .let { it.copy(plan = it.plan.copy(profile = null, goals = listOf(target))) }
+            .let { it.copy(plan = Plan(it.plan.scenario, it.plan.steps, profile = null, goals = listOf(target))) }
             .toHtmlReport()
 
         page shouldContain "98.0%"

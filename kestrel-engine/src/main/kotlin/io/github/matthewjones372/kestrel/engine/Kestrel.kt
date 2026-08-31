@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
@@ -17,14 +18,14 @@ import java.util.concurrent.CopyOnWriteArrayList
  * this lives in the engine rather than in either test-framework module, so
  * neither of those has to depend on the other to get it.
  */
-class Kestrel {
+class Kestrel(private val progress: Progress = Progress.lines()) {
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
     // the test thread and read from JUnit's, hence the copy-on-write.
     private val runs = CopyOnWriteArrayList<RunResult>()
 
-    fun run(simulation: Simulation): RunResult = simulation.run().also { runs += it }
+    fun run(simulation: Simulation): RunResult = simulation.run(progress).also { runs += it }
 
     /**
      * Hunts for the rate the scenario sustains. Every rung it ran is kept, so

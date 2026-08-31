@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Completing
 import io.github.matthewjones372.kestrel.Pending
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
@@ -27,17 +28,24 @@ import kotlin.time.Duration.Companion.nanoseconds
  * Runs the search a rung at a time, and blocks for as long as it takes —
  * `worstCase` says how long that can be before anybody starts one.
  */
-fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
+fun Search.run(progress: Progress = Progress.lines()): Capacity = judgedBy { rung -> rung.run(progress) }
 
 /**
  * Sends the simulation and blocks until the last user it started has finished,
  * and until the sink it named has had the wait it declared.
+ *
+ * [progress] says what the run is doing while it does it, and defaults to
+ * saying it: a `main` that prints nothing for ten minutes is a run somebody
+ * kills. A caller whose stdout belongs to something else passes
+ * [Progress.silent].
  */
-fun Simulation.run(): RunResult {
+fun Simulation.run(progress: Progress = Progress.lines()): RunResult {
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val runStart = System.nanoTime()
     val users = Departures()
+    val departed = Departed()
+    val watching = watchProgress(progress, runStart) { ended -> departed.snapshot(users.inFlight(), ended) }
     // Read where the offsets are consumed rather than off the profile: what the
     // report names is the spacing that was produced, and a profile asked the
     // same question would answer with its own intention. This is the one thread
@@ -55,7 +63,11 @@ fun Simulation.run(): RunResult {
             arrivals.record(departure)
             users.starting()
             scheduler.schedule(
-                { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain) },
+                {
+                    scenario.depart(
+                        recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain, departed,
+                    )
+                },
                 // Relative to now, but the offset is from the run's start, and
                 // booking a million of these is not instant. Subtracting what
                 // has already elapsed is what stops every departure inheriting
@@ -70,6 +82,7 @@ fun Simulation.run(): RunResult {
         scheduler.shutdownNow()
     }
     drain?.close()
+    watching.stop()
     return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop())
 }
 
@@ -80,7 +93,12 @@ private fun Scenario.depart(
     users: Departures,
     session: Session,
     drain: Drain?,
+    departed: Departed,
 ) {
+    // The scheduler counting itself, on the scheduler's own thread. What the
+    // report calls lateness is still read below, where the user starts: one
+    // says when this tool fired, the other when a request left.
+    departed.left(lateness(runStart, departure).inWholeNanoseconds)
     Thread.ofVirtual().start {
         try {
             // Read here rather than on the scheduler: what the report calls
@@ -163,6 +181,7 @@ private class Departures {
 
     private val outstanding = AtomicLong(1)
     private val allFinished = CountDownLatch(1)
+    private val booking = CountDownLatch(1)
 
     fun starting() {
         outstanding.incrementAndGet()
@@ -172,9 +191,17 @@ private class Departures {
         if (outstanding.decrementAndGet() == 0L) allFinished.countDown()
     }
 
-    fun allScheduled() = finished()
+    fun allScheduled() {
+        // Released before the token it stands for, so a watcher between the two
+        // reads one user too few rather than the loop as a user.
+        booking.countDown()
+        finished()
+    }
 
     fun awaitAll() = allFinished.await()
+
+    /** Users still running, which is everything outstanding but the scheduling loop's own token. */
+    fun inFlight(): Long = (outstanding.get() - booking.count).coerceAtLeast(0)
 }
 
 /**

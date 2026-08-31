@@ -45,7 +45,7 @@ class Kestrel(
      * so naming a reporter names an engine rather than widening the seam that
      * 0051 kept to one method.
      */
-    constructor(progress: Progress) : this(VirtualThreads(progress).exclusive(), progress)
+    constructor(progress: Progress) : this(VirtualThreads(progress).exclusive(progress), progress)
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
@@ -63,7 +63,7 @@ class Kestrel(
      * a curve is one machine's answer and not two interleaved runs'.
      */
     fun run(search: Search): Capacity =
-        exclusively(Exclusivity.Running) { search.reported(progress) { rung -> run(rung) } }
+        exclusively(Exclusivity.Running, progress) { search.reported(progress) { rung -> run(rung) } }
 
     /**
      * Walks one user through [scenario] and prints what each step did.
@@ -79,7 +79,7 @@ class Kestrel(
      * measured between two runs would be measuring the drift it is there to
      * bound.
      */
-    fun calibrate(): Floor = exclusively(Exclusivity.Calibrating) { machineFloor() }
+    fun calibrate(): Floor = exclusively(Exclusivity.Calibrating, progress) { machineFloor() }
 
     /** What was measured, for a failure message. Empty when nothing ran. */
     fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }

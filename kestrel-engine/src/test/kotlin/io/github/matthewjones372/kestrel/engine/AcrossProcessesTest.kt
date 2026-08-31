@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
@@ -84,6 +85,46 @@ class AcrossProcessesTest {
     }
 
     @Test
+    fun `a run that queued for the machine says how long it waited`(@TempDir machine: Path) {
+        val lock = machine.resolve(LOCK)
+        val held = machine.resolve("holder-may-go")
+        val queued = machine.resolve("queued-may-go")
+
+        Forked(lock, held).use { holder ->
+            holder.said("in").shouldNotBeNull()
+            Forked(lock, queued).use { waiting ->
+                waiting.queues()
+                Files.createFile(held)
+                waiting.said("kestrel: waited").shouldNotBeNull()
+                withClue("the run that walked straight in had nothing to say about a queue") {
+                    holder.everSaid("kestrel: waited") shouldBe false
+                }
+                Files.createFile(queued)
+            }
+        }
+    }
+
+    @Test
+    fun `a run given a silent reporter says nothing about the queue it was in`(@TempDir machine: Path) {
+        val lock = machine.resolve(LOCK)
+        val held = machine.resolve("holder-may-go")
+        val queued = machine.resolve("queued-may-go")
+
+        Forked(lock, held).use { holder ->
+            holder.said("in").shouldNotBeNull()
+            Forked(lock, queued, silent = true).use { waiting ->
+                waiting.queues()
+                Files.createFile(held)
+                waiting.said("in").shouldNotBeNull()
+                withClue("a caller whose stdout belongs to something else is not told about a queue either") {
+                    waiting.everSaid("kestrel:") shouldBe false
+                }
+                Files.createFile(queued)
+            }
+        }
+    }
+
+    @Test
     fun `a wait past its ceiling fails naming the process that has the machine`(@TempDir machine: Path) {
         val lock = machine.resolve(LOCK)
 
@@ -93,7 +134,7 @@ class AcrossProcessesTest {
             val gaveUp =
                 withProperties("kestrel.exclusive.file" to lock.toString(), "kestrel.exclusive.timeout" to "1") {
                     shouldThrow<IllegalStateException> {
-                        Kestrel(engine = Blank().exclusive()).run(waitingRoom)
+                        Kestrel(engine = Blank().exclusive(Progress.silent)).run(waitingRoom)
                     }
                 }
 
@@ -120,6 +161,7 @@ internal class Forked(
     lock: Path,
     release: Path,
     exclusive: Boolean = true,
+    silent: Boolean = false,
 ) : AutoCloseable {
 
     private val process = ProcessBuilder(
@@ -131,6 +173,7 @@ internal class Forked(
             System.getProperty("java.class.path"),
             "io.github.matthewjones372.kestrel.engine.HoldsTheMachine",
             release.toString(),
+            "silent".takeIf { silent },
         ),
     ).redirectErrorStream(true).start()
 
@@ -163,6 +206,16 @@ internal class Forked(
      */
     fun everSaid(word: String): Boolean = everything.any { it.startsWith(word) }
 
+    /**
+     * Waits until this process is queueing for the machine rather than still
+     * starting: it says so before it asks, and the moment between saying and
+     * blocking is what the pause covers.
+     */
+    fun queues() {
+        said("asking").shouldNotBeNull()
+        Thread.sleep(SETTLING_MILLIS)
+    }
+
     fun kill() {
         process.destroyForcibly().waitFor()
     }
@@ -175,3 +228,5 @@ internal class Forked(
 private const val LOCK = "kestrel-machine.lock"
 
 private val PATIENCE = 15.seconds
+
+private const val SETTLING_MILLIS = 500L

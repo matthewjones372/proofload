@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Engine
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Simulation
@@ -35,7 +36,7 @@ class MachineLockTest {
 
         val said = printed {
             withProperties(FILE to occupied.resolve(LOCK).toString()) {
-                repeat(2) { Kestrel(engine = Blank().exclusive()).run(nothing) }
+                repeat(2) { Kestrel(engine = Blank().exclusive(Progress.silent)).run(nothing) }
             }
         }
 
@@ -52,7 +53,7 @@ class MachineLockTest {
 
         val said = printed {
             withProperties(FILE to readOnly.resolve(LOCK).toString()) {
-                Kestrel(engine = Blank().exclusive()).run(nothing)
+                Kestrel(engine = Blank().exclusive(Progress.silent)).run(nothing)
             }
         }
 
@@ -64,7 +65,7 @@ class MachineLockTest {
         val lock = directory.resolve(LOCK)
 
         withProperties(FILE to lock.toString(), "kestrel.exclusive" to "false") {
-            Kestrel(engine = Blank().exclusive()).run(nothing)
+            Kestrel(engine = Blank().exclusive(Progress.silent)).run(nothing)
         }
 
         withClue("a run that opted out queues for nothing, so it leaves nothing to queue on") {

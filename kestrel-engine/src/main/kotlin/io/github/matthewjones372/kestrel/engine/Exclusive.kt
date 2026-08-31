@@ -2,11 +2,14 @@ package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Exclusivity
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.then
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.time.toKotlinDuration
 
 /**
  * This engine, sending one simulation at a time on this machine: a run started
@@ -15,13 +18,17 @@ import java.util.concurrent.locks.ReentrantLock
  * A decorator rather than something inside an engine, because exclusivity is
  * the machine's property and not virtual threads': two engines in one process
  * queue for the same machine, as do two processes.
+ *
+ * [progress] is asked for nothing; it says whether this run is one a reader is
+ * being told about, so a caller who passed [Progress.silent] is not told about
+ * a queue either.
  */
-fun Engine.exclusive(): Engine = Exclusive(this)
+fun Engine.exclusive(progress: Progress = Progress.lines()): Engine = Exclusive(this, progress)
 
-private class Exclusive(private val engine: Engine) : Engine {
+private class Exclusive(private val engine: Engine, private val progress: Progress) : Engine {
 
     override fun run(simulation: Simulation): RunResult =
-        exclusively(Exclusivity.Running) { engine.run(simulation) }
+        exclusively(Exclusivity.Running, progress) { engine.run(simulation) }
 }
 
 /**
@@ -34,7 +41,7 @@ private class Exclusive(private val engine: Engine) : Engine {
  * before [work] starts, so a wait is never inside the measurement that follows
  * it — a queued run reports the target's latency and not the queue's.
  */
-internal fun <T> exclusively(during: Exclusivity, work: () -> T): T {
+internal fun <T> exclusively(during: Exclusivity, progress: Progress = Progress.silent, work: () -> T): T {
     // A rung of a capacity search arrives here on the thread that is already
     // holding the machine for the search: the same run continuing, rather than
     // a second one asking, so it neither waits nor gives the machine back early.
@@ -54,11 +61,25 @@ internal fun <T> exclusively(during: Exclusivity, work: () -> T): T {
         takeTheMachine().use { host ->
             val asked = if (free && host?.waited != true) Exclusivity.Idle else Exclusivity.Waiting(since)
             asked.then(during)
+            asked.reportedTo(progress)
             work()
         }
     } finally {
         machine.unlock()
     }
+}
+
+/**
+ * How long the machine was queued for, where the run is one that speaks at all.
+ *
+ * [Progress] has no member for a wait — it is a core type, and adding one is
+ * 0050's third section — so a run whose caller asked for silence with
+ * [Progress.silent] gets silence here too, and a run that did not queue says
+ * nothing either way.
+ */
+private fun Exclusivity.reportedTo(progress: Progress) {
+    if (this !is Exclusivity.Waiting || progress === Progress.silent) return
+    println("kestrel: waited ${Duration.between(since, Instant.now()).toKotlinDuration()} for the machine")
 }
 
 private fun exclusivityWanted(): Boolean = System.getProperty("kestrel.exclusive")?.toBooleanStrictOrNull() != false

@@ -3,6 +3,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Engine
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Simulation
@@ -21,11 +22,13 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * A `main` because one JVM cannot show that two JVMs serialise:
  * `AcrossProcessesTest` forks this and reads these lines. `asking` is what lets
- * that test know this process is queueing rather than yet to start.
+ * that test know this process is queueing rather than yet to start. A second
+ * argument of `silent` asks the run for [Progress.silent].
  */
 fun main(args: Array<String>) {
     val release = Path.of(args[0])
-    val kestrel = Kestrel(engine = Holding(release).exclusive())
+    val progress = if (args.getOrNull(1) == "silent") Progress.silent else Progress.lines()
+    val kestrel = Kestrel(engine = Holding(release).exclusive(progress))
     say("asking")
     kestrel.run(scenario("holding") { exec("hold") { } }.at(1.perSecond, over = 1.milliseconds))
 }

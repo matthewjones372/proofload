@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.junit5
 
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -30,8 +31,15 @@ class KestrelExtension : ParameterResolver, TestExecutionExceptionHandler {
         throw throwable
     }
 
-    private fun ExtensionContext.kestrel(): Kestrel =
-        requireNotNull(getStore(NAMESPACE).getOrComputeIfAbsent(uniqueId, { Kestrel() }, Kestrel::class.java))
+    /**
+     * Silent rather than the default: a JUnit report is somebody else's
+     * output, and a run that prints a line every five seconds into it is noise
+     * a reader has to scroll past to reach the failure. A `main` keeps the
+     * lines, which is where the ten minutes of silence was the problem.
+     */
+    private fun ExtensionContext.kestrel(): Kestrel = requireNotNull(
+        getStore(NAMESPACE).getOrComputeIfAbsent(uniqueId, { Kestrel(Progress.silent) }, Kestrel::class.java),
+    )
 
     private companion object {
         // Keyed on the test's own id, so two tests in a class never share one.

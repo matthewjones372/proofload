@@ -28,7 +28,9 @@ an adapter, not a design.
   caller's choice and none of them is this tool's business.
 - No consumer-group lag monitoring. That is observing a system, not generating
   load against one, and it belongs in a spec of its own.
-- No embedded broker in the build, and no second engine.
+- No broker inside `./gradlew build`. A real one runs in a task of its own, on
+  0041's pattern; see below.
+- No second engine. The producer runs on virtual threads like everything else.
 
 ## Shape
 
@@ -61,6 +63,14 @@ the measurement honest in a way an owned serializer would not: whatever
 serialization costs, it is the caller's code running on the departure thread,
 and it is visible as such rather than hidden inside a step this tool wrote.
 
+Two tiers of test, because this is the first module that cannot be proved
+against a socket it starts itself. 0041 has already had this argument in another
+key: a class of test that is real but cannot share `build` gets a tag, a task, an
+exclusion from Kover instrumentation, and a gate that fails the build if the two
+ever meet. `broker` is that shape again, for an environment rather than a clock.
+What `build` then proves is the mapping, which is all the adapter is; what the
+tagged task proves is the wire, the serializer and the registry.
+
 One producer, shared. A `KafkaProducer` is thread-safe and built to be shared,
 which is the opposite of 0055's per-user cookie jar and for the opposite reason:
 a jar is per-user state, a producer is a connection pool. A producer per virtual
@@ -84,13 +94,27 @@ tunes against them will ship a consumer that cannot keep up.
       `correlatedBy` reading the id from a header.
       Done when: a run whose completions come from a second topic reports
       `unmatched` and `inFlight` as 0040 defines them.
+- [ ] **`spec-0060-broker`** — a `broker`-tagged task running the module
+      against a real Kafka in a container, and the root gate widened from one
+      tag to a set.
+      Done when: `./gradlew build --dry-run` lists neither `timingTests` nor
+      `brokerTests`, reverting either exclusion fails the build by name, and the
+      tagged task produces and consumes against a real broker.
 - [ ] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`:
-      the repository declaration, the serializer wiring, and the warm-up.
+      the `packages.confluent.io` declaration, the serializer wired into
+      `value { }`, and what the first record costs.
+      Done when: the page says that a serializer fetches its schema once per
+      subject and caches it, so the first record pays an HTTP round trip; that
+      the stall lands in `behind` rather than in the target's latency, because
+      the lambda is the caller's code on the departure thread; and that
+      `result.steady` is where to read the run without it.
 
 ## Acceptance
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
+./gradlew build --dry-run | grep -cE "timingTests|brokerTests"   # 0
+./gradlew :kestrel-kafka:brokerTests                             # needs a container
 ```
 
 ## Open questions
@@ -106,12 +130,15 @@ tunes against them will ship a consumer that cannot keep up.
     trip; with `acks=0` it is nothing at all. Recommend recording the ack as the
     step's service time, printing the `acks` setting beside it, and leaning on
     `completing` for the number that matters.
-3. **How is this tested without a container?** `MockProducer`/`MockConsumer`
-    ship with `kafka-clients` and run in-JVM, which suits the first entry —
-    the adapter's job is mapping, and 0040's shape is already covered by
-    `InMemoryCompletions`. Recommend those, and accept that nothing here
-    exercises the wire; a Testcontainers suite would be a `timing`-style tagged
-    task nobody runs in `build`.
+3. **What does `build` prove about a module it cannot run a broker for?**
+    That the adapter maps — key, value, header, correlation, the reason a failed
+    send gives — which `MockProducer`/`MockConsumer` answer in-JVM, and which is
+    the whole of the adapter's job. 0040's shape is covered already by
+    `InMemoryCompletions`, and whether `kafka-clients` works is Apache's
+    question, not this repository's. The wire, the serializer and the registry
+    are the `broker` task's. Recommend saying exactly that in
+    `docs/modules.md`, where every other module's claim is a test, rather than
+    letting this one row quietly mean less than the others.
 4. **Where does the correlation id live?** A header keeps it out of the payload
     and needs no deserializer on the completion side, which is the only option
     that does not drag the registry back in. Recommend a header, with the key as

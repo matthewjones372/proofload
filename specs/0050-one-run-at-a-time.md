@@ -68,9 +68,29 @@ processes. Both are JDK, so core's dependency test stays green. A lock is taken
 
 The file lock is what makes "no configuration" true rather than nearly true.
 A JVM-scoped singleton alone solves only what `@ResourceLock` solved — two
-tests in one fork — and leaves Gradle's other forks exactly as they were. The
-OS releases a `FileLock` when the process dies, so a crashed run cannot wedge
-the machine, which a lock file with a PID in it could.
+tests in one fork — and leaves Gradle's other forks exactly as they were.
+
+Measured on Linux with JDK 25 rather than assumed:
+
+| claim | result |
+|---|---|
+| two processes serialise | second waited 1,728 ms for a 2,000 ms hold |
+| two locks in one JVM | `OverlappingFileLockException` |
+| holder killed with `SIGKILL` | next process acquired in 0 ms |
+| unusable path | catchable `IOException`, immediately |
+
+The second row is why the reentrant lock in front is required rather than
+tidy. The third is why there is no PID file and nothing to reap: the OS frees
+the lock when its holder dies, including a `kill -9`, so a crashed run cannot
+wedge the machine.
+
+The fourth is what keeps setup at zero. Where the lock cannot be taken for an
+environmental reason — a read-only temp directory, another user owning the
+file, a filesystem whose locking is unreliable — the run proceeds with in-JVM
+exclusivity and says the machine-wide guarantee was not available. **A load
+test must never fail because a lock file could not be opened.** A tool that
+makes you configure a lock before it will run is the setup burden this whole
+design exists to avoid.
 
 Wrapping an engine rather than living in one is what keeps this honest. A lock
 inside `kestrel-engine` would be virtual threads' lock, and two engines in one
@@ -98,10 +118,12 @@ Stacks on 0051, which declares the `Engine` this decorates.
       Done when: two threads calling `run()` are shown never to overlap, a
       capacity search's rungs do not deadlock on their own lock, and
       `NoThirdPartyDependenciesTest` still passes.
-- [ ] **`spec-0050-across-processes`** — the file lock, and the opt-out.
+- [ ] **`spec-0050-across-processes`** — the file lock, its degradation, and
+      the opt-out.
       Done when: two JVMs started together are shown to run one after the
-      other, `-Dkestrel.exclusive=false` lets them overlap, and killing a
-      holder frees the machine for the next.
+      other, killing a holder frees the machine for the next,
+      `-Dkestrel.exclusive=false` lets them overlap, and a lock file that
+      cannot be opened downgrades the guarantee instead of failing the run.
 - [ ] **`spec-0050-reported`** — the wait, where a reader sees it.
       Done when: a run that waited says how long, and a run that did not says
       nothing.
@@ -121,9 +143,17 @@ Stacks on 0051, which declares the `Engine` this decorates.
     field — a run that waited four minutes and does not say so is the kind of
     silence this repository keeps writing specs about.
 2. **What is the lock file's path, and who else might hold it?** A fixed name
-    under `java.io.tmpdir` is the obvious choice and is shared by every user on
+    under `java.io.tmpdir` needs no configuration and is shared by every user on
     a multi-user box, which serialises strangers. Recommend it anyway, with the
     path overridable, since two strangers load-testing one host should queue.
+    Two containers on one host are the case this cannot reach: they share a CPU
+    and not a `/tmp`, so they will not serialise. Nothing inside a container can
+    fix that, and the page should not imply otherwise.
+7. **Is `FileLock` sound on the filesystems people actually use?** Local disks
+    and tmpfs are measured above. The JDK documents network filesystems as the
+    weak spot and NFS was not tested here. Recommend the degradation rule cover
+    it: an unreliable lock is one that fails to be taken, which is already the
+    path that downgrades rather than fails.
 3. **Does `benchmarks` opt out?** It measures the tool deliberately and may want
     several processes at once. Recommend it sets `kestrel.exclusive=false` in
     its own build file rather than the engine special-casing it.

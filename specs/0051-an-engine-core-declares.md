@@ -69,6 +69,14 @@ The seam is worth landing before 0050 rather than after: a machine-wide lock
 placed inside one engine has to move the moment there is a second, and a lock
 that moved is a lock somebody has to re-prove.
 
+No second engine is built and none is planned. A recording test double is the
+whole proof, and it is the right one: the parts that assume virtual threads —
+`Recorders`, with its carrier shards, `threadId()` and `onSpinWait` — are
+already `internal` to this module, while core's `RunRecorder` is deliberately
+not thread-safe and merged at the end. That is a shape an actor engine would
+want too, one recorder per actor. The seam is real before anything exercises
+it; what this spec adds is a name for it.
+
 ## Stack
 
 - [ ] **`spec-0051-interface`** — `Engine` in core, `VirtualThreads`
@@ -98,10 +106,16 @@ that moved is a lock somebody has to re-prove.
     the machine, but it is measured by running a null step, which needs an
     engine. Recommend it stay on `Kestrel` and run through whichever engine it
     holds, so a floor describes the machine as that engine will drive it.
-3. **Does the interface need a suspend variant?** A coroutine or actor engine
-    would have to block inside `run`. Recommend blocking for now — every caller
-    today is a test method that blocks anyway — and revisit when a non-blocking
-    engine actually exists rather than designing for one that does not.
+3. **Does the interface need a suspend variant?** No, and it would cost.
+    JUnit has no continuation to supply a `suspend` test method, so a suspending
+    `run` puts `runBlocking` in every JUnit user's test body or a
+    kotlinx-coroutines dependency in `kestrel-junit5`. Core could declare
+    `suspend` — it is stdlib — but not `withContext` or `runBlocking`, which are
+    not, so core would declare a method it cannot help anyone call. Kotest
+    already blocks inside a coroutine today and works. Blocking is also the
+    reversible choice: adding a suspending overload later is additive, removing
+    one is not. Recommend blocking, and note that blocking a virtual thread is
+    the point of Loom rather than a compromise.
 4. **Does `Simulation.run()` survive?** Keeping it as sugar over the default
     engine preserves the README's examples and every doc snippet. Recommend
     keeping it, defined in terms of `VirtualThreads`, so the extension is a

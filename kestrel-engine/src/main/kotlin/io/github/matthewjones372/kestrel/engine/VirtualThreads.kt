@@ -49,6 +49,10 @@ fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
 fun Simulation.run(): RunResult = VirtualThreads().run(this)
 
 private fun Simulation.send(): RunResult {
+    // One arm: booking a second arm's departures after the first hands the
+    // arrival recorder gaps that run backwards, so a mix waits for a schedule
+    // that merges them.
+    val (scenario, profile, feeder) = arms.single()
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val runStart = System.nanoTime()
@@ -60,7 +64,7 @@ private fun Simulation.send(): RunResult {
     // three numbers there costs no allocation on the path whose delay is
     // measured as latency.
     val arrivals = ArrivalRecorder()
-    val drain = completing?.let { Drain(it, recorders, runStart, closesAt = profile.over + it.drainingFor) }
+    val drain = completing?.let { Drain(it, recorders, runStart, closesAt = over + it.drainingFor) }
     drain?.start()
     // One platform thread. Its only job is to start virtual threads at the
     // offsets the profile named; a step never runs on it, so a slow target

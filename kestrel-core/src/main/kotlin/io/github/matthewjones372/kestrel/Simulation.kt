@@ -22,14 +22,61 @@ val Number.perMinute: Rate get() = Rate.ofPerSecond(toDouble() / SECONDS_PER_MIN
 /** A sink drained for the answers a run's emit steps departed with, and how long the run waits for them. */
 data class Completing(val step: String, val from: Completions, val drainingFor: Duration)
 
-/** A scenario, the rate it is sent at and what its users start with: a run, as one value. */
+/** A scenario, the rate it is sent at and what its users start with: one journey of a run. */
+data class Arm(val scenario: Scenario, val profile: InjectionProfile, val feeder: Feeder = Feeder.empty)
+
+/** The arms sent together, what they have to achieve and the sink they are drained into: a run, as one value. */
 data class Simulation(
-    val scenario: Scenario,
-    val profile: InjectionProfile,
-    val feeder: Feeder = Feeder.empty,
+    val arms: List<Arm>,
     val goals: List<Goal> = emptyList(),
     val completing: Completing? = null,
-)
+) {
+
+    constructor(
+        scenario: Scenario,
+        profile: InjectionProfile,
+        feeder: Feeder = Feeder.empty,
+        goals: List<Goal> = emptyList(),
+        completing: Completing? = null,
+    ) : this(listOf(Arm(scenario, profile, feeder)), goals, completing)
+
+    init {
+        require(arms.isNotEmpty()) { "a simulation sends at least one arm" }
+        val shared = arms
+            .flatMap { arm -> arm.scenario.stepNames.distinct().map { step -> step to arm.scenario.name } }
+            .groupBy({ (step, _) -> step }, { (_, scenario) -> scenario })
+            .filterValues { it.size > 1 }
+        // A step name is one row of the report. Two arms sharing one would
+        // either merge into a row describing neither or be qualified behind the
+        // caller's back, which breaks reading a row back by the name written.
+        require(shared.isEmpty()) {
+            shared.entries.joinToString("; ", postfix = ": rename one of them") { (step, scenarios) ->
+                "step \"$step\" is in ${scenarios.joinToString(" and ")}"
+            }
+        }
+    }
+
+    /** The first arm's rate line; a mix has one per arm, on [Arm]. */
+    val profile: InjectionProfile get() = arms.first().profile
+
+    /** The first arm's data, likewise. */
+    val feeder: Feeder get() = arms.first().feeder
+
+    /** How long the run lasts: the arms depart together, so the longest of them. */
+    val over: Duration get() = arms.maxOf { it.profile.over }
+}
+
+/** How many users this run sends, every arm counted, before it sends any. */
+fun Simulation.userCount(): Long = arms.sumOf { it.profile.userCount() }
+
+/**
+ * Both sides' arms in one run, judged by both sides' goals.
+ *
+ * A drained sink belongs to the run rather than to an arm, so the left-hand
+ * side's is the one kept.
+ */
+operator fun Simulation.plus(other: Simulation): Simulation =
+    Simulation(arms + other.arms, goals + other.goals, completing ?: other.completing)
 
 /**
  * The same run, with [from] drained for the answers its emit steps departed
@@ -49,15 +96,17 @@ fun Simulation.completing(step: StepName, from: Completions, drainingFor: Durati
 fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goals + goals)
 
 /** What this run is asking for, before any of it happens. */
-fun Simulation.plan(): Plan = Plan(
-    scenario = scenario.name,
-    steps = scenario.stepNames,
-    profile = profile,
-    goals = goals,
-)
+fun Simulation.plan(): Plan = arms.first().let { arm ->
+    Plan(
+        scenario = arm.scenario.name,
+        steps = arm.scenario.stepNames,
+        profile = arm.profile,
+        goals = goals,
+    )
+}
 
-/** The same run, with each user seeded from [feeder] before its first step. */
-fun Simulation.fedBy(feeder: Feeder): Simulation = copy(feeder = feeder)
+/** The same run, with each user of every arm seeded from [feeder] before its first step. */
+fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })
 
 /** Gatling's `setUp` / `inject` / `protocols`, in one call. */
 fun Scenario.at(rate: Rate, over: Duration): Simulation = Simulation(this, constantRate(rate, over))

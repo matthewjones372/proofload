@@ -805,11 +805,35 @@ has all of its goals judged over all of it.
 
 ## What this is for
 
-Gatling is the reference point and the thing to be simpler than. Its scenario
-DSL is Scala, its reports are a bundled web app, and running one in CI means
-adopting its plugin and its conventions. The bet here is that most teams want
-a much smaller slice: describe a scenario in Kotlin, run it from a test or a
-`main`, get numbers that are honest about what they measured.
+Gatling is the reference point, and this exists because of what using it from
+Kotlin is like rather than because anything is wrong with it. It has had a
+Kotlin DSL for years. That DSL is a Kotlin surface over a Java one, and what
+Kotlin would otherwise buy does not survive the trip.
+
+A session key is a string, and its type is named where the value is read rather
+than where the key is declared — `getString("orderId")` at each use, agreeing
+with the write by convention. A step is named by a string at the `exec` and by
+that string again wherever a result is asserted, so a rename leaves a report
+with a row nobody reads instead of failing to compile. A path carries
+`#{orderId}`, resolved against the session while the run is going, so a typo is
+a failed request at minute six. A simulation is a class extending `Simulation`
+with its `setUp` in an initialiser, so there is nothing to hold: no value to
+compose, none to print, and nothing to ask `userCount()` of before anything is
+sent. And it runs through its own plugin and its own launcher, with the
+assertions written inside the simulation in Gatling's language — what comes
+back is a report directory rather than a number a test can read.
+
+None of those is a defect. They are what a DSL designed for Scala and adapted
+twice looks like from Kotlin, and together they are a scenario the compiler
+cannot check and a result the test framework cannot see. The first code block
+in this README is the same test with each of them removed.
+
+The other half of this is not ergonomics. A generator that falls behind its own
+schedule reports its backlog as the target's latency, and most tools in this
+class cannot say whether that happened. Everything above this section is that
+argument: two clocks on every step, the injector's own stalls measured beside
+the tail they are blamed for, a floor the machine is asked for before a
+comparison is drawn, and a verdict allowed to say it cannot tell.
 
 The three decisions that shape everything else, and are still open:
 

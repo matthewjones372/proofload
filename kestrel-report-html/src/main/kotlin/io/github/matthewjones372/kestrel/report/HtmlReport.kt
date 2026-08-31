@@ -296,7 +296,7 @@ private fun StepStats.reasonLines(): List<String> =
         """            <td colspan="${COLUMNS.size}">""",
         """              <ul class="reason-list">""",
     ) + failed.reasons.map { (reason, seen) ->
-        """                <li><span class="reason">${reason.escapedForHtml()}</span>""" +
+        """                <li><span class="reason">${reason.described.escapedForHtml()}</span>""" +
             """<span class="reason-count">${seen.grouped()}</span></li>"""
     } + listOf(
         "              </ul>",

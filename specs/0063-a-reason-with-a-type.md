@@ -99,20 +99,20 @@ in a wrapper still cannot do.
 
 ## Stack
 
-- [ ] **`spec-0063-reason`** — `Reason` in core, `Said`, `Threw`, `TimedOut`
+- [x] **`spec-0063-reason`** — `Reason` in core, `Said`, `Threw`, `TimedOut`
       and `Other`; `StepScope.fail` taking either; `Outcome.reasons` and
       `failedWith` in terms of it; both reporters reading `described`.
       Done when: a step that failed twice for one reason counts two under one
       key; `fail("no customer fed")` reads back as `Said("no customer fed")`;
       and the cardinality guard still collapses the twenty-first reason into
       `Other`.
-- [ ] **`spec-0063-protocols`** — `HttpStatus`, `CheckFailed`,
+- [x] **`spec-0063-protocols`** — `HttpStatus`, `CheckFailed`,
       `NothingCaptured` and the unfilled-path reason in `kestrel-http`; the
       websocket module's two; `kestrel-pelican`'s status and throw.
       Done when: a 503 reads back as `HttpStatus(503)` rather than as text, a
       rejected check names itself, and `NoThirdPartyDependenciesTest` still
       passes for every module that gained a type.
-- [ ] **`spec-0063-asked`** — the README and the cookbook saying what a typed
+- [x] **`spec-0063-asked`** — the README and the cookbook saying what a typed
       reason is for, rather than showing the literal this spec removes.
       Done when: no example in either file passes a string literal to
       `failedWith`.
@@ -139,3 +139,8 @@ in a wrapper still cannot do.
 4. **What about `status(code)`?** It becomes `HttpStatus(code)` and the helper
     goes. Recommend removing it rather than leaving a function whose whole
     purpose was to stand in for the type this spec adds.
+5. **What does `kestrel-pelican` name a status?** Settled in the building: its
+    own `Status`, in its own package. It cannot depend on `kestrel-http` —
+    `NoPekkoTest` asserts its runtime classpath is core and `pelican-core`, and
+    `docs/modules.md` says so — and a run goes through one transport or the
+    other, never both, so nothing is ever grouped across the two.

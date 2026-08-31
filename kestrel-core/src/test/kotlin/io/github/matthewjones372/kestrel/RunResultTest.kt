@@ -27,7 +27,7 @@ class RunResultTest {
         failed = Outcome(
             serviceTime = timingOf(List(3) { 30.milliseconds }),
             responseTime = timingOf(List(3) { 130.milliseconds }),
-            reasons = mapOf("status 503" to 3L),
+            reasons = mapOf(Said("status 503") to 3L),
         ),
         serviceTime = timingOf(List(97) { 20.milliseconds } + List(3) { 30.milliseconds }),
         responseTime = timingOf(List(97) { 120.milliseconds } + List(3) { 130.milliseconds }),
@@ -54,7 +54,7 @@ class RunResultTest {
     @Test
     fun `a step counts what failed without being told twice`() {
         result["pay"].failed.count shouldBe 3L
-        result["pay"].failed.reasons["status 503"] shouldBe 3L
+        result["pay"].failed.reasons[Said("status 503")] shouldBe 3L
     }
 
     @Test
@@ -67,12 +67,12 @@ class RunResultTest {
 
     @Test
     fun `a step says how many failed for one reason, without a map to compare against`() {
-        result["pay"].failedWith("status 503") shouldBe 3L
+        result["pay"].failedWith(Said("status 503")) shouldBe 3L
     }
 
     @Test
     fun `a reason nothing failed for is none of them, not an absent one`() {
-        result["pay"].failedWith("timeout") shouldBe 0L
+        result["pay"].failedWith(Said("timeout")) shouldBe 0L
     }
 
     @Test

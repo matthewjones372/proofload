@@ -204,7 +204,7 @@ private fun unitOf(nanos: Long): DurationUnit = when {
 private fun RunResult.failureBlocks(): List<String> {
     val rows = steps.values.flatMap { step ->
         step.failed.reasons.map { (reason, seen) ->
-            listOf(step.name.escapeMarkdown(), reason.escapeMarkdown(), seen.toString())
+            listOf(step.name.escapeMarkdown(), reason.described.escapeMarkdown(), seen.toString())
         }
     }
     if (rows.isEmpty()) return emptyList()

@@ -1,9 +1,12 @@
 package io.github.matthewjones372.kestrel.websocket
 
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.SessionKey
 import io.github.matthewjones372.kestrel.StepName
 import io.github.matthewjones372.kestrel.StepScope
+import io.github.matthewjones372.kestrel.Threw
+import io.github.matthewjones372.kestrel.TimedOut
 import io.github.matthewjones372.kestrel.sessionKey
 import java.net.URI
 import java.net.http.HttpClient
@@ -20,12 +23,12 @@ import java.util.concurrent.TimeoutException
 internal val handshakeTimeout: Duration = Duration.ofSeconds(30)
 
 /**
- * How this module names a step that needed a connection nothing had opened.
- *
- * A reason is a contract between the code that writes it and the test that
- * reads it, and a literal on both sides is a contract nobody checks.
+ * A step that needed a connection nothing had opened: a `close` with no `open`
+ * before it, or one whose `open` failed and left the user without a socket.
  */
-const val NOT_CONNECTED: String = "not connected"
+data object NotConnected : Reason {
+    override val described: String get() = "not connected"
+}
 
 /**
  * One user's socket.
@@ -90,12 +93,12 @@ private fun StepScope.openTo(target: WsTarget) {
 }
 
 private fun StepScope.closeOpen() {
-    val open = this[connection] ?: return fail(NOT_CONNECTED)
+    val open = this[connection] ?: return fail(NotConnected)
     open.socket.sendClose(WebSocket.NORMAL_CLOSURE, "").settled(this) ?: return
     // Waiting here is the measurement, not a stall: the step is timed for the
     // round trip, and the gate is bounded so a peer that never answers is a
     // failure rather than a user parked for the rest of the run.
-    if (!open.awaitClosed(handshakeTimeout)) fail("timeout")
+    if (!open.awaitClosed(handshakeTimeout)) fail(TimedOut)
 }
 
 /**
@@ -138,8 +141,8 @@ private fun <T> CompletableFuture<T>.settled(scope: StepScope): T? =
  * is named instead of classed because it is the one failure a reader acts on
  * differently — the target was reachable and did not answer in time.
  */
-private fun CompletionException.reason(): String {
+private fun CompletionException.reason(): Reason {
     val failure = cause ?: this
-    if (failure is TimeoutException) return "timeout"
-    return failure::class.simpleName ?: failure.javaClass.name
+    if (failure is TimeoutException) return TimedOut
+    return Threw(failure::class.simpleName ?: failure.javaClass.name)
 }

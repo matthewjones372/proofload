@@ -19,7 +19,7 @@ sealed interface StepResult {
 
     data class Ok(override val session: Session) : StepResult
 
-    data class Failed(override val session: Session, val reason: String) : StepResult
+    data class Failed(override val session: Session, val reason: Reason) : StepResult
 }
 
 /**
@@ -32,7 +32,7 @@ class StepScope internal constructor(private var session: Session) {
     // The builder case AGENTS.md allows: a step body is written as statements,
     // so the session and the reason accumulate across them and are frozen into
     // a StepResult the moment the body returns. Neither escapes mutable.
-    private var reason: String? = null
+    private var reason: Reason? = null
 
     operator fun <T : Any> get(key: SessionKey<T>): T? = session[key]
 
@@ -45,11 +45,18 @@ class StepScope internal constructor(private var session: Session) {
      * to report a declared failure would put a second error model beside this
      * one, and the engine would have to catch to measure.
      */
-    fun fail(reason: String) {
+    fun fail(reason: Reason) {
         // First reason wins: a timeout that follows a 503 is the 503's doing,
         // and a report that renames it loses which one to go and fix.
         if (this.reason == null) this.reason = reason
     }
+
+    /**
+     * The same, for a step body with no type to give: a library that answers
+     * with a message, or a condition nobody has named yet. Recorded as [Said],
+     * so it groups like every other reason.
+     */
+    fun fail(reason: String) = fail(Said(reason))
 
     internal fun result(): StepResult =
         reason?.let { StepResult.Failed(session, it) } ?: StepResult.Ok(session)

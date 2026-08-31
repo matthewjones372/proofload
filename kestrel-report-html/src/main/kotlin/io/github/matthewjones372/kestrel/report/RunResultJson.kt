@@ -99,7 +99,7 @@ private fun Outcome.toJson(depth: Int): String = jsonObject(
         "serviceTime" to serviceTime.toJson(depth + 1),
         "responseTime" to responseTime.toJson(depth + 1),
         "reasons" to reasons.entries.jsonArray(depth + 1) { (reason, seen) ->
-            jsonObject(depth + 2, listOf("reason" to jsonString(reason), "count" to seen.toString()))
+            jsonObject(depth + 2, listOf("reason" to jsonString(reason.described), "count" to seen.toString()))
         },
     ),
 )

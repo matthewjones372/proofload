@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Said
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -45,14 +46,20 @@ class RecordersTest {
 
         List(2) { index ->
             Thread.ofVirtual().start {
-                recorders.record("pay", if (index == 0) "503" else null, 1.milliseconds, Duration.ZERO, Duration.ZERO)
+                recorders.record(
+                    "pay",
+                    if (index ==
+                        0
+                    ) Said("503") else null,
+                    1.milliseconds, Duration.ZERO, Duration.ZERO,
+                )
             }
         }.forEach { it.join() }
 
         val pay = recorders.freeze(Plan.none, Arrivals.none)["pay"]
         pay.count shouldBe 2L
         pay.ok.count shouldBe 1L
-        pay.failed.reasons shouldBe mapOf("503" to 1L)
+        pay.failed.reasons shouldBe mapOf(Said("503") to 1L)
     }
 
     @Test

@@ -60,7 +60,7 @@ class SessionTest {
     fun `a failed step names its reason and still carries the session on`() {
         val result = action { set(orderId, 1L); fail("status 503") }.run(Session.empty)
 
-        result shouldBe StepResult.Failed(Session.empty.set(orderId, 1L), "status 503")
+        result shouldBe StepResult.Failed(Session.empty.set(orderId, 1L), Said("status 503"))
         result.session[orderId] shouldBe 1L
     }
 }

@@ -32,7 +32,7 @@ class SteadySegmentTest {
             repeat(EACH_SECOND) { index ->
                 recorder.record(
                     step = pay.name,
-                    failure = if (failingIn(second)) "status 503" else null,
+                    failure = if (failingIn(second)) Said("status 503") else null,
                     serviceTime = if (cold) 200.milliseconds else 20.milliseconds,
                     schedulingDelay = 5.milliseconds,
                     at = (second * MILLIS_A_SECOND + index * MILLIS_APART).milliseconds,

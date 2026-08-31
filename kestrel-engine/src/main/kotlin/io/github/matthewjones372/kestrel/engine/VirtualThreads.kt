@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Completing
 import io.github.matthewjones372.kestrel.Engine
 import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.Progress
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
@@ -14,6 +15,7 @@ import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
+import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.departures
 import io.github.matthewjones372.kestrel.judgedBy
 import io.github.matthewjones372.kestrel.plan
@@ -366,10 +368,10 @@ private fun Action.runOn(
 private fun Action.attempt(session: Session): StepResult = try {
     run(session)
 } catch (throwable: Throwable) {
-    StepResult.Failed(session, throwable.javaClass.name)
+    StepResult.Failed(session, Threw(throwable.javaClass.name))
 }
 
-private fun StepResult.reason(): String? = when (this) {
+private fun StepResult.reason(): Reason? = when (this) {
     is StepResult.Ok -> null
     is StepResult.Failed -> reason
 }

@@ -5,9 +5,9 @@ import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.fedBy
 import io.github.matthewjones372.kestrel.feed
+import io.github.matthewjones372.kestrel.http.HttpStatus
 import io.github.matthewjones372.kestrel.http.http
 import io.github.matthewjones372.kestrel.http.send
-import io.github.matthewjones372.kestrel.http.status
 import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.report.appendToStepSummary
@@ -133,7 +133,7 @@ class CheckoutLoadTest {
 
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))
 
-        result[pay].failedWith(status(503)) shouldBe 10L
+        result[pay].failedWith(HttpStatus(503)) shouldBe 10L
         result[pay].failed.count shouldBe 10L
         withClue("every request was refused, so the whole step is the failed side of it") {
             result[pay].ok.count shouldBe 0L

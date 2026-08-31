@@ -81,7 +81,7 @@ class TransportTest {
 
         transport.send(ClientRequest(Method.GET, url("/orders/7/missing"))).toCompletableFuture().join()
 
-        recorder.freeze()["GET /orders/{id}/missing"].failed.reasons shouldBe mapOf("status 404" to 1L)
+        recorder.freeze()["GET /orders/{id}/missing"].failed.reasons shouldBe mapOf(Status(404) to 1L)
     }
 
     @Test

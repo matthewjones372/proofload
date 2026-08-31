@@ -11,7 +11,9 @@ import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Probe
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.against
@@ -43,7 +45,7 @@ class MarkdownTest {
         name: String,
         ok: List<Duration>,
         failed: List<Duration> = emptyList(),
-        reasons: Map<String, Long> = emptyMap(),
+        reasons: Map<Reason, Long> = emptyMap(),
     ) = StepStats(
         name = name,
         ok = Outcome(timingOf(ok), timingOf(ok)),
@@ -76,7 +78,7 @@ class MarkdownTest {
                     "pay",
                     ok = spread(100).dropLast(3),
                     failed = List(3) { 30.milliseconds },
-                    reasons = mapOf("status 503" to 3L),
+                    reasons = mapOf(Said("status 503") to 3L),
                 ),
             ),
             behind = timingOf(listOf(100.milliseconds)),
@@ -107,7 +109,7 @@ class MarkdownTest {
             "GET /a|b",
             ok = List(2) { 1.milliseconds },
             failed = List(3) { 1.milliseconds },
-            reasons = mapOf(reason to 3L),
+            reasons = mapOf(Said(reason) to 3L),
         )
         val result = RunResult(
             startedAt = startedAt,

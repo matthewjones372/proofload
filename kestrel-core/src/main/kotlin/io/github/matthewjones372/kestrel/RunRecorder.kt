@@ -23,7 +23,7 @@ class RunRecorder(private val startedAt: Instant) {
      *   the timeline is then a function of what a caller recorded, and a test
      *   of it needs no elapsed time.
      */
-    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration, at: Duration) {
+    fun record(step: String, failure: Reason?, serviceTime: Duration, schedulingDelay: Duration, at: Duration) {
         require(at >= Duration.ZERO) { "a request cannot have left before the run began, but left at $at" }
         behind.record(schedulingDelay)
         steps.getOrPut(step) { StepRecorder() }.record(failure, serviceTime, serviceTime + schedulingDelay, at)
@@ -79,8 +79,6 @@ class RunRecorder(private val startedAt: Instant) {
          * into a list of one-offs.
          */
         const val MAX_REASONS_PER_STEP: Int = 20
-
-        const val OTHER_REASONS: String = "other"
     }
 }
 
@@ -90,7 +88,7 @@ private class StepRecorder {
     // these merged at freeze, so they cannot drift from the sides they sum.
     private val ok = OutcomeRecorder()
     private val failed = OutcomeRecorder()
-    private val failures = LinkedHashMap<String, Long>()
+    private val failures = LinkedHashMap<Reason, Long>()
 
     // The accumulator AGENTS.md allows a builder: it is added to as shards are
     // merged and frozen into StepStats, and never escapes mutable.
@@ -98,7 +96,7 @@ private class StepRecorder {
 
     val seconds = Seconds()
 
-    fun record(failure: String?, service: Duration, response: Duration, at: Duration) {
+    fun record(failure: Reason?, service: Duration, response: Duration, at: Duration) {
         if (failure == null) {
             ok.record(service, response)
         } else {
@@ -134,11 +132,11 @@ private class StepRecorder {
         timeline = seconds.freeze(),
     )
 
-    private fun countFailure(reason: String, seen: Long) {
+    private fun countFailure(reason: Reason, seen: Long) {
         val key = when {
             reason in failures -> reason
             failures.size < RunRecorder.MAX_REASONS_PER_STEP -> reason
-            else -> RunRecorder.OTHER_REASONS
+            else -> Other
         }
         failures[key] = (failures[key] ?: 0L) + seen
     }
@@ -155,7 +153,7 @@ private class Seconds {
 
     private val counted = ArrayList<SecondRecorder>()
 
-    fun record(at: Duration, failure: String?, service: Duration, response: Duration) =
+    fun record(at: Duration, failure: Reason?, service: Duration, response: Duration) =
         reaching(at.inWholeSeconds.toInt()).record(failure, service, response)
 
     fun merge(other: Seconds) = other.counted.forEachIndexed { index, theirs -> reaching(index).merge(theirs) }
@@ -181,7 +179,7 @@ private class SecondRecorder {
     // target's latency.
     private var failed: Clocks? = null
 
-    fun record(failure: String?, service: Duration, response: Duration) =
+    fun record(failure: Reason?, service: Duration, response: Duration) =
         if (failure == null) ok.record(service, response) else failing().record(service, response)
 
     fun merge(other: SecondRecorder) {
@@ -238,7 +236,7 @@ private class OutcomeRecorder {
         responseTime.merge(other.responseTime)
     }
 
-    fun freeze(reasons: Map<String, Long> = emptyMap()): Outcome =
+    fun freeze(reasons: Map<Reason, Long> = emptyMap()): Outcome =
         Outcome(serviceTime.timing(), responseTime.timing(), reasons)
 }
 

@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepResult
+import io.github.matthewjones372.kestrel.TimedOut
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.stepNames
 import io.kotest.matchers.shouldBe
@@ -37,7 +38,7 @@ class HttpRequestTest {
                 .expecting(201)
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 200")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(200))
         }
     }
 
@@ -46,7 +47,7 @@ class HttpRequestTest {
         serving("/products" to Reply(204)) { server ->
             val result = http.baseUrl(server.baseUrl).get("/products").run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 204")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(204))
         }
     }
 
@@ -94,7 +95,7 @@ class HttpRequestTest {
         serving("/products" to Reply(302, headers = mapOf("location" to "/elsewhere"))) { server ->
             val result = http.baseUrl(server.baseUrl).get("/products").run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 302")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(302))
             server.received.map { it.path } shouldBe listOf("/products")
         }
     }
@@ -107,7 +108,7 @@ class HttpRequestTest {
                 .timeout(Duration.ofMillis(50))
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "timeout")
+            result shouldBe StepResult.Failed(Session.empty, TimedOut)
         }
     }
 }

@@ -44,7 +44,7 @@ class HttpSessionTest {
         serving("/orders/7" to Reply(200)) { server ->
             val result = http.baseUrl(server.baseUrl).get("/orders/{orderId}").run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "missing {orderId}")
+            result shouldBe StepResult.Failed(Session.empty, UnfilledPath("orderId"))
             server.received shouldBe emptyList()
         }
     }
@@ -93,7 +93,7 @@ class HttpSessionTest {
                 .capture(orderId) { response -> response.header("location") }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "no orderId captured")
+            result shouldBe StepResult.Failed(Session.empty, NothingCaptured("orderId"))
         }
     }
 
@@ -107,7 +107,7 @@ class HttpSessionTest {
                 .capture(orderId) { response -> response.header("location") }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 500")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(500))
         }
     }
 }

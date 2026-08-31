@@ -9,6 +9,7 @@ import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.constantRate
@@ -57,7 +58,7 @@ class BaselineTest {
                 name to StepStats(
                     name = name,
                     ok = Outcome(ok.timing(), ok.timing()),
-                    failed = Outcome(failed.timing(), failed.timing(), mapOf("status 503" to FAILURES.toLong())),
+                    failed = Outcome(failed.timing(), failed.timing(), mapOf(Said("status 503") to FAILURES.toLong())),
                     serviceTime = whole,
                     responseTime = whole,
                 ),

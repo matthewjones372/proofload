@@ -1,6 +1,9 @@
 package io.github.matthewjones372.kestrel.http
 
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.StepScope
+import io.github.matthewjones372.kestrel.Threw
+import io.github.matthewjones372.kestrel.TimedOut
 import java.io.IOException
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -54,6 +57,6 @@ internal fun exchange(request: HttpRequest, scope: StepScope): Response? =
  * is named instead of classed because it is the one transport failure a reader
  * acts on differently — the target was reachable and did not answer in time.
  */
-private fun IOException.reason(): String = if (this is HttpTimeoutException) "timeout" else className()
+private fun IOException.reason(): Reason = if (this is HttpTimeoutException) TimedOut else className()
 
-private fun Throwable.className(): String = this::class.simpleName ?: javaClass.name
+private fun Throwable.className(): Threw = Threw(this::class.simpleName ?: javaClass.name)

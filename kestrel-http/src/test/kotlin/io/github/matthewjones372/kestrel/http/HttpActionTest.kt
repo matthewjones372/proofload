@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepResult
+import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
 import io.github.matthewjones372.kestrel.stepNames
@@ -25,7 +26,7 @@ class HttpActionTest {
         serving("/products" to Reply(500)) { server ->
             val result = http.get("${server.baseUrl}/products").run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 500")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(500))
         }
     }
 
@@ -33,7 +34,7 @@ class HttpActionTest {
     fun `a transport error fails the step with the exception's class name`() {
         val result = http.get("${closedPortUrl()}/products").run(Session.empty)
 
-        result shouldBe StepResult.Failed(Session.empty, "ConnectException")
+        result shouldBe StepResult.Failed(Session.empty, Threw("ConnectException"))
     }
 
     @Test
@@ -61,7 +62,7 @@ class HttpActionTest {
                 .checking("has an id") { response -> "\"id\"" in response.body }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "has an id")
+            result shouldBe StepResult.Failed(Session.empty, CheckFailed("has an id"))
         }
     }
 
@@ -85,7 +86,7 @@ class HttpActionTest {
                 .checking("has an id") { asked.incrementAndGet() > 0 }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "status 500")
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(500))
             asked.get() shouldBe 0
         }
     }
@@ -100,7 +101,7 @@ class HttpActionTest {
                 .capture(id) { "7" }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, "has an id")
+            result shouldBe StepResult.Failed(Session.empty, CheckFailed("has an id"))
         }
     }
 

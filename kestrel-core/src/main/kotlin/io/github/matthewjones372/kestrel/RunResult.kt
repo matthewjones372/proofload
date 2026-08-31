@@ -204,7 +204,7 @@ data class Outcome(
     val serviceTime: Timing,
     val responseTime: Timing,
     /** What the target said, counted by reason. Empty on the side that worked. */
-    val reasons: Map<String, Long> = emptyMap(),
+    val reasons: Map<Reason, Long> = emptyMap(),
 ) {
     val count: Long get() = serviceTime.count
 
@@ -238,7 +238,7 @@ data class StepStats(
     val count: Long get() = ok.count + failed.count
 
     /** How many failed for [reason]; none is zero rather than absent. */
-    fun failedWith(reason: String): Long = failed.reasons[reason] ?: 0L
+    fun failedWith(reason: Reason): Long = failed.reasons[reason] ?: 0L
 }
 
 /**

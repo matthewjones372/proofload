@@ -12,7 +12,7 @@ private val started = Instant.parse("2026-08-26T09:00:00Z")
 
 class RunRecorderTest {
 
-    private fun RunRecorder.pay(failure: String? = null, service: Long = 10L, late: Long = 0L, at: Long = 0L) =
+    private fun RunRecorder.pay(failure: Reason? = null, service: Long = 10L, late: Long = 0L, at: Long = 0L) =
         record(
             step = "pay",
             failure = failure,
@@ -25,20 +25,20 @@ class RunRecorderTest {
     fun `a recorder counts what it was given`() {
         val recorder = RunRecorder(started)
         repeat(3) { recorder.pay() }
-        recorder.pay(failure = "status 503")
+        recorder.pay(failure = Said("status 503"))
 
         val result = recorder.freeze()
 
         result["pay"].count shouldBe 4L
         result["pay"].ok.count shouldBe 3L
         result["pay"].failed.count shouldBe 1L
-        result["pay"].failed.reasons shouldBe mapOf("status 503" to 1L)
+        result["pay"].failed.reasons shouldBe mapOf(Said("status 503") to 1L)
     }
 
     @Test
     fun `a target that sheds load fast reports a low failed p99 and the successes keep their own`() {
         val recorder = RunRecorder(started)
-        repeat(90) { recorder.pay(failure = "status 503", service = 1L) }
+        repeat(90) { recorder.pay(failure = Said("status 503"), service = 1L) }
         repeat(10) { recorder.pay(service = 500L) }
 
         val pay = recorder.freeze()["pay"]
@@ -54,7 +54,7 @@ class RunRecorderTest {
     fun `the whole step's timing is the merge of the two sides`() {
         val recorder = RunRecorder(started)
         repeat(3) { recorder.pay(service = 20L, late = 5L) }
-        repeat(2) { recorder.pay(failure = "timeout", service = 700L, late = 5L) }
+        repeat(2) { recorder.pay(failure = TimedOut, service = 700L, late = 5L) }
 
         val pay = recorder.freeze()["pay"]
 
@@ -80,7 +80,7 @@ class RunRecorderTest {
         val right = RunRecorder(started)
         val both = RunRecorder(started)
         repeat(5) { left.pay(service = 10L); both.pay(service = 10L) }
-        repeat(5) { right.pay(failure = "timeout", service = 50L); both.pay(failure = "timeout", service = 50L) }
+        repeat(5) { right.pay(failure = TimedOut, service = 50L); both.pay(failure = TimedOut, service = 50L) }
 
         left.merge(right)
 
@@ -99,12 +99,12 @@ class RunRecorderTest {
     @Test
     fun `reasons that interpolate an id are capped, and the cap is in the result`() {
         val recorder = RunRecorder(started)
-        repeat(RunRecorder.MAX_REASONS_PER_STEP + 5) { recorder.pay(failure = "order $it rejected") }
+        repeat(RunRecorder.MAX_REASONS_PER_STEP + 5) { recorder.pay(failure = Said("order $it rejected")) }
 
         val failures = recorder.freeze()["pay"].failed.reasons
 
         failures.size shouldBe RunRecorder.MAX_REASONS_PER_STEP + 1
-        failures[RunRecorder.OTHER_REASONS] shouldBe 5L
+        failures[Other] shouldBe 5L
     }
 
     private fun Map<String, StepStats>.shouldBeEmptyMap() = isEmpty() shouldBe true

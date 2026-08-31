@@ -17,7 +17,7 @@ class GoodputTest {
     private fun timingOf(samples: List<Duration>): Timing =
         Histogram().apply { samples.forEach { record(it) } }.timing()
 
-    private fun outcomeOf(fast: Int, slow: Int, reasons: Map<String, Long>) = Outcome(
+    private fun outcomeOf(fast: Int, slow: Int, reasons: Map<Reason, Long>) = Outcome(
         serviceTime = timingOf(List(fast) { 20.milliseconds } + List(slow) { 800.milliseconds }),
         responseTime = timingOf(List(fast) { 50.milliseconds } + List(slow) { 900.milliseconds }),
         reasons = reasons,
@@ -37,7 +37,7 @@ class GoodputTest {
             failed = outcomeOf(
                 failedFast,
                 failedSlow,
-                if (failures == 0L) emptyMap() else mapOf("status 503" to failures),
+                if (failures == 0L) emptyMap() else mapOf(Said("status 503") to failures),
             ),
             serviceTime = outcomeOf(fast + failedFast, slow + failedSlow, emptyMap()).serviceTime,
             responseTime = outcomeOf(fast + failedFast, slow + failedSlow, emptyMap()).responseTime,

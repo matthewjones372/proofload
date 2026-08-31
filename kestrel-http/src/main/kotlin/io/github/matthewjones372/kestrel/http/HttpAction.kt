@@ -73,14 +73,14 @@ class HttpAction internal constructor(
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
             // reappears as a stranger, several steps later.
-            scope.fail(status(response.status))
+            scope.fail(HttpStatus(response.status))
             return null
         }
         val rejected = checks.firstOrNull { it.rejects(response) }
         if (rejected != null) {
             // Same reason the status branch above captures nothing: a body the
             // check has just called wrong is not one to take values out of.
-            scope.fail(rejected.name)
+            scope.fail(CheckFailed(rejected.name))
             return null
         }
         captures.forEach { it.applyTo(scope, response) }
@@ -120,15 +120,6 @@ class HttpAction internal constructor(
     private fun publisher(): HttpRequest.BodyPublisher =
         body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()
 }
-
-/**
- * How this module names a status it did not expect.
- *
- * A reason is a contract between the code that writes it and the test that
- * reads it, and a literal on both sides is a contract nobody checks. Changing
- * the wording now breaks compilation rather than a run.
- */
-fun status(code: Int): String = "status $code"
 
 /** Names the step for the path template, which is the row a report wants. */
 fun ScenarioBuilder.exec(request: HttpAction) {

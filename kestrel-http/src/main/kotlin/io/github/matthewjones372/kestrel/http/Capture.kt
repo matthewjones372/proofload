@@ -17,7 +17,7 @@ internal class Capture<T : Any>(
         val value = extract(response)
         // A capture that quietly does nothing surfaces three steps later as an
         // unfilled path; failing here names the step that actually broke.
-        if (value == null) scope.fail("no ${key.name} captured") else scope.set(key, value)
+        if (value == null) scope.fail(NothingCaptured(key.name)) else scope.set(key, value)
     }
 }
 
@@ -40,7 +40,7 @@ internal fun String.fill(scope: StepScope): String? {
 
     val missing = holes.firstOrNull { it !in found }
     if (missing != null) {
-        scope.fail("missing {$missing}")
+        scope.fail(UnfilledPath(missing))
         return null
     }
     return placeholder.replace(this) { match -> found.getValue(match.groupValues[1]) }

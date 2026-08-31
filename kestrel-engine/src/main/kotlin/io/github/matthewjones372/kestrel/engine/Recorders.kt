@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.engine
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Outstanding
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import java.time.Instant
@@ -15,7 +16,7 @@ import kotlin.time.Duration
  * without a branch on the path a request is timed on.
  */
 internal fun interface StepSink {
-    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration, at: Duration)
+    fun record(step: String, failure: Reason?, serviceTime: Duration, schedulingDelay: Duration, at: Duration)
 }
 
 /**
@@ -47,7 +48,7 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
 
     override fun record(
         step: String,
-        failure: String?,
+        failure: Reason?,
         serviceTime: Duration,
         schedulingDelay: Duration,
         at: Duration,
@@ -79,7 +80,7 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
     private tailrec fun recordFrom(
         index: Int,
         step: String,
-        failure: String?,
+        failure: Reason?,
         serviceTime: Duration,
         schedulingDelay: Duration,
         at: Duration,

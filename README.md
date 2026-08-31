@@ -17,7 +17,7 @@ Kotlin value: build it, inspect it, split it across files, run it.
 > nothing is released yet. See [AGENTS.md](AGENTS.md) before writing code.
 
 > [!TIP]
-> **[docs/cookbook.md](docs/cookbook.md) is thirty recipes** — feeders, ramps,
+> **[docs/cookbook.md](docs/cookbook.md) is the recipe book** — feeders, ramps,
 > think time, cookies, WebSockets, work that finishes on another topic, goals,
 > capacity searches, steady state, reports and CI. Each is the few lines you
 > would actually write, and the reason it is those lines and not the obvious
@@ -198,12 +198,27 @@ pull the whole distribution down: the run reports a p99 nobody experienced, and
 the better the shedding the better the number looks.
 
 ```kotlin
-result[placeOrder].serviceTime.p99          // every sample, unchanged
-result[placeOrder].ok.serviceTime.p99       // the requests that worked
-result[placeOrder].failed.serviceTime.p99   // the requests that did not
-result[placeOrder].failed.count             // 41
-result[placeOrder].failed.reasons           // {"status 503": 41}
-result[placeOrder].failedWith("status 503") // 41
+result[placeOrder].serviceTime.p99               // every sample, unchanged
+result[placeOrder].ok.serviceTime.p99           // the requests that worked
+result[placeOrder].failed.serviceTime.p99       // the requests that did not
+result[placeOrder].failed.count                 // 41
+result[placeOrder].failed.reasons               // {HttpStatus(503): 41}
+result[placeOrder].failedWith(HttpStatus(503))  // 41
+```
+
+A reason is a value, not a string. The module that made the request is the one
+that knows what went wrong with it, so `kestrel-http` names a status, a rejected
+check and a capture that found nothing; core names the three that belong to no
+protocol — `TimedOut`, `Threw(className)` and `Said(text)`, which is what
+`fail("...")` records for a step body with no type to give. A caller's own step
+can declare its own, and a report prints whatever each one is `described` as.
+
+Being values, they can be asked something a string cannot:
+
+```kotlin
+result[placeOrder].failed.reasons.keys
+    .filterIsInstance<HttpStatus>()
+    .filter { it.code >= 500 }
 ```
 
 The whole-step timings are the merge of the two sides, so no number has moved:
@@ -243,7 +258,7 @@ api.post("/orders")
     .expecting(201)
     .checking("has an id") { response -> "\"id\"" in response.body }
 
-result[placeOrder].failed.reasons   // {"has an id": 41}
+result[placeOrder].failed.reasons   // {CheckFailed("has an id"): 41}
 ```
 
 The name is required rather than derived, because a report saying `check
@@ -655,7 +670,7 @@ result.appendToStepSummary(comparison, floor)
 Where to keep the file on GitHub — a cache key, an artifact or a branch
 somebody reviews — and why latency should not gate a merge on a shared runner,
 are in [docs/cookbook.md](docs/cookbook.md), along with publishing the reports
-to Pages and the rest of the thirty recipes.
+to Pages and the rest of the recipes.
 
 ## More than one run
 

@@ -45,6 +45,7 @@ test that quietly asserts about a step nobody runs.
 [work that finishes somewhere else](#work-that-finishes-somewhere-else)
 
 **Asking the question** — [assert, or declare goals](#assert-or-declare-goals) ·
+[ask what actually failed](#ask-what-actually-failed) ·
 [read only the part that settled](#read-only-the-part-that-settled) ·
 [find the rate it sustains](#find-the-rate-it-sustains) ·
 [did the generator keep up?](#did-the-generator-keep-up)
@@ -575,6 +576,56 @@ by failing does not pass it.
 `keptSchedule` is the one that guards the rest. It asks whether the *generator*
 kept to its own schedule; where it did not, every latency underneath includes a
 queue this tool made, and the numbers are describing the injector.
+
+## Ask what actually failed
+
+A reason is a value, not a string, and the module that made the request is the
+one that names it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Said
+import io.github.matthewjones372.kestrel.Threw
+import io.github.matthewjones372.kestrel.TimedOut
+import io.github.matthewjones372.kestrel.http.CheckFailed
+import io.github.matthewjones372.kestrel.http.HttpStatus
+import io.github.matthewjones372.kestrel.http.NothingCaptured
+
+result[placeOrder].failedWith(HttpStatus(503))        // the target said no
+result[placeOrder].failedWith(TimedOut)               // it was up and too slow
+result[placeOrder].failedWith(Threw("ConnectException"))
+result[placeOrder].failedWith(CheckFailed("has an order id"))
+```
+
+Which is the point of the type — a string could be counted and nothing else:
+
+```kotlin
+val serverErrors = result[placeOrder].failed.reasons
+    .filterKeys { it is HttpStatus && it.code >= 500 }
+    .values.sum()
+```
+
+A step body of your own uses `fail(String)` where it has no type to give, and
+that is recorded as `Said`, so it groups like everything else:
+
+```kotlin
+exec(settle) { fail("ledger rejected it") }
+
+result[settle].failedWith(Said("ledger rejected it"))
+```
+
+Declare your own where you do have a type. Any value implementing `Reason`
+works, and it must be a value — a data class or an object — because a reason is
+a map key that gets merged across recording shards and again across runs:
+
+```kotlin
+data class LedgerRejected(val code: String) : Reason {
+    override val described: String get() = "ledger $code"
+}
+```
+
+Past twenty distinct reasons on one step the rest are counted under `Other`. A
+reason with an order id in it is a key per request, and a report that listed
+them all would be a list of one-offs rather than something to act on.
 
 ## Read only the part that settled
 

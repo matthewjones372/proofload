@@ -47,7 +47,7 @@ class ScenarioTest {
             set(page, "error")
         }.run(Session.empty)
 
-        result shouldBe StepResult.Failed(Session.empty.set(orderId, 7L).set(page, "error"), "status 503")
+        result shouldBe StepResult.Failed(Session.empty.set(orderId, 7L).set(page, "error"), Said("status 503"))
     }
 
     @Test
@@ -57,7 +57,7 @@ class ScenarioTest {
             fail("and then a timeout")
         }.run(Session.empty)
 
-        result shouldBe StepResult.Failed(Session.empty, "status 503")
+        result shouldBe StepResult.Failed(Session.empty, Said("status 503"))
     }
 
     @Test

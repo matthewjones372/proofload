@@ -28,12 +28,12 @@ class RunsTest {
         startedAt: Instant = Instant.parse("2026-08-26T09:00:00Z"),
         plan: Plan = paying,
         machine: Machine = here,
-        failures: Map<String, Long> = emptyMap(),
+        failures: Map<Reason, Long> = emptyMap(),
         steps: List<String> = listOf("pay"),
     ): RunResult {
         val failed = failures.values.sum().toInt()
         val timing = Histogram().apply { repeat(samples) { record(latency) } }.timing()
-        val outcomeOf = { taken: Int, reasons: Map<String, Long> ->
+        val outcomeOf = { taken: Int, reasons: Map<Reason, Long> ->
             val side = Histogram().apply { repeat(taken) { record(latency) } }.timing()
             Outcome(side, side, reasons)
         }
@@ -125,13 +125,17 @@ class RunsTest {
     fun `failures are summed by reason, and a step only some runs reached keeps the counts of those that did`() {
         val runs = Runs(
             listOf(
-                runOf(1.milliseconds, failures = mapOf("timeout" to 3L)),
-                runOf(1.milliseconds, failures = mapOf("timeout" to 2L, "500" to 1L), steps = listOf("pay", "refund")),
+                runOf(1.milliseconds, failures = mapOf(TimedOut to 3L)),
+                runOf(
+                    1.milliseconds,
+                    failures = mapOf(TimedOut to 2L, Said("500") to 1L),
+                    steps = listOf("pay", "refund"),
+                ),
             ),
         )
 
-        runs.merged["pay"].failedWith("timeout") shouldBe 5L
-        runs.merged["pay"].failedWith("500") shouldBe 1L
+        runs.merged["pay"].failedWith(TimedOut) shouldBe 5L
+        runs.merged["pay"].failedWith(Said("500")) shouldBe 1L
         runs.merged["refund"].count shouldBe 100L
     }
 
@@ -170,7 +174,7 @@ class RunsTest {
     private fun everyFieldSet(): RunResult {
         val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))
         recorder.record("pay", null, 10.milliseconds, schedulingDelay = 2.milliseconds, at = Duration.ZERO)
-        recorder.record("pay", "status 503", 20.milliseconds, schedulingDelay = 3.milliseconds, at = 1.seconds)
+        recorder.record("pay", Said("status 503"), 20.milliseconds, schedulingDelay = 3.milliseconds, at = 1.seconds)
         recorder.outstanding("pay", Outstanding(unmatched = 2L, inFlight = 1L))
         return recorder.freeze().copy(
             plan = paying,

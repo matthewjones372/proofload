@@ -6,9 +6,11 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Rate
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Rung
+import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.constantRate
@@ -51,7 +53,7 @@ internal object Fixtures {
                 ok = listOf(20.milliseconds, 40.milliseconds) to listOf(220.milliseconds, 440.milliseconds),
                 failed = listOf(60.milliseconds, 800.milliseconds, 1200.milliseconds) to
                     listOf(660.milliseconds, 1600.milliseconds, 2000.milliseconds),
-                reasons = linkedMapOf(HOSTILE_REASON to 2L, CLOSING_TAG_REASON to 1L),
+                reasons = linkedMapOf<Reason, Long>(Said(HOSTILE_REASON) to 2L, Said(CLOSING_TAG_REASON) to 1L),
             ),
         ),
         behind = timingOf(
@@ -82,7 +84,7 @@ internal object Fixtures {
                 ok = List(98) { 20.milliseconds } + 800.milliseconds to
                     List(98) { 50.milliseconds } + 900.milliseconds,
                 failed = listOf(20.milliseconds) to listOf(50.milliseconds),
-                reasons = linkedMapOf("status 503" to 1L),
+                reasons = linkedMapOf<Reason, Long>(Said("status 503") to 1L),
             ),
         ),
         behind = timingOf(listOf(1.milliseconds)),
@@ -102,7 +104,7 @@ internal object Fixtures {
                 ok = emptyList<Duration>() to emptyList(),
                 failed = List(4) { 20.milliseconds } + 1200.milliseconds to
                     List(4) { 20.milliseconds } + 1200.milliseconds,
-                reasons = linkedMapOf("status 503" to 5L),
+                reasons = linkedMapOf<Reason, Long>(Said("status 503") to 5L),
             ),
         ),
         behind = timingOf(listOf(1.milliseconds)),
@@ -160,7 +162,7 @@ internal object Fixtures {
             val tail = index % ONE_IN_TEN == 0
             recorder.record(
                 step = "pay",
-                failure = if (degraded && tail) "status 503" else null,
+                failure = if (degraded && tail) Said("status 503") else null,
                 serviceTime = when {
                     degraded && tail -> 900.milliseconds
                     degraded -> 400.milliseconds
@@ -248,7 +250,7 @@ internal object Fixtures {
                     failed = flatOutcome(
                         failed,
                         took,
-                        if (failed == 0L) emptyMap() else mapOf("status 503" to failed),
+                        if (failed == 0L) emptyMap() else mapOf(Said("status 503") to failed),
                     ),
                     serviceTime = flat(requests, took),
                     responseTime = flat(requests, took),
@@ -263,7 +265,7 @@ internal object Fixtures {
     private const val SECONDS_HELD = 120.0
 
     /** Every request at the same latency: a rung is judged on its percentiles, and a flat run has one. */
-    private fun flatOutcome(samples: Long, took: Duration, reasons: Map<String, Long> = emptyMap()) =
+    private fun flatOutcome(samples: Long, took: Duration, reasons: Map<Reason, Long> = emptyMap()) =
         Outcome(flat(samples, took), flat(samples, took), reasons)
 
     private fun flat(samples: Long, took: Duration): Timing =
@@ -277,7 +279,7 @@ internal object Fixtures {
         name: String,
         ok: Pair<List<Duration>, List<Duration>>,
         failed: Pair<List<Duration>, List<Duration>> = emptyList<Duration>() to emptyList(),
-        reasons: Map<String, Long> = emptyMap(),
+        reasons: Map<Reason, Long> = emptyMap(),
     ) = StepStats(
         name = name,
         ok = Outcome(timingOf(ok.first), timingOf(ok.second)),

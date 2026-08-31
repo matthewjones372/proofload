@@ -1,7 +1,9 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Step
+import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.action
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
@@ -40,7 +42,7 @@ class EngineTest {
             .at(1.perSecond, over = 1.seconds)
             .run()
 
-        result["pay"].failed.reasons shouldContainExactly mapOf("503" to 1L)
+        result["pay"].failed.reasons shouldContainExactly mapOf(Said("503") to 1L)
         result.failed shouldBe 1L
     }
 
@@ -50,7 +52,7 @@ class EngineTest {
             .at(1.perSecond, over = 1.seconds)
             .run()
 
-        result["pay"].failed.reasons shouldContainExactly mapOf("java.lang.IllegalStateException" to 1L)
+        result["pay"].failed.reasons shouldContainExactly mapOf(Threw("java.lang.IllegalStateException") to 1L)
     }
 
     @Test

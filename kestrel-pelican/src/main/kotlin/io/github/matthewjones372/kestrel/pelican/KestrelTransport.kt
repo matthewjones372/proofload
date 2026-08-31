@@ -1,6 +1,9 @@
 package io.github.matthewjones372.kestrel.pelican
 
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
+import io.github.matthewjones372.kestrel.Threw
+import io.github.matthewjones372.kestrel.TimedOut
 import io.github.matthewjones372.pelican.ClientRequest
 import io.github.matthewjones372.pelican.ClientResponse
 import io.github.matthewjones372.pelican.ClientTransport
@@ -64,7 +67,7 @@ private class KestrelTransport(
             }
     }
 
-    private fun record(step: String, startedAt: Long, failure: String?) {
+    private fun record(step: String, startedAt: Long, failure: Reason?) {
         // No departure to be late against here: this transport is called from
         // inside a step the engine already timed, so the backlog is that step's
         // to report and zero is the honest number rather than a guess.
@@ -83,13 +86,23 @@ private class KestrelTransport(
     }
 }
 
-private fun statusFailure(status: Int): String? = if (status in SUCCESS) null else "status $status"
+/**
+ * The same fact `kestrel-http`'s `HttpStatus` is, and a separate type because
+ * neither module may depend on the other: this one's runtime classpath is core
+ * and `pelican-core`, and a test asserts it. A run goes through one transport
+ * or the other, never both, so nothing is ever grouped across the two.
+ */
+data class Status(val code: Int) : Reason {
+    override val described: String get() = "status $code"
+}
+
+private fun statusFailure(status: Int): Reason? = if (status in SUCCESS) null else Status(status)
 
 // The client wraps what went wrong in a CompletionException, so the cause is
 // the thing worth naming in a report.
-private fun reasonFor(failure: Throwable): String = when (val cause = failure.cause ?: failure) {
-    is HttpTimeoutException -> "timeout"
-    else -> cause::class.java.name
+private fun reasonFor(failure: Throwable): Reason = when (val cause = failure.cause ?: failure) {
+    is HttpTimeoutException -> TimedOut
+    else -> Threw(cause::class.java.name)
 }
 
 private fun ClientRequest.asHttpRequest(fallback: Duration): HttpRequest =

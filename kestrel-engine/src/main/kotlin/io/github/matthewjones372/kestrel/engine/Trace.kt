@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Feeder
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.stepNames
 import kotlin.time.Duration
@@ -38,4 +39,4 @@ private fun printedTo(width: Int): StepSink = StepSink { step, failure, _, _, _ 
 // Says what the engine did about the failure as well as what it was: the steps
 // after it are not walked, and a reader who does not know that reads the lines
 // that are missing as a trace that stopped early.
-private fun String?.outcome(): String = this?.let { "FAILED $it — user abandoned here" } ?: "ok"
+private fun Reason?.outcome(): String = this?.let { "FAILED ${it.described} — user abandoned here" } ?: "ok"

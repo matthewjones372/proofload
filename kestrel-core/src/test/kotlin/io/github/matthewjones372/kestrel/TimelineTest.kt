@@ -18,7 +18,7 @@ private val began = Instant.parse("2026-08-27T09:00:00Z")
  */
 class TimelineTest {
 
-    private fun RunRecorder.pay(at: Duration, failure: String? = null, service: Duration = 10.milliseconds) =
+    private fun RunRecorder.pay(at: Duration, failure: Reason? = null, service: Duration = 10.milliseconds) =
         record(step = "pay", failure = failure, serviceTime = service, schedulingDelay = Duration.ZERO, at = at)
 
     @Test
@@ -72,7 +72,7 @@ class TimelineTest {
     fun `a failure is counted in the second it happened in`() {
         val recorder = RunRecorder(began)
         recorder.pay(at = 0.5.seconds)
-        recorder.pay(at = 1.5.seconds, failure = "status 503")
+        recorder.pay(at = 1.5.seconds, failure = Said("status 503"))
 
         val timeline = recorder.freeze().timeline
 
@@ -166,7 +166,7 @@ class TimelineTest {
         repeat(10) {
             recorder.record(
                 step = "pay",
-                failure = "status 503",
+                failure = Said("status 503"),
                 serviceTime = 1.milliseconds,
                 schedulingDelay = 400.milliseconds,
                 at = (200 + it * 20).milliseconds,

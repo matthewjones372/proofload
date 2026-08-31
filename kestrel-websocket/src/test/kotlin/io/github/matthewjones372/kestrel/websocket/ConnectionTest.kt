@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
+import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.step
 import io.github.matthewjones372.kestrel.stepNames
@@ -38,7 +39,7 @@ class ConnectionTest {
         refusing { url ->
             val result = scenario("watching") { open(connect, ws.at(url)) }.walk()
 
-            result shouldBe StepResult.Failed(Session.empty, "WebSocketHandshakeException")
+            result shouldBe StepResult.Failed(Session.empty, Threw("WebSocketHandshakeException"))
         }
     }
 
@@ -63,7 +64,7 @@ class ConnectionTest {
     fun `a close with nothing open fails the step rather than throwing`() {
         val result = scenario("watching") { close(disconnect) }.walk()
 
-        result shouldBe StepResult.Failed(Session.empty, NOT_CONNECTED)
+        result shouldBe StepResult.Failed(Session.empty, NotConnected)
     }
 
     @Test

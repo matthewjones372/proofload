@@ -28,8 +28,8 @@ an adapter, not a design.
   caller's choice and none of them is this tool's business.
 - No consumer-group lag monitoring. That is observing a system, not generating
   load against one, and it belongs in a spec of its own.
-- No broker inside `./gradlew build`. A real one runs in a task of its own, on
-  0041's pattern; see below.
+- **No Docker required.** A container suite exists for anyone who wants the real
+  images, and nothing gates on it.
 - No second engine. The producer runs on virtual threads like everything else.
 
 ## Shape
@@ -63,13 +63,20 @@ the measurement honest in a way an owned serializer would not: whatever
 serialization costs, it is the caller's code running on the departure thread,
 and it is visible as such rather than hidden inside a step this tool wrote.
 
-Two tiers of test, because this is the first module that cannot be proved
-against a socket it starts itself. 0041 has already had this argument in another
-key: a class of test that is real but cannot share `build` gets a tag, a task, an
-exclusion from Kover instrumentation, and a gate that fails the build if the two
-ever meet. `broker` is that shape again, for an environment rather than a clock.
-What `build` then proves is the mapping, which is all the adapter is; what the
-tagged task proves is the wire, the serializer and the registry.
+A real broker, started in-process, and Docker optional. Kafka 4 is KRaft only,
+so a broker no longer drags ZooKeeper, and `org.apache.kafka:kafka_2.13` is on
+Central. Started on an ephemeral loopback port it is the shape this repository
+already tests with everywhere — a server the test starts and stops itself,
+needing no network and no container — and it is `testImplementation`, so the
+published module stays `kafka-clients`, core and the JDK. The dependency test
+reads the main runtime classpath and never sees it.
+
+That leaves the registry, which is a REST API and can be answered by the
+`com.sun.net.httpserver` the rest of the repository already tests against: a
+stub serving a schema id is enough to prove a caller's serializer wires up,
+precisely because this module does not own the serializer. Containers stay
+available for whoever wants the real images, and no gate depends on them — a
+suite that half the people who would run it cannot run is not a gate.
 
 One producer, shared. A `KafkaProducer` is thread-safe and built to be shared,
 which is the opposite of 0055's per-user cookie jar and for the opposite reason:
@@ -94,12 +101,16 @@ tunes against them will ship a consumer that cannot keep up.
       `correlatedBy` reading the id from a header.
       Done when: a run whose completions come from a second topic reports
       `unmatched` and `inFlight` as 0040 defines them.
-- [ ] **`spec-0060-broker`** — a `broker`-tagged task running the module
-      against a real Kafka in a container, and the root gate widened from one
-      tag to a set.
-      Done when: `./gradlew build --dry-run` lists neither `timingTests` nor
-      `brokerTests`, reverting either exclusion fails the build by name, and the
-      tagged task produces and consumes against a real broker.
+- [ ] **`spec-0060-embedded`** — a broker started in-process for this module's
+      own tests, and a stub registry on `com.sun.net.httpserver`.
+      Done when: the suite produces and consumes over a real socket with no
+      container and no network; a caller's serializer resolves a schema against
+      the stub; and `NoThirdPartyDependenciesTest` still reports the module's
+      runtime classpath as `kafka-clients`, core and the JDK.
+- [ ] **`spec-0060-containers`** — the same suite against the real broker and
+      registry images, opted into rather than required.
+      Done when: it runs where Docker is present, is skipped rather than failed
+      where it is not, and nothing in `build` depends on it.
 - [ ] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`:
       the `packages.confluent.io` declaration, the serializer wired into
       `value { }`, and what the first record costs.
@@ -113,8 +124,8 @@ tunes against them will ship a consumer that cannot keep up.
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
-./gradlew build --dry-run | grep -cE "timingTests|brokerTests"   # 0
-./gradlew :kestrel-kafka:brokerTests                             # needs a container
+./gradlew :kestrel-kafka:test          # a real broker, in process, no Docker
+./gradlew :kestrel-kafka:containerTests   # the real images, where Docker exists
 ```
 
 ## Open questions
@@ -130,15 +141,12 @@ tunes against them will ship a consumer that cannot keep up.
     trip; with `acks=0` it is nothing at all. Recommend recording the ack as the
     step's service time, printing the `acks` setting beside it, and leaning on
     `completing` for the number that matters.
-3. **What does `build` prove about a module it cannot run a broker for?**
-    That the adapter maps — key, value, header, correlation, the reason a failed
-    send gives — which `MockProducer`/`MockConsumer` answer in-JVM, and which is
-    the whole of the adapter's job. 0040's shape is covered already by
-    `InMemoryCompletions`, and whether `kafka-clients` works is Apache's
-    question, not this repository's. The wire, the serializer and the registry
-    are the `broker` task's. Recommend saying exactly that in
-    `docs/modules.md`, where every other module's claim is a test, rather than
-    letting this one row quietly mean less than the others.
+3. **Which embedded broker?** `embedded-kafka_2.13` is the least code and a
+    Scala API to call from Kotlin; Kafka's own `KafkaClusterTestKit` is a Java
+    one living in a test-jar; formatting a storage directory and starting
+    `KafkaRaftServer` by hand is perhaps sixty lines and needs nothing beyond
+    `kafka_2.13`. Recommend trying the first and measuring its startup, because
+    that number decides question 6.
 4. **Where does the correlation id live?** A header keeps it out of the payload
     and needs no deserializer on the completion side, which is the only option
     that does not drag the registry back in. Recommend a header, with the key as
@@ -148,3 +156,10 @@ tunes against them will ship a consumer that cannot keep up.
     intended-departure clock reports it honestly, but it will show up as
     generator lateness rather than target latency. Recommend saying so where
     `fellBehind()` is explained rather than special-casing it.
+6. **Does the embedded suite run inside `build`?** It binds a loopback port and
+    starts nothing a container would, so on principle it belongs there with
+    every other module's tests. The cost is startup on every build and a Scala
+    broker on the test classpath. Recommend measuring rather than guessing: a
+    second or two and it goes in `build`; ten and it gets a tag and widens
+    0041's gate from one tag to a set, which that spec's own second open
+    question already anticipated.

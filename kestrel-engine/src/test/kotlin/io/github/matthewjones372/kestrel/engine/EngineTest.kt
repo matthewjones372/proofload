@@ -109,6 +109,31 @@ class EngineTest {
     }
 
     @Test
+    fun `a step three iterations deep for each of ten users counts thirty requests and ten users`() {
+        val checkout = Scenario("checkout", listOf(Step.Repeat(3, listOf(Step.Exec("add to cart", action { })))))
+
+        val result = checkout.at(10.perSecond, over = 1.seconds).run()
+
+        result["add to cart"].count shouldBe 30L
+        withClue("a loop multiplies the requests and not the users that made them") {
+            result["add to cart"].reached shouldBe 10L
+        }
+    }
+
+    @Test
+    fun `a step under a condition counts the users that satisfied it and no others`() {
+        val result = scenario("checkout") {
+            exec("browse") { set(cart, "two hats") }
+            doIf({ session -> session[cart] != null }) { exec("pay") { } }
+            doIf({ session -> session[order] != null }) { exec("refund") { } }
+        }.at(4.perSecond, over = 1.seconds).run()
+
+        result["browse"].reached shouldBe 4L
+        result["pay"].reached shouldBe 4L
+        result.ran("refund") shouldBe false
+    }
+
+    @Test
     fun `a during loop runs its body again for as long as its own clock has time left`() {
         val body = listOf(Step.Exec("poll", action { }), Step.Pause(20.milliseconds))
         val polling = Scenario("polling", listOf(Step.During(200.milliseconds, body)))

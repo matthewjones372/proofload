@@ -7,10 +7,10 @@
 
 Compared at p99 of response time. A sampling interval bounds which sample the p99 landed on, given how many there were. It does not bound how far a repeat of this run would land from it, because two runs of one unchanged target drift by the machine as well as by the code. So this says these samples differ, not that the target did — repeated runs are what answers the second.
 
-| Step   | Requests |    OK | Failed |    p50 |    p95 |    p99 |    Max |
-| :----- | -------: | ----: | -----: | -----: | -----: | -----: | -----: |
-| browse |       10 |    10 |      0 | 2.01ms | 3.01ms | 3.01ms | 3.01ms |
-| pay    |      100 |   100 |      0 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
+| Step   | Requests | Reached |    OK | Failed |    p50 |    p95 |    p99 |    Max |
+| :----- | -------: | ------: | ----: | -----: | -----: | -----: | -----: | -----: |
+| browse |       10 |       — |    10 |      0 | 2.01ms | 3.01ms | 3.01ms | 3.01ms |
+| pay    |      100 |       — |   100 |      0 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 
 110 requests, 110 ok, 0 failed. Started 2026-08-26T09:00:00Z.
 

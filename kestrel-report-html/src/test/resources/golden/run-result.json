@@ -30,6 +30,7 @@
     {
       "name": "browse",
       "count": 4,
+      "reached": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {
@@ -92,6 +93,7 @@
     {
       "name": "pay",
       "count": 5,
+      "reached": 0,
       "unmatched": 0,
       "inFlight": 0,
       "serviceTime": {

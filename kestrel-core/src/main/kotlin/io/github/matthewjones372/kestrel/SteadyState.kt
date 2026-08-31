@@ -85,8 +85,9 @@ private fun StepStats.from(offset: Duration): StepStats {
     val failedResponse = seconds.map { it.failedResponseTime }.merged()
     return StepStats(
         name = name,
-        // No reasons: a second counts what failed and not what the target
-        // said about it, so the segment can say how many and not which.
+        // No reasons and no reaches: a second counts what failed and not what
+        // the target said about it, and a user reached this step once, in a
+        // second the segment may have dropped. Both are the whole run's.
         ok = Outcome(serviceTime = worked, responseTime = workedResponse),
         failed = Outcome(serviceTime = failed, responseTime = failedResponse),
         serviceTime = listOf(worked, failed).merged(),

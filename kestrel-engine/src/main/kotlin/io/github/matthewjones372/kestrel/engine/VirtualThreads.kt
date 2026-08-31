@@ -311,6 +311,12 @@ private class UserWalk(
     private val drain: Drain?,
 ) {
 
+    // The one mutable thing a walk keeps, and one per user rather than per
+    // request: `reached` counts users, so the first time this user records
+    // under a name has to be told from every later time, and only the walk
+    // knows which user it is on.
+    private val met = HashSet<String>()
+
     // A failed step abandons the user. A null session carries that decision
     // through the walk and out of any loop it was inside: the steps after it
     // are not run, and are not counted as anything. Counting a payment that
@@ -319,7 +325,7 @@ private class UserWalk(
         steps.fold(from) { session, step -> session?.let { run(step, it) } }
 
     private fun run(step: Step, session: Session): Session? = when (step) {
-        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay)
+        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay, met.add(step.name))
 
         is Step.Emit -> emit(step, session)
 
@@ -350,7 +356,9 @@ private class UserWalk(
      * subtracted from.
      */
     private fun emit(step: Step.Emit, session: Session): Session? {
-        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay) ?: return null
+        val reached = met.add(step.name)
+        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay, reached)
+            ?: return null
         drain?.departed(step.correlation.of(published), departure)
         return published
     }
@@ -365,12 +373,13 @@ private fun Action.runOn(
     sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
+    reached: Boolean,
 ): Session? {
     val startedAt = System.nanoTime()
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
     val reason = result.reason()
-    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
+    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds, reached)
     return if (reason == null) result.session else null
 }
 

@@ -1,9 +1,9 @@
 > **Behind schedule:** 100ms late at p99, 100ms at worst. The response times below include that backlog.
 
-| Step   | Requests |    OK | Failed |    p50 |    p95 |    p99 |    Max |
-| :----- | -------: | ----: | -----: | -----: | -----: | -----: | -----: |
-| browse |       10 |    10 |      0 | 2.01ms | 3.01ms | 3.01ms | 3.01ms |
-| pay    |      100 |    97 |      3 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
+| Step   | Requests | Reached |    OK | Failed |    p50 |    p95 |    p99 |    Max |
+| :----- | -------: | ------: | ----: | -----: | -----: | -----: | -----: | -----: |
+| browse |       10 |       — |    10 |      0 | 2.01ms | 3.01ms | 3.01ms | 3.01ms |
+| pay    |      100 |       — |    97 |      3 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 
 **Failures**
 

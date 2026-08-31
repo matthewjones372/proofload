@@ -228,6 +228,18 @@ data class StepStats(
     val failed: Outcome,
     val serviceTime: Timing,
     val responseTime: Timing,
+    /**
+     * The users that got this far, counted once each however many requests they
+     * made here.
+     *
+     * Beside [count] rather than instead of it: under a loop [count] is a
+     * multiple of the users and under a condition it is a fraction of them, and
+     * a step that made few requests because few users reached it is a different
+     * finding from one each of them made few requests at. Zero where whatever
+     * recorded the run did not count users, which the report prints as unmeasured
+     * rather than as nobody.
+     */
+    val reached: Long = 0L,
     /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */

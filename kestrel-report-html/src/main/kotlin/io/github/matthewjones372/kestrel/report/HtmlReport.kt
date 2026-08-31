@@ -226,7 +226,10 @@ private fun RunResult.stepsLines(): List<String> =
             """<button type="button" id="mode-toggle">Show response time</button></p>""",
         "    </div>",
     ) + tableLines() + chartLines() + listOf(
-        """    <p class="note">Service time is what the target took; response time counts from the """ +
+        """    <p class="note">Count is requests and reached is the users that got here, counted once """ +
+            "each: a loop multiplies the first and a condition divides it, and a step that made few " +
+            "requests because few users reached it is a different finding from one they each made few " +
+            "at. Service time is what the target took; response time counts from the " +
             "departure the profile promised, so it carries the generator's own backlog. Percentiles are " +
             "the top of the histogram bucket a sample fell in, never a point interpolated between two: " +
             "each is good to ${Histogram.PRECISION.asPercent()}, and rounds away from the target rather " +
@@ -264,6 +267,7 @@ private fun StepStats.rowLines(): List<String> =
             (if (failed.reasons.isEmpty()) ">" else """ aria-expanded="false" tabindex="0">"""),
         """            <th scope="row">${name.escapedForHtml()}</th>""",
         """            <td class="num">${count.grouped()}</td>""",
+        """            <td class="num reached">${reached.orNothing()}</td>""",
         """            <td class="num ok">${ok.count.grouped()}</td>""",
         """            <td class="num failed">${failed.count.grouped()}</td>""",
         timeCell(serviceTime.p50, responseTime.p50),
@@ -316,6 +320,11 @@ private fun String.sortKey(): String = substringBefore(" (").lowercase().replace
 
 private fun Timing.p99OrNothing(): String = if (count == 0L) NOTHING_MEASURED else p99.forReport()
 
+// A run recorded by something that did not count users has no reaches to print,
+// which is not the same fact as a step nobody reached: a zero here would be the
+// page claiming a measurement nothing took.
+private fun Long.orNothing(): String = if (this == 0L) NOTHING_MEASURED else grouped()
+
 internal fun String.escapedForHtml(): String = map(::htmlEscaped).joinToString(separator = "")
 
 private fun htmlEscaped(char: Char): String = when (char) {
@@ -350,6 +359,7 @@ private const val PERCENTILE_99 = 99.0
 private val COLUMNS = listOf(
     "Step" to false,
     "Count" to true,
+    "Reached" to true,
     "OK" to true,
     "Failed" to true,
     "p50" to true,

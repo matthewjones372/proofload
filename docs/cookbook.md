@@ -30,7 +30,9 @@ test that quietly asserts about a step nobody runs.
 
 **Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
 [stop sending on a metronome](#stop-sending-on-a-metronome) ·
-[think time](#think-time)
+[think time](#think-time) ·
+[loops and conditions](#loops-and-conditions) ·
+[two journeys in one run](#two-journeys-in-one-run)
 
 **Giving users their own data** — [a function of the user number](#a-function-of-the-user-number) ·
 [a fixed list](#a-fixed-list) · [a CSV file](#a-csv-file) ·
@@ -279,6 +281,83 @@ val checkout = scenario("checkout") {
 
 A pause has no name and no row in the report. It is not a step that took two
 seconds; it is the absence of one.
+
+## Loops and conditions
+
+A scenario is a tree, not a list, so a loop is a step holding steps rather than
+a body copied out:
+
+```kotlin
+val browsing = scenario("browsing") {
+    exec(signIn, api.post("/session").body(credentials))
+
+    repeat(10) {
+        exec(browse, api.get("/products"))
+        pause(2.seconds)
+    }
+
+    during(5.minutes) {
+        exec(poll, api.get("/notifications"))
+        pause(30.seconds)
+    }
+
+    doIf({ it[tier] == "gold" }) {
+        exec(concierge, api.get("/concierge"))
+    }
+}
+```
+
+`repeat` deliberately shadows `kotlin.repeat` inside a scenario. The stdlib one
+would build the body ten times over, and the report would carry ten rows for one
+step; this builds one step that runs ten times, so `/products` is one row with
+ten times the samples.
+
+`during` reads its own clock between iterations rather than waiting on anything,
+so no thread is parked. A user still looping when the profile's window closes
+finishes its iteration and extends the run — the alternative is cutting a user
+off mid-journey and counting the half of it that happened.
+
+`doIf` asks the session and nothing else. A condition over what the target
+answered would be a step nobody named, and a run that took one could not say
+beforehand what it was going to send.
+
+Because a step can now run many times per user, the report says both:
+
+```kotlin
+result[browse].count      // 300 requests
+result[browse].reached    // from 30 users
+```
+
+## Two journeys in one run
+
+Most real load is a mix. Name each journey as an arm with its own rate and its
+own data:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Arm
+import io.github.matthewjones372.kestrel.Simulation
+
+val simulation = Simulation(
+    arms = listOf(
+        Arm(browsing, constantRate(500.perSecond, over = 10.minutes)),
+        Arm(checkout, constantRate(20.perSecond, over = 10.minutes)),
+    ),
+)
+
+kestrel.run(simulation)
+```
+
+The arms are merged into one departure schedule rather than booked one after
+another — a run that sent all of one arm and then all of the next would hand the
+arrivals recorder a gap running backwards, and report a spacing nothing
+produced. Each arm is fed from its own feeder and numbers its users from zero,
+so `feed(customer) { "customer-$it" }` on two arms is two independent sequences.
+
+The run lasts as long as its longest arm. Two arms may not share a step name: a
+step name is one row of the report, and a shared one would either merge into a
+row describing neither or be qualified behind your back. Rename one and the
+constructor tells you which. A two-arm run also refuses to compare against a
+one-arm baseline, and names the arm that is missing.
 
 ## A function of the user number
 

@@ -78,6 +78,26 @@ enough to list, and long enough to matter.
   session rather than on the run's shared client, and `traced()` puts a W3C
   `traceparent` and a synthetic-traffic `baggage` entry on every request.
   Redirects are not followed.
+- **Loops and conditionals in the DSL.** `repeat(n) { }`, `during(window) { }`
+  and `doIf(predicate) { }` in `ScenarioBuilder`, building the tree the engine
+  already walked. `repeat` deliberately shadows `kotlin.repeat` inside a
+  scenario — the stdlib one unrolls the body and gives the report a row per
+  copy. A `during` loop reads its own clock between iterations, so no carrier is
+  parked and a user still looping when the profile's window closes extends the
+  run rather than being cut off.
+- **`reached` on a step.** How many users got to a step, beside how many
+  requests it made — so a loop reads as 30 requests from 10 users rather than as
+  30 of something. A result with no user information behind it prints `—`
+  rather than a zero nobody measured.
+- **More than one journey in a run.** `Simulation(arms = listOf(…))` sends every
+  arm, merged into one schedule by a lazy k-way merge of their own departure
+  sequences rather than booked one after another — which would have handed the
+  arrival recorder a gap running backwards. Each arm is fed from its own feeder
+  at its own user number from zero, and a two-arm mix refuses a one-arm baseline
+  naming the arm that is missing.
+- **A ceiling measured over a socket.** `:benchmarks:ceiling` now sweeps the
+  shipped HTTP step against a loopback target as well as a null step, and
+  `docs/what-it-costs.md` leads with the figure and calls it a lower bound.
 - **`kestrel-websocket`** — `open`, `send`, `awaiting` and `close` as timed
   steps on `java.net.http.WebSocket`, one connection per user, held in the
   session. `open` times the upgrade to the 101 alone and `close` the Close frame
@@ -126,15 +146,9 @@ enough to list, and long enough to matter.
 What this does not do yet. Each of these is checked against the tree at the
 commit this section was written on, not planned or assumed.
 
-- **One arm per run.** `Simulation` holds a `List<Arm>` and core will build a
-  two-arm simulation happily, but the engine still takes `arms.single()`, so
-  running one throws `IllegalArgumentException` rather than sending both. Two
-  journeys in one run is not available; two runs are.
-- **No loops or conditionals in the DSL.** `Step.Repeat` and `Step.When` are in
-  the model and the engine walks them, but `ScenarioBuilder` offers only `exec`,
-  `pause` and `emit` — there is no `repeat`, `during` or `doIf`. Constructing
-  `Scenario(name, steps)` and the `Step` values by hand works and is the only
-  way in.
+- **A mix does not say which arm a row belongs to.** Two arms run and are
+  measured, but the plan view and the progress line still name the first arm,
+  so the page does not print the arm beside each step row.
 - **No closed model.** Every profile states departure times up front. There is
   no "hold 50 concurrent users", which is the shape a queueing model wants and
   the shape some teams' targets are specified in.

@@ -17,7 +17,6 @@ import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.departures
-import io.github.matthewjones372.kestrel.judgedBy
 import io.github.matthewjones372.kestrel.plan
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -47,7 +46,8 @@ class VirtualThreads(private val progress: Progress = Progress.lines()) : Engine
  * Runs the search a rung at a time, and blocks for as long as it takes —
  * `worstCase` says how long that can be before anybody starts one.
  */
-fun Search.run(progress: Progress = Progress.lines()): Capacity = judgedBy { rung -> rung.run(progress) }
+fun Search.run(progress: Progress = Progress.lines()): Capacity =
+    reported(progress) { rung -> rung.run(progress) }
 
 /** The same run through [VirtualThreads], for a caller with no reason to name an engine. */
 fun Simulation.run(progress: Progress = Progress.lines()): RunResult = VirtualThreads(progress).run(this)
@@ -63,12 +63,15 @@ private fun Simulation.send(progress: Progress): RunResult {
     // arrival recorder gaps that run backwards, so a mix waits for a schedule
     // that merges them.
     val (scenario, profile, feeder) = arms.single()
+    progress.starting(plan())
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val runStart = System.nanoTime()
     val users = Departures()
     val departed = Departed()
-    val watching = watchProgress(progress, runStart) { ended -> departed.snapshot(users.inFlight(), ended) }
+    val watching = watchProgress(progress, runStart) { ended ->
+        departed.snapshot(users.inFlight(), ended, scheduled = profile.over)
+    }
     // Read where the offsets are consumed rather than off the profile: what the
     // report names is the spacing that was produced, and a profile asked the
     // same question would answer with its own intention. The pump is the one

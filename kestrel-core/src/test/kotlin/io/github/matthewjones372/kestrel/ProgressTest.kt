@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -23,7 +24,14 @@ class ProgressTest {
         inFlight: Long = 0L,
         behind: Duration = Duration.ZERO,
         ended: Boolean = false,
-    ): Snapshot = Snapshot(departed = departed, inFlight = inFlight, behind = behind, ended = ended)
+        scheduled: Duration = Duration.ZERO,
+    ): Snapshot = Snapshot(
+        departed = departed,
+        inFlight = inFlight,
+        behind = behind,
+        ended = ended,
+        scheduled = scheduled,
+    )
 
     private fun printedBy(block: () -> Unit): List<String> {
         val captured = ByteArrayOutputStream()
@@ -72,6 +80,68 @@ class ProgressTest {
         }
 
         printed.single() shouldBe "kestrel: 01:30  departed 44,231  in flight 312  behind 2ms"
+    }
+
+    @Test
+    fun `a run with a window on it counts down to the end of the schedule`() {
+        val printed = printedBy {
+            Progress.lines().tick(
+                90.seconds,
+                snapshot(departed = 4_500L, ended = true, scheduled = 10.minutes),
+            )
+        }
+
+        printed.single() shouldContain "08:30 left"
+    }
+
+    @Test
+    fun `a part second still to run reads as a second rather than as none`() {
+        val printed = printedBy {
+            Progress.lines().tick(2200.milliseconds, snapshot(departed = 44L, ended = true, scheduled = 3.seconds))
+        }
+
+        withClue("800ms of schedule is left, and 00:00 would say the run had stopped asking") {
+            printed.single() shouldContain "00:01 left"
+        }
+    }
+
+    @Test
+    fun `past the window the line says draining rather than a countdown nobody can make`() {
+        val printed = printedBy {
+            Progress.lines().tick(
+                10.minutes,
+                snapshot(departed = 30_000L, inFlight = 41L, ended = true, scheduled = 10.minutes),
+            )
+        }
+
+        withClue("what is left after the schedule is the target's, and this end of the wire does not know it") {
+            printed.single() shouldContain "draining"
+        }
+    }
+
+    @Test
+    fun `a run says its shape before it departs, read off the plan rather than measured`() {
+        val plan = Plan(
+            scenario = "checkout",
+            steps = listOf("/products", "/orders"),
+            profile = constantRate(50.perSecond, over = 10.minutes),
+        )
+
+        val printed = printedBy { Progress.lines().starting(plan) }
+
+        printed.single() shouldBe "kestrel: checkout — 30,000 users over 10m, 2 steps each"
+    }
+
+    @Test
+    fun `a result built from samples has no profile, so there is no shape to announce`() {
+        printedBy { Progress.lines().starting(Plan.none) }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `silent says nothing about the shape either`() {
+        val plan = Plan("checkout", listOf("/products"), constantRate(50.perSecond, over = 1.minutes))
+
+        printedBy { Progress.silent.starting(plan) }.shouldBeEmpty()
     }
 
     @Test

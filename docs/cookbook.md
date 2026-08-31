@@ -25,6 +25,7 @@ test that quietly asserts about a step nobody runs.
 [the same thing in Kotest](#the-same-thing-in-kotest) ·
 [without a test framework](#without-a-test-framework) ·
 [see what a scenario does before running it](#see-what-a-scenario-does-before-running-it) ·
+[know how long it will take](#know-how-long-it-will-take) ·
 [quieten the progress lines](#quieten-the-progress-lines)
 
 **Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
@@ -165,11 +166,42 @@ checkout.stepNames                                  // [/products, /orders]
 checkout.at(50.perSecond, over = 1.minutes).userCount()   // 3000, before anything is sent
 ```
 
+## Know how long it will take
+
+A run says its shape before it departs and counts down while it goes:
+
+```
+kestrel: checkout — 30,000 users over 10m, 2 steps each
+kestrel: 00:05  departed 250  in flight 3  behind 88.033us  09:55 left
+kestrel: 10:00  departed 30,000  in flight 41  behind 96.718us  draining
+```
+
+Nothing there is estimated. The window and the user count are the profile's own
+arithmetic, available before a request leaves, and `left` is the schedule's
+remainder. Past the window it says `draining` rather than counting to zero:
+what is left then is the target finishing the users it was given, and this end
+of the wire does not know how long that takes.
+
+A capacity search is the one thing whose length nobody can work out in advance,
+because the ladder stops as soon as it has the knee and then bisects. So it
+prints a bound, and narrows it:
+
+```
+kestrel: capacity — at most 10 rungs of 2s and the bisection after them, so at most 30s
+kestrel: rung 1 — 4/s passed, at most 28s left
+kestrel: rung 5 — 20/s failed, at most 20s left
+kestrel: rung 9 — 17/s passed, at most 12s left
+```
+
+"At most", never a forecast. A bound that is beaten leaves you pleasantly
+surprised; a forecast that is missed is a tool that lied. A rung that voids says
+so and stops the bound, because the generator lost ground and the answer is then
+about this machine rather than about the target.
+
 ## Quieten the progress lines
 
-A run prints where it has got to every five seconds, so a ten-minute soak is not
-ten minutes of silence somebody kills. When the output is somebody else's report
-— a CI step that parses stdout, a test framework — hand it a quiet one:
+When the output is somebody else's report — a CI step that parses stdout, a test
+framework — hand it a quiet one:
 
 ```kotlin
 import io.github.matthewjones372.kestrel.Progress

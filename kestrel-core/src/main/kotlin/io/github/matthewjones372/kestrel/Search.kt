@@ -27,6 +27,17 @@ data class Search(
      * run also waits out the users it started and that wait is the target's.
      */
     val worstCase: Duration get() = holding * (rungs.size + BISECTIONS)
+
+    /**
+     * The most the holds can still add up to once [climbed] rungs have run.
+     *
+     * Still a bound and still pessimistic: the ladder usually stops well short
+     * of its last rung, and the bisection stops as soon as it is out of
+     * halvings. A bound that is beaten leaves a reader pleasantly surprised,
+     * where a forecast that is missed is a tool that lied.
+     */
+    fun atMostAfter(climbed: Int): Duration =
+        holding * ((rungs.size - climbed).coerceAtLeast(0) + BISECTIONS)
 }
 
 /** What one rung learned: the rate it held, and the run that judged it. */
@@ -120,37 +131,44 @@ fun Search.at(rate: Rate): Simulation =
  * deliberately not a thing here: 0032 owns finding one, and inventing a second
  * rule in the meantime would leave two.
  */
-fun Search.judgedBy(run: (Simulation) -> RunResult): Capacity {
-    val ladder = climb(rungs, run, emptyList())
-    return Capacity((ladder + bisect(ladder, run)).sortedBy { it.rate.perSecond })
+fun Search.judgedBy(climbed: (Rung) -> Unit = {}, run: (Simulation) -> RunResult): Capacity {
+    val told: (Simulation) -> RunResult = run
+    val ladder = climb(rungs, told, emptyList(), climbed)
+    return Capacity((ladder + bisect(ladder, told, climbed)).sortedBy { it.rate.perSecond })
 }
 
 private tailrec fun Search.climb(
     remaining: List<Rate>,
     run: (Simulation) -> RunResult,
     climbed: List<Rung>,
+    told: (Rung) -> Unit,
 ): List<Rung> {
     val rate = remaining.firstOrNull() ?: return climbed
     val rung = Rung(rate, run(at(rate)))
+    told(rung)
     val done = climbed + rung
     return when (rung.outcome) {
         Rung.Outcome.Void -> done
 
         Rung.Outcome.Passed, Rung.Outcome.Failed ->
-            if (done.pastTheKnee() >= RUNGS_PAST_THE_KNEE) done else climb(remaining.drop(1), run, done)
+            if (done.pastTheKnee() >= RUNGS_PAST_THE_KNEE) done else climb(remaining.drop(1), run, done, told)
     }
 }
 
 /** How many rungs have run since the first one that failed. */
 private fun List<Rung>.pastTheKnee(): Int = dropWhile { it.outcome != Rung.Outcome.Failed }.size - 1
 
-private fun Search.bisect(ladder: List<Rung>, run: (Simulation) -> RunResult): List<Rung> {
+private fun Search.bisect(
+    ladder: List<Rung>,
+    run: (Simulation) -> RunResult,
+    told: (Rung) -> Unit,
+): List<Rung> {
     val knee = ladder.firstOrNull { it.outcome == Rung.Outcome.Failed } ?: return emptyList()
     val below = ladder
         .lastOrNull { it.outcome == Rung.Outcome.Passed && it.rate.perSecond < knee.rate.perSecond }
         ?.rate
         ?: 0.perSecond
-    return refine(below, knee.rate, BISECTIONS, run, emptyList())
+    return refine(below, knee.rate, BISECTIONS, run, emptyList(), told)
 }
 
 private tailrec fun Search.refine(
@@ -159,15 +177,17 @@ private tailrec fun Search.refine(
     left: Int,
     run: (Simulation) -> RunResult,
     refined: List<Rung>,
+    told: (Rung) -> Unit,
 ): List<Rung> {
     if (left == 0) return refined
     val middle = ((low.perSecond + high.perSecond) / 2).perSecond
     val rung = Rung(middle, run(at(middle)))
+    told(rung)
     val done = refined + rung
     return when (rung.outcome) {
         Rung.Outcome.Void -> done
-        Rung.Outcome.Passed -> refine(middle, high, left - 1, run, done)
-        Rung.Outcome.Failed -> refine(low, middle, left - 1, run, done)
+        Rung.Outcome.Passed -> refine(middle, high, left - 1, run, done, told)
+        Rung.Outcome.Failed -> refine(low, middle, left - 1, run, done, told)
     }
 }
 

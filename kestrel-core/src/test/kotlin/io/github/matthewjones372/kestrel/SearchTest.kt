@@ -40,6 +40,33 @@ class SearchTest {
     }
 
     @Test
+    fun `the bound narrows as rungs are spent, and stays a bound rather than a forecast`() {
+        withClue("nothing has run, so this is the whole worst case") {
+            search.atMostAfter(climbed = 0) shouldBe search.worstCase
+        }
+        search.atMostAfter(climbed = 4) shouldBe 22.minutes
+        withClue("past the ladder only the bisection is left, and it cannot go negative") {
+            search.atMostAfter(climbed = 12) shouldBe 10.minutes
+        }
+    }
+
+    @Test
+    fun `every rung is offered to a climber as it finishes, ladder first and then the bisection`() {
+        val told = mutableListOf<Rate>()
+
+        val capacity = search.judgedBy(climbed = { told += it.rate }, run = failingAbove(4_800.perSecond))
+
+        withClue("one rung ran, one rung was told about: $told") {
+            told.map { it.perSecond }.sorted() shouldBe capacity.curve.map { it.rate.perSecond }.sorted()
+        }
+        withClue("the ladder climbs before the bisection refines, so the told order is the run order") {
+            val ladder = told.takeWhile { it in search.rungs }
+            ladder shouldBe ladder.sortedBy { it.perSecond }
+            told.drop(ladder.size).shouldNotContain(search.rungs.first())
+        }
+    }
+
+    @Test
     fun `a rung is the scenario held at one rate, judged by the goals the search was given`() {
         search.fedBy(Feeder.empty).at(2_000.perSecond) shouldBe
             Simulation(checkout, constantRate(2_000.perSecond, over = 2.minutes), Feeder.empty, listOf(fast))
@@ -47,7 +74,7 @@ class SearchTest {
 
     @Test
     fun `a judge that fails above a rate is found to within one ladder step of it`() {
-        val capacity = search.judgedBy(failingAbove(4_800.perSecond))
+        val capacity = search.judgedBy(run = failingAbove(4_800.perSecond))
 
         val found = capacity.rate.shouldNotBeNull().perSecond
         withClue("the highest passing rate must not claim more than the judge allowed") {
@@ -60,12 +87,12 @@ class SearchTest {
 
     @Test
     fun `the goal that stopped the search is the one the first failing rung missed`() {
-        search.judgedBy(failingAbove(4_800.perSecond)).limitedBy shouldBe fast
+        search.judgedBy(run = failingAbove(4_800.perSecond)).limitedBy shouldBe fast
     }
 
     @Test
     fun `the ladder carries on past the knee, so the shape past it can be read`() {
-        val curve = search.judgedBy(failingAbove(4_800.perSecond)).curve.map { it.rate }
+        val curve = search.judgedBy(run = failingAbove(4_800.perSecond)).curve.map { it.rate }
 
         curve shouldContain 7_000.perSecond
         withClue("two rungs past the first failing one, and then it stops") {
@@ -75,7 +102,7 @@ class SearchTest {
 
     @Test
     fun `a rung the injector could not offer is void, and does not end up as the answer`() {
-        val capacity = search.judgedBy(fallingBehindAbove(3_000.perSecond))
+        val capacity = search.judgedBy(run = fallingBehindAbove(3_000.perSecond))
 
         capacity.curve.last().outcome shouldBe Rung.Outcome.Void
         withClue("nothing was learned about the target, so no goal limited it") {
@@ -119,7 +146,7 @@ class SearchTest {
 
     @Test
     fun `a search whose lowest rung already misses reports no sustainable rate`() {
-        val capacity = search.judgedBy(failingAbove(0.perSecond))
+        val capacity = search.judgedBy(run = failingAbove(0.perSecond))
 
         capacity.rate shouldBe null
         capacity.limitedBy shouldBe fast
@@ -127,7 +154,7 @@ class SearchTest {
 
     @Test
     fun `the curve holds every rung that ran, and each carries the verdicts it was judged on`() {
-        val capacity = search.judgedBy(failingAbove(4_800.perSecond))
+        val capacity = search.judgedBy(run = failingAbove(4_800.perSecond))
 
         withClue("the rates climb, so the curve reads left to right") {
             capacity.curve.map { it.rate.perSecond } shouldBe capacity.curve.map { it.rate.perSecond }.sorted()

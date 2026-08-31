@@ -85,12 +85,12 @@ badly and differently, for a fact the tool already holds.
 
 ## Stack
 
-- [ ] **`spec-0064-scheduled`** — a run naming its shape before it departs and
+- [x] **`spec-0064-scheduled`** — a run naming its shape before it departs and
       carrying the schedule's remaining time on each tick.
       Done when: a run of a known profile prints its user count and window
       before the first departure; `left` counts down to the window and then
       reads `draining`; and `Progress.silent` still prints nothing at all.
-- [ ] **`spec-0064-rungs`** — a search naming its bound and narrowing it.
+- [x] **`spec-0064-rungs`** — a search naming its bound and narrowing it.
       Done when: a search prints `worstCase` before its first rung, numbers
       each rung against the ladder, and says how much is left once bisection
       has begun.
@@ -108,17 +108,22 @@ badly and differently, for a fact the tool already holds.
 
 ## Open questions
 
-1. **Where does the schedule reach the reporter?** `Snapshot` is documented as
-    numbers the scheduler already keeps, and the window is one of them.
-    Recommend a field on `Snapshot` rather than a second method on `Progress`,
-    which would stop it being a `fun interface`.
+1. **Where does the schedule reach the reporter?** Settled in the building:
+    both. `Snapshot.scheduled` carries the window, and `Progress` gained three
+    default no-op members — `starting`, `searching`, `climbed`. A `fun
+    interface` may carry non-abstract members, so `Progress { _, _ -> }` still
+    compiles and `Progress.silent` swallows all three.
 2. **Does the opening line belong to `Progress` or to the engine?** A caller
     who asked for silence should get it. Recommend `Progress`, with the
     engine handing it the plan, so `Progress.silent` swallows this too.
-3. **What does a search print for a rung that voided?** The ladder stops there,
-    so the bound collapses to nothing rather than narrowing. Recommend saying
-    the search stopped and why, since a void rung is the generator's ceiling
-    and the reader needs to know the answer is about the machine.
+3. **What does a search print for a rung that voided?** Settled as recommended:
+    the line names it void, says the generator lost ground, and prints no bound
+    after it — there is nothing left to narrow, and the reader needs to know the
+    answer is about this machine.
+5. **Does the countdown round up or down?** Settled in the building: up. A run
+    with eight hundred milliseconds of schedule left read `00:00`, which says it
+    had stopped asking for departures when it had not. Rounding up keeps it a
+    bound, like every other figure this spec prints.
 4. **Should the countdown appear for a profile with no window?** Every profile
     has one. A result built from samples has `Plan.none`, which is not a run.
     Recommend printing the shape only where a profile named one.

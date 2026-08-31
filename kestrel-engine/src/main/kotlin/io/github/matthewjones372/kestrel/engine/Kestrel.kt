@@ -10,7 +10,6 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Simulation
-import io.github.matthewjones372.kestrel.judgedBy
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -30,7 +29,15 @@ import java.util.concurrent.CopyOnWriteArrayList
  * start one at the same moment measure it one after the other instead of
  * measuring each other.
  */
-class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
+class Kestrel(
+    private val engine: Engine = VirtualThreads().exclusive(),
+    /**
+     * What a capacity search says while it climbs. Held here rather than
+     * reached for through [engine], because a search is not a run and the seam
+     * 0051 kept to one method has nothing to say about one.
+     */
+    private val progress: Progress = Progress.lines(),
+) {
 
     /**
      * The default engine, told what to say while a run is going. Progress is
@@ -38,7 +45,7 @@ class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
      * so naming a reporter names an engine rather than widening the seam that
      * 0051 kept to one method.
      */
-    constructor(progress: Progress) : this(VirtualThreads(progress).exclusive())
+    constructor(progress: Progress) : this(VirtualThreads(progress).exclusive(), progress)
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
@@ -56,7 +63,7 @@ class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
      * a curve is one machine's answer and not two interleaved runs'.
      */
     fun run(search: Search): Capacity =
-        exclusively(Exclusivity.Running) { search.judgedBy { rung -> run(rung) } }
+        exclusively(Exclusivity.Running) { search.reported(progress) { rung -> run(rung) } }
 
     /**
      * Walks one user through [scenario] and prints what each step did.

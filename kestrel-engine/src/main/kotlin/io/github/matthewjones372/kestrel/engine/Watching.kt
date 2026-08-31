@@ -33,8 +33,13 @@ internal class Departed {
         lateness = nanos
     }
 
-    fun snapshot(inFlight: Long, ended: Boolean): Snapshot =
-        Snapshot(departed = count, inFlight = inFlight, behind = lateness.nanoseconds, ended = ended)
+    fun snapshot(inFlight: Long, ended: Boolean, scheduled: Duration): Snapshot = Snapshot(
+        departed = count,
+        inFlight = inFlight,
+        behind = lateness.nanoseconds,
+        ended = ended,
+        scheduled = scheduled,
+    )
 }
 
 /** A run that is being watched, and the thread the ticks arrive on. */

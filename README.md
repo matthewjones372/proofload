@@ -860,6 +860,7 @@ The three decisions that shape everything else, and are still open:
 | `kestrel-core` | **nothing** | scenarios, profiles and results as values |
 | `kestrel-engine` | core | virtual threads, departures on a schedule |
 | `kestrel-http` | core | HTTP steps on `java.net.http` |
+| `kestrel-websocket` | core | WebSocket handshakes on `java.net.http`, a connection per user |
 | `kestrel-junit5` | core, engine, JUnit | a load test that is a `@Test` |
 | `kestrel-kotest` | core, engine | the same, in a Kotest spec |
 | `kestrel-baseline` | core | a run kept in a file, to compare the next one to |

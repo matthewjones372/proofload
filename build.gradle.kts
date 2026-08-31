@@ -62,6 +62,7 @@ val moduleDescriptions = mapOf(
     "kestrel-pelican" to "Load tests driven by Pelican endpoint descriptions.",
     "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",
+    "kestrel-websocket" to "WebSocket steps on the JDK client. Depends on kestrel-core and nothing else.",
 )
 
 // Coverage, aggregated across the modules rather than per-module: a line in

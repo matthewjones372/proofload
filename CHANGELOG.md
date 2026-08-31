@@ -40,6 +40,11 @@ one.
   provider. `Refreshing.fixed(value)` is the same value with no scheduler, and
   `stop()` ends the schedule.
 - **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
+- **`kestrel-websocket`** — `open` and `close` as timed steps on
+  `java.net.http.WebSocket`, one connection per user, held in the session.
+  `open` times the upgrade to the server's 101 and `close` times the Close
+  frame out to the far end's Close back; neither is a message, and no message
+  is timed yet.
 - **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.
 - **`kestrel-report-html` and `kestrel-report-github`** — one self-contained

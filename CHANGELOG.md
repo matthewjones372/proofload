@@ -35,6 +35,9 @@ one.
   could not offer is void rather than failed, and ends the search.
   `Capacity.toHtmlReport()` draws the curve, with the operating point marked.
 - **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
+  `withCookies()` carries cookies between a user's steps, in that user's own
+  session rather than on the run's shared client. Redirects are still not
+  followed.
 - **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.
 - **`kestrel-report-html` and `kestrel-report-github`** — one self-contained

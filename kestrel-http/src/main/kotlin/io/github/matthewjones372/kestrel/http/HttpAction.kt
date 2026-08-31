@@ -12,6 +12,7 @@ import java.net.http.HttpRequest
 import java.time.Duration
 
 private const val OK = 200
+private const val COOKIE = "cookie"
 
 /**
  * One request, as a value: each of these returns another action rather than
@@ -20,7 +21,7 @@ private const val OK = 200
  */
 class HttpAction internal constructor(
     private val method: String,
-    private val baseUrl: String,
+    private val origin: Http,
     private val path: String,
     private val headers: Map<String, String> = emptyMap(),
     private val body: String? = null,
@@ -53,7 +54,12 @@ class HttpAction internal constructor(
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {
         val url = path.fill(scope) ?: return null
-        val response = exchange(request(url), scope) ?: return null
+        val response = exchange(request(url, scope), scope) ?: return null
+        // Kept whatever the status was, unlike a capture: a cookie is state the
+        // target set on the user, not a value this step asked for, and dropping
+        // the one that came with an unexpected status would make the next step
+        // fail as a sign-in problem rather than as the status that broke.
+        if (origin.cookies) scope.rememberCookies(response)
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
@@ -71,17 +77,27 @@ class HttpAction internal constructor(
         expected: Int = this.expected,
         timeout: Duration = this.timeout,
         captures: List<Capture<*>> = this.captures,
-    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, captures)
+    ): HttpAction = HttpAction(method, origin, path, headers, body, expected, timeout, captures)
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.
-    private fun request(url: String): HttpRequest = headers.entries
+    private fun request(url: String, scope: StepScope): HttpRequest = headersFor(scope).entries
         .fold(
-            HttpRequest.newBuilder(URI.create(baseUrl + url))
+            HttpRequest.newBuilder(URI.create(origin.baseUrl + url))
                 .timeout(timeout)
                 .method(method, publisher()),
         ) { builder, (name, value) -> builder.header(name, value) }
         .build()
+
+    // `HttpRequest.Builder.header` appends, so a jar and a hand-written cookie
+    // header would send two of them; the one the scenario wrote wins.
+    private fun headersFor(scope: StepScope): Map<String, String> {
+        val sending = if (origin.cookies) scope.cookieHeader() else null
+        return when {
+            sending == null || headers.keys.any { it.equals(COOKIE, ignoreCase = true) } -> headers
+            else -> mapOf(COOKIE to sending) + headers
+        }
+    }
 
     private fun publisher(): HttpRequest.BodyPublisher =
         body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()

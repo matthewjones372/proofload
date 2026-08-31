@@ -16,6 +16,7 @@ import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 /**
@@ -30,7 +31,8 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), floor?.line(), behindWarning()) + comparison.blocks(floor) + mixBlocks() +
+        listOfNotNull(lostWarning(), cutShortWarning(), floor?.line(), behindWarning()) +
+            comparison.blocks(floor) + mixBlocks() +
             stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
     }
@@ -150,6 +152,25 @@ private fun RunResult.arrivalLine(): String? {
     if (arrivals.count < 2L) return asked
     return "$asked Measured ${arrivals.mean.report()} between departures, coefficient of variation " +
         "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}."
+}
+
+/**
+ * A run that stopped before its schedule did, naming both windows: every count
+ * under it is over the shorter one, and a summary printing only what it
+ * measured reads exactly like a run that saw its window out.
+ *
+ * Absent otherwise, because a warning on every summary is one readers skip. A
+ * run legitimately outlasts its window while it waits out the users it started,
+ * and a shortfall under [SHORTFALL] of the window is the timeline's own whole
+ * seconds as readily as a run somebody stopped.
+ */
+private fun RunResult.cutShortWarning(): String? {
+    val asked = plan.plannedWindow
+    val recorded = timeline.size.seconds
+    if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return null
+
+    return "> **Cut short:** the schedule asked for ${asked.report()} and the run recorded ${recorded.report()}. " +
+        "Every number below is over the shorter window."
 }
 
 private fun RunResult.behindWarning(): String? {
@@ -343,6 +364,9 @@ private const val ACTIVE_CHARACTERS = "\\`*_[]<>|"
 private const val NOTHING_MEASURED = "—"
 
 private const val MIN_COLUMN_WIDTH = 5
+
+/** Under this share of the window, a shortfall is the timeline's own whole seconds rather than a run that stopped. */
+private const val SHORTFALL = 0.1
 
 private const val SIGNIFICANT_DIGITS = 3
 private const val NANOS_PER_MICRO = 1_000L

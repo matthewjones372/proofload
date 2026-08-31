@@ -13,6 +13,7 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.Reason
+import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
@@ -335,6 +336,46 @@ class MarkdownTest {
     @Test
     fun `a mix matches its golden`() {
         mixed().markdown() shouldBe golden("mixed.md")
+    }
+
+    @Test
+    fun `a run cut short names the window it was given beside the one it was asked for`() {
+        val summary = asking(40.seconds).markdown()
+
+        summary shouldContain "> **Cut short:** the schedule asked for 40.0s and the run recorded 20.0s."
+    }
+
+    @Test
+    fun `a run that saw its window out says nothing extra`() {
+        asking(20.seconds).markdown() shouldNotContain "Cut short"
+    }
+
+    @Test
+    fun `a run that drained past its window is not a run that was cut short`() {
+        asking(10.seconds).markdown() shouldNotContain "Cut short"
+    }
+
+    @Test
+    fun `a result nobody recorded a timeline for has no measured window to be short of`() {
+        ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+            .markdown() shouldNotContain "Cut short"
+    }
+
+    /** Twenty seconds of recorded run, against the window the plan asked for. */
+    private fun asking(window: Duration): RunResult {
+        val recorder = RunRecorder(startedAt)
+        repeat(20) { second ->
+            recorder.record(
+                step = "pay",
+                failure = null,
+                serviceTime = 20.milliseconds,
+                schedulingDelay = Duration.ZERO,
+                at = second.seconds,
+            )
+        }
+        return recorder.freeze().copy(
+            plan = Plan(scenario = "checkout", steps = listOf("pay"), profile = hold(25.perSecond, over = window)),
+        )
     }
 
     /** Two arms, where the mix that departed is not the mix that was asked for. */

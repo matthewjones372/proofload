@@ -15,6 +15,7 @@ import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The run as one self-contained page: the data, the stylesheet and the script
@@ -66,6 +67,7 @@ private fun RunResult.documentLines(
         comparison.comparisonLines(floor),
         differences.differenceLines(),
         planLines(),
+        cutShortLines(),
         lostLines(),
         behindLines(),
         totalsLines(),
@@ -81,6 +83,29 @@ private fun RunResult.documentLines(
         dataLines(),
         scriptLines(),
     ).flatten()
+
+/**
+ * A run that stopped before its schedule did, naming both windows: every count
+ * under it is over the shorter one, and a page printing only what it measured
+ * reads exactly like a run that saw its window out.
+ *
+ * Absent otherwise, because a warning on every page is one readers skip. A run
+ * legitimately outlasts its window while it waits out the users it started, and
+ * a shortfall under [SHORTFALL] of the window is the timeline's own whole
+ * seconds as readily as a run somebody stopped.
+ */
+private fun RunResult.cutShortLines(): List<String> {
+    val asked = plan.plannedWindow
+    val recorded = timeline.size.seconds
+    if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return emptyList()
+
+    return listOf(
+        """  <p class="behind" id="kestrel-cut-short" role="status">""",
+        "    <strong>Cut short.</strong> The schedule asked for ${asked.forPlan()} and the run recorded " +
+            "${recorded.forPlan()}. Every number below is over the shorter window.",
+        "  </p>",
+    )
+}
 
 /**
  * Above the backlog warning and above every count on the page. A record that
@@ -394,3 +419,6 @@ private val COLUMNS = listOf(
 )
 
 internal const val NOTHING_MEASURED: String = "—"
+
+/** Under this share of the window, a shortfall is the timeline's own whole seconds rather than a run that stopped. */
+private const val SHORTFALL = 0.1

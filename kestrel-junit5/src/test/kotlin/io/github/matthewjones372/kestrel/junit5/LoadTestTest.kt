@@ -15,6 +15,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener
 import org.junit.platform.launcher.listeners.TestExecutionSummary
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
 internal const val FIXTURE = "fixture"
@@ -31,6 +32,19 @@ class LoadTestTest {
 
         result["home"].count shouldBe 4L
         result.failed shouldBe 0L
+    }
+
+    /** What naming an engine has to leave alone: a bare load test still runs on Loom. */
+    @LoadTest
+    fun `a load test that names no engine runs its users on virtual threads`(kestrel: Kestrel) {
+        val virtual = AtomicBoolean(false)
+
+        kestrel.run(
+            scenario("browse") { exec("home") { virtual.set(Thread.currentThread().isVirtual) } }
+                .at(1.perSecond, over = 1.seconds),
+        )
+
+        virtual.get() shouldBe true
     }
 
     @Test

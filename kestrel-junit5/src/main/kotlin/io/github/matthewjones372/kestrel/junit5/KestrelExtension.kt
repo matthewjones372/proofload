@@ -2,10 +2,12 @@ package io.github.matthewjones372.kestrel.junit5
 
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.engine.exclusive
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * Hands a test a [Kestrel] and, when the test fails, attaches what its runs
@@ -38,8 +40,21 @@ class KestrelExtension : ParameterResolver, TestExecutionExceptionHandler {
      * lines, which is where the ten minutes of silence was the problem.
      */
     private fun ExtensionContext.kestrel(): Kestrel = requireNotNull(
-        getStore(NAMESPACE).getOrComputeIfAbsent(uniqueId, { Kestrel(Progress.silent) }, Kestrel::class.java),
+        getStore(NAMESPACE).getOrComputeIfAbsent(uniqueId, { runner() }, Kestrel::class.java),
     )
+
+    /**
+     * The engine the test class named, or the default one.
+     *
+     * A named engine is given the machine the same way the default is: two
+     * tests that start a run at the same moment measure it one after the
+     * other, and which engine was named is not a reason to lose that.
+     */
+    private fun ExtensionContext.runner(): Kestrel =
+        when (val chosen = (testInstance.getOrNull() as? RunsOn)?.engine) {
+            null -> Kestrel(Progress.silent)
+            else -> Kestrel(chosen.exclusive(), Progress.silent)
+        }
 
     private companion object {
         // Keyed on the test's own id, so two tests in a class never share one.

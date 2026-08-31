@@ -24,8 +24,17 @@ fun writePagesIndex(directory: Path): Path {
             .filter { it.name.endsWith(HTML) && it.name != INDEX }
             .sortedWith(compareByDescending<Path> { Files.getLastModifiedTime(it) }.thenBy { it.name })
     }
-    return Files.writeString(directory.resolve(INDEX), page(reports.map(::entryOf)))
+    val written = Files.writeString(directory.resolve(INDEX), page(reports.map(::entryOf)))
+    // Said the way a written report says it, so a workflow log reads as one
+    // voice. Duplicated rather than shared: this module carries core and the
+    // JDK, and an index is not worth a dependency on the HTML one.
+    println("kestrel: index of ${reports.size} ${"report".plural(reports.size)} at ${written.asLink()}")
+    return written
 }
+
+private fun Path.asLink(): String = toAbsolutePath().normalize().toUri().toString()
+
+private fun String.plural(count: Int): String = if (count == 1) this else "${this}s"
 
 private fun entryOf(report: Path): Entry =
     Entry(name = report.name, written = Files.getLastModifiedTime(report).toInstant())

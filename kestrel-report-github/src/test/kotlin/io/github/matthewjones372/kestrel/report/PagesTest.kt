@@ -20,6 +20,36 @@ class PagesTest {
         return file
     }
 
+    private fun printedBy(block: () -> Unit): String {
+        val captured = java.io.ByteArrayOutputStream()
+        val original = System.out
+        System.setOut(java.io.PrintStream(captured, true, Charsets.UTF_8))
+        try {
+            block()
+        } finally {
+            System.setOut(original)
+        }
+        return captured.toString(Charsets.UTF_8)
+    }
+
+    @Test
+    fun `writing the index says where it went, and how many it lists`(@TempDir dir: Path) {
+        dir.report("monday.html", "2026-08-24T09:00:00Z")
+        dir.report("tuesday.html", "2026-08-25T09:00:00Z")
+
+        val printed = printedBy { writePagesIndex(dir) }
+
+        printed shouldContain "kestrel: index of 2 reports at "
+        printed shouldContain dir.resolve("index.html").toAbsolutePath().normalize().toUri().toString()
+    }
+
+    @Test
+    fun `one report is counted in the singular`(@TempDir dir: Path) {
+        dir.report("monday.html", "2026-08-24T09:00:00Z")
+
+        printedBy { writePagesIndex(dir) } shouldContain "index of 1 report at "
+    }
+
     @Test
     fun `an index lists the reports beside it, newest first`(@TempDir dir: Path) {
         dir.report("monday.html", "2026-08-24T09:00:00Z")

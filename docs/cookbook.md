@@ -30,8 +30,7 @@ test that quietly asserts about a step nobody runs.
 
 **Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
 [stop sending on a metronome](#stop-sending-on-a-metronome) ·
-[think time](#think-time) ·
-[two journeys in one run](#two-journeys-in-one-run)
+[think time](#think-time)
 
 **Giving users their own data** — [a function of the user number](#a-function-of-the-user-number) ·
 [a fixed list](#a-fixed-list) · [a CSV file](#a-csv-file) ·
@@ -280,30 +279,6 @@ val checkout = scenario("checkout") {
 
 A pause has no name and no row in the report. It is not a step that took two
 seconds; it is the absence of one.
-
-## Two journeys in one run
-
-Most real load is a mix. Name each journey as an arm with its own rate and its
-own data:
-
-```kotlin
-import io.github.matthewjones372.kestrel.Arm
-import io.github.matthewjones372.kestrel.Simulation
-
-val simulation = Simulation(
-    arms = listOf(
-        Arm(browsing, constantRate(500.perSecond, over = 10.minutes)),
-        Arm(checkout, constantRate(20.perSecond, over = 10.minutes)),
-    ),
-)
-
-kestrel.run(simulation)
-```
-
-The arms depart together and the run lasts as long as the longest of them. Two
-arms may not share a step name: a step name is one row of the report, and a
-shared one would either merge into a row describing neither or be qualified
-behind your back. Rename one and the constructor tells you which.
 
 ## A function of the user number
 

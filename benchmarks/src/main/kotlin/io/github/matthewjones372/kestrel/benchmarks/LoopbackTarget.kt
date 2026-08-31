@@ -6,8 +6,9 @@ import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.timing
 import java.net.InetSocketAddress
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
@@ -25,20 +26,20 @@ import kotlin.time.TimeSource
  */
 class LoopbackTarget internal constructor(private val server: HttpServer) {
 
-    // One histogram per handler thread, merged on read: a shared one would put
-    // a lock on the path being timed, which is the service time being reported.
-    private val everyThread = CopyOnWriteArrayList<Histogram>()
-    private val mine = ThreadLocal.withInitial { Histogram().also(everyThread::add) }
+    // Striped and shared rather than one table per handler thread: the server
+    // runs a new virtual thread for every exchange, so a thread-local table is
+    // a forty-kilobyte allocation per request and a list that grows with the
+    // run, which at a sweep's rates is the harness measuring itself.
+    private val stripes = List(STRIPES) { Tally() }
 
     val baseUrl: String get() = "http://localhost:${server.address.port}/"
 
-    /**
-     * What the target itself took, read once the traffic has stopped: the
-     * per-thread tables are merged without locking them, so a read taken while
-     * handlers are still writing can miss a sample they are recording.
-     */
-    fun served(): Timing = everyThread
-        .fold(Histogram()) { all, thread -> all.also { it.merge(thread) } }
+    /** How many counter tables the target holds, which a sweep's length must not move. */
+    internal val tables: Int get() = stripes.size
+
+    /** What the target itself took, added up across the stripes it was counted in. */
+    fun served(): Timing = stripes
+        .fold(Histogram()) { all, stripe -> all.also(stripe::mergeInto) }
         .timing()
 
     internal fun answer(exchange: HttpExchange) {
@@ -49,8 +50,25 @@ class LoopbackTarget internal constructor(private val server: HttpServer) {
         exchange.requestBody.use { it.readAllBytes() }
         exchange.sendResponseHeaders(OK, BODY.size.toLong())
         exchange.responseBody.use { it.write(BODY) }
-        mine.get().record(started.elapsedNow())
+        // Read before the stripe is claimed, so waiting for one is not counted
+        // as time the target took to answer.
+        val took = started.elapsedNow()
+        stripes[(Thread.currentThread().threadId() % STRIPES).toInt()].record(took)
     }
+}
+
+/**
+ * One counter table and the lock several handler threads take to share it.
+ * `ReentrantLock` rather than `synchronized`, which pins the carrier the
+ * virtual thread running a handler is mounted on.
+ */
+private class Tally {
+    private val lock = ReentrantLock()
+    private val counted = Histogram()
+
+    fun record(took: Duration) = lock.withLock { counted.record(took) }
+
+    fun mergeInto(all: Histogram) = lock.withLock { all.merge(counted) }
 }
 
 /**
@@ -93,3 +111,11 @@ private const val OK = 200
 private const val BACKLOG = 4_096
 
 private val BODY = "{}".encodeToByteArray()
+
+private const val PER_PROCESSOR = 8
+
+/**
+ * Enough stripes that two handlers rarely want the same one, and few enough
+ * that they are a fixed cost of the target rather than a cost of the run.
+ */
+private val STRIPES: Int = Runtime.getRuntime().availableProcessors() * PER_PROCESSOR

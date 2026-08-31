@@ -40,6 +40,20 @@ class LoopbackTargetTest {
     }
 
     @Test
+    fun `the counter tables do not grow with the number of requests answered`() {
+        loopback { target ->
+            repeat(FEW) { get(target.baseUrl) }
+            val afterAFew = target.tables
+
+            repeat(MANY - FEW) { get(target.baseUrl) }
+
+            withClue("$afterAFew tables after $FEW requests, ${target.tables} after $MANY") {
+                target.tables shouldBe afterAFew
+            }
+        }
+    }
+
+    @Test
     fun `the target is gone once the harness has stopped it`() {
         val url = loopback { it.baseUrl }
 
@@ -73,6 +87,8 @@ class LoopbackTargetTest {
 
     private companion object {
         const val ASKED = 25
+        const val FEW = 50
+        const val MANY = 500
         const val OK = 200
         const val SAMPLES = 1_000
     }

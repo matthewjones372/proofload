@@ -33,6 +33,17 @@ data class NothingCaptured(val key: String) : Reason {
     override val described: String get() = "no $key captured"
 }
 
+/**
+ * The target kept redirecting past the number of hops the request allowed.
+ *
+ * The limit rather than the last URL it offered: a redirect loop names a
+ * different location every time round, and a report keyed on those is a row per
+ * request saying the one thing this says once.
+ */
+data class TooManyRedirects(val max: Int) : Reason {
+    override val described: String get() = "more than $max redirects"
+}
+
 /** A `{name}` in a path the session had nothing under. */
 data class UnfilledPath(val placeholder: String) : Reason {
     override val described: String get() = "missing {$placeholder}"

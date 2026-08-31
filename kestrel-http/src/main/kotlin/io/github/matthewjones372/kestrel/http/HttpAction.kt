@@ -30,6 +30,7 @@ class HttpAction internal constructor(
     private val checks: List<Check> = emptyList(),
     private val captures: List<Capture<*>> = emptyList(),
     private val traced: Boolean = false,
+    private val following: Int = 0,
 ) : Action {
 
     /**
@@ -48,6 +49,15 @@ class HttpAction internal constructor(
     fun timeout(timeout: Duration): HttpAction = copy(timeout = timeout)
 
     /**
+     * Follows a redirect, up to [max] hops, and judges the step on the response
+     * the chain lands on. Off unless asked for, because the client never
+     * follows: a 302 nobody declared is a finding, and followed silently it
+     * becomes a timing for a page nobody asked for under this request's name.
+     * A chain longer than [max] fails the step as [TooManyRedirects].
+     */
+    fun following(max: Int = 1): HttpAction = copy(following = max)
+
+    /**
      * Asks [holds] of the response, failing the step under [name] when it does
      * not. The whole response body is held in memory to be read, so a request
      * that streams something large cannot also be checked.
@@ -63,12 +73,7 @@ class HttpAction internal constructor(
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {
         val url = path.fill(scope) ?: return null
-        val response = exchange(request(url, scope), scope) ?: return null
-        // Kept whatever the status was, unlike a capture: a cookie is state the
-        // target set on the user, not a value this step asked for, and dropping
-        // the one that came with an unexpected status would make the next step
-        // fail as a sign-in problem rather than as the status that broke.
-        if (origin.cookies) scope.rememberCookies(response)
+        val response = follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope) ?: return null
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
@@ -87,6 +92,29 @@ class HttpAction internal constructor(
         return response
     }
 
+    /**
+     * Walks the chain, hop by hop, and answers with the response it ends on.
+     *
+     * Followed here rather than by the client, which is built never to: each hop
+     * is a request this makes, so a hop can carry the cookies the one before it
+     * set and none of them can arrive as somebody else's measurement.
+     */
+    private tailrec fun follow(hop: Hop, hopsLeft: Int, scope: StepScope): Response? {
+        val response = exchange(request(hop, scope), scope) ?: return null
+        // Kept whatever the status was, unlike a capture: a cookie is state the
+        // target set on the user, not a value this step asked for, and dropping
+        // the one that came with an unexpected status would make the next step
+        // fail as a sign-in problem rather than as the status that broke.
+        if (origin.cookies) scope.rememberCookies(response)
+        val next = if (following <= 0) null else response.hopFrom(hop)
+        if (next == null) return response
+        if (hopsLeft <= 0) {
+            scope.fail(TooManyRedirects(following))
+            return null
+        }
+        return follow(next, hopsLeft - 1, scope)
+    }
+
     private fun copy(
         headers: Map<String, String> = this.headers,
         body: String? = this.body,
@@ -94,15 +122,17 @@ class HttpAction internal constructor(
         timeout: Duration = this.timeout,
         checks: List<Check> = this.checks,
         captures: List<Capture<*>> = this.captures,
-    ): HttpAction = HttpAction(method, origin, path, headers, body, expected, timeout, checks, captures, traced)
+        following: Int = this.following,
+    ): HttpAction =
+        HttpAction(method, origin, path, headers, body, expected, timeout, checks, captures, traced, following)
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.
-    private fun request(url: String, scope: StepScope): HttpRequest = headersFor(scope).entries
+    private fun request(hop: Hop, scope: StepScope): HttpRequest = headersFor(scope).entries
         .fold(
-            HttpRequest.newBuilder(URI.create(origin.baseUrl + url))
+            HttpRequest.newBuilder(hop.uri)
                 .timeout(timeout)
-                .method(method, publisher())
+                .method(hop.method, publisher(hop.body))
                 .tracing(traced),
         ) { builder, (name, value) -> builder.header(name, value) }
         .build()
@@ -117,7 +147,7 @@ class HttpAction internal constructor(
         }
     }
 
-    private fun publisher(): HttpRequest.BodyPublisher =
+    private fun publisher(body: String?): HttpRequest.BodyPublisher =
         body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()
 }
 

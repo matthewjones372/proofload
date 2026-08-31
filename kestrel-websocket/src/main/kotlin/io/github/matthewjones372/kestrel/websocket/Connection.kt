@@ -45,6 +45,12 @@ class Connection internal constructor(
     internal val inbound: Inbound,
 ) {
 
+    /** Messages that answered a send this connection had outstanding. */
+    val matched: Long get() = inbound.matched
+
+    /** Messages nobody sent for, counted and not timed: there is no departure to measure one from. */
+    val unsolicited: Long get() = inbound.unsolicited
+
     /**
      * Sends this connection has still to see an answer to, split by whether
      * they were given [window] to be answered in — a send that left too late to

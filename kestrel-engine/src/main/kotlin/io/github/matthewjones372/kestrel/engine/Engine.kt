@@ -34,6 +34,10 @@ fun Search.run(): Capacity = judgedBy { rung -> rung.run() }
  * and until the sink it named has had the wait it declared.
  */
 fun Simulation.run(): RunResult {
+    // One arm: booking a second arm's departures after the first hands the
+    // arrival recorder gaps that run backwards, so a mix waits for a schedule
+    // that merges them.
+    val (scenario, profile, feeder) = arms.single()
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val runStart = System.nanoTime()
@@ -44,7 +48,7 @@ fun Simulation.run(): RunResult {
     // that sees every departure exactly once, and folding three numbers here
     // costs no allocation on a loop whose delay is measured as latency.
     val arrivals = ArrivalRecorder()
-    val drain = completing?.let { Drain(it, recorders, runStart, closesAt = profile.over + it.drainingFor) }
+    val drain = completing?.let { Drain(it, recorders, runStart, closesAt = over + it.drainingFor) }
     drain?.start()
     // One platform thread. Its only job is to start virtual threads at the
     // offsets the profile named; a step never runs on it, so a slow target

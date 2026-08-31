@@ -65,6 +65,15 @@ fun interface Progress {
      */
     fun climbed(rung: Rung, number: Int, atMost: Duration) {}
 
+    /**
+     * How long this run queued for the machine before it could start.
+     *
+     * Only a run that waited is told about, so a reporter hearing this knows
+     * the number it is about to print describes a machine that was busy. Where
+     * nothing queued, nothing is said.
+     */
+    fun waited(queued: Duration) {}
+
     companion object {
 
         /** For a caller whose output is somebody else's report — a test framework, a CI step that parses stdout. */
@@ -110,6 +119,10 @@ private class Lines(private val every: Duration) : Progress {
             "kestrel: capacity — at most ${search.rungs.size} rungs of ${search.holding} and the bisection " +
                 "after them, so at most ${search.worstCase}",
         )
+    }
+
+    override fun waited(queued: Duration) {
+        println("kestrel: waited $queued for the machine")
     }
 
     override fun climbed(rung: Rung, number: Int, atMost: Duration) {

@@ -62,22 +62,27 @@ else.
 
 ## Stack
 
-- [ ] **`spec-0052-arms`** — `Arm`, `Simulation` over a list of them, `+`, and
+- [x] **`spec-0052-arms`** — `Arm`, `Simulation` over a list of them, `+`, and
       the refusal when two arms share a step name.
       Done when: a one-armed simulation behaves exactly as today, and two arms
       sharing a step name fail to build with both names in the message.
-- [ ] **`spec-0052-plan`** — `plan()` over arms, and `NotComparable` naming the
+- [x] **`spec-0052-plan`** — `plan()` over arms, and `NotComparable` naming the
       arm that differs.
       Done when: a run of a two-arm mix will not compare against a one-arm
       baseline, and says which arm is missing.
-- [ ] **`spec-0052-engine`** — the engine merging arms into one schedule, each
+- [x] **`spec-0052-engine`** — the engine merging arms into one schedule, each
       arm fed from its own feeder.
       Done when: a two-arm run departs in the merged order, and each arm's user
       numbers start at zero.
-- [ ] **`spec-0052-report`** — the arm on each step row, and the mix in the
+- [x] **`spec-0052-report`** — the arm on each step row, and the mix in the
       plan view.
       Done when: the page names the arm beside each step and prints the ratio
       the plan asked for beside the one that departed.
+      Landed, with the departed share derived from `reached` rather than
+      counted: nothing records a departure per arm. Exact for a scenario every
+      user walks, a floor for one that opens with a condition, and the page
+      says which it is. A per-arm departure count on `RunResult` would make it
+      a measurement, and is the one change left worth making here.
 
 ## Acceptance
 

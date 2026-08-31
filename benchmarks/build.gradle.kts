@@ -12,6 +12,10 @@ dependencies {
 }
 
 tasks.register<JavaExec>("ceiling") {
+    // A benchmark measures this machine, so it must not queue behind a test
+    // run and must not make one queue behind it: a ceiling taken while
+    // something else held the machine would be a measurement of the wait.
+    systemProperty("kestrel.exclusive", "false")
     group = "verification"
     description = "Finds the rate at which the generator stops keeping its own schedule."
     mainClass.set("io.github.matthewjones372.kestrel.benchmarks.CeilingKt")
@@ -22,6 +26,10 @@ tasks.register<JavaExec>("ceiling") {
 }
 
 tasks.register<JavaExec>("timelineCost") {
+    // A benchmark measures this machine, so it must not queue behind a test
+    // run and must not make one queue behind it: a ceiling taken while
+    // something else held the machine would be a measurement of the wait.
+    systemProperty("kestrel.exclusive", "false")
     group = "verification"
     description = "Measures what a soak's per-second timeline costs, recording and frozen."
     mainClass.set("io.github.matthewjones372.kestrel.benchmarks.TimelineCostKt")

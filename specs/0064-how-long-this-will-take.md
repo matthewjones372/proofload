@@ -94,7 +94,7 @@ badly and differently, for a fact the tool already holds.
       Done when: a search prints `worstCase` before its first rung, numbers
       each rung against the ladder, and says how much is left once bisection
       has begun.
-- [ ] **`spec-0064-page`** — the scheduled window beside the measured one on
+- [x] **`spec-0064-page`** — the scheduled window beside the measured one on
       the report, so a run that was cut short says so.
       Done when: a page whose measured window is shorter than its planned one
       names both rather than only what it measured.

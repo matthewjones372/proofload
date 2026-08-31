@@ -113,20 +113,23 @@ succeeded a second apart.
 
 Stacks on 0051, which declares the `Engine` this decorates.
 
-- [ ] **`spec-0050-exclusive`** — the states in core, and the in-JVM lock in the
+- [x] **`spec-0050-exclusive`** — the states in core, and the in-JVM lock in the
       decorator around `run()` and `calibrate()`.
       Done when: two threads calling `run()` are shown never to overlap, a
       capacity search's rungs do not deadlock on their own lock, and
       `NoThirdPartyDependenciesTest` still passes.
-- [ ] **`spec-0050-across-processes`** — the file lock, its degradation, and
+- [x] **`spec-0050-across-processes`** — the file lock, its degradation, and
       the opt-out.
       Done when: two JVMs started together are shown to run one after the
       other, killing a holder frees the machine for the next,
       `-Dkestrel.exclusive=false` lets them overlap, and a lock file that
       cannot be opened downgrades the guarantee instead of failing the run.
-- [ ] **`spec-0050-reported`** — the wait, where a reader sees it.
+- [x] **`spec-0050-reported`** — the wait, where a reader sees it.
       Done when: a run that waited says how long, and a run that did not says
       nothing.
+      Landed as a `waited(Duration)` member on `Progress` with a no-op default,
+      declared as `starting`, `searching` and `climbed` are, so silence is what
+      a reporter does rather than what it is.
 
 ## Acceptance
 

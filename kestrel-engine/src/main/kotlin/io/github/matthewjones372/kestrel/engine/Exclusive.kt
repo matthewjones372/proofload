@@ -70,16 +70,19 @@ internal fun <T> exclusively(during: Exclusivity, progress: Progress = Progress.
 }
 
 /**
- * How long the machine was queued for, where the run is one that speaks at all.
+ * How long the machine was queued for, told to the reporter the run was given.
  *
- * [Progress] has no member for a wait — it is a core type, and adding one is
- * 0050's third section — so a run whose caller asked for silence with
- * [Progress.silent] gets silence here too, and a run that did not queue says
- * nothing either way.
+ * Asked rather than compared: an earlier draft printed unless the reporter was
+ * identically [Progress.silent], which silenced the one instance this
+ * repository ships and nobody else's — a caller's own no-op `Progress` would
+ * have been talked over. `waited` has a no-op default like every other member
+ * added since, so silence is what a reporter does rather than what it is.
+ *
+ * A run that did not queue says nothing either way.
  */
 private fun Exclusivity.reportedTo(progress: Progress) {
-    if (this !is Exclusivity.Waiting || progress === Progress.silent) return
-    println("kestrel: waited ${Duration.between(since, Instant.now()).toKotlinDuration()} for the machine")
+    if (this !is Exclusivity.Waiting) return
+    progress.waited(Duration.between(since, Instant.now()).toKotlinDuration())
 }
 
 private fun exclusivityWanted(): Boolean = System.getProperty("kestrel.exclusive")?.toBooleanStrictOrNull() != false

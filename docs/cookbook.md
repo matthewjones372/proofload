@@ -54,6 +54,7 @@ test that quietly asserts about a step nobody runs.
 [did the generator keep up?](#did-the-generator-keep-up)
 
 **Keeping the answer** — [write an HTML report](#write-an-html-report) ·
+[one run at a time, on the whole machine](#one-run-at-a-time-on-the-whole-machine) ·
 [a baseline in GitHub Actions](#a-baseline-in-github-actions) ·
 [more than one run, and a verdict worth having](#more-than-one-run-and-a-verdict-worth-having) ·
 [publish the reports to GitHub Pages](#publish-the-reports-to-github-pages) ·
@@ -931,6 +932,39 @@ A capacity search has a page of its own, with the curve on it:
 ```kotlin
 capacity.writeHtmlReport(Path.of("build/reports/kestrel/capacity.html"))
 ```
+
+## One run at a time, on the whole machine
+
+A run takes the machine while it lasts, and since two runs sharing a host
+measure each other, that guarantee reaches across processes as well as threads:
+a second JVM waits for the first rather than competing with it.
+
+```
+kestrel: waited 204.682774ms for the machine
+kestrel: checkout — 30,000 users over 10m, 2 steps each
+```
+
+A run that did not queue says nothing. The lock is a `FileLock` on a file under
+`java.io.tmpdir`, so the OS releases it when a process dies — a killed run frees
+the machine for the next one with nothing to clean up.
+
+It degrades rather than fails. A read-only temp directory, a container without
+one, a filesystem that will not lock: each says so once and runs anyway, with
+the guarantee back to one run at a time in this JVM. A load test that died
+because it could not create a lock file is one people stop running.
+
+Four properties, all optional:
+
+| Property | Default | What it does |
+|---|---|---|
+| `kestrel.exclusive` | `true` | `false` lets runs overlap. Set it on a benchmark, which is measuring the machine and must not queue behind a test. |
+| `kestrel.exclusive.file` | `$java.io.tmpdir/kestrel-machine.lock` | Where the lock lives. One name per host is what makes two people queue for each other. |
+| `kestrel.exclusive.timeout` | none | Seconds to queue before giving up, failing with the holder's pid. Unset waits indefinitely. |
+| `kestrel.resolution` | measured | A floor somebody already measured, skipping `calibrate()`. A floor named rather than measured carries no probe, so nothing can compare two machines by it. |
+
+Two containers on one host cannot serialise against each other this way — they
+do not share a temp directory — and no file can fix that. Nothing here pretends
+otherwise.
 
 ## A baseline in GitHub Actions
 

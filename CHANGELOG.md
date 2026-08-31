@@ -78,6 +78,14 @@ enough to list, and long enough to matter.
   session rather than on the run's shared client, and `traced()` puts a W3C
   `traceparent` and a synthetic-traffic `baggage` entry on every request.
   Redirects are not followed.
+- **One run at a time, across processes.** The in-JVM lock is now backed by a
+  `FileLock` under `java.io.tmpdir`, so two JVMs on one host run one after the
+  other rather than measuring each other, and a killed holder frees the machine
+  with nothing to reap. It degrades rather than fails: a lock that cannot be
+  taken says so once and the run goes ahead with the in-JVM guarantee.
+  `kestrel.exclusive=false` opts out, `kestrel.exclusive.file` moves the lock,
+  and `kestrel.exclusive.timeout` puts a ceiling on the wait. A run that queued
+  says how long; one that did not says nothing.
 - **A test can name its engine.** `Engine` is a `fun interface` in core; a
   JUnit class names one by implementing `RunsOn`, and a Kotest spec by calling
   `kestrel(engine)`. A class that names none runs on virtual threads, so bare

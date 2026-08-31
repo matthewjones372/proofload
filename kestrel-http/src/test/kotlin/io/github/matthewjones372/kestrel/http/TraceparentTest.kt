@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.Session
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -67,6 +68,32 @@ class TraceparentTest {
             val received = server.received.single()
             received.headers["x-tenant"] shouldBe "anvils"
             received.headers["traceparent"].orEmpty() shouldMatch TRACEPARENT
+        }
+    }
+
+    /**
+     * The two switches were written on branches that could not see each other,
+     * so this is the first thing to ask either of them together.
+     */
+    @Test
+    fun `tracing and cookies are both kept, in whichever order they are asked for`() {
+        // Asserted on the value rather than only on the wire: a builder that
+        // drops the other's switch is the failure, and only one of the two
+        // shows up in a header.
+        listOf(
+            http.baseUrl("http://localhost:1").traced().withCookies(),
+            http.baseUrl("http://localhost:1").withCookies().traced(),
+        ).forEach { client ->
+            withClue("traced then cookies, and the reverse") {
+                client.traced shouldBe true
+                client.cookies shouldBe true
+            }
+        }
+
+        serving("/products" to Reply(200)) { server ->
+            http.baseUrl(server.baseUrl).traced().withCookies().get("/products").run(Session.empty)
+
+            server.received.single().headers["traceparent"].orEmpty() shouldMatch TRACEPARENT
         }
     }
 

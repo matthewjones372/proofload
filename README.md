@@ -87,6 +87,27 @@ A feeder is a function of the user's number rather than a cursor over a source,
 so there is nothing to lock on the path every request takes, nothing to run out
 of, and user 4,001 gets the same data tomorrow as it did today.
 
+A target with a login form answers with a cookie, and `withCookies()` carries it
+from the step that was given it to the ones after:
+
+```kotlin
+val api = http.baseUrl("https://shop.internal").withCookies()
+
+val signedIn = scenario("signed in") {
+    exec(signIn, api.post("/session").body(credentials).expecting(302))
+    exec(browse, api.get("/account"))    // carries the cookie the sign-in set
+}
+```
+
+The jar is in each user's own session, not on the client. There is one
+`HttpClient` for the whole run so that TLS handshakes are not measured, and
+`java.net.CookieHandler` hangs off the client, so a jar there would be one jar
+shared by every user — fifty thousand of them taking turns being one logged-in
+person. Name and value only: no expiry, and no path or domain matching, because
+a load test sends to one base URL. It is off unless asked for, so a scenario
+without `withCookies()` sends no cookie header at all, and it does not follow
+redirects: a 302 is still the failure it was, under the step that got it.
+
 A load shape is stages in order, and still a value — so it composes, and it
 answers before a request leaves:
 

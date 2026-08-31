@@ -12,6 +12,9 @@ class Response internal constructor(
     /** Case-insensitively, because HTTP field names are. */
     fun header(name: String): String? = headers[name.lowercase()]?.firstOrNull()
 
+    /** All of them: a response that sets two cookies sends two of this header. */
+    internal val setCookie: List<String> get() = headers["set-cookie"].orEmpty()
+
     internal companion object {
 
         fun of(raw: HttpResponse<String>): Response = Response(

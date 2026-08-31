@@ -331,16 +331,37 @@ Read once, before the run, and held as a value:
 
 ```kotlin
 import io.github.matthewjones372.kestrel.csv
+import io.github.matthewjones372.kestrel.feeding
+
+val customer = sessionKey<String>("customer")
+val tier = sessionKey<String>("tier")
 
 val accounts = csv(Path.of("src/test/resources/accounts.csv"))
 
-checkout.at(50.perSecond, over = 1.minutes)
-    .fedBy(feedFrom(customer, accounts.column("account_id").orEmpty()))
+checkout.at(50.perSecond, over = 1.minutes).fedBy(accounts.feeding(customer, tier))
 ```
+
+Each key fills from the column the header gave the same name, so there is no
+second place to keep the mapping. A key naming a column the file does not have
+fails when the feeder is built, naming the column and listing the ones that are
+there — before the run departs anything, rather than on user one.
+
+A CSV has no types, so a key that is not a `String` names its own conversion:
+
+```kotlin
+val account = sessionKey<Long>("account")
+
+accounts.feeding(account) { it.toLong() }
+```
+
+The conversion runs once per row while the feeder is built, never on the path a
+departure takes.
 
 Held in memory rather than streamed, for the reason everything else here is: a
 file read between a departure and the request it makes is measured as the
-target's latency. The grammar is a deliberately small part of RFC 4180 — quoted
+target's latency. One session is built per row up front, so feeding a user is an
+index into a list — nothing allocated, nothing locked, and it wraps round rather
+than running out. The grammar is a deliberately small part of RFC 4180 — quoted
 fields and doubled quotes inside them — because core carries no dependencies and
 anything wider is a CSV library.
 

@@ -5,11 +5,46 @@ import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 
-/** Runs the steps in order, stopping at the first failure, the way the engine does. */
-internal fun Scenario.walk(): StepResult =
-    steps.fold<Step, StepResult>(StepResult.Ok(Session.empty)) { carried, step ->
-        when (carried) {
-            is StepResult.Failed -> carried
-            is StepResult.Ok -> (step as Step.Exec).action.run(carried.session)
-        }
+/**
+ * Runs the steps in order, stopping at the first failure, the way the engine
+ * does.
+ *
+ * A scenario is a tree rather than a list, so this walks one. It used to cast
+ * every step to [Step.Exec], which held only for as long as `repeat` inside a
+ * scenario meant `kotlin.repeat` and unrolled the body; the moment
+ * `ScenarioBuilder.repeat` existed, that cast met the `Step.Repeat` it builds.
+ *
+ * This module is a leaf on core and cannot reach the engine, so the walk is
+ * duplicated here rather than shared. The `when` is exhaustive over the sealed
+ * type with no `else`, so a new form of step fails to compile here rather than
+ * being silently skipped.
+ */
+internal fun Scenario.walk(): StepResult = steps.walk(StepResult.Ok(Session.empty))
+
+private fun List<Step>.walk(from: StepResult): StepResult = fold(from) { carried, step ->
+    when (carried) {
+        is StepResult.Failed -> carried
+        is StepResult.Ok -> step.walk(carried)
     }
+}
+
+private fun Step.walk(carried: StepResult.Ok): StepResult = when (this) {
+    is Step.Exec -> action.run(carried.session)
+
+    is Step.Emit -> action.run(carried.session)
+
+    is Step.Repeat -> (1..times).fold<Int, StepResult>(carried) { each, _ ->
+        if (each is StepResult.Ok) steps.walk(each) else each
+    }
+
+    // One pass. A test here asserts what a body did, not how long a clock ran
+    // for, and looping on a wall clock would make these tests take as long as
+    // the window says rather than as long as the work does.
+    is Step.During -> steps.walk(carried)
+
+    is Step.When -> if (predicate(carried.session)) steps.walk(carried) else carried
+
+    // Nothing to run and nothing to wait for: a pause is time a user spends
+    // reading, and no assertion in this module is about the clock.
+    is Step.Pause -> carried
+}

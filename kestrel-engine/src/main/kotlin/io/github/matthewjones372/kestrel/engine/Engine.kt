@@ -18,10 +18,12 @@ import io.github.matthewjones372.kestrel.plan
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Runs the search a rung at a time, and blocks for as long as it takes —
@@ -40,9 +42,10 @@ fun Simulation.run(): RunResult {
     val users = Departures()
     // Read where the offsets are consumed rather than off the profile: what the
     // report names is the spacing that was produced, and a profile asked the
-    // same question would answer with its own intention. This is the one thread
-    // that sees every departure exactly once, and folding three numbers here
-    // costs no allocation on a loop whose delay is measured as latency.
+    // same question would answer with its own intention. The pump is the one
+    // thread that sees every departure exactly once and in order, and folding
+    // three numbers there costs no allocation on the path whose delay is
+    // measured as latency.
     val arrivals = ArrivalRecorder()
     val drain = completing?.let { Drain(it, recorders, runStart, closesAt = profile.over + it.drainingFor) }
     drain?.start()
@@ -51,20 +54,29 @@ fun Simulation.run(): RunResult {
     // cannot push a departure back.
     val scheduler = Executors.newSingleThreadScheduledExecutor(::schedulerThread)
     try {
-        profile.departures().forEachIndexed { user, departure ->
-            arrivals.record(departure)
-            users.starting()
-            scheduler.schedule(
-                { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain) },
-                // Relative to now, but the offset is from the run's start, and
-                // booking a million of these is not instant. Subtracting what
-                // has already elapsed is what stops every departure inheriting
-                // the time spent booking the ones before it.
-                departure.inWholeNanoseconds - (System.nanoTime() - runStart),
-                TimeUnit.NANOSECONDS,
-            )
-        }
-        users.allScheduled()
+        // The pump is the scheduler thread's own work rather than a second
+        // thread's: two threads deciding when a user leaves is two chances to
+        // disagree about it.
+        scheduler.execute(
+            Pump(
+                scheduler,
+                BookingWindow(profile.departures().withIndex().iterator(), BOOKING_WINDOW),
+                runStart,
+                allBooked = users::allScheduled,
+            ) { user, departure ->
+                arrivals.record(departure)
+                users.starting()
+                scheduler.schedule(
+                    { scenario.depart(recorders, runStart, departure, users, feeder.forUser(user.toLong()), drain) },
+                    // Relative to now, but the offset is from the run's start
+                    // and a pump books partway through it. Subtracting what has
+                    // already elapsed is what stops every departure inheriting
+                    // the time its window waited to be booked.
+                    departure.inWholeNanoseconds - (System.nanoTime() - runStart),
+                    TimeUnit.NANOSECONDS,
+                )
+            },
+        )
         users.awaitAll()
     } finally {
         scheduler.shutdownNow()
@@ -150,14 +162,36 @@ private class Drain(
     private fun elapsed(): Duration = (System.nanoTime() - runStart).nanoseconds
 }
 
+/**
+ * Books the departures that are due within a window, then books itself to run
+ * again when the next one comes into view.
+ *
+ * Scheduled rather than looped: a thread that wakes, tops the queue up and
+ * sleeps again is a parked thread in library code, and a stall there is
+ * measured as the target's latency.
+ */
+private class Pump(
+    private val scheduler: ScheduledExecutorService,
+    private val booking: BookingWindow,
+    private val runStart: Long,
+    private val allBooked: () -> Unit,
+    private val book: (user: Int, departure: Duration) -> Unit,
+) : Runnable {
+
+    override fun run() {
+        val again = booking.fill((System.nanoTime() - runStart).nanoseconds, book)
+        if (again == null) allBooked() else scheduler.schedule(this, again.inWholeNanoseconds, TimeUnit.NANOSECONDS)
+    }
+}
+
 private fun schedulerThread(runnable: Runnable): Thread =
     Thread(runnable, "kestrel-scheduler").apply { isDaemon = true }
 
 /**
  * How many users are still to finish, and a gate that opens when none are.
- * The scheduling loop counts as one of them until the last departure is
- * booked, so a run whose early users finish before its late ones are even
- * scheduled cannot declare itself over.
+ * The pump counts as one of them until the last departure is booked, so a run
+ * whose early users finish before its late ones are even scheduled cannot
+ * declare itself over.
  */
 private class Departures {
 
@@ -257,3 +291,12 @@ private fun StepResult.reason(): String? = when (this) {
     is StepResult.Ok -> null
     is StepResult.Failed -> reason
 }
+
+/**
+ * How far ahead of itself a run books departures.
+ *
+ * Time rather than a count of tasks: five seconds is the same slack at every
+ * rate, where a thousand tasks is minutes of run at one rate and milliseconds
+ * at another.
+ */
+private val BOOKING_WINDOW: Duration = 5.seconds

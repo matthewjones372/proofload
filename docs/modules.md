@@ -10,6 +10,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-core` | scenarios, shapes, goals and results, all as values | **nothing** |
 | `kestrel-engine` | runs a simulation on virtual threads, departures on a schedule | core |
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client | core |
+| `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
@@ -37,6 +38,7 @@ dependencies {
     implementation("io.github.matthewjones372:kestrel-core:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-engine:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-websocket:$kestrelVersion")
 
     // One of these two, for the framework you already run tests in.
     testImplementation("io.github.matthewjones372:kestrel-junit5:$kestrelVersion")
@@ -61,6 +63,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-core` | [NoThirdPartyDependenciesTest](../kestrel-core/src/test/kotlin/io/github/matthewjones372/kestrel/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-engine` | [NoThirdPartyDependenciesTest](../kestrel-engine/src/test/kotlin/io/github/matthewjones372/kestrel/engine/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-http` | [NoThirdPartyDependenciesTest](../kestrel-http/src/test/kotlin/io/github/matthewjones372/kestrel/http/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |

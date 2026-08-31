@@ -102,7 +102,7 @@ private fun Scenario.depart(
  * to extend it: that would turn records it lost into records it merely did not
  * wait for, which are the two things being told apart here.
  */
-private class Drain(
+internal class Drain(
     private val completing: Completing,
     private val recorders: Recorders,
     private val runStart: Long,
@@ -189,8 +189,8 @@ private fun lateness(runStart: Long, departure: Duration): Duration =
 // the fold: the steps after it are not run, and are not counted as anything.
 // Counting a payment that never had a cart as a success reports a service that
 // answered nobody.
-private fun Scenario.runOneUser(
-    recorders: Recorders,
+internal fun Scenario.runOneUser(
+    sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
     departure: Duration,
@@ -200,8 +200,8 @@ private fun Scenario.runOneUser(
     steps.fold<Step, Session?>(started) { session, step ->
         session?.let {
             when (step) {
-                is Step.Exec -> step.action.runOn(step.name, it, recorders, runStart, schedulingDelay)
-                is Step.Emit -> step.runOn(it, recorders, runStart, schedulingDelay, departure, drain)
+                is Step.Exec -> step.action.runOn(step.name, it, sink, runStart, schedulingDelay)
+                is Step.Emit -> step.runOn(it, sink, runStart, schedulingDelay, departure, drain)
             }
         }
     }
@@ -214,13 +214,13 @@ private fun Scenario.runOneUser(
  */
 private fun Step.Emit.runOn(
     session: Session,
-    recorders: Recorders,
+    sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
     departure: Duration,
     drain: Drain?,
 ): Session? {
-    val published = action.runOn(name, session, recorders, runStart, schedulingDelay) ?: return null
+    val published = action.runOn(name, session, sink, runStart, schedulingDelay) ?: return null
     drain?.departed(correlation.of(published), departure)
     return published
 }
@@ -231,7 +231,7 @@ private fun Step.Emit.runOn(
 private fun Action.runOn(
     name: String,
     session: Session,
-    recorders: Recorders,
+    sink: StepSink,
     runStart: Long,
     schedulingDelay: Duration,
 ): Session? {
@@ -239,7 +239,7 @@ private fun Action.runOn(
     val result = attempt(session)
     val serviceTime = (System.nanoTime() - startedAt).nanoseconds
     val reason = result.reason()
-    recorders.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
+    sink.record(name, reason, serviceTime, schedulingDelay, (startedAt - runStart).nanoseconds)
     return if (reason == null) result.session else null
 }
 

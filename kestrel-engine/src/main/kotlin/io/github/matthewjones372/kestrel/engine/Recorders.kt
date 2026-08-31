@@ -10,6 +10,15 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.time.Duration
 
 /**
+ * What a step reports to when it finishes. The walk holds one of these rather
+ * than a [Recorders], so a trace can print from the same walk a run measures
+ * without a branch on the path a request is timed on.
+ */
+internal fun interface StepSink {
+    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration, at: Duration)
+}
+
+/**
  * One recorder per processor, shared by every virtual user and merged when the
  * run ends.
  *
@@ -26,7 +35,7 @@ import kotlin.time.Duration
  * the claim is uncontended in the common case, and it stays correct rather than
  * merely lucky if one ever does.
  */
-internal class Recorders(private val startedAt: Instant, shards: Int = defaultShards) {
+internal class Recorders(private val startedAt: Instant, shards: Int = defaultShards) : StepSink {
 
     // The mutable accumulator this whole class is about: the alternative is an
     // allocation per request on the path the report calls the target's latency.
@@ -36,7 +45,13 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
 
     private val completions = RunRecorder(startedAt)
 
-    fun record(step: String, failure: String?, serviceTime: Duration, schedulingDelay: Duration, at: Duration) {
+    override fun record(
+        step: String,
+        failure: String?,
+        serviceTime: Duration,
+        schedulingDelay: Duration,
+        at: Duration,
+    ) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()

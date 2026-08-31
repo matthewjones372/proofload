@@ -185,10 +185,6 @@ private class Departures {
 private fun lateness(runStart: Long, departure: Duration): Duration =
     ((System.nanoTime() - runStart).nanoseconds - departure).coerceAtLeast(Duration.ZERO)
 
-// A failed step abandons the user. A null session carries that decision through
-// the fold: the steps after it are not run, and are not counted as anything.
-// Counting a payment that never had a cart as a success reports a service that
-// answered nobody.
 private fun Scenario.runOneUser(
     recorders: Recorders,
     runStart: Long,
@@ -197,32 +193,53 @@ private fun Scenario.runOneUser(
     started: Session,
     drain: Drain?,
 ) {
-    steps.fold<Step, Session?>(started) { session, step ->
-        session?.let {
-            when (step) {
-                is Step.Exec -> step.action.runOn(step.name, it, recorders, runStart, schedulingDelay)
-                is Step.Emit -> step.runOn(it, recorders, runStart, schedulingDelay, departure, drain)
-            }
-        }
-    }
+    UserWalk(recorders, runStart, schedulingDelay, departure, drain).walk(steps, started)
 }
 
 /**
- * The publish is timed like any other step, because it is all that leaves here.
- * What the record answers with is registered against the departure the profile
- * promised, so the sink's observation has an honest thing to be subtracted from.
+ * One user's way through the scenario tree. What a step is run against is held
+ * here rather than threaded through the walk, because a nested step hands all
+ * of it down unchanged.
  */
-private fun Step.Emit.runOn(
-    session: Session,
-    recorders: Recorders,
-    runStart: Long,
-    schedulingDelay: Duration,
-    departure: Duration,
-    drain: Drain?,
-): Session? {
-    val published = action.runOn(name, session, recorders, runStart, schedulingDelay) ?: return null
-    drain?.departed(correlation.of(published), departure)
-    return published
+private class UserWalk(
+    private val recorders: Recorders,
+    private val runStart: Long,
+    private val schedulingDelay: Duration,
+    private val departure: Duration,
+    private val drain: Drain?,
+) {
+
+    // A failed step abandons the user. A null session carries that decision
+    // through the walk and out of any loop it was inside: the steps after it
+    // are not run, and are not counted as anything. Counting a payment that
+    // never had a cart as a success reports a service that answered nobody.
+    fun walk(steps: List<Step>, from: Session?): Session? =
+        steps.fold(from) { session, step -> session?.let { run(step, it) } }
+
+    private fun run(step: Step, session: Session): Session? = when (step) {
+        is Step.Exec -> step.action.runOn(step.name, session, recorders, runStart, schedulingDelay)
+
+        is Step.Emit -> emit(step, session)
+
+        // Iterations, not steps: the body is one subtree walked again, so three
+        // times round records three requests under the one name the tree
+        // declared, and the plan can still name it before the run starts.
+        is Step.Repeat -> (1..step.times).fold<Int, Session?>(session) { each, _ -> walk(step.steps, each) }
+
+        is Step.When -> if (step.predicate(session)) walk(step.steps, session) else session
+    }
+
+    /**
+     * The publish is timed like any other step, because it is all that leaves
+     * here. What the record answers with is registered against the departure the
+     * profile promised, so the sink's observation has an honest thing to be
+     * subtracted from.
+     */
+    private fun emit(step: Step.Emit, session: Session): Session? {
+        val published = step.action.runOn(step.name, session, recorders, runStart, schedulingDelay) ?: return null
+        drain?.departed(step.correlation.of(published), departure)
+        return published
+    }
 }
 
 // The second a request is counted in is the one it left in, not the one it came

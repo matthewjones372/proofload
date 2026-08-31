@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.http
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.stepNames
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -39,7 +40,7 @@ class HttpActionTest {
             exec(http.get("/products"))
         }
 
-        checkout.steps.single().name shouldBe "/products"
+        checkout.stepNames.single() shouldBe "/products"
     }
 
     @Test

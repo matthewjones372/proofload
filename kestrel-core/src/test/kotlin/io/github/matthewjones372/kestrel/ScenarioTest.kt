@@ -19,7 +19,7 @@ class ScenarioTest {
         }
 
         checkout.name shouldBe "checkout"
-        checkout.steps.map { it.name } shouldBe listOf("browse", "add to cart")
+        checkout.stepNames shouldBe listOf("browse", "add to cart")
     }
 
     @Test
@@ -72,6 +72,28 @@ class ScenarioTest {
         val backwards = scenario("s") { exec("b", browse); exec("a", browse) }
 
         (forwards == backwards) shouldBe false
+    }
+
+    @Test
+    fun `a nested step is named once, where the tree puts it`() {
+        val checkout = Scenario(
+            "checkout",
+            listOf(
+                Step.Exec("browse", browse),
+                Step.Repeat(3, listOf(Step.Exec("add to cart", browse))),
+                Step.When({ session -> session[page] != null }, listOf(Step.Exec("pay", browse))),
+            ),
+        )
+
+        checkout.stepNames shouldBe listOf("browse", "add to cart", "pay")
+    }
+
+    @Test
+    fun `a name a run can record is readable however deep the tree buries it`() {
+        val place = Step.Emit("place", browse, Correlation { session -> session[orderId] ?: 0L })
+        val checkout = Scenario("checkout", listOf(Step.Repeat(2, listOf(Step.When({ true }, listOf(place))))))
+
+        checkout.stepNames shouldBe listOf("place")
     }
 
     @Test

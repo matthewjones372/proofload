@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
+import io.github.matthewjones372.kestrel.Scenario
+import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.action
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
@@ -75,6 +77,56 @@ class EngineTest {
         }.at(1.perSecond, over = 1.seconds).run()
 
         result.steps.keys shouldBe setOf("login")
+    }
+
+    @Test
+    fun `a step inside a loop is timed once per iteration, under the one name it declares`() {
+        val checkout = Scenario("checkout", listOf(Step.Repeat(3, listOf(Step.Exec("add to cart", action { })))))
+
+        val result = checkout.at(1.perSecond, over = 1.seconds).run()
+
+        result.steps.keys shouldBe setOf("add to cart")
+        result["add to cart"].count shouldBe 3L
+    }
+
+    @Test
+    fun `a failure inside a loop abandons the user rather than starting the next iteration`() {
+        val adding = Step.Exec("add to cart", action { fail("503") })
+        val checkout = Scenario("checkout", listOf(Step.Repeat(3, listOf(adding))))
+
+        val result = checkout.at(1.perSecond, over = 1.seconds).run()
+
+        result["add to cart"].count shouldBe 1L
+    }
+
+    @Test
+    fun `a condition runs the steps under it for the user whose session satisfies it`() {
+        val checkout = Scenario(
+            "checkout",
+            listOf(
+                Step.Exec("browse", action { set(cart, "two hats") }),
+                Step.When({ session -> session[cart] != null }, listOf(Step.Exec("pay", action { }))),
+            ),
+        )
+
+        val result = checkout.at(1.perSecond, over = 1.seconds).run()
+
+        result["pay"].count shouldBe 1L
+    }
+
+    @Test
+    fun `a condition nobody satisfies records nothing for the steps under it`() {
+        val checkout = Scenario(
+            "checkout",
+            listOf(
+                Step.Exec("browse", action { }),
+                Step.When({ session -> session[cart] != null }, listOf(Step.Exec("pay", action { }))),
+            ),
+        )
+
+        val result = checkout.at(1.perSecond, over = 1.seconds).run()
+
+        result.steps.keys shouldBe setOf("browse")
     }
 
     @Test

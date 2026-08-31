@@ -18,7 +18,10 @@ one.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body
-  that names neither the session nor its result.
+  that names neither the session nor its result. A scenario is a tree rather
+  than a list: `Step.Repeat` and `Step.When` hold steps instead of naming one,
+  so `name` sits on the leaves and `Scenario.stepNames` reads off every name a
+  run can record.
 - **Open-model injection.** `ConstantRate` and `RampRate` state departure times
   up front; each offset is computed from its index so a long run cannot drift.
 - **Measurement.** A log-linear `Histogram` written here rather than taken as a

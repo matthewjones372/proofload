@@ -10,6 +10,14 @@
 // the tool.
 tasks.test {
     useJUnitPlatform { excludeTags("timing") }
+
+    // `smoke/` is a separate Gradle build, so this one has no project object to
+    // ask what it depends on. `SmokeProjectTest` reads the two files instead.
+    val settings = rootProject.layout.projectDirectory.file("settings.gradle.kts")
+    val smokeBuild = rootProject.layout.projectDirectory.file("smoke/build.gradle.kts")
+    inputs.files(settings, smokeBuild).withPropertyName("smokeProjectCoverage")
+    systemProperty("kestrel.settings", settings.asFile.absolutePath)
+    systemProperty("kestrel.smokeBuild", smokeBuild.asFile.absolutePath)
 }
 
 val timingTests = tasks.register<Test>("timingTests") {

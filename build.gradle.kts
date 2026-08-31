@@ -45,8 +45,14 @@ val ktlintOverrides = mapOf("ktlint_standard_kdoc" to "disabled")
 repositories { mavenCentral() }
 
 spotless {
+    // `smoke/` is a build of its own and so has no subproject to format it, but
+    // it is Kotlin a reader copies from and is held to the same layout.
+    kotlin {
+        target("smoke/src/**/*.kt")
+        ktlint(ktlintVersion).editorConfigOverride(ktlintOverrides)
+    }
     kotlinGradle {
-        target("*.gradle.kts")
+        target("*.gradle.kts", "smoke/*.gradle.kts")
         ktlint(ktlintVersion).editorConfigOverride(ktlintOverrides)
     }
 }

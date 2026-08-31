@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Engine
+import io.github.matthewjones372.kestrel.Exclusivity
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Search
@@ -21,8 +22,12 @@ import java.util.concurrent.CopyOnWriteArrayList
  * [engine] is what sends each simulation. It lives here rather than in core
  * because a default has to name an implementation, and core naming one would be
  * the coupling the interface exists to remove.
+ *
+ * The default takes the machine for the duration of a run, so two tests that
+ * start one at the same moment measure it one after the other instead of
+ * measuring each other.
  */
-class Kestrel(private val engine: Engine = VirtualThreads()) {
+class Kestrel(private val engine: Engine = VirtualThreads().exclusive()) {
 
     // The accumulator case: a test may run more than one simulation, and the
     // extension reads these back after the method has returned. Written from
@@ -35,8 +40,12 @@ class Kestrel(private val engine: Engine = VirtualThreads()) {
      * Hunts for the rate the scenario sustains. Every rung it ran is kept, so
      * a failure can show the curve rather than only the rate read off the end
      * of it.
+     *
+     * The machine is held across the whole search rather than rung by rung, so
+     * a curve is one machine's answer and not two interleaved runs'.
      */
-    fun run(search: Search): Capacity = search.judgedBy { rung -> run(rung) }
+    fun run(search: Search): Capacity =
+        exclusively(Exclusivity.Running) { search.judgedBy { rung -> run(rung) } }
 
     /**
      * What this machine can resolve, measured once per JVM and kept afterwards.
@@ -44,7 +53,7 @@ class Kestrel(private val engine: Engine = VirtualThreads()) {
      * measured between two runs would be measuring the drift it is there to
      * bound.
      */
-    fun calibrate(): Floor = machineFloor()
+    fun calibrate(): Floor = exclusively(Exclusivity.Calibrating) { machineFloor() }
 
     /** What was measured, for a failure message. Empty when nothing ran. */
     fun summary(): String? = runs.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { it.lines() }

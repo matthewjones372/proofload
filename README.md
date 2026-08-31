@@ -64,6 +64,11 @@ passes against a step nobody runs. `at` is Gatling's `setUp`, `inject` and
 `protocols` in one call, and what it returns is an ordinary value —
 `simulation.profile.userCount()` is 3000 before anything has been sent.
 
+A run takes the machine while it lasts. Two tests that start one at the same
+moment measure it one after the other rather than measuring each other, and a
+capacity search holds it across every rung of its curve. That is this JVM: a
+second process on the same host is not queued behind it.
+
 Every virtual user starts with its own data, so a cache in front of the target
 cannot answer for all of them:
 

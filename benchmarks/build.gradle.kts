@@ -5,6 +5,10 @@
 dependencies {
     implementation(project(":kestrel-core"))
     implementation(project(":kestrel-engine"))
+    // The over-the-socket sweep sends the step a user sends. Measuring the
+    // shipped client is the point of it, so the harness takes the module
+    // rather than writing a client of its own.
+    implementation(project(":kestrel-http"))
 }
 
 tasks.register<JavaExec>("ceiling") {

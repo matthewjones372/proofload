@@ -10,6 +10,15 @@ its own KDoc calls it "what stands in for a broker until a module carries one".
 So the one shape this tool has for asynchronous work cannot be pointed at the
 system people most often mean by it.
 
+Two questions get conflated here and they want different answers. **Is the
+adapter right** — does a correlation survive, does a failed send name its reason
+— is this repository's, and it needs no broker. **Is my cluster sized right** —
+do these partitions and this replication hold at fifty thousand a second — is
+the user's, and it needs *their* cluster, not one Kestrel ships. A module that
+is correct, and whose own overhead is known, serves the second without ever
+running a broker in its own build. What that overhead is, and what proves it,
+is 0061's.
+
 The measurement is also not the one an HTTP module makes. A broker acking a
 produce is not a consumer having done the work, and a team load-testing Kafka
 almost always wants the second. `emit`/`completing` already answers that — the
@@ -27,9 +36,11 @@ an adapter, not a design.
 - **No Kestrel-owned serializer.** Avro, Protobuf and JSON Schema are the
   caller's choice and none of them is this tool's business.
 - No consumer-group lag monitoring. That is observing a system, not generating
-  load against one, and it belongs in a spec of its own.
-- **No Docker required, and no embedded broker.** A container suite exists for
-  whoever wants the real images, and nothing gates on it. See the weights below.
+  load against one.
+- No advice about cluster sizing. This tool measures; a partition count is the
+  reader's conclusion from what it measured.
+- No broker, embedded or containerised. 0061 owns what is proved over a real
+  socket and what the path costs.
 - No second engine. The producer runs on virtual threads like everything else.
 
 ## Shape
@@ -58,34 +69,10 @@ work and the module never learns which.
 
 ## Why this shape
 
-Keeping the serializer out is what keeps the module publishable. It also keeps
+Keeping the serializer out is what keeps the module publishable, and it keeps
 the measurement honest in a way an owned serializer would not: whatever
 serialization costs, it is the caller's code running on the departure thread,
-and it is visible as such rather than hidden inside a step this tool wrote.
-
-Nothing heavy on the test classpath, and no Docker in the way. Resolved and
-weighed rather than guessed:
-
-| on the test classpath | size | jars |
-|---|---|---|
-| `kafka-clients`, which the module needs anyway | 19.9 MB | 5 |
-| `kafka_2.13`, a real broker | 42.9 MB | 45 |
-| `embedded-kafka_2.13` | 43.0 MB | 46 |
-| Testcontainers Kafka | 23.0 MB | 13 |
-
-An embedded broker is 23 MB and forty jars on top of what is already there,
-paid by every `./gradlew build` forever, and the wrapper is free — the weight
-is the broker. It buys a real socket, and what actually needs proving over one
-is narrower than it looks: that `kafka-clients` speaks Kafka is Apache's test
-suite, not this repository's, and the registry is answered by a stub on the
-`com.sun.net.httpserver` everything else here tests against, precisely because
-this module does not own the serializer.
-
-What is left, and genuinely Kestrel's, is that a correlation header survives
-from the producing side to the `Completions` side. `MockProducer` and
-`MockConsumer` ship inside `kafka-clients` and can be wired to each other, so
-that round trip costs nothing and stays inside `build`. A real broker is then
-an opt-in tier rather than the price of admission.
+visible as such rather than hidden inside a step this tool wrote.
 
 One producer, shared. A `KafkaProducer` is thread-safe and built to be shared,
 which is the opposite of 0055's per-user cookie jar and for the opposite reason:
@@ -115,26 +102,19 @@ tunes against them will ship a consumer that cannot keep up.
       `com.sun.net.httpserver`.
       Done when: a correlation header written by an `emit` is the one
       `Completions` matches on; a caller's serializer resolves a schema against
-      the stub; nothing new is on the test classpath; and this runs inside
+      the stub; nothing new is on the test classpath; and it runs inside
       `./gradlew build`.
-- [ ] **`spec-0060-containers`** — the same suite against the real broker and
-      registry images, opted into rather than required.
-      Done when: it runs where Docker is present, is skipped rather than failed
-      where it is not, and nothing in `build` depends on it.
-- [ ] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`:
-      the `packages.confluent.io` declaration, the serializer wired into
-      `value { }`, and what the first record costs.
-      Done when: the page says that a serializer fetches its schema once per
-      subject and caches it, so the first record pays an HTTP round trip; that
-      the stall lands in `behind` rather than in the target's latency, because
-      the lambda is the caller's code on the departure thread; and that
-      `result.steady` is where to read the run without it.
+- [ ] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`.
+      Done when: the page says a serializer fetches its schema once per subject
+      and caches it, so the first record pays an HTTP round trip; that the stall
+      lands in `behind` rather than the target's latency, because the lambda is
+      the caller's code on the departure thread; and that `result.steady` is
+      where to read the run without it.
 
 ## Acceptance
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
-./gradlew :kestrel-kafka:containerTests   # the real images, where Docker exists
 ```
 
 ## Open questions
@@ -150,28 +130,12 @@ tunes against them will ship a consumer that cannot keep up.
     trip; with `acks=0` it is nothing at all. Recommend recording the ack as the
     step's service time, printing the `acks` setting beside it, and leaning on
     `completing` for the number that matters.
-3. **Is a socket worth 23 MB?** The alternative nobody has costed is a fake
-    broker built from `kafka-clients`' own protocol classes, which are all
-    present: `RequestHeader.parse` and `AbstractRequest.parseRequest` are public,
-    and a Produce request carries a valid record batch that a Fetch response can
-    hand straight back, so no batch encoding is needed. It would add nothing to
-    the classpath. Against it: `AbstractResponse.serializeWithHeader` is
-    package-private, so responses need a hand-written header, and flexible
-    versions put tagged fields in that header — a thing to get subtly and
-    silently wrong. Recommend a spike before it is promised, and the mock round
-    trip in the meantime, which needs no spike and no jars.
-4. **Where does the correlation id live?** A header keeps it out of the payload
+3. **Where does the correlation id live?** A header keeps it out of the payload
     and needs no deserializer on the completion side, which is the only option
     that does not drag the registry back in. Recommend a header, with the key as
     a second option, and reading from the payload refused rather than supported.
-5. **A blocking `send`.** When the accumulator fills, `send` blocks up to
+4. **A blocking `send`.** When the accumulator fills, `send` blocks up to
     `max.block.ms` on the calling thread. That is real backpressure and 0040's
     intended-departure clock reports it honestly, but it will show up as
     generator lateness rather than target latency. Recommend saying so where
     `fellBehind()` is explained rather than special-casing it.
-6. **Does anything real run on this repository's own machine?** With the mock
-    round trip in `build` and containers opted into, the answer on a machine
-    without Docker is no — the wire is exercised nowhere. That is a smaller gap
-    than it sounds, since the wire belongs to `kafka-clients`, but it is a gap
-    and `docs/modules.md` should say so in the row for this module rather than
-    let it read like every other one.

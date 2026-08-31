@@ -160,6 +160,24 @@ alone can be met by a target that failed most of the load, which is the mirror
 of the bug this catches — and `failureRate` is a count over a count, so it is
 unchanged.
 
+What none of those numbers can say is where a slow request spent its time,
+because Kestrel measures from outside the target. The join to whatever does
+know — Jaeger, Tempo, Datadog — is a trace id, so a traced client puts one on
+every request:
+
+```kotlin
+val api = http.baseUrl("https://orders.internal").traced()
+```
+
+Each request carries a W3C `traceparent` — `00-<trace id>-<parent id>-00` — and
+a `baggage` entry of `synthetic=true` so the traffic can be told apart from real
+users downstream, before a shared environment autoscales for it. The sampled
+flag is left off: whether to record is the target's decision, and a load
+generator forcing it would be choosing the sampling policy of a system it does
+not own. Ids come from a counter and a per-thread seed rather than
+`SecureRandom`, because a blocking entropy source on the path being timed is a
+stall the report would charge to the target.
+
 Every run also watches the machine it is sending from. A task due every
 millisecond records how much later than that it actually ran, so a stall in the
 measuring process arrives beside the tail it caused rather than inside it:

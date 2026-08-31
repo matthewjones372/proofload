@@ -27,6 +27,7 @@ class HttpAction internal constructor(
     private val expected: Int = OK,
     private val timeout: Duration = requestTimeout,
     private val captures: List<Capture<*>> = emptyList(),
+    private val traced: Boolean = false,
 ) : Action {
 
     /**
@@ -71,7 +72,7 @@ class HttpAction internal constructor(
         expected: Int = this.expected,
         timeout: Duration = this.timeout,
         captures: List<Capture<*>> = this.captures,
-    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, captures)
+    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, captures, traced)
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.
@@ -79,7 +80,8 @@ class HttpAction internal constructor(
         .fold(
             HttpRequest.newBuilder(URI.create(baseUrl + url))
                 .timeout(timeout)
-                .method(method, publisher()),
+                .method(method, publisher())
+                .tracing(traced),
         ) { builder, (name, value) -> builder.header(name, value) }
         .build()
 

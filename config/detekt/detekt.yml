@@ -45,10 +45,10 @@ exceptions:
     # that turns an unexpected throwable into a reported result — and say which
     # in a comment. An empty list is the right starting point.
     #
-    # Engine.kt runs a step body the caller wrote. A throw out of one is a
-    # failed request to name and count, not a crash of the run; see the comment
-    # on `attempt`.
-    excludes: ['**/kestrel/engine/Engine.kt']
+    # VirtualThreads.kt runs a step body the caller wrote. A throw out of one is
+    # a failed request to name and count, not a crash of the run; see the
+    # comment on `attempt`.
+    excludes: ['**/kestrel/engine/VirtualThreads.kt']
   SwallowedException:
     excludes: ['**/test/**']
 

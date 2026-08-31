@@ -857,8 +857,8 @@ The three decisions that shape everything else, and are still open:
 
 | Module | Depends on | For |
 |---|---|---|
-| `kestrel-core` | **nothing** | scenarios, profiles and results as values |
-| `kestrel-engine` | core | virtual threads, departures on a schedule |
+| `kestrel-core` | **nothing** | scenarios, profiles and results as values, and the `Engine` that runs one |
+| `kestrel-engine` | core | `VirtualThreads`: departures on a schedule, a user to a thread |
 | `kestrel-http` | core | HTTP steps on `java.net.http` |
 | `kestrel-junit5` | core, engine, JUnit | a load test that is a `@Test` |
 | `kestrel-kotest` | core, engine | the same, in a Kotest spec |

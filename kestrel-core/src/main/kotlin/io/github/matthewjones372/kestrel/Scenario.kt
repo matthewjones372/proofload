@@ -144,6 +144,16 @@ class ScenarioBuilder internal constructor(private val name: String) {
         steps += Step.During(duration, nested(block))
     }
 
+    /**
+     * [block], for a user whose session answers [predicate]. The question is
+     * asked of the session and nothing else: a condition over what a target
+     * answered is a step nobody named, and a run that took one could not say
+     * beforehand what it was going to send.
+     */
+    fun doIf(predicate: (Session) -> Boolean, block: ScenarioBuilder.() -> Unit) {
+        steps += Step.When(predicate, nested(block))
+    }
+
     fun emit(name: String, action: Action, keyedBy: Correlation) {
         steps += Step.Emit(name, action, keyedBy)
     }

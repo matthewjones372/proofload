@@ -170,6 +170,30 @@ class EngineTest {
     }
 
     @Test
+    fun `a step under a condition nobody satisfies is not a failure and not a skip, it is nothing`() {
+        val result = scenario("checkout") {
+            exec("browse") { }
+            doIf({ session -> session[cart] != null }) { exec("pay") { } }
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        withClue("a step nobody reached has no row to read a percentile off") {
+            result.ran("pay") shouldBe false
+        }
+        result.count shouldBe 1L
+        result.failed shouldBe 0L
+    }
+
+    @Test
+    fun `a step under a condition its user satisfies runs where the tree puts it`() {
+        val result = scenario("checkout") {
+            exec("browse") { set(cart, "two hats") }
+            doIf({ session -> session[cart] != null }) { exec("pay") { } }
+        }.at(1.perSecond, over = 1.seconds).run()
+
+        result["pay"].ok.count shouldBe 1L
+    }
+
+    @Test
     fun `every request records how late it left against the departure it was promised`() {
         val result = scenario("checkout") { exec("browse") { } }
             .at(4.perSecond, over = 1.seconds)

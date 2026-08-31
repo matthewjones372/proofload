@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
@@ -151,6 +152,32 @@ class ScenarioTest {
     @Test
     fun `a window that runs backwards is refused where it is written, not where it is run`() {
         shouldThrow<IllegalArgumentException> { scenario("polling") { during(-(1.seconds)) { exec("poll", browse) } } }
+    }
+
+    @Test
+    fun `doIf holds the steps it guards and the question it asks about the session`() {
+        val checkout = scenario("checkout") {
+            exec("browse", browse)
+            doIf({ session -> session[orderId] != null }) { exec("pay", browse) }
+        }
+
+        val guard = checkout.steps.last()
+        guard.shouldBeInstanceOf<Step.When>()
+        guard.steps shouldBe listOf(Step.Exec("pay", browse))
+        guard.predicate(Session.empty) shouldBe false
+        guard.predicate(Session.empty.set(orderId, 7L)) shouldBe true
+        checkout.stepNames shouldBe listOf("browse", "pay")
+    }
+
+    @Test
+    fun `a condition can guard a loop, and a loop can hold a condition`() {
+        val checkout = scenario("checkout") {
+            doIf({ session -> session[page] != null }) {
+                repeat(2) { exec("add to cart", browse) }
+            }
+        }
+
+        checkout.stepNames shouldBe listOf("add to cart")
     }
 
     @Test

@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock
  *
  * A decorator rather than something inside an engine, because exclusivity is
  * the machine's property and not virtual threads': two engines in one process
- * queue for the same machine.
+ * queue for the same machine, as do two processes.
  */
 fun Engine.exclusive(): Engine = Exclusive(this)
 
@@ -27,9 +27,12 @@ private class Exclusive(private val engine: Engine) : Engine {
 /**
  * Runs [work] with the machine to itself, entering [during] once it is held.
  *
- * The lock is taken before [work] starts, so a wait is never inside the
- * measurement that follows it — a queued run reports the target's latency and
- * not the queue's.
+ * Two locks, in this order because they answer different questions: a
+ * [ReentrantLock] serialises the threads of this JVM and lets a capacity search
+ * hold the machine across its rungs, and a file lock under the temp directory
+ * serialises this process against every other one on the host. Both are taken
+ * before [work] starts, so a wait is never inside the measurement that follows
+ * it — a queued run reports the target's latency and not the queue's.
  */
 internal fun <T> exclusively(during: Exclusivity, work: () -> T): T {
     // A rung of a capacity search arrives here on the thread that is already
@@ -37,17 +40,28 @@ internal fun <T> exclusively(during: Exclusivity, work: () -> T): T {
     // a second one asking, so it neither waits nor gives the machine back early.
     if (machine.isHeldByCurrentThread) return work()
 
-    val asked = if (machine.tryLock()) Exclusivity.Idle else Exclusivity.Waiting(Instant.now())
-    // Blocked here rather than in the branch above, so the state saying this
-    // run queued is a value that exists before the queueing does.
-    if (asked is Exclusivity.Waiting) machine.lock()
+    // `-Dkestrel.exclusive=false` is for a caller that means to run several at
+    // once — a benchmark measuring what four processes do to each other, which
+    // is a measurement of the tool rather than one this can protect.
+    if (!exclusivityWanted()) return work()
+
+    val since = Instant.now()
+    val free = machine.tryLock()
+    // Blocked here rather than in the branch above, so the moment this run
+    // started queueing is a value that exists before the queueing does.
+    if (!free) machine.lock()
     return try {
-        asked.then(during)
-        work()
+        takeTheMachine().use { host ->
+            val asked = if (free && host?.waited != true) Exclusivity.Idle else Exclusivity.Waiting(since)
+            asked.then(during)
+            work()
+        }
     } finally {
         machine.unlock()
     }
 }
+
+private fun exclusivityWanted(): Boolean = System.getProperty("kestrel.exclusive")?.toBooleanStrictOrNull() != false
 
 /**
  * One run at a time in this JVM, whoever asked. A single lock for the whole

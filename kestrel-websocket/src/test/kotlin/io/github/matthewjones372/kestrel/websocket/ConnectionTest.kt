@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.kestrel.stepNames
 import io.kotest.assertions.withClue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -72,7 +73,7 @@ class ConnectionTest {
             close(disconnect)
         }
 
-        watching.steps.map { it.name } shouldBe listOf("connect", "disconnect")
+        watching.stepNames shouldBe listOf("connect", "disconnect")
     }
 }
 

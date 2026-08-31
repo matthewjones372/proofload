@@ -160,6 +160,24 @@ alone can be met by a target that failed most of the load, which is the mirror
 of the bug this catches — and `failureRate` is a count over a count, so it is
 unchanged.
 
+A status is not the only way an answer can be wrong: a target that degrades
+into cheerful empty 200s looks healthier than one that fails honestly.
+`checking` asks a question of the response, and an answer that fails it fails
+the step under the check's name:
+
+```kotlin
+api.post("/orders")
+    .expecting(201)
+    .checking("has an id") { response -> "\"id\"" in response.body }
+
+result[placeOrder].failed.reasons   // {"has an id": 41}
+```
+
+The name is required rather than derived, because a report saying `check
+failed` for three different checks is one nobody can act on. A check reads the
+whole body, which is held in memory to be read: a request that streams
+something large cannot also be checked.
+
 Every run also watches the machine it is sending from. A task due every
 millisecond records how much later than that it actually ran, so a stall in the
 measuring process arrives beside the tail it caused rather than inside it:

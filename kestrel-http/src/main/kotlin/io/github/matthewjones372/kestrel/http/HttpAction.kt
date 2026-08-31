@@ -26,6 +26,7 @@ class HttpAction internal constructor(
     private val body: String? = null,
     private val expected: Int = OK,
     private val timeout: Duration = requestTimeout,
+    private val checks: List<Check> = emptyList(),
     private val captures: List<Capture<*>> = emptyList(),
 ) : Action {
 
@@ -44,6 +45,13 @@ class HttpAction internal constructor(
 
     fun timeout(timeout: Duration): HttpAction = copy(timeout = timeout)
 
+    /**
+     * Asks [holds] of the response, failing the step under [name] when it does
+     * not. The whole response body is held in memory to be read, so a request
+     * that streams something large cannot also be checked.
+     */
+    fun checking(name: String, holds: (Response) -> Boolean): HttpAction = copy(checks = checks + Check(name, holds))
+
     /** Takes a value out of the response and puts it in the session under [key]. */
     fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction =
         copy(captures = captures + Capture(key, extract))
@@ -61,6 +69,13 @@ class HttpAction internal constructor(
             scope.fail(status(response.status))
             return null
         }
+        val rejected = checks.firstOrNull { it.rejects(response) }
+        if (rejected != null) {
+            // Same reason the status branch above captures nothing: a body the
+            // check has just called wrong is not one to take values out of.
+            scope.fail(rejected.name)
+            return null
+        }
         captures.forEach { it.applyTo(scope, response) }
         return response
     }
@@ -70,8 +85,9 @@ class HttpAction internal constructor(
         body: String? = this.body,
         expected: Int = this.expected,
         timeout: Duration = this.timeout,
+        checks: List<Check> = this.checks,
         captures: List<Capture<*>> = this.captures,
-    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, captures)
+    ): HttpAction = HttpAction(method, baseUrl, path, headers, body, expected, timeout, checks, captures)
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.

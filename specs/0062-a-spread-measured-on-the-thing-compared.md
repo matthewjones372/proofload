@@ -68,13 +68,16 @@ place the claim is made, and 0048 is the evidence that this does not converge.
 
 ## Stack
 
-- [ ] **`spec-0062-population`** — `RegressionTest` comparing two sets of runs
+- [x] **`spec-0062-population`** — `RegressionTest` comparing two sets of runs
       through `Runs.against`, and `Floor` used only to skip a machine that can
       resolve nothing.
       Done when: `./gradlew :examples:timingTests` passes ten consecutive times
       on a loaded machine — the count matters, because the present failure rate
       is about one run in five and a single green run proves nothing.
-- [ ] **`spec-0062-said`** — the page saying which kind of answer it is, so a
+      Measured: 10 of 10, on four cores at load 4.2 to 5.2, with `--rerun` and
+      `skipped="0"` on every run, so none of the ten was the assumption
+      skipping the test.
+- [x] **`spec-0062-said`** — the page saying which kind of answer it is, so a
       single-run comparison stops reading like a verdict.
       Done when: a report from one run against one baseline says it cannot know
       whether the move was real, and one from `Runs` prints the interval.

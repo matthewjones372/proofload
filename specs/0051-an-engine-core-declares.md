@@ -79,14 +79,19 @@ it; what this spec adds is a name for it.
 
 ## Stack
 
-- [ ] **`spec-0051-interface`** — `Engine` in core, `VirtualThreads`
+- [x] **`spec-0051-interface`** — `Engine` in core, `VirtualThreads`
       implementing it, `Kestrel` taking one and defaulting to it.
       Done when: `Kestrel(engine = ...)` runs a simulation through a test
       double that records it, the default still runs on virtual threads, and
       `NoThirdPartyDependenciesTest` still passes.
-- [ ] **`spec-0051-chosen`** — the framework modules letting a caller name one.
+- [x] **`spec-0051-chosen`** — the framework modules letting a caller name one.
       Done when: a JUnit load test and a Kotest spec each run on a supplied
       engine, and neither module depends on the other to do it.
+      Landed as `RunsOn` in JUnit and a `kestrel(engine)` overload in Kotest.
+      A `@RegisterExtension` field was tried first and rejected on evidence:
+      `@LoadTest` registers `KestrelExtension` declaratively, a field-registered
+      instance is not deduplicated against it, and the test dies with
+      "Discovered multiple competing ParameterResolvers".
 
 ## Acceptance
 

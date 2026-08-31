@@ -23,6 +23,7 @@ test that quietly asserts about a step nobody runs.
 
 **Getting a run out of it** — [a first load test](#a-first-load-test) ·
 [the same thing in Kotest](#the-same-thing-in-kotest) ·
+[run on an engine of your own](#run-on-an-engine-of-your-own) ·
 [without a test framework](#without-a-test-framework) ·
 [see what a scenario does before running it](#see-what-a-scenario-does-before-running-it) ·
 [know how long it will take](#know-how-long-it-will-take) ·
@@ -120,6 +121,48 @@ class CheckoutSpec : StringSpec({
     }
 })
 ```
+
+## Run on an engine of your own
+
+Kestrel runs on virtual threads and there is no second engine in the tree — but
+core declares what a runner is, so the seam is real rather than promised:
+
+```kotlin
+fun interface Engine {
+    fun run(simulation: Simulation): RunResult
+}
+```
+
+A JUnit test class names one by implementing `RunsOn`; a class that does not
+implement it runs on virtual threads, so `@LoadTest` costs an implementer
+nothing:
+
+```kotlin
+import io.github.matthewjones372.kestrel.junit5.RunsOn
+
+class CheckoutLoadTest : RunsOn {
+
+    override val engine = Actors()
+
+    @LoadTest
+    fun `checkout holds up at fifty a second`(kestrel: Kestrel) { ... }
+}
+```
+
+and a Kotest spec names one by passing it:
+
+```kotlin
+val result = kestrel(Actors()).run(checkout.at(50.perSecond, over = 1.minutes))
+```
+
+The engine you name is still wrapped so that one run has the machine at a time —
+two tests that start together measure the target one after the other rather than
+measuring each other, whichever engine sends them. Wrapping an already-exclusive
+engine is safe: the lock notices the thread already holds it.
+
+This is worth having with one implementation because the alternative was
+selecting an engine by which `run` you imported, which makes a scenario's runner
+depend on a file's import list.
 
 ## Without a test framework
 

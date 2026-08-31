@@ -78,6 +78,11 @@ enough to list, and long enough to matter.
   session rather than on the run's shared client, and `traced()` puts a W3C
   `traceparent` and a synthetic-traffic `baggage` entry on every request.
   Redirects are not followed.
+- **A test can name its engine.** `Engine` is a `fun interface` in core; a
+  JUnit class names one by implementing `RunsOn`, and a Kotest spec by calling
+  `kestrel(engine)`. A class that names none runs on virtual threads, so bare
+  `@LoadTest` is unchanged. A named engine is still held exclusively, so two
+  tests never measure each other whichever engine sends them.
 - **Loops and conditionals in the DSL.** `repeat(n) { }`, `during(window) { }`
   and `doIf(predicate) { }` in `ScenarioBuilder`, building the tree the engine
   already walked. `repeat` deliberately shadows `kotlin.repeat` inside a

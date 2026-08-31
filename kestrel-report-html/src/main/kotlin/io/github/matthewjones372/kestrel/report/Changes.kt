@@ -45,9 +45,11 @@ private fun Comparison?.comparisonLines(): List<String> = when (this) {
                 warning = caveat,
                 rows = changes.map { it.line() },
                 notes = listOf(
-                    "Compared at p99 of response time, with 95% sampling intervals. Two runs whose intervals " +
-                        "overlap have not been shown to differ — the fix for that is a longer run, not a " +
-                        "closer look.",
+                    "Compared at p99 of response time. A sampling interval bounds which sample the p99 landed " +
+                        "on, given how many there were. It does not bound how far a repeat of this run would " +
+                        "land from it, because two runs of one unchanged target drift by the machine as well " +
+                        "as by the code. So this says these samples differ, not that the target did — " +
+                        "repeated runs are what answers the second.",
                 ),
             )
         }

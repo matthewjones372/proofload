@@ -85,11 +85,12 @@ class ChangesTest {
     }
 
     @Test
-    fun `the page says what it compared and how, rather than leaving it implied`() {
+    fun `the page says what the interval does not bound, rather than leaving a reader to assume it does`() {
         val page = pageWith(Change.Indistinguishable("pay", 1.milliseconds, 1.milliseconds))
 
-        page shouldContain "95% sampling intervals"
-        page shouldContain "the fix for that is a longer run"
+        page shouldContain "which sample the p99 landed on"
+        page shouldContain "does not bound how far a repeat of this run would land from it"
+        page shouldContain "repeated runs are what answers the second"
     }
 
     @Test

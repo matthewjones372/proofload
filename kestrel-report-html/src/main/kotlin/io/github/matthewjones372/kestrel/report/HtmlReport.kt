@@ -129,10 +129,37 @@ private fun RunResult.headLines(): List<String> =
         "<body>",
         "<main>",
         """  <header class="run">""",
-        "    <h1>Kestrel run</h1>",
-        """    <p class="when">Started <time datetime="${started()}">${started()}</time></p>""",
+        """    <div class="run-name">""",
+        """      <span class="wordmark">Kestrel</span>""",
+        "      <h1>${headline()}</h1>",
+        "    </div>",
+        """    <div class="run-meta">""",
+        """      <p class="when">Started <time datetime="${started()}">${started()}</time></p>""",
+        THEME_TOGGLE,
+        "    </div>",
         "  </header>",
     )
+
+/**
+ * The scenario, where one was named. A result assembled from samples rather
+ * than run has no plan to name, and "Kestrel run" is still true of it.
+ */
+private fun RunResult.headline(): String =
+    plan.scenario.takeIf { it.isNotBlank() }?.escapedForHtml() ?: "Kestrel run"
+
+/**
+ * Drawn rather than lettered, so it needs no font, and inert without the
+ * script: a reader whose browser ran no JavaScript keeps the machine's own
+ * theme and is shown nothing that promises otherwise.
+ */
+internal const val THEME_TOGGLE: String =
+    """      <button type="button" id="theme-toggle" class="theme-toggle" hidden """ +
+        """aria-label="Switch theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" """ +
+        """stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" """ +
+        """aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path>""" +
+        """<path d="M12 20v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="m17.7 17.7 1.4 1.4"></path>""" +
+        """<path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.3 17.7-1.4 1.4"></path>""" +
+        """<path d="m19.1 4.9-1.4 1.4"></path></svg></button>"""
 
 private fun RunResult.started(): String = startedAt.toString().escapedForHtml()
 
@@ -270,7 +297,7 @@ private fun RunResult.dataLines(): List<String> =
         listOf("</script>")
 
 private fun RunResult.scriptLines(): List<String> =
-    listOf("<script>") + REPORT_JS.lines() + listOf("</script>", "</body>", "</html>")
+    listOf("<script>") + THEME_JS.lines() + REPORT_JS.lines() + listOf("</script>", "</body>", "</html>")
 
 private fun String.sortKey(): String = substringBefore(" (").lowercase().replace(" ", "-")
 

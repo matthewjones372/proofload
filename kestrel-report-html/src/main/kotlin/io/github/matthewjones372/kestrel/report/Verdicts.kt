@@ -19,8 +19,10 @@ internal fun RunResult.verdictLines(): List<String> {
 
     return listOf(
         """  <section class="verdicts $outcome" aria-label="Goals">""",
-        """    <p class="verdict-headline"><strong>$met of ${judged.size} """ +
-            """${"goal".plural(judged.size)} met.</strong></p>""",
+        """    <p class="verdict-headline">""",
+        """      <span class="verdict-score">$met/${judged.size}</span>""",
+        """      <span class="verdict-caption">${"goal".plural(judged.size)} met</span>""",
+        "    </p>",
         """    <ul class="verdict-list">""",
     ) + judged.map { it.line() } + listOf("    </ul>", "  </section>")
 }

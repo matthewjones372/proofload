@@ -49,8 +49,14 @@ private fun Capacity.headLines(): List<String> =
         "<body>",
         "<main>",
         """  <header class="run">""",
-        "    <h1>The rate it sustains</h1>",
-        """    <p class="when">${scenario()} — ${curve.size} ${"rung".plural(curve.size)}${started()}</p>""",
+        """    <div class="run-name">""",
+        """      <span class="wordmark">Kestrel</span>""",
+        "      <h1>The rate it sustains</h1>",
+        "    </div>",
+        """    <div class="run-meta">""",
+        """      <p class="when">${scenario()} — ${curve.size} ${"rung".plural(curve.size)}${started()}</p>""",
+        THEME_TOGGLE,
+        "    </div>",
         "  </header>",
     )
 
@@ -219,6 +225,9 @@ private fun Capacity.noteLines(): List<String> =
             "target's. Void rungs are still drawn: the rate the generator itself ran out at is worth " +
             "seeing. Offered is what left, against the rate the rung asked for.</p>",
         "</main>",
+        "<script>",
+    ) + THEME_JS.lines() + listOf(
+        "</script>",
         "</body>",
         "</html>",
     )

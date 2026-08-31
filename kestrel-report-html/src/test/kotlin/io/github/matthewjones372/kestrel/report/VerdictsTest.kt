@@ -26,7 +26,10 @@ class VerdictsTest {
 
     @Test
     fun `the page leads with how many goals were met`() {
-        pageWith(p99(pay) under 10.seconds, keptSchedule) shouldContain "1 of 2 goals met."
+        val page = pageWith(p99(pay) under 10.seconds, keptSchedule)
+
+        page shouldContain """<span class="verdict-score">1/2</span>"""
+        page shouldContain """<span class="verdict-caption">goals met</span>"""
     }
 
     @Test

@@ -4,50 +4,105 @@ package io.github.matthewjones372.kestrel.report
  * The stylesheet, inlined into every report.
  *
  * Hand-written, because the report has to open from a `file://` URL with
- * nothing fetched. `color-scheme` plus one media query is the whole theming
- * story: a report is read in a terminal-coloured editor as often as in a
- * browser on a projector.
+ * nothing fetched — which rules out a web font, so the hierarchy here is built
+ * from scale, weight and colour rather than from a typeface.
+ *
+ * Three theme states rather than two: the media query is what an untouched
+ * report follows, and `data-theme` on the root is a reader overriding it. A CI
+ * artifact is opened on whatever machine happened to have the link.
  */
 internal val REPORT_CSS: String = """
     :root {
       color-scheme: light dark;
-      --bg: #fdfdfc;
-      --fg: #1b1b19;
-      --muted: #6b6b66;
-      --line: #e2e2dd;
+      --bg: #faf9f6;
+      --fg: #191815;
+      --muted: #6f6b62;
+      --line: #e6e2d9;
+      --rule: #d6d1c5;
       --card: #ffffff;
-      --ok: #1c7c4a;
-      --failed: #b3261e;
+      --accent: oklch(0.55 0.13 265);
+      --ok: oklch(0.50 0.13 150);
+      --failed: oklch(0.53 0.15 25);
+      --failed-tint: oklch(0.96 0.03 25);
+      --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
     }
+    /* An untouched report follows the machine; `data-theme` is a reader who said otherwise. */
     @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #16171a;
-        --fg: #e8e8e4;
-        --muted: #9a9a94;
-        --line: #2c2e33;
-        --card: #1d1f23;
-        --ok: #57c38a;
-        --failed: #f2857c;
+      :root:not([data-theme="light"]) {
+        --bg: #131316;
+        --fg: #eceae4;
+        --muted: #9b968c;
+        --line: #2a2a30;
+        --rule: #3a3a42;
+        --card: #1a1a1e;
+        --accent: oklch(0.75 0.13 265);
+        --ok: oklch(0.75 0.13 150);
+        --failed: oklch(0.72 0.15 25);
+        --failed-tint: oklch(0.28 0.06 25);
       }
     }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #131316;
+      --fg: #eceae4;
+      --muted: #9b968c;
+      --line: #2a2a30;
+      --rule: #3a3a42;
+      --card: #1a1a1e;
+      --accent: oklch(0.75 0.13 265);
+      --ok: oklch(0.75 0.13 150);
+      --failed: oklch(0.72 0.15 25);
+      --failed-tint: oklch(0.28 0.06 25);
+    }
+    :root[data-theme="light"] { color-scheme: light; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--fg);
-      font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font: 15px/1.55 var(--sans);
     }
-    main { max-width: 68rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
-    h2 { font-size: 1.05rem; margin: 0; }
-    .when { color: var(--muted); margin: 0 0 1.5rem; }
+    main { max-width: 72rem; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+    h1 { font-size: 2.125rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+    h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+    /* One numeral treatment, so a figure reads the same wherever it appears. */
+    .num, .tile-value, .measured, .goodput-value, .tail-value, .failures-value,
+    td.num, .operating-rate, .reason-count {
+      font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+    }
+    .run {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap;
+      padding-bottom: 1.25rem; margin-bottom: 2.5rem; border-bottom: 2px solid var(--fg);
+    }
+    .run-name { display: flex; flex-direction: column; gap: 0.35rem; }
+    .wordmark {
+      font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .run-meta { display: flex; align-items: center; gap: 1rem; }
+    .when {
+      color: var(--muted); margin: 0; font-family: var(--mono);
+      font-size: 0.8125rem; text-align: right;
+    }
+    .theme-toggle {
+      font: inherit; color: var(--muted); background: none;
+      border: 1px solid var(--line); border-radius: 0.4rem;
+      padding: 0.35rem 0.4rem; cursor: pointer; line-height: 0;
+    }
+    .theme-toggle:hover { color: var(--fg); border-color: var(--rule); }
+    .theme-toggle svg { display: block; }
     .totals {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+      gap: 1.75rem;
+      margin: 0 0 3rem;
     }
-    .tile { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem 0.9rem; }
+    /* A rule rather than a card: six bordered boxes give a headline number the
+       same weight as a footnote, which is most of why the page read flat. */
+    .tile { padding-left: 1.25rem; border-left: 2px solid var(--rule); }
+    .tile-value { display: block; font-size: 2.375rem; line-height: 1.05; margin-top: 0.5rem; }
     .tile-label {
       display: block;
       color: var(--muted);
@@ -55,9 +110,9 @@ internal val REPORT_CSS: String = """
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
-    .tile-value { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; margin-top: 0.15rem; }
     .tile.ok .tile-value { color: var(--ok); }
     .tile.failed .tile-value { color: var(--failed); }
+    .steps { margin-top: 3rem; }
     .steps-head {
       display: flex;
       align-items: baseline;
@@ -68,13 +123,16 @@ internal val REPORT_CSS: String = """
     }
     .table-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; }
+    th, td { padding: 0.8rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; }
+    tbody td { font-size: 0.9375rem; }
     thead th {
       color: var(--muted);
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       white-space: nowrap;
+      border-bottom-color: var(--rule);
     }
     td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     td.ok { color: var(--ok); }
@@ -86,12 +144,13 @@ internal val REPORT_CSS: String = """
     .reason { overflow-wrap: anywhere; }
     .reason-count { font-variant-numeric: tabular-nums; color: var(--muted); }
     .behind {
-      background: color-mix(in srgb, var(--failed) 12%, var(--card));
-      border: 1px solid var(--failed);
-      border-radius: 0.5rem;
-      padding: 0.7rem 0.9rem;
-      margin: 0 0 1.5rem;
+      background: var(--failed-tint);
+      border: 0; border-left: 3px solid var(--failed);
+      padding: 1.05rem 1.35rem;
+      margin: 0 0 2rem;
+      line-height: 1.55;
     }
+    .behind strong { font-weight: 650; }
     thead th button {
       font: inherit;
       color: inherit;
@@ -109,21 +168,32 @@ internal val REPORT_CSS: String = """
     tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
     #mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
     #mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
-    .verdicts {
-      border: 1px solid var(--line);
-      border-left-width: 4px;
-      border-radius: 0.5rem;
-      padding: 0.8rem 1rem;
-      margin: 0 0 1.5rem;
+    .verdicts { display: flex; gap: 3rem; align-items: flex-start; margin: 0 0 3rem; flex-wrap: wrap; }
+    .verdict-headline {
+      margin: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.3rem;
+      padding-right: 3rem; border-right: 1px solid var(--line);
     }
-    .verdicts.met { border-left-color: var(--ok); }
-    .verdicts.missed { border-left-color: var(--failed); }
-    .verdict-headline { margin: 0 0 0.5rem; font-size: 1.05rem; }
-    .verdict-list { list-style: none; margin: 0; padding: 0; }
-    .verdict-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
-    .verdict-list li::before { content: "met"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--ok); }
+    .verdict-score {
+      font-family: var(--mono); font-variant-numeric: tabular-nums;
+      font-size: 4.5rem; line-height: 0.9; font-weight: 600; letter-spacing: -0.05em;
+    }
+    .verdicts.met .verdict-score { color: var(--ok); }
+    .verdicts.missed .verdict-score { color: var(--failed); }
+    .verdict-caption {
+      font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .verdict-list { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 20rem; }
+    .verdict-list li {
+      display: flex; justify-content: space-between; gap: 1.25rem;
+      padding: 0.7rem 0; border-top: 1px solid var(--line);
+    }
+    .verdict-list li::before {
+      content: "met"; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--ok);
+    }
     .verdict-list li.missed::before { content: "missed"; color: var(--failed); }
-    .verdict-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+    .verdict-list .goal { flex: 1; margin-left: -3.9rem; padding-left: 4.3rem; font-size: 1rem; }
     .verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
     .changes { margin: 0 0 1.5rem; }
     .caveat { border: 1px solid var(--muted); border-radius: 0.5rem; padding: 0.6rem 0.8rem; margin: 0 0 0.6rem; }
@@ -165,11 +235,14 @@ internal val REPORT_CSS: String = """
     .reading { margin: 0 0 2rem; max-width: 46rem; }
     .reading p { margin: 0 0 0.6rem; }
     .reading strong { font-weight: 600; }
-    .chart { margin: 1.5rem 0 0; }
-    .chart figcaption { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.35rem; }
-    .chart svg { width: 100%; height: 9rem; overflow: visible; }
-    .bar { fill: var(--ok); opacity: 0.75; }
-    .mark { stroke: var(--failed); stroke-width: 1; stroke-dasharray: 3 2; }
+    .chart { margin: 2rem 0 0; }
+    .chart figcaption {
+      color: var(--muted); font-size: 0.6875rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.7rem;
+    }
+    .chart svg { width: 100%; height: 14rem; overflow: visible; }
+    .bar { fill: var(--accent); opacity: 0.62; }
+    .mark { stroke: var(--failed); stroke-width: 1.5; stroke-dasharray: 4 3; }
     .mark-label { fill: var(--failed); font-size: 9px; }
     .tick { stroke: var(--line); stroke-width: 1; }
     .tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
@@ -185,7 +258,12 @@ internal val REPORT_CSS: String = """
     .key.p99 { color: var(--fg); }
     .series-start { text-anchor: start; }
     .series-end { text-anchor: end; }
-    .note { color: var(--muted); font-size: 0.82rem; margin: 1rem 0 0; }
+    .note {
+      color: var(--muted); font-size: 0.875rem; line-height: 1.6;
+      margin: 1.5rem 0 0; padding: 1rem 0 1rem 1.35rem;
+      border-left: 3px solid var(--accent); background: var(--card);
+    }
+    .note strong { color: var(--fg); font-weight: 600; }
     .operating { margin: 0 0 1.5rem; }
     .operating-rate { font-size: 1.6rem; margin: 0; font-variant-numeric: tabular-nums; }
     .operating-limit { color: var(--muted); margin: 0.25rem 0 0; }
@@ -205,7 +283,46 @@ internal val REPORT_CSS: String = """
 """.trimIndent()
 
 /**
- * The page's behaviour, inlined like everything else it needs.
+ * The theme control, on every page this module writes.
+ *
+ * Split from [REPORT_JS] because the capacity page carries no steps table and
+ * so runs none of the rest of it, and a reader there wants the same control.
+ */
+internal val THEME_JS: String = """
+    (function () {
+      var toggle = document.getElementById('theme-toggle');
+      if (!toggle) return;
+      var root = document.documentElement;
+      toggle.hidden = false;
+
+      // Absent until a reader says otherwise, so an untouched report keeps
+      // following the machine's own setting rather than one this page chose.
+      var kept = null;
+      try { kept = localStorage.getItem('kestrel-theme'); } catch (ignored) { kept = null; }
+      if (kept === 'light' || kept === 'dark') root.setAttribute('data-theme', kept);
+
+      function dark() {
+        var set = root.getAttribute('data-theme');
+        if (set) return set === 'dark';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      function label() {
+        toggle.setAttribute('aria-label', dark() ? 'Switch to the light theme' : 'Switch to the dark theme');
+      }
+      label();
+
+      toggle.addEventListener('click', function () {
+        var next = dark() ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('kestrel-theme', next); } catch (ignored) { /* a file:// URL may refuse */ }
+        label();
+      });
+    })();
+""".trimIndent()
+
+/**
+ * The steps table's behaviour, inlined like everything else it needs.
  *
  * Plain DOM against the hooks the markup carries. Both timings already ride on
  * each cell as text the server formatted, so the toggle swaps an attribute

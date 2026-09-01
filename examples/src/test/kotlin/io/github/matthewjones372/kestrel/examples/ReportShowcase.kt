@@ -8,12 +8,11 @@ import io.github.matthewjones372.kestrel.failureRate
 import io.github.matthewjones372.kestrel.fedBy
 import io.github.matthewjones372.kestrel.feed
 import io.github.matthewjones372.kestrel.goodput
-import io.github.matthewjones372.kestrel.http.exec
 import io.github.matthewjones372.kestrel.http.http
 import io.github.matthewjones372.kestrel.keptSchedule
 import io.github.matthewjones372.kestrel.p99
-import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey

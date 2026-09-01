@@ -63,8 +63,8 @@ class CheckoutLoadTest {
     fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
         val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
 
-        result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
-        result.failed shouldBe 0L
+        assertTrue(result[placeOrder].responseTime.p99 < 200.milliseconds)
+        assertEquals(0L, result.failed)
     }
 }
 ```

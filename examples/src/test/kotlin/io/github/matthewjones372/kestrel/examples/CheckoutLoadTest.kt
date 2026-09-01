@@ -16,11 +16,10 @@ import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
 import io.github.matthewjones372.kestrel.step
-import io.kotest.assertions.withClue
-import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import java.net.InetSocketAddress
 import java.nio.file.Files
@@ -110,15 +109,15 @@ class CheckoutLoadTest {
                 .fedBy(feed(customer) { user -> "customer-$user" }),
         )
 
-        result[browse].count shouldBe 50L
-        seenCustomers.size shouldBe 50
-        result[placeOrder].failed.count shouldBe 0L
-        result[pay].serviceTime.p99 shouldBeLessThan 500.milliseconds
+        assertEquals(50L, result[browse].count)
+        assertEquals(50, seenCustomers.size)
+        assertEquals(0L, result[placeOrder].failed.count)
+        assertTrue(result[pay].serviceTime.p99 < 500.milliseconds)
 
         val report = Files.createTempDirectory("kestrel").resolve("checkout.html")
         result.writeHtmlReport(report)
-        Files.readString(report) shouldContain "place order"
-        result.markdown() shouldContain "place order"
+        assertTrue(Files.readString(report).contains("place order"))
+        assertTrue(result.markdown().contains("place order"))
         result.appendToStepSummary { null }
     }
 
@@ -133,12 +132,11 @@ class CheckoutLoadTest {
 
         val result = kestrel.run(checkout.at(10.perSecond, over = 1.seconds))
 
-        result[pay].failedWith(HttpStatus(503)) shouldBe 10L
-        result[pay].failed.count shouldBe 10L
-        withClue("every request was refused, so the whole step is the failed side of it") {
-            result[pay].ok.count shouldBe 0L
-            result[pay].serviceTime.count shouldBe result[pay].failed.serviceTime.count
-        }
-        result.ran(confirm) shouldBe false
+        assertEquals(10L, result[pay].failedWith(HttpStatus(503)))
+        assertEquals(10L, result[pay].failed.count)
+        val whenRefused = "every request was refused, so the whole step is the failed side of it"
+        assertEquals(0L, result[pay].ok.count, whenRefused)
+        assertEquals(result[pay].failed.serviceTime.count, result[pay].serviceTime.count, whenRefused)
+        assertFalse(result.ran(confirm))
     }
 }

@@ -7,20 +7,14 @@
 
 # Kestrel
 
-### Load testing for Kotlin, with numbers you can actually trust.
+### Load testing for Kotlin — with a p99 you can trust.
 
 </div>
 
-Your load test says p99 is 200 ms and you ship. But when a load generator can't
-keep up, it quietly queues requests and then reports the wait as *your server's*
-latency. So the test passes, the tail looks fine, and the slow service goes to
-production anyway. This is **coordinated omission** — the classic bug in load
-testing, and most tools can't even tell you it happened.
-
-Kestrel is built around not doing that. It times every request from the moment
-it was *supposed* to start, and every report says plainly whether the generator
-kept up. If it didn't, you know the numbers are suspect. If it did, you can trust
-them.
+**Most load tests lie to you.** When the generator can't keep up, it reports its
+own backlog as your server's latency — a bug called *coordinated omission*, and
+most tools can't even detect it. Kestrel can, and it proves on every run that the
+numbers are the target's, not the tool's.
 
 <div align="center">
 <a href="docs/assets/report-full-light.png">

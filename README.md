@@ -7,13 +7,20 @@
 
 # Kestrel
 
-**Load testing for Kotlin, honest about its own numbers.**
-
-Write a scenario as a plain Kotlin value. Run it. Get back a result your test
-reads directly, and one self-contained HTML page that tells you whether to
-trust it.
+### Load testing for Kotlin, with numbers you can actually trust.
 
 </div>
+
+Your load test says p99 is 200 ms and you ship. But when a load generator can't
+keep up, it quietly queues requests and then reports the wait as *your server's*
+latency. So the test passes, the tail looks fine, and the slow service goes to
+production anyway. This is **coordinated omission** — the classic bug in load
+testing, and most tools can't even tell you it happened.
+
+Kestrel is built around not doing that. It times every request from the moment
+it was *supposed* to start, and every report says plainly whether the generator
+kept up. If it didn't, you know the numbers are suspect. If it did, you can trust
+them.
 
 <div align="center">
 <a href="docs/assets/report-full-light.png">
@@ -24,24 +31,23 @@ trust it.
 </a>
 
 <sub>A real run. <code>POST /pay</code> missed its 300 ms target — and the green
-<b>"the generator keeps its schedule"</b> is what proves that's the target's
-fault, not the tool's. <a href="docs/assets/report-full-light.png">See the whole page →</a></sub>
+<b>"the generator keeps its schedule"</b> is the proof that's the server's fault,
+not the tool's. <a href="docs/assets/report-full-light.png">See the whole page →</a></sub>
 </div>
 
-> [!NOTE]
-> Early, but it runs. `specs/` tracks what is built and what is not. Nothing is
-> released yet.
+## Write it in Kotlin, not in a framework
 
-## A complete test
+No base class to extend. No string keys to keep in sync. No XML, no separate DSL
+language, no Docker. A scenario is a plain Kotlin value, and the result is
+something your test reads straight off:
 
 ```kotlin
 val orderId = sessionKey<String>("orderId")
-val browse = step("browse")
 val placeOrder = step("place order")
 val api = http.baseUrl("https://orders.internal")
 
 val checkout = scenario("checkout") {
-    exec(browse, api.get("/products"))
+    exec(step("browse"), api.get("/products"))
     exec(
         placeOrder,
         api.post("/orders")
@@ -63,42 +69,32 @@ class CheckoutLoadTest {
 }
 ```
 
-That is the whole thing. No base class, no string keys to keep in sync, no URL
-template that breaks halfway through a run, no report directory to parse
-afterwards. `@LoadTest` hands you a `Kestrel`, and the result is a value you
-assert on.
+That is the whole test. `@LoadTest` hands you a `Kestrel`, you assert on a value,
+and it runs on virtual threads on the JDK's own HTTP client — nothing to install.
+Everything is typed and named once: capture into `orderId` and it comes back a
+`String`; rename `placeOrder` and the code stops compiling instead of silently
+checking a step that no longer exists.
 
-Everything is typed and named once. Capture into `orderId` and it reads back as
-a `String`. Rename the `placeOrder` handle and the code stops compiling, instead
-of leaving a test that checks a step nobody runs. And a scenario is just a value,
-so you can ask it questions before it sends anything —
-`checkout.at(50.perSecond, over = 1.minutes).profile.userCount()` is `3000`.
+## What you get
 
-## Why it exists
-
-**It stays out of your way.** Gatling has a Kotlin DSL, but it is a thin layer
-over the Java one, and the things Kotlin is good at do not survive the trip:
-keys are strings, steps are named twice, URLs are templated and checked at
-runtime, and a simulation is a class you cannot hold or print. Kestrel drops all
-of that. The compiler checks your scenario; your test framework reads the result.
-
-**It tells you the truth.** When a load generator cannot keep up, it quietly
-queues requests and then reports the wait as the target's latency. This is
-*coordinated omission*, the classic load-testing bug, and most tools cannot even
-detect it. Kestrel times each request from when it was *meant* to start, shows
-the generator's own stalls next to the latency they would otherwise inflate, and
-lets a verdict say *"cannot tell"* instead of guessing. If a number is in the
-report, something measured it.
+- **A verdict you can believe.** Every run tells you whether the generator kept
+  its own schedule. A green test on a generator that fell behind is the trap
+  Kestrel exists to close.
+- **Real percentiles.** Bars are counted buckets, a percentile is the top of the
+  bucket a sample landed in, on a log axis. No smoothing, no interpolation — if a
+  number is on the page, something measured it.
+- **A report, not a web app.** One self-contained HTML file: data, styles and
+  charts inline. It opens straight from disk, uploads as a CI artifact as-is, and
+  does light and dark. [See a full one.](docs/assets/report-full-light.png)
+- **Answers before you run.** A scenario is a value, so
+  `checkout.at(50.perSecond, over = 1.minutes).profile.userCount()` is `3000`
+  before a single request goes out.
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/report-distribution-dark.png">
   <img src="docs/assets/report-distribution-light.png" width="820" alt="A latency distribution: histogram bars with p50 and p99 markers.">
 </picture>
-
-<sub>Every bar counted something. A percentile is the top of the bucket a sample
-landed in, drawn on a log axis because latency is logarithmic. No smoothing, no
-interpolation.</sub>
 </div>
 
 ## Get started
@@ -111,71 +107,40 @@ dependencies {
 }
 ```
 
-Write the test above, then do what you like with the result — assert on it, or
-write the report:
+Write the test above, then write the report:
 
 ```kotlin
 result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"))
 ```
 
-That is one file, with the data, styles and charts all inline. It opens straight
-from disk and uploads as a CI artifact with nothing attached. The images above
-are that page. The file itself is at
-[docs/assets/example-report.html](docs/assets/example-report.html) to open after
-a clone, and [the cookbook](docs/cookbook.md) shows how to publish a live one
-from CI.
-
-## Going further
-
-**[docs/cookbook.md](docs/cookbook.md) is the recipe book.** Every capability
-below is a few lines there, each with a note on why it is those lines and not the
-obvious alternative:
+**[The cookbook](docs/cookbook.md) has the rest** — each recipe a few lines, with
+a note on why it is those lines and not the obvious alternative:
 
 | | |
 |---|---|
 | **Shaping load** | flat, ramped and staged profiles; Poisson arrivals; think time; a mix of journeys in one run |
 | **Per-user data** | feeders as a function of the user number; CSV; a token refreshed off the measured path |
 | **The requests** | captures, body checks, cookies across redirects, W3C trace ids, WebSocket streams, work that finishes on another topic |
-| **Asking the question** | goals and goodput; steady state; capacity search; comparing runs; *did the generator keep up?* |
+| **Asking the question** | goals and goodput; steady state; capacity search; comparing runs against a baseline |
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 
-- **[docs/what-it-costs.md](docs/what-it-costs.md)** — the tool's own measured
-  overhead, so you can trust the numbers above it.
-- **[docs/modules.md](docs/modules.md)** — the modules and the coordinates to
-  depend on them.
+> [!NOTE]
+> Early days. It runs and it's tested, but nothing is released to Maven Central
+> yet — `specs/` tracks what is built and what is not.
 
-## Building
+## The rest
+
+- **[docs/what-it-costs.md](docs/what-it-costs.md)** — the tool's own measured overhead, so you can trust the numbers above it.
+- **[docs/modules.md](docs/modules.md)** — the modules and the coordinates to depend on them.
+- **[AGENTS.md](AGENTS.md)** — read this first if you want to work on Kestrel itself.
 
 ```bash
 ./gradlew build          # tests, detekt, spotless, coverage
-./gradlew spotlessApply  # run before you commit
 ```
 
-`smoke/` is a separate Gradle build that depends on the published coordinates, so
-a wrong POM or a missing jar fails at resolution here rather than for a stranger:
-
-```bash
-./gradlew publishToMavenLocal && cd smoke && ../gradlew test
-```
-
-## Modules
-
-| Module | Depends on | For |
-|---|---|---|
-| `kestrel-core` | **nothing** | scenarios, profiles and results as values, and the `Engine` that runs one |
-| `kestrel-engine` | core | `VirtualThreads`: departures on a schedule, a user to a thread |
-| `kestrel-http` | core | HTTP steps on `java.net.http` |
-| `kestrel-websocket` | core | WebSocket steps on `java.net.http`, a connection per user |
-| `kestrel-junit5` / `kestrel-kotest` | core, engine | a load test that is a `@Test`, or a Kotest spec |
-| `kestrel-baseline` | core | a run kept in a file, to compare the next one to |
-| `kestrel-report-html` / `kestrel-report-github` | core | a self-contained HTML page, or markdown for a job summary |
-| `kestrel-pelican` | core, `pelican-core` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps |
-
-Every row is a test: each module asserts its own runtime classpath, so `core`
-cannot grow a dependency and the Kotest module cannot quietly start needing the
-JUnit one. `core` depends on the Kotlin standard library and nothing else.
-
-Working in here? Read [AGENTS.md](AGENTS.md) first.
+`kestrel-core` depends on the Kotlin standard library and nothing else, and a
+test enforces it. Each module asserts its own runtime classpath, so core can't
+grow a dependency and the Kotest module can't quietly start needing the JUnit one.
 
 ## License
 

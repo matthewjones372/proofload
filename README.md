@@ -11,10 +11,14 @@
 
 </div>
 
-**Most load tests lie to you.** When the generator can't keep up, it reports its
-own backlog as your server's latency — a bug called *coordinated omission*, and
-most tools can't even detect it. Kestrel can, and it proves on every run that the
-numbers are the target's, not the tool's.
+**A passing load test can still ship a slow service.** When the load generator
+can't keep up, it quietly queues requests and reports the wait as your server's
+latency — the classic *coordinated omission* bug — so the tail looks fine and the
+test goes green anyway.
+
+Kestrel takes a different approach: it times every request from the moment it was
+*meant* to start, and proves on every run whether the generator kept up. Green
+means the numbers are the target's, not the tool's.
 
 <div align="center">
 <a href="docs/assets/report-full-light.png">

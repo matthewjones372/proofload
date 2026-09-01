@@ -77,12 +77,22 @@ checking a step that no longer exists.
 
 ## Point it at anything
 
-- **HTTP** and **WebSockets**, in the box.
-- **[Pelican](https://github.com/matthewjones372/pelican)** typed endpoints, driven as steps.
-- **Anything you already have a Kotlin client for** — gRPC, a database, a queue — is a
-  plain `exec { }` step, timed exactly like the rest.
-- **Systems that answer somewhere else.** Publish now and match the reply that lands on
-  another channel later, so the latency you measure is the real round trip, not the ack.
+HTTP and WebSockets come in the box, and
+[Pelican](https://github.com/matthewjones372/pelican) typed endpoints are steps too.
+
+Anything else — gRPC, a database, a queue — is just a step body. Whatever you call
+inside it is timed and recorded like any other step, so you use the client you
+already have:
+
+```kotlin
+exec(settle) {
+    val outcome = ledger.settle(order)   // your own client — gRPC, JDBC, a producer
+    if (!outcome.ok) fail(outcome.reason)
+}
+```
+
+And for work that finishes somewhere else — publish now, match the reply that arrives
+on another channel later — the latency you measure is the real round trip, not the ack.
 
 ## What you get
 

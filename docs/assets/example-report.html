@@ -1,0 +1,2507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kestrel run — 2026-09-01T06:43:14.238194725Z</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #faf9f6;
+  --fg: #191815;
+  --muted: #6f6b62;
+  --line: #e6e2d9;
+  --rule: #d6d1c5;
+  --card: #ffffff;
+  --accent: oklch(0.55 0.13 265);
+  --ok: oklch(0.50 0.13 150);
+  --failed: oklch(0.53 0.15 25);
+  --failed-tint: oklch(0.96 0.03 25);
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+/* An untouched report follows the machine; `data-theme` is a reader who said otherwise. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131316;
+    --fg: #eceae4;
+    --muted: #9b968c;
+    --line: #2a2a30;
+    --rule: #3a3a42;
+    --card: #1a1a1e;
+    --accent: oklch(0.75 0.13 265);
+    --ok: oklch(0.75 0.13 150);
+    --failed: oklch(0.72 0.15 25);
+    --failed-tint: oklch(0.28 0.06 25);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #131316;
+  --fg: #eceae4;
+  --muted: #9b968c;
+  --line: #2a2a30;
+  --rule: #3a3a42;
+  --card: #1a1a1e;
+  --accent: oklch(0.75 0.13 265);
+  --ok: oklch(0.75 0.13 150);
+  --failed: oklch(0.72 0.15 25);
+  --failed-tint: oklch(0.28 0.06 25);
+}
+:root[data-theme="light"] { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.55 var(--sans);
+}
+main { max-width: 72rem; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+h1 { font-size: 2.125rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+/* One numeral treatment, so a figure reads the same wherever it appears. */
+.num, .tile-value, .measured, .goodput-value, .tail-value, .failures-value,
+td.num, .operating-rate, .reason-count {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.run {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1.5rem; flex-wrap: wrap;
+  padding-bottom: 1.25rem; margin-bottom: 2.5rem; border-bottom: 2px solid var(--fg);
+}
+.run-name { display: flex; flex-direction: column; gap: 0.35rem; }
+.wordmark {
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--accent);
+}
+.run-meta { display: flex; align-items: center; gap: 1rem; }
+.when {
+  color: var(--muted); margin: 0; font-family: var(--mono);
+  font-size: 0.8125rem; text-align: right;
+}
+.theme-toggle {
+  font: inherit; color: var(--muted); background: none;
+  border: 1px solid var(--line); border-radius: 0.4rem;
+  padding: 0.35rem 0.4rem; cursor: pointer; line-height: 0;
+}
+.theme-toggle:hover { color: var(--fg); border-color: var(--rule); }
+.theme-toggle svg { display: block; }
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1.75rem;
+  margin: 0 0 3rem;
+}
+/* A rule rather than a card: six bordered boxes give a headline number the
+   same weight as a footnote, which is most of why the page read flat. */
+.tile { padding-left: 1.25rem; border-left: 2px solid var(--rule); }
+.tile-value { display: block; font-size: 2.375rem; line-height: 1.05; margin-top: 0.5rem; }
+.tile-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.tile.ok .tile-value { color: var(--ok); }
+.tile.failed .tile-value { color: var(--failed); }
+.steps { margin-top: 3rem; }
+.steps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.8rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; }
+tbody td { font-size: 0.9375rem; }
+thead th {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom-color: var(--rule);
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.ok { color: var(--ok); }
+td.failed { color: var(--failed); }
+tr.reasons > td { background: var(--card); }
+.reason-list { list-style: none; margin: 0; padding: 0; }
+.reason-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; }
+.reason { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+.reason { overflow-wrap: anywhere; }
+.reason-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+.behind {
+  background: var(--failed-tint);
+  border: 0; border-left: 3px solid var(--failed);
+  padding: 1.05rem 1.35rem;
+  margin: 0 0 2rem;
+  line-height: 1.55;
+}
+.behind strong { font-weight: 650; }
+thead th button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+thead th[aria-sort="ascending"] button::after { content: " \2191"; }
+thead th[aria-sort="descending"] button::after { content: " \2193"; }
+tr.step[aria-expanded] { cursor: pointer; }
+tr.step[aria-expanded="true"] > th::before { content: "\25BE "; }
+tr.step[aria-expanded="false"] > th::before { content: "\25B8 "; }
+#mode-toggle { font: inherit; background: none; border: 1px solid var(--line); border-radius: 0.3rem; }
+#mode-toggle { padding: 0.1rem 0.45rem; color: inherit; cursor: pointer; }
+.verdicts { display: flex; gap: 3rem; align-items: flex-start; margin: 0 0 3rem; flex-wrap: wrap; }
+.verdict-headline {
+  margin: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.3rem;
+  padding-right: 3rem; border-right: 1px solid var(--line);
+}
+.verdict-score {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-size: 4.5rem; line-height: 0.9; font-weight: 600; letter-spacing: -0.05em;
+}
+.verdicts.met .verdict-score { color: var(--ok); }
+.verdicts.missed .verdict-score { color: var(--failed); }
+.verdict-caption {
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.verdict-list { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 20rem; }
+.verdict-list li {
+  display: flex; justify-content: space-between; gap: 1.25rem;
+  padding: 0.7rem 0; border-top: 1px solid var(--line);
+}
+.verdict-list li::before {
+  content: "met"; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ok);
+}
+.verdict-list li.missed::before { content: "missed"; color: var(--failed); }
+.verdict-list .goal { flex: 1; margin-left: -3.9rem; padding-left: 4.3rem; font-size: 1rem; }
+.verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.changes { margin: 0 0 1.5rem; }
+.caveat { border: 1px solid var(--muted); border-radius: 0.5rem; padding: 0.6rem 0.8rem; margin: 0 0 0.6rem; }
+.change-headline { margin: 0 0 0.5rem; }
+.change-list { list-style: none; margin: 0; padding: 0; }
+.change-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.change-list li::before { content: "same"; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--muted); }
+.change-list li.worse::before { content: "worse"; color: var(--failed); }
+.change-list li.better::before { content: "better"; color: var(--ok); }
+.change-list li.new::before { content: "new"; }
+.change-list li.gone::before { content: "gone"; color: var(--failed); }
+.change-list .goal { flex: 1; margin-left: -3.2rem; padding-left: 3.6rem; }
+.change-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan { margin: 0 0 1.5rem; }
+.plan p { margin: 0 0 0.5rem; }
+.plan p.arrivals { color: var(--muted); font-size: 0.82rem; }
+.mix-list { list-style: none; margin: 0 0 0.5rem; padding: 0; }
+.mix-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.mix-arm { font-weight: 600; }
+.mix-shape { flex: 1; color: var(--muted); }
+.mix-share { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chart.shape svg { height: 4.5rem; }
+.shape-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.7; }
+.shape-area { fill: var(--fg); opacity: 0.09; }
+.shape-end, .curve-end { text-anchor: end; }
+.goodput { margin: 0 0 2rem; max-width: 46rem; }
+.goodput-headline { margin: 0.4rem 0 0.6rem; font-size: 1.05rem; }
+.goodput-list { list-style: none; margin: 0; padding: 0; }
+.goodput-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.goodput-step { flex: 1; }
+.goodput-value { font-variant-numeric: tabular-nums; }
+.goodput-value.none, .goodput-headline.none { color: var(--muted); }
+.failures { margin: 0 0 2rem; max-width: 46rem; }
+.failures-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.failures-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.failures-step { flex: 1; }
+.failures-value { color: var(--failed); font-variant-numeric: tabular-nums; }
+.tail { margin: 2rem 0 0; max-width: 46rem; }
+.tail-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.tail-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+.tail-step { flex: 1; }
+.tail-value { font-variant-numeric: tabular-nums; }
+.tail-value.none, .tail-interval { color: var(--muted); }
+.reading { margin: 0 0 2rem; max-width: 46rem; }
+.reading p { margin: 0 0 0.6rem; }
+.reading strong { font-weight: 600; }
+.chart { margin: 2rem 0 0; }
+.chart figcaption {
+  color: var(--muted); font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.7rem;
+}
+.chart svg { width: 100%; height: 14rem; overflow: visible; }
+.bar { fill: var(--accent); opacity: 0.62; }
+.mark { stroke: var(--failed); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.mark-label { fill: var(--failed); font-size: 9px; }
+.tick { stroke: var(--line); stroke-width: 1; }
+.tick-label { fill: var(--muted); font-size: 9px; text-anchor: middle; }
+.timeline { margin: 2rem 0 0; }
+.chart.over-time svg { height: 4.5rem; }
+.series { fill: none; stroke-width: 1.5; }
+.series.count { stroke: var(--fg); opacity: 0.7; }
+.series.p50 { stroke: var(--muted); }
+.series.p99 { stroke: var(--fg); }
+.series.failed { stroke: var(--failed); }
+.key { font-weight: 600; }
+.key.p50 { color: var(--muted); }
+.key.p99 { color: var(--fg); }
+.series-start { text-anchor: start; }
+.series-end { text-anchor: end; }
+.note {
+  color: var(--muted); font-size: 0.875rem; line-height: 1.6;
+  margin: 1.5rem 0 0; padding: 1rem 0 1rem 1.35rem;
+  border-left: 3px solid var(--accent); background: var(--card);
+}
+.note strong { color: var(--fg); font-weight: 600; }
+.operating { margin: 0 0 1.5rem; }
+.operating-rate { font-size: 1.6rem; margin: 0; font-variant-numeric: tabular-nums; }
+.operating-limit { color: var(--muted); margin: 0.25rem 0 0; }
+.chart.curve svg { height: 11rem; }
+.curve-line { fill: none; stroke: var(--fg); stroke-width: 1.5; opacity: 0.45; }
+.dot { fill: var(--ok); }
+.dot.failed { fill: var(--failed); }
+.dot.void { fill: var(--muted); }
+.chosen-mark { stroke: var(--ok); stroke-width: 1; stroke-dasharray: 3 2; }
+.chosen-label { fill: var(--ok); font-size: 9px; }
+.chosen-tag { color: var(--ok); font-size: 0.75rem; letter-spacing: 0.05em; margin-left: 0.4rem; }
+tr.rung.chosen > th { font-weight: 700; }
+tr.rung.failed > td.outcome { color: var(--failed); }
+tr.rung.void > td.outcome { color: var(--muted); }
+td.goals { color: var(--muted); font-size: 0.85rem; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header class="run">
+    <div class="run-name">
+      <span class="wordmark">Kestrel</span>
+      <h1>checkout</h1>
+    </div>
+    <div class="run-meta">
+      <p class="when">Started <time datetime="2026-09-01T06:43:14.238194725Z">2026-09-01T06:43:14.238194725Z</time></p>
+      <button type="button" id="theme-toggle" class="theme-toggle" hidden aria-label="Switch theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="m17.7 17.7 1.4 1.4"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.3 17.7-1.4 1.4"></path><path d="m19.1 4.9-1.4 1.4"></path></svg></button>
+    </div>
+  </header>
+  <section class="verdicts missed" aria-label="Goals">
+    <p class="verdict-headline">
+      <span class="verdict-score">2/4</span>
+      <span class="verdict-caption">goals met</span>
+    </p>
+    <ul class="verdict-list">
+      <li class="missed"><span class="goal">POST /pay p99 under 300ms</span><span class="measured">386 ms — <strong>29% over</strong></span></li>
+      <li class="missed"><span class="goal">POST /pay goodput under 300ms at least 99.0%</span><span class="measured">66.8%</span></li>
+      <li class="met"><span class="goal">the run failing under 1.0%</span><span class="measured">0.2%</span></li>
+      <li class="met"><span class="goal">the generator keeps its schedule</span><span class="measured">897 µs</span></li>
+    </ul>
+  </section>
+  <p class="note" id="kestrel-steady">
+    <strong>Settled after 0 ns</strong>, judged over the remaining 31.0 s. The first 0 ns are drawn on the timeline below and left out of every goal above that reads the counts or either clock; the generator's own backlog is not kept second by second, so a goal on that is judged over the whole run. Every percentile in the table below is the whole run: nothing here is discarded. Two windows count as the same within <strong>12.50%</strong> of each other — twice the width of the buckets these seconds are read from, and a default rather than something this run discovered.
+  </p>
+  <section class="plan" aria-label="What was asked for">
+    <p><strong>checkout</strong> — 3 steps, 30/s held for 30.0 s. Planned 900 users, 2,700 requests.</p>
+    <p class="arrivals">Arrivals were evenly spaced, which understates queueing against the same mean rate in production. Measured 33.3 ms between departures, coefficient of variation 0.00.</p>
+    <figure class="chart shape">
+      <figcaption>the shape that was asked for — peak 30/s</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">
+        <polygon class="shape-area" points="0.0,60.0 0.0,8.0 640.0,8.0 640.0,60.0"></polygon>
+        <polyline class="shape-line" points="0.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label shape-start" x="0" y="78">0</text>
+        <text class="tick-label shape-end" x="640.0" y="78">30.0 s</text>
+      </svg>
+    </figure>
+  </section>
+  <section class="totals" aria-label="Totals">
+    <div class="tile">
+      <span class="tile-label">Requests</span>
+      <span class="tile-value">2,700</span>
+    </div>
+    <div class="tile ok">
+      <span class="tile-label">OK</span>
+      <span class="tile-value">2,694</span>
+    </div>
+    <div class="tile failed">
+      <span class="tile-label">Failed</span>
+      <span class="tile-value">6</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Behind schedule, p99</span>
+      <span class="tile-value">897 µs</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Injector stalled, p99</span>
+      <span class="tile-value">449 µs</span>
+    </div>
+  </section>
+  <section class="goodput" aria-label="Goodput">
+    <h2>Goodput</h2>
+    <p class="goodput-headline"><strong>81.4333/s</strong> under 300 ms across the run, over the 30.0 s the plan asked for.</p>
+    <ul class="goodput-list">
+      <li><span class="goodput-step">POST /pay under 300 ms</span><span class="goodput-value">71.4% · 21.4333/s</span></li>
+    </ul>
+    <p class="note">Goodput counts the requests that both succeeded and came back inside the target, over the window the plan asked for rather than the span the run took. It is read off the successes' own distribution, so a failure that was also slow is counted out once rather than twice. The bucket holding the target counts as having missed it, which is the direction every percentile here already rounds.</p>
+  </section>
+  <p class="note" id="kestrel-hiccups">The injector's own JVM stalled for 449 µs at p99 and 40.4 ms at worst, measured on a thread no request ran on. A tail that size is this machine as readily as the target.</p>
+  <section class="reading" aria-label="What these numbers say">
+    <p><strong>2,700 requests</strong>, <strong>6 failed</strong> (0.2%).</p>
+    <p>The run sent all 2,700 of them.</p>
+    <p>The run kept to its schedule, so these latencies are the target's rather than this tool's.</p>
+    <p><strong>POST /pay is the slowest step</strong> at 371 ms p99, and it carries 6 of the 6 failures.</p>
+    <p>A user completes 3 steps, so about <strong>1 user in 33</strong> meets a p99 somewhere in the journey — assuming the steps are independent, which they are not quite. Percentiles do not add: the journey's own p99 is not the sum of the steps'.</p>
+  </section>
+  <section class="failures" aria-label="What the failures took">
+    <h2>What failed, and how fast</h2>
+    <ul class="failures-list">
+      <li><span class="failures-step">POST /pay</span><span class="failures-value">6 failed at 323 ms p99, against 371 ms for the 894 that worked</span></li>
+    </ul>
+    <p class="note">Service time, so this is the target's own speed rather than a wait this tool added. The table below counts these samples alongside the successes, and a target that sheds load answers a rejection at once — the faster it sheds, the better that table looks. A step that failed nothing is not listed.</p>
+  </section>
+  <section class="steps">
+    <div class="steps-head">
+      <h2>Steps</h2>
+      <p class="mode">Showing <strong id="mode-name">service time</strong>. <button type="button" id="mode-toggle">Show response time</button></p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" data-sort="step" aria-sort="none"><button type="button">Step</button></th>
+            <th scope="col" class="num" data-sort="count" aria-sort="none"><button type="button">Count</button></th>
+            <th scope="col" class="num" data-sort="reached" aria-sort="none"><button type="button">Reached</button></th>
+            <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
+            <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
+            <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
+            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (46)</button></th>
+            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (10)</button></th>
+            <th scope="col" class="num" data-sort="max" aria-sort="none"><button type="button">Max</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="step" data-step="GET /cart">
+            <th scope="row">GET /cart</th>
+            <td class="num">900</td>
+            <td class="num reached">900</td>
+            <td class="num ok">900</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="23.1 ms" data-response="23.3 ms" data-service-ns="23068671" data-response-ns="23330815">23.1 ms</td>
+            <td class="num time" data-service="30.1 ms" data-response="30.4 ms" data-service-ns="30146559" data-response-ns="30408703">30.1 ms</td>
+            <td class="num time" data-service="30.7 ms" data-response="31.2 ms" data-service-ns="30670847" data-response-ns="31195135">30.7 ms</td>
+            <td class="num time" data-service="54.3 ms" data-response="54.5 ms" data-service-ns="54263807" data-response-ns="54525951">54.3 ms</td>
+          </tr>
+          <tr class="step" data-step="GET /products">
+            <th scope="row">GET /products</th>
+            <td class="num">900</td>
+            <td class="num reached">900</td>
+            <td class="num ok">900</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="8.85 ms" data-response="9.18 ms" data-service-ns="8847359" data-response-ns="9175039">8.85 ms</td>
+            <td class="num time" data-service="11.6 ms" data-response="11.9 ms" data-service-ns="11599871" data-response-ns="11927551">11.6 ms</td>
+            <td class="num time" data-service="12.1 ms" data-response="13.1 ms" data-service-ns="12124159" data-response-ns="13107199">12.1 ms</td>
+            <td class="num time" data-service="16.4 ms" data-response="36.2 ms" data-service-ns="16383999" data-response-ns="36175871">16.4 ms</td>
+          </tr>
+          <tr class="step" data-step="POST /pay" aria-expanded="false" tabindex="0">
+            <th scope="row">POST /pay</th>
+            <td class="num">900</td>
+            <td class="num reached">900</td>
+            <td class="num ok">894</td>
+            <td class="num failed">6</td>
+            <td class="num time" data-service="239 ms" data-response="239 ms" data-service-ns="239075327" data-response-ns="239075327">239 ms</td>
+            <td class="num time" data-service="361 ms" data-response="361 ms" data-service-ns="360710143" data-response-ns="360710143">361 ms</td>
+            <td class="num time" data-service="371 ms" data-response="371 ms" data-service-ns="371195903" data-response-ns="371195903">371 ms</td>
+            <td class="num time" data-service="371 ms" data-response="382 ms" data-service-ns="371195903" data-response-ns="381681663">371 ms</td>
+          </tr>
+          <tr class="reasons" data-for="POST /pay">
+            <td colspan="9">
+              <ul class="reason-list">
+                <li><span class="reason">status 503</span><span class="reason-count">6</span></li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      <figure class="chart">
+        <figcaption>GET /cart — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="GET /cart distribution">
+          <rect class="bar" x="0.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 14.8 ms</title>
+          </rect>
+          <rect class="bar" x="2.2" y="108.6" width="4.0" height="11.4">
+            <title>2 at 14.9 ms</title>
+          </rect>
+          <rect class="bar" x="4.3" y="85.7" width="4.0" height="34.3">
+            <title>6 at 14.9 ms</title>
+          </rect>
+          <rect class="bar" x="6.5" y="102.9" width="4.0" height="17.1">
+            <title>3 at 15.0 ms</title>
+          </rect>
+          <rect class="bar" x="8.6" y="102.9" width="4.0" height="17.1">
+            <title>3 at 15.1 ms</title>
+          </rect>
+          <rect class="bar" x="10.7" y="97.1" width="4.0" height="22.9">
+            <title>4 at 15.1 ms</title>
+          </rect>
+          <rect class="bar" x="12.8" y="91.4" width="4.0" height="28.6">
+            <title>5 at 15.2 ms</title>
+          </rect>
+          <rect class="bar" x="14.9" y="91.4" width="4.0" height="28.6">
+            <title>5 at 15.3 ms</title>
+          </rect>
+          <rect class="bar" x="17.0" y="97.1" width="4.0" height="22.9">
+            <title>4 at 15.3 ms</title>
+          </rect>
+          <rect class="bar" x="19.1" y="108.6" width="4.0" height="11.4">
+            <title>2 at 15.4 ms</title>
+          </rect>
+          <rect class="bar" x="21.2" y="91.4" width="4.0" height="28.6">
+            <title>5 at 15.5 ms</title>
+          </rect>
+          <rect class="bar" x="23.3" y="97.1" width="4.0" height="22.9">
+            <title>4 at 15.5 ms</title>
+          </rect>
+          <rect class="bar" x="25.3" y="102.9" width="4.0" height="17.1">
+            <title>3 at 15.6 ms</title>
+          </rect>
+          <rect class="bar" x="27.4" y="114.3" width="4.0" height="5.7">
+            <title>1 at 15.7 ms</title>
+          </rect>
+          <rect class="bar" x="29.4" y="114.3" width="4.0" height="5.7">
+            <title>1 at 15.7 ms</title>
+          </rect>
+          <rect class="bar" x="31.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 15.8 ms</title>
+          </rect>
+          <rect class="bar" x="33.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 15.9 ms</title>
+          </rect>
+          <rect class="bar" x="35.5" y="114.3" width="4.0" height="5.7">
+            <title>1 at 15.9 ms</title>
+          </rect>
+          <rect class="bar" x="37.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 16.0 ms</title>
+          </rect>
+          <rect class="bar" x="39.5" y="74.3" width="4.0" height="45.7">
+            <title>8 at 16.1 ms</title>
+          </rect>
+          <rect class="bar" x="41.5" y="102.9" width="4.0" height="17.1">
+            <title>3 at 16.1 ms</title>
+          </rect>
+          <rect class="bar" x="43.5" y="91.4" width="4.0" height="28.6">
+            <title>5 at 16.2 ms</title>
+          </rect>
+          <rect class="bar" x="45.5" y="85.7" width="4.0" height="34.3">
+            <title>6 at 16.3 ms</title>
+          </rect>
+          <rect class="bar" x="47.5" y="85.7" width="4.0" height="34.3">
+            <title>6 at 16.3 ms</title>
+          </rect>
+          <rect class="bar" x="49.4" y="85.7" width="4.0" height="34.3">
+            <title>6 at 16.4 ms</title>
+          </rect>
+          <rect class="bar" x="51.4" y="102.9" width="4.0" height="17.1">
+            <title>3 at 16.4 ms</title>
+          </rect>
+          <rect class="bar" x="53.3" y="91.4" width="4.0" height="28.6">
+            <title>5 at 16.5 ms</title>
+          </rect>
+          <rect class="bar" x="55.3" y="80.0" width="4.0" height="40.0">
+            <title>7 at 16.6 ms</title>
+          </rect>
+          <rect class="bar" x="57.2" y="102.9" width="4.0" height="17.1">
+            <title>3 at 16.6 ms</title>
+          </rect>
+          <rect class="bar" x="59.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 16.7 ms</title>
+          </rect>
+          <rect class="bar" x="61.1" y="108.6" width="4.0" height="11.4">
+            <title>2 at 16.8 ms</title>
+          </rect>
+          <rect class="bar" x="64.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 16.9 ms</title>
+          </rect>
+          <rect class="bar" x="68.6" y="97.1" width="4.0" height="22.9">
+            <title>4 at 17.0 ms</title>
+          </rect>
+          <rect class="bar" x="72.4" y="45.7" width="4.0" height="74.3">
+            <title>13 at 17.2 ms</title>
+          </rect>
+          <rect class="bar" x="76.1" y="57.1" width="4.0" height="62.9">
+            <title>11 at 17.3 ms</title>
+          </rect>
+          <rect class="bar" x="79.8" y="62.9" width="4.0" height="57.1">
+            <title>10 at 17.4 ms</title>
+          </rect>
+          <rect class="bar" x="83.5" y="91.4" width="4.0" height="28.6">
+            <title>5 at 17.6 ms</title>
+          </rect>
+          <rect class="bar" x="87.1" y="91.4" width="4.0" height="28.6">
+            <title>5 at 17.7 ms</title>
+          </rect>
+          <rect class="bar" x="90.7" y="102.9" width="4.0" height="17.1">
+            <title>3 at 17.8 ms</title>
+          </rect>
+          <rect class="bar" x="94.3" y="97.1" width="4.0" height="22.9">
+            <title>4 at 18.0 ms</title>
+          </rect>
+          <rect class="bar" x="97.9" y="62.9" width="4.0" height="57.1">
+            <title>10 at 18.1 ms</title>
+          </rect>
+          <rect class="bar" x="101.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 18.2 ms</title>
+          </rect>
+          <rect class="bar" x="104.9" y="80.0" width="4.0" height="40.0">
+            <title>7 at 18.4 ms</title>
+          </rect>
+          <rect class="bar" x="108.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 18.5 ms</title>
+          </rect>
+          <rect class="bar" x="111.9" y="97.1" width="4.0" height="22.9">
+            <title>4 at 18.6 ms</title>
+          </rect>
+          <rect class="bar" x="115.3" y="108.6" width="4.0" height="11.4">
+            <title>2 at 18.7 ms</title>
+          </rect>
+          <rect class="bar" x="118.7" y="85.7" width="4.0" height="34.3">
+            <title>6 at 18.9 ms</title>
+          </rect>
+          <rect class="bar" x="122.1" y="74.3" width="4.0" height="45.7">
+            <title>8 at 19.0 ms</title>
+          </rect>
+          <rect class="bar" x="125.5" y="51.4" width="4.0" height="68.6">
+            <title>12 at 19.1 ms</title>
+          </rect>
+          <rect class="bar" x="128.8" y="51.4" width="4.0" height="68.6">
+            <title>12 at 19.3 ms</title>
+          </rect>
+          <rect class="bar" x="132.2" y="68.6" width="4.0" height="51.4">
+            <title>9 at 19.4 ms</title>
+          </rect>
+          <rect class="bar" x="135.5" y="57.1" width="4.0" height="62.9">
+            <title>11 at 19.5 ms</title>
+          </rect>
+          <rect class="bar" x="138.7" y="85.7" width="4.0" height="34.3">
+            <title>6 at 19.7 ms</title>
+          </rect>
+          <rect class="bar" x="142.0" y="102.9" width="4.0" height="17.1">
+            <title>3 at 19.8 ms</title>
+          </rect>
+          <rect class="bar" x="145.2" y="108.6" width="4.0" height="11.4">
+            <title>2 at 19.9 ms</title>
+          </rect>
+          <rect class="bar" x="148.4" y="51.4" width="4.0" height="68.6">
+            <title>12 at 20.1 ms</title>
+          </rect>
+          <rect class="bar" x="151.6" y="85.7" width="4.0" height="34.3">
+            <title>6 at 20.2 ms</title>
+          </rect>
+          <rect class="bar" x="154.8" y="45.7" width="4.0" height="74.3">
+            <title>13 at 20.3 ms</title>
+          </rect>
+          <rect class="bar" x="157.9" y="57.1" width="4.0" height="62.9">
+            <title>11 at 20.4 ms</title>
+          </rect>
+          <rect class="bar" x="161.1" y="85.7" width="4.0" height="34.3">
+            <title>6 at 20.6 ms</title>
+          </rect>
+          <rect class="bar" x="164.2" y="114.3" width="4.0" height="5.7">
+            <title>1 at 20.7 ms</title>
+          </rect>
+          <rect class="bar" x="167.3" y="91.4" width="4.0" height="28.6">
+            <title>5 at 20.8 ms</title>
+          </rect>
+          <rect class="bar" x="170.3" y="102.9" width="4.0" height="17.1">
+            <title>3 at 21.0 ms</title>
+          </rect>
+          <rect class="bar" x="173.4" y="97.1" width="4.0" height="22.9">
+            <title>4 at 21.1 ms</title>
+          </rect>
+          <rect class="bar" x="176.4" y="57.1" width="4.0" height="62.9">
+            <title>11 at 21.2 ms</title>
+          </rect>
+          <rect class="bar" x="179.4" y="68.6" width="4.0" height="51.4">
+            <title>9 at 21.4 ms</title>
+          </rect>
+          <rect class="bar" x="182.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 21.5 ms</title>
+          </rect>
+          <rect class="bar" x="185.4" y="91.4" width="4.0" height="28.6">
+            <title>5 at 21.6 ms</title>
+          </rect>
+          <rect class="bar" x="188.4" y="97.1" width="4.0" height="22.9">
+            <title>4 at 21.8 ms</title>
+          </rect>
+          <rect class="bar" x="191.3" y="97.1" width="4.0" height="22.9">
+            <title>4 at 21.9 ms</title>
+          </rect>
+          <rect class="bar" x="194.2" y="74.3" width="4.0" height="45.7">
+            <title>8 at 22.0 ms</title>
+          </rect>
+          <rect class="bar" x="197.2" y="74.3" width="4.0" height="45.7">
+            <title>8 at 22.2 ms</title>
+          </rect>
+          <rect class="bar" x="200.0" y="22.9" width="4.0" height="97.1">
+            <title>17 at 22.3 ms</title>
+          </rect>
+          <rect class="bar" x="202.9" y="45.7" width="4.0" height="74.3">
+            <title>13 at 22.4 ms</title>
+          </rect>
+          <rect class="bar" x="205.8" y="68.6" width="4.0" height="51.4">
+            <title>9 at 22.5 ms</title>
+          </rect>
+          <rect class="bar" x="208.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 22.7 ms</title>
+          </rect>
+          <rect class="bar" x="211.4" y="114.3" width="4.0" height="5.7">
+            <title>1 at 22.8 ms</title>
+          </rect>
+          <rect class="bar" x="214.2" y="85.7" width="4.0" height="34.3">
+            <title>6 at 22.9 ms</title>
+          </rect>
+          <rect class="bar" x="217.0" y="80.0" width="4.0" height="40.0">
+            <title>7 at 23.1 ms</title>
+          </rect>
+          <rect class="bar" x="219.8" y="57.1" width="4.0" height="62.9">
+            <title>11 at 23.2 ms</title>
+          </rect>
+          <rect class="bar" x="222.6" y="34.3" width="4.0" height="85.7">
+            <title>15 at 23.3 ms</title>
+          </rect>
+          <rect class="bar" x="225.3" y="57.1" width="4.0" height="62.9">
+            <title>11 at 23.5 ms</title>
+          </rect>
+          <rect class="bar" x="228.0" y="85.7" width="4.0" height="34.3">
+            <title>6 at 23.6 ms</title>
+          </rect>
+          <rect class="bar" x="230.8" y="97.1" width="4.0" height="22.9">
+            <title>4 at 23.7 ms</title>
+          </rect>
+          <rect class="bar" x="233.4" y="102.9" width="4.0" height="17.1">
+            <title>3 at 23.9 ms</title>
+          </rect>
+          <rect class="bar" x="236.1" y="97.1" width="4.0" height="22.9">
+            <title>4 at 24.0 ms</title>
+          </rect>
+          <rect class="bar" x="238.8" y="45.7" width="4.0" height="74.3">
+            <title>13 at 24.1 ms</title>
+          </rect>
+          <rect class="bar" x="241.5" y="40.0" width="4.0" height="80.0">
+            <title>14 at 24.2 ms</title>
+          </rect>
+          <rect class="bar" x="244.1" y="17.1" width="4.0" height="102.9">
+            <title>18 at 24.4 ms</title>
+          </rect>
+          <rect class="bar" x="246.7" y="80.0" width="4.0" height="40.0">
+            <title>7 at 24.5 ms</title>
+          </rect>
+          <rect class="bar" x="249.3" y="102.9" width="4.0" height="17.1">
+            <title>3 at 24.6 ms</title>
+          </rect>
+          <rect class="bar" x="251.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 24.8 ms</title>
+          </rect>
+          <rect class="bar" x="254.5" y="102.9" width="4.0" height="17.1">
+            <title>3 at 24.9 ms</title>
+          </rect>
+          <rect class="bar" x="257.1" y="62.9" width="4.0" height="57.1">
+            <title>10 at 25.0 ms</title>
+          </rect>
+          <rect class="bar" x="259.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 25.2 ms</title>
+          </rect>
+          <rect class="bar" x="262.2" y="45.7" width="4.0" height="74.3">
+            <title>13 at 25.3 ms</title>
+          </rect>
+          <rect class="bar" x="264.7" y="80.0" width="4.0" height="40.0">
+            <title>7 at 25.4 ms</title>
+          </rect>
+          <rect class="bar" x="267.2" y="80.0" width="4.0" height="40.0">
+            <title>7 at 25.6 ms</title>
+          </rect>
+          <rect class="bar" x="269.7" y="97.1" width="4.0" height="22.9">
+            <title>4 at 25.7 ms</title>
+          </rect>
+          <rect class="bar" x="272.2" y="108.6" width="4.0" height="11.4">
+            <title>2 at 25.8 ms</title>
+          </rect>
+          <rect class="bar" x="274.7" y="91.4" width="4.0" height="28.6">
+            <title>5 at 26.0 ms</title>
+          </rect>
+          <rect class="bar" x="277.2" y="68.6" width="4.0" height="51.4">
+            <title>9 at 26.1 ms</title>
+          </rect>
+          <rect class="bar" x="279.6" y="45.7" width="4.0" height="74.3">
+            <title>13 at 26.2 ms</title>
+          </rect>
+          <rect class="bar" x="282.1" y="45.7" width="4.0" height="74.3">
+            <title>13 at 26.3 ms</title>
+          </rect>
+          <rect class="bar" x="284.5" y="74.3" width="4.0" height="45.7">
+            <title>8 at 26.5 ms</title>
+          </rect>
+          <rect class="bar" x="286.9" y="91.4" width="4.0" height="28.6">
+            <title>5 at 26.6 ms</title>
+          </rect>
+          <rect class="bar" x="289.3" y="97.1" width="4.0" height="22.9">
+            <title>4 at 26.7 ms</title>
+          </rect>
+          <rect class="bar" x="291.7" y="114.3" width="4.0" height="5.7">
+            <title>1 at 26.9 ms</title>
+          </rect>
+          <rect class="bar" x="294.1" y="68.6" width="4.0" height="51.4">
+            <title>9 at 27.0 ms</title>
+          </rect>
+          <rect class="bar" x="296.5" y="68.6" width="4.0" height="51.4">
+            <title>9 at 27.1 ms</title>
+          </rect>
+          <rect class="bar" x="298.9" y="62.9" width="4.0" height="57.1">
+            <title>10 at 27.3 ms</title>
+          </rect>
+          <rect class="bar" x="301.2" y="80.0" width="4.0" height="40.0">
+            <title>7 at 27.4 ms</title>
+          </rect>
+          <rect class="bar" x="303.5" y="91.4" width="4.0" height="28.6">
+            <title>5 at 27.5 ms</title>
+          </rect>
+          <rect class="bar" x="305.9" y="97.1" width="4.0" height="22.9">
+            <title>4 at 27.7 ms</title>
+          </rect>
+          <rect class="bar" x="308.2" y="108.6" width="4.0" height="11.4">
+            <title>2 at 27.8 ms</title>
+          </rect>
+          <rect class="bar" x="310.5" y="114.3" width="4.0" height="5.7">
+            <title>1 at 27.9 ms</title>
+          </rect>
+          <rect class="bar" x="312.8" y="85.7" width="4.0" height="34.3">
+            <title>6 at 28.0 ms</title>
+          </rect>
+          <rect class="bar" x="315.1" y="40.0" width="4.0" height="80.0">
+            <title>14 at 28.2 ms</title>
+          </rect>
+          <rect class="bar" x="317.3" y="0.0" width="4.0" height="120.0">
+            <title>21 at 28.3 ms</title>
+          </rect>
+          <rect class="bar" x="319.6" y="80.0" width="4.0" height="40.0">
+            <title>7 at 28.4 ms</title>
+          </rect>
+          <rect class="bar" x="321.9" y="74.3" width="4.0" height="45.7">
+            <title>8 at 28.6 ms</title>
+          </rect>
+          <rect class="bar" x="324.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 28.7 ms</title>
+          </rect>
+          <rect class="bar" x="328.5" y="80.0" width="4.0" height="40.0">
+            <title>7 at 29.0 ms</title>
+          </rect>
+          <rect class="bar" x="330.8" y="68.6" width="4.0" height="51.4">
+            <title>9 at 29.1 ms</title>
+          </rect>
+          <rect class="bar" x="333.0" y="45.7" width="4.0" height="74.3">
+            <title>13 at 29.2 ms</title>
+          </rect>
+          <rect class="bar" x="335.2" y="85.7" width="4.0" height="34.3">
+            <title>6 at 29.4 ms</title>
+          </rect>
+          <rect class="bar" x="337.3" y="62.9" width="4.0" height="57.1">
+            <title>10 at 29.5 ms</title>
+          </rect>
+          <rect class="bar" x="339.5" y="102.9" width="4.0" height="17.1">
+            <title>3 at 29.6 ms</title>
+          </rect>
+          <rect class="bar" x="341.7" y="97.1" width="4.0" height="22.9">
+            <title>4 at 29.8 ms</title>
+          </rect>
+          <rect class="bar" x="343.8" y="108.6" width="4.0" height="11.4">
+            <title>2 at 29.9 ms</title>
+          </rect>
+          <rect class="bar" x="346.0" y="74.3" width="4.0" height="45.7">
+            <title>8 at 30.0 ms</title>
+          </rect>
+          <rect class="bar" x="348.1" y="51.4" width="4.0" height="68.6">
+            <title>12 at 30.1 ms</title>
+          </rect>
+          <rect class="bar" x="350.2" y="57.1" width="4.0" height="62.9">
+            <title>11 at 30.3 ms</title>
+          </rect>
+          <rect class="bar" x="352.3" y="68.6" width="4.0" height="51.4">
+            <title>9 at 30.4 ms</title>
+          </rect>
+          <rect class="bar" x="354.4" y="74.3" width="4.0" height="45.7">
+            <title>8 at 30.5 ms</title>
+          </rect>
+          <rect class="bar" x="356.5" y="97.1" width="4.0" height="22.9">
+            <title>4 at 30.7 ms</title>
+          </rect>
+          <rect class="bar" x="358.6" y="108.6" width="4.0" height="11.4">
+            <title>2 at 30.8 ms</title>
+          </rect>
+          <rect class="bar" x="360.7" y="108.6" width="4.0" height="11.4">
+            <title>2 at 30.9 ms</title>
+          </rect>
+          <rect class="bar" x="362.8" y="114.3" width="4.0" height="5.7">
+            <title>1 at 31.1 ms</title>
+          </rect>
+          <rect class="bar" x="364.8" y="114.3" width="4.0" height="5.7">
+            <title>1 at 31.2 ms</title>
+          </rect>
+          <rect class="bar" x="475.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 39.1 ms</title>
+          </rect>
+          <rect class="bar" x="519.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 42.7 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 54.3 ms</title>
+          </rect>
+          <line class="mark" x1="217.0" y1="0" x2="217.0" y2="120.0"></line>
+          <text class="mark-label" x="220.0" y="12">p50</text>
+          <line class="mark" x1="356.5" y1="0" x2="356.5" y2="120.0"></line>
+          <text class="mark-label" x="359.5" y="12">p99</text>
+          <line class="tick" x1="0.0" y1="120.0" x2="0.0" y2="124.0"></line>
+          <text class="tick-label" x="0.0" y="140">10.0 ms</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>GET /products — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="GET /products distribution">
+          <rect class="bar" x="0.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 5.83 ms</title>
+          </rect>
+          <rect class="bar" x="10.3" y="91.4" width="4.0" height="28.6">
+            <title>5 at 5.93 ms</title>
+          </rect>
+          <rect class="bar" x="13.7" y="114.3" width="4.0" height="5.7">
+            <title>1 at 5.96 ms</title>
+          </rect>
+          <rect class="bar" x="17.1" y="114.3" width="4.0" height="5.7">
+            <title>1 at 6.00 ms</title>
+          </rect>
+          <rect class="bar" x="20.4" y="102.9" width="4.0" height="17.1">
+            <title>3 at 6.03 ms</title>
+          </rect>
+          <rect class="bar" x="23.8" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.06 ms</title>
+          </rect>
+          <rect class="bar" x="27.1" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.09 ms</title>
+          </rect>
+          <rect class="bar" x="30.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 6.13 ms</title>
+          </rect>
+          <rect class="bar" x="33.7" y="80.0" width="4.0" height="40.0">
+            <title>7 at 6.16 ms</title>
+          </rect>
+          <rect class="bar" x="36.9" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.19 ms</title>
+          </rect>
+          <rect class="bar" x="40.2" y="62.9" width="4.0" height="57.1">
+            <title>10 at 6.23 ms</title>
+          </rect>
+          <rect class="bar" x="43.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 6.26 ms</title>
+          </rect>
+          <rect class="bar" x="46.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 6.29 ms</title>
+          </rect>
+          <rect class="bar" x="49.8" y="85.7" width="4.0" height="34.3">
+            <title>6 at 6.32 ms</title>
+          </rect>
+          <rect class="bar" x="53.0" y="17.1" width="4.0" height="102.9">
+            <title>18 at 6.36 ms</title>
+          </rect>
+          <rect class="bar" x="56.2" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.39 ms</title>
+          </rect>
+          <rect class="bar" x="59.3" y="80.0" width="4.0" height="40.0">
+            <title>7 at 6.42 ms</title>
+          </rect>
+          <rect class="bar" x="62.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 6.46 ms</title>
+          </rect>
+          <rect class="bar" x="65.6" y="68.6" width="4.0" height="51.4">
+            <title>9 at 6.49 ms</title>
+          </rect>
+          <rect class="bar" x="68.7" y="85.7" width="4.0" height="34.3">
+            <title>6 at 6.52 ms</title>
+          </rect>
+          <rect class="bar" x="71.8" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.55 ms</title>
+          </rect>
+          <rect class="bar" x="74.8" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.59 ms</title>
+          </rect>
+          <rect class="bar" x="77.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 6.62 ms</title>
+          </rect>
+          <rect class="bar" x="80.9" y="97.1" width="4.0" height="22.9">
+            <title>4 at 6.65 ms</title>
+          </rect>
+          <rect class="bar" x="84.0" y="102.9" width="4.0" height="17.1">
+            <title>3 at 6.68 ms</title>
+          </rect>
+          <rect class="bar" x="87.0" y="108.6" width="4.0" height="11.4">
+            <title>2 at 6.72 ms</title>
+          </rect>
+          <rect class="bar" x="90.0" y="102.9" width="4.0" height="17.1">
+            <title>3 at 6.75 ms</title>
+          </rect>
+          <rect class="bar" x="92.9" y="108.6" width="4.0" height="11.4">
+            <title>2 at 6.78 ms</title>
+          </rect>
+          <rect class="bar" x="95.9" y="97.1" width="4.0" height="22.9">
+            <title>4 at 6.82 ms</title>
+          </rect>
+          <rect class="bar" x="101.8" y="108.6" width="4.0" height="11.4">
+            <title>2 at 6.88 ms</title>
+          </rect>
+          <rect class="bar" x="104.7" y="108.6" width="4.0" height="11.4">
+            <title>2 at 6.91 ms</title>
+          </rect>
+          <rect class="bar" x="107.6" y="91.4" width="4.0" height="28.6">
+            <title>5 at 6.95 ms</title>
+          </rect>
+          <rect class="bar" x="110.5" y="102.9" width="4.0" height="17.1">
+            <title>3 at 6.98 ms</title>
+          </rect>
+          <rect class="bar" x="113.4" y="91.4" width="4.0" height="28.6">
+            <title>5 at 7.01 ms</title>
+          </rect>
+          <rect class="bar" x="116.3" y="91.4" width="4.0" height="28.6">
+            <title>5 at 7.05 ms</title>
+          </rect>
+          <rect class="bar" x="119.2" y="97.1" width="4.0" height="22.9">
+            <title>4 at 7.08 ms</title>
+          </rect>
+          <rect class="bar" x="122.0" y="97.1" width="4.0" height="22.9">
+            <title>4 at 7.11 ms</title>
+          </rect>
+          <rect class="bar" x="124.8" y="114.3" width="4.0" height="5.7">
+            <title>1 at 7.14 ms</title>
+          </rect>
+          <rect class="bar" x="127.6" y="62.9" width="4.0" height="57.1">
+            <title>10 at 7.18 ms</title>
+          </rect>
+          <rect class="bar" x="130.5" y="74.3" width="4.0" height="45.7">
+            <title>8 at 7.21 ms</title>
+          </rect>
+          <rect class="bar" x="133.2" y="85.7" width="4.0" height="34.3">
+            <title>6 at 7.24 ms</title>
+          </rect>
+          <rect class="bar" x="136.0" y="91.4" width="4.0" height="28.6">
+            <title>5 at 7.27 ms</title>
+          </rect>
+          <rect class="bar" x="138.8" y="68.6" width="4.0" height="51.4">
+            <title>9 at 7.31 ms</title>
+          </rect>
+          <rect class="bar" x="141.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 7.34 ms</title>
+          </rect>
+          <rect class="bar" x="144.3" y="62.9" width="4.0" height="57.1">
+            <title>10 at 7.37 ms</title>
+          </rect>
+          <rect class="bar" x="147.0" y="68.6" width="4.0" height="51.4">
+            <title>9 at 7.41 ms</title>
+          </rect>
+          <rect class="bar" x="149.7" y="68.6" width="4.0" height="51.4">
+            <title>9 at 7.44 ms</title>
+          </rect>
+          <rect class="bar" x="152.4" y="80.0" width="4.0" height="40.0">
+            <title>7 at 7.47 ms</title>
+          </rect>
+          <rect class="bar" x="155.1" y="74.3" width="4.0" height="45.7">
+            <title>8 at 7.50 ms</title>
+          </rect>
+          <rect class="bar" x="157.8" y="85.7" width="4.0" height="34.3">
+            <title>6 at 7.54 ms</title>
+          </rect>
+          <rect class="bar" x="160.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 7.57 ms</title>
+          </rect>
+          <rect class="bar" x="163.2" y="91.4" width="4.0" height="28.6">
+            <title>5 at 7.60 ms</title>
+          </rect>
+          <rect class="bar" x="165.8" y="102.9" width="4.0" height="17.1">
+            <title>3 at 7.63 ms</title>
+          </rect>
+          <rect class="bar" x="168.4" y="97.1" width="4.0" height="22.9">
+            <title>4 at 7.67 ms</title>
+          </rect>
+          <rect class="bar" x="171.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 7.70 ms</title>
+          </rect>
+          <rect class="bar" x="173.7" y="114.3" width="4.0" height="5.7">
+            <title>1 at 7.73 ms</title>
+          </rect>
+          <rect class="bar" x="176.3" y="108.6" width="4.0" height="11.4">
+            <title>2 at 7.77 ms</title>
+          </rect>
+          <rect class="bar" x="178.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 7.80 ms</title>
+          </rect>
+          <rect class="bar" x="181.5" y="114.3" width="4.0" height="5.7">
+            <title>1 at 7.83 ms</title>
+          </rect>
+          <rect class="bar" x="184.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 7.86 ms</title>
+          </rect>
+          <rect class="bar" x="186.6" y="114.3" width="4.0" height="5.7">
+            <title>1 at 7.90 ms</title>
+          </rect>
+          <rect class="bar" x="189.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 7.93 ms</title>
+          </rect>
+          <rect class="bar" x="191.7" y="108.6" width="4.0" height="11.4">
+            <title>2 at 7.96 ms</title>
+          </rect>
+          <rect class="bar" x="194.2" y="97.1" width="4.0" height="22.9">
+            <title>4 at 8.00 ms</title>
+          </rect>
+          <rect class="bar" x="196.7" y="62.9" width="4.0" height="57.1">
+            <title>10 at 8.03 ms</title>
+          </rect>
+          <rect class="bar" x="199.2" y="85.7" width="4.0" height="34.3">
+            <title>6 at 8.06 ms</title>
+          </rect>
+          <rect class="bar" x="201.7" y="85.7" width="4.0" height="34.3">
+            <title>6 at 8.09 ms</title>
+          </rect>
+          <rect class="bar" x="204.2" y="68.6" width="4.0" height="51.4">
+            <title>9 at 8.13 ms</title>
+          </rect>
+          <rect class="bar" x="206.7" y="97.1" width="4.0" height="22.9">
+            <title>4 at 8.16 ms</title>
+          </rect>
+          <rect class="bar" x="209.2" y="74.3" width="4.0" height="45.7">
+            <title>8 at 8.19 ms</title>
+          </rect>
+          <rect class="bar" x="211.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 8.22 ms</title>
+          </rect>
+          <rect class="bar" x="214.1" y="80.0" width="4.0" height="40.0">
+            <title>7 at 8.26 ms</title>
+          </rect>
+          <rect class="bar" x="216.5" y="85.7" width="4.0" height="34.3">
+            <title>6 at 8.29 ms</title>
+          </rect>
+          <rect class="bar" x="218.9" y="68.6" width="4.0" height="51.4">
+            <title>9 at 8.32 ms</title>
+          </rect>
+          <rect class="bar" x="221.4" y="102.9" width="4.0" height="17.1">
+            <title>3 at 8.36 ms</title>
+          </rect>
+          <rect class="bar" x="223.8" y="97.1" width="4.0" height="22.9">
+            <title>4 at 8.39 ms</title>
+          </rect>
+          <rect class="bar" x="228.6" y="40.0" width="4.0" height="80.0">
+            <title>14 at 8.45 ms</title>
+          </rect>
+          <rect class="bar" x="233.3" y="17.1" width="4.0" height="102.9">
+            <title>18 at 8.52 ms</title>
+          </rect>
+          <rect class="bar" x="238.0" y="74.3" width="4.0" height="45.7">
+            <title>8 at 8.59 ms</title>
+          </rect>
+          <rect class="bar" x="242.7" y="80.0" width="4.0" height="40.0">
+            <title>7 at 8.65 ms</title>
+          </rect>
+          <rect class="bar" x="247.4" y="85.7" width="4.0" height="34.3">
+            <title>6 at 8.72 ms</title>
+          </rect>
+          <rect class="bar" x="252.0" y="57.1" width="4.0" height="62.9">
+            <title>11 at 8.78 ms</title>
+          </rect>
+          <rect class="bar" x="256.6" y="85.7" width="4.0" height="34.3">
+            <title>6 at 8.85 ms</title>
+          </rect>
+          <rect class="bar" x="261.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 8.91 ms</title>
+          </rect>
+          <rect class="bar" x="265.6" y="97.1" width="4.0" height="22.9">
+            <title>4 at 8.98 ms</title>
+          </rect>
+          <rect class="bar" x="270.1" y="74.3" width="4.0" height="45.7">
+            <title>8 at 9.04 ms</title>
+          </rect>
+          <rect class="bar" x="274.5" y="80.0" width="4.0" height="40.0">
+            <title>7 at 9.11 ms</title>
+          </rect>
+          <rect class="bar" x="279.0" y="62.9" width="4.0" height="57.1">
+            <title>10 at 9.18 ms</title>
+          </rect>
+          <rect class="bar" x="283.3" y="17.1" width="4.0" height="102.9">
+            <title>18 at 9.24 ms</title>
+          </rect>
+          <rect class="bar" x="287.7" y="40.0" width="4.0" height="80.0">
+            <title>14 at 9.31 ms</title>
+          </rect>
+          <rect class="bar" x="292.0" y="45.7" width="4.0" height="74.3">
+            <title>13 at 9.37 ms</title>
+          </rect>
+          <rect class="bar" x="296.3" y="17.1" width="4.0" height="102.9">
+            <title>18 at 9.44 ms</title>
+          </rect>
+          <rect class="bar" x="300.6" y="57.1" width="4.0" height="62.9">
+            <title>11 at 9.50 ms</title>
+          </rect>
+          <rect class="bar" x="304.8" y="62.9" width="4.0" height="57.1">
+            <title>10 at 9.57 ms</title>
+          </rect>
+          <rect class="bar" x="309.0" y="85.7" width="4.0" height="34.3">
+            <title>6 at 9.63 ms</title>
+          </rect>
+          <rect class="bar" x="313.2" y="57.1" width="4.0" height="62.9">
+            <title>11 at 9.70 ms</title>
+          </rect>
+          <rect class="bar" x="317.3" y="97.1" width="4.0" height="22.9">
+            <title>4 at 9.76 ms</title>
+          </rect>
+          <rect class="bar" x="321.4" y="102.9" width="4.0" height="17.1">
+            <title>3 at 9.83 ms</title>
+          </rect>
+          <rect class="bar" x="325.5" y="91.4" width="4.0" height="28.6">
+            <title>5 at 9.90 ms</title>
+          </rect>
+          <rect class="bar" x="329.6" y="97.1" width="4.0" height="22.9">
+            <title>4 at 9.96 ms</title>
+          </rect>
+          <rect class="bar" x="333.6" y="91.4" width="4.0" height="28.6">
+            <title>5 at 10.0 ms</title>
+          </rect>
+          <rect class="bar" x="337.6" y="80.0" width="4.0" height="40.0">
+            <title>7 at 10.1 ms</title>
+          </rect>
+          <rect class="bar" x="341.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 10.2 ms</title>
+          </rect>
+          <rect class="bar" x="345.6" y="74.3" width="4.0" height="45.7">
+            <title>8 at 10.2 ms</title>
+          </rect>
+          <rect class="bar" x="349.5" y="28.6" width="4.0" height="91.4">
+            <title>16 at 10.3 ms</title>
+          </rect>
+          <rect class="bar" x="353.4" y="11.4" width="4.0" height="108.6">
+            <title>19 at 10.4 ms</title>
+          </rect>
+          <rect class="bar" x="357.3" y="0.0" width="4.0" height="120.0">
+            <title>21 at 10.4 ms</title>
+          </rect>
+          <rect class="bar" x="361.2" y="28.6" width="4.0" height="91.4">
+            <title>16 at 10.5 ms</title>
+          </rect>
+          <rect class="bar" x="365.0" y="62.9" width="4.0" height="57.1">
+            <title>10 at 10.6 ms</title>
+          </rect>
+          <rect class="bar" x="368.8" y="74.3" width="4.0" height="45.7">
+            <title>8 at 10.6 ms</title>
+          </rect>
+          <rect class="bar" x="372.6" y="102.9" width="4.0" height="17.1">
+            <title>3 at 10.7 ms</title>
+          </rect>
+          <rect class="bar" x="376.4" y="91.4" width="4.0" height="28.6">
+            <title>5 at 10.7 ms</title>
+          </rect>
+          <rect class="bar" x="380.1" y="108.6" width="4.0" height="11.4">
+            <title>2 at 10.8 ms</title>
+          </rect>
+          <rect class="bar" x="383.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 10.9 ms</title>
+          </rect>
+          <rect class="bar" x="387.6" y="114.3" width="4.0" height="5.7">
+            <title>1 at 10.9 ms</title>
+          </rect>
+          <rect class="bar" x="391.2" y="108.6" width="4.0" height="11.4">
+            <title>2 at 11.0 ms</title>
+          </rect>
+          <rect class="bar" x="394.9" y="97.1" width="4.0" height="22.9">
+            <title>4 at 11.1 ms</title>
+          </rect>
+          <rect class="bar" x="398.5" y="40.0" width="4.0" height="80.0">
+            <title>14 at 11.1 ms</title>
+          </rect>
+          <rect class="bar" x="402.1" y="51.4" width="4.0" height="68.6">
+            <title>12 at 11.2 ms</title>
+          </rect>
+          <rect class="bar" x="405.7" y="17.1" width="4.0" height="102.9">
+            <title>18 at 11.3 ms</title>
+          </rect>
+          <rect class="bar" x="409.3" y="5.7" width="4.0" height="114.3">
+            <title>20 at 11.3 ms</title>
+          </rect>
+          <rect class="bar" x="412.8" y="17.1" width="4.0" height="102.9">
+            <title>18 at 11.4 ms</title>
+          </rect>
+          <rect class="bar" x="416.4" y="62.9" width="4.0" height="57.1">
+            <title>10 at 11.5 ms</title>
+          </rect>
+          <rect class="bar" x="419.9" y="62.9" width="4.0" height="57.1">
+            <title>10 at 11.5 ms</title>
+          </rect>
+          <rect class="bar" x="423.4" y="51.4" width="4.0" height="68.6">
+            <title>12 at 11.6 ms</title>
+          </rect>
+          <rect class="bar" x="426.8" y="51.4" width="4.0" height="68.6">
+            <title>12 at 11.7 ms</title>
+          </rect>
+          <rect class="bar" x="430.3" y="80.0" width="4.0" height="40.0">
+            <title>7 at 11.7 ms</title>
+          </rect>
+          <rect class="bar" x="433.7" y="91.4" width="4.0" height="28.6">
+            <title>5 at 11.8 ms</title>
+          </rect>
+          <rect class="bar" x="437.1" y="102.9" width="4.0" height="17.1">
+            <title>3 at 11.9 ms</title>
+          </rect>
+          <rect class="bar" x="440.5" y="97.1" width="4.0" height="22.9">
+            <title>4 at 11.9 ms</title>
+          </rect>
+          <rect class="bar" x="443.9" y="102.9" width="4.0" height="17.1">
+            <title>3 at 12.0 ms</title>
+          </rect>
+          <rect class="bar" x="447.2" y="114.3" width="4.0" height="5.7">
+            <title>1 at 12.1 ms</title>
+          </rect>
+          <rect class="bar" x="450.6" y="108.6" width="4.0" height="11.4">
+            <title>2 at 12.1 ms</title>
+          </rect>
+          <rect class="bar" x="453.9" y="114.3" width="4.0" height="5.7">
+            <title>1 at 12.2 ms</title>
+          </rect>
+          <rect class="bar" x="460.5" y="108.6" width="4.0" height="11.4">
+            <title>2 at 12.3 ms</title>
+          </rect>
+          <rect class="bar" x="476.7" y="114.3" width="4.0" height="5.7">
+            <title>1 at 12.6 ms</title>
+          </rect>
+          <rect class="bar" x="495.5" y="114.3" width="4.0" height="5.7">
+            <title>1 at 13.0 ms</title>
+          </rect>
+          <rect class="bar" x="507.8" y="114.3" width="4.0" height="5.7">
+            <title>1 at 13.3 ms</title>
+          </rect>
+          <rect class="bar" x="513.8" y="114.3" width="4.0" height="5.7">
+            <title>1 at 13.4 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="114.3" width="4.0" height="5.7">
+            <title>1 at 16.4 ms</title>
+          </rect>
+          <line class="mark" x1="256.6" y1="0" x2="256.6" y2="120.0"></line>
+          <text class="mark-label" x="259.6" y="12">p50</text>
+          <line class="mark" x1="450.6" y1="0" x2="450.6" y2="120.0"></line>
+          <text class="mark-label" x="453.6" y="12">p99</text>
+          <line class="tick" x1="332.0" y1="120.0" x2="332.0" y2="124.0"></line>
+          <text class="tick-label" x="332.0" y="140">10.0 ms</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>POST /pay — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="POST /pay distribution">
+          <rect class="bar" x="0.0" y="90.0" width="4.0" height="30.0">
+            <title>3 at 122 ms</title>
+          </rect>
+          <rect class="bar" x="2.5" y="90.0" width="4.0" height="30.0">
+            <title>3 at 122 ms</title>
+          </rect>
+          <rect class="bar" x="4.9" y="110.0" width="4.0" height="10.0">
+            <title>1 at 123 ms</title>
+          </rect>
+          <rect class="bar" x="7.3" y="110.0" width="4.0" height="10.0">
+            <title>1 at 123 ms</title>
+          </rect>
+          <rect class="bar" x="12.2" y="110.0" width="4.0" height="10.0">
+            <title>1 at 124 ms</title>
+          </rect>
+          <rect class="bar" x="14.6" y="90.0" width="4.0" height="30.0">
+            <title>3 at 125 ms</title>
+          </rect>
+          <rect class="bar" x="16.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 125 ms</title>
+          </rect>
+          <rect class="bar" x="21.7" y="110.0" width="4.0" height="10.0">
+            <title>1 at 126 ms</title>
+          </rect>
+          <rect class="bar" x="24.1" y="80.0" width="4.0" height="40.0">
+            <title>4 at 127 ms</title>
+          </rect>
+          <rect class="bar" x="26.4" y="90.0" width="4.0" height="30.0">
+            <title>3 at 127 ms</title>
+          </rect>
+          <rect class="bar" x="28.7" y="100.0" width="4.0" height="20.0">
+            <title>2 at 128 ms</title>
+          </rect>
+          <rect class="bar" x="31.1" y="100.0" width="4.0" height="20.0">
+            <title>2 at 128 ms</title>
+          </rect>
+          <rect class="bar" x="33.4" y="70.0" width="4.0" height="50.0">
+            <title>5 at 129 ms</title>
+          </rect>
+          <rect class="bar" x="35.7" y="70.0" width="4.0" height="50.0">
+            <title>5 at 129 ms</title>
+          </rect>
+          <rect class="bar" x="38.0" y="110.0" width="4.0" height="10.0">
+            <title>1 at 130 ms</title>
+          </rect>
+          <rect class="bar" x="40.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 131 ms</title>
+          </rect>
+          <rect class="bar" x="44.9" y="90.0" width="4.0" height="30.0">
+            <title>3 at 132 ms</title>
+          </rect>
+          <rect class="bar" x="47.1" y="100.0" width="4.0" height="20.0">
+            <title>2 at 132 ms</title>
+          </rect>
+          <rect class="bar" x="49.4" y="70.0" width="4.0" height="50.0">
+            <title>5 at 133 ms</title>
+          </rect>
+          <rect class="bar" x="51.6" y="90.0" width="4.0" height="30.0">
+            <title>3 at 133 ms</title>
+          </rect>
+          <rect class="bar" x="53.9" y="110.0" width="4.0" height="10.0">
+            <title>1 at 134 ms</title>
+          </rect>
+          <rect class="bar" x="56.1" y="100.0" width="4.0" height="20.0">
+            <title>2 at 134 ms</title>
+          </rect>
+          <rect class="bar" x="60.6" y="80.0" width="4.0" height="40.0">
+            <title>4 at 135 ms</title>
+          </rect>
+          <rect class="bar" x="65.0" y="60.0" width="4.0" height="60.0">
+            <title>6 at 136 ms</title>
+          </rect>
+          <rect class="bar" x="69.3" y="90.0" width="4.0" height="30.0">
+            <title>3 at 137 ms</title>
+          </rect>
+          <rect class="bar" x="73.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 138 ms</title>
+          </rect>
+          <rect class="bar" x="78.0" y="70.0" width="4.0" height="50.0">
+            <title>5 at 139 ms</title>
+          </rect>
+          <rect class="bar" x="82.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 141 ms</title>
+          </rect>
+          <rect class="bar" x="86.5" y="60.0" width="4.0" height="60.0">
+            <title>6 at 142 ms</title>
+          </rect>
+          <rect class="bar" x="90.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 143 ms</title>
+          </rect>
+          <rect class="bar" x="94.8" y="70.0" width="4.0" height="50.0">
+            <title>5 at 144 ms</title>
+          </rect>
+          <rect class="bar" x="99.0" y="90.0" width="4.0" height="30.0">
+            <title>3 at 145 ms</title>
+          </rect>
+          <rect class="bar" x="103.1" y="110.0" width="4.0" height="10.0">
+            <title>1 at 146 ms</title>
+          </rect>
+          <rect class="bar" x="107.2" y="90.0" width="4.0" height="30.0">
+            <title>3 at 147 ms</title>
+          </rect>
+          <rect class="bar" x="111.3" y="90.0" width="4.0" height="30.0">
+            <title>3 at 148 ms</title>
+          </rect>
+          <rect class="bar" x="115.3" y="50.0" width="4.0" height="70.0">
+            <title>7 at 149 ms</title>
+          </rect>
+          <rect class="bar" x="119.3" y="60.0" width="4.0" height="60.0">
+            <title>6 at 150 ms</title>
+          </rect>
+          <rect class="bar" x="123.3" y="90.0" width="4.0" height="30.0">
+            <title>3 at 151 ms</title>
+          </rect>
+          <rect class="bar" x="127.2" y="90.0" width="4.0" height="30.0">
+            <title>3 at 152 ms</title>
+          </rect>
+          <rect class="bar" x="131.1" y="90.0" width="4.0" height="30.0">
+            <title>3 at 153 ms</title>
+          </rect>
+          <rect class="bar" x="135.0" y="80.0" width="4.0" height="40.0">
+            <title>4 at 154 ms</title>
+          </rect>
+          <rect class="bar" x="138.9" y="90.0" width="4.0" height="30.0">
+            <title>3 at 155 ms</title>
+          </rect>
+          <rect class="bar" x="142.7" y="70.0" width="4.0" height="50.0">
+            <title>5 at 156 ms</title>
+          </rect>
+          <rect class="bar" x="146.5" y="90.0" width="4.0" height="30.0">
+            <title>3 at 157 ms</title>
+          </rect>
+          <rect class="bar" x="150.3" y="90.0" width="4.0" height="30.0">
+            <title>3 at 158 ms</title>
+          </rect>
+          <rect class="bar" x="154.1" y="80.0" width="4.0" height="40.0">
+            <title>4 at 159 ms</title>
+          </rect>
+          <rect class="bar" x="157.8" y="50.0" width="4.0" height="70.0">
+            <title>7 at 160 ms</title>
+          </rect>
+          <rect class="bar" x="161.5" y="60.0" width="4.0" height="60.0">
+            <title>6 at 161 ms</title>
+          </rect>
+          <rect class="bar" x="165.2" y="110.0" width="4.0" height="10.0">
+            <title>1 at 163 ms</title>
+          </rect>
+          <rect class="bar" x="168.9" y="40.0" width="4.0" height="80.0">
+            <title>8 at 164 ms</title>
+          </rect>
+          <rect class="bar" x="172.5" y="110.0" width="4.0" height="10.0">
+            <title>1 at 165 ms</title>
+          </rect>
+          <rect class="bar" x="176.1" y="80.0" width="4.0" height="40.0">
+            <title>4 at 166 ms</title>
+          </rect>
+          <rect class="bar" x="179.7" y="110.0" width="4.0" height="10.0">
+            <title>1 at 167 ms</title>
+          </rect>
+          <rect class="bar" x="183.3" y="70.0" width="4.0" height="50.0">
+            <title>5 at 168 ms</title>
+          </rect>
+          <rect class="bar" x="186.9" y="50.0" width="4.0" height="70.0">
+            <title>7 at 169 ms</title>
+          </rect>
+          <rect class="bar" x="190.4" y="100.0" width="4.0" height="20.0">
+            <title>2 at 170 ms</title>
+          </rect>
+          <rect class="bar" x="193.9" y="90.0" width="4.0" height="30.0">
+            <title>3 at 171 ms</title>
+          </rect>
+          <rect class="bar" x="197.4" y="90.0" width="4.0" height="30.0">
+            <title>3 at 172 ms</title>
+          </rect>
+          <rect class="bar" x="200.9" y="100.0" width="4.0" height="20.0">
+            <title>2 at 173 ms</title>
+          </rect>
+          <rect class="bar" x="204.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 174 ms</title>
+          </rect>
+          <rect class="bar" x="207.7" y="70.0" width="4.0" height="50.0">
+            <title>5 at 175 ms</title>
+          </rect>
+          <rect class="bar" x="211.1" y="80.0" width="4.0" height="40.0">
+            <title>4 at 176 ms</title>
+          </rect>
+          <rect class="bar" x="214.5" y="90.0" width="4.0" height="30.0">
+            <title>3 at 177 ms</title>
+          </rect>
+          <rect class="bar" x="217.9" y="60.0" width="4.0" height="60.0">
+            <title>6 at 178 ms</title>
+          </rect>
+          <rect class="bar" x="221.2" y="100.0" width="4.0" height="20.0">
+            <title>2 at 179 ms</title>
+          </rect>
+          <rect class="bar" x="224.5" y="70.0" width="4.0" height="50.0">
+            <title>5 at 180 ms</title>
+          </rect>
+          <rect class="bar" x="227.8" y="100.0" width="4.0" height="20.0">
+            <title>2 at 181 ms</title>
+          </rect>
+          <rect class="bar" x="231.1" y="30.0" width="4.0" height="90.0">
+            <title>9 at 182 ms</title>
+          </rect>
+          <rect class="bar" x="234.4" y="90.0" width="4.0" height="30.0">
+            <title>3 at 184 ms</title>
+          </rect>
+          <rect class="bar" x="237.6" y="50.0" width="4.0" height="70.0">
+            <title>7 at 185 ms</title>
+          </rect>
+          <rect class="bar" x="240.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 186 ms</title>
+          </rect>
+          <rect class="bar" x="244.1" y="80.0" width="4.0" height="40.0">
+            <title>4 at 187 ms</title>
+          </rect>
+          <rect class="bar" x="247.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 188 ms</title>
+          </rect>
+          <rect class="bar" x="250.5" y="60.0" width="4.0" height="60.0">
+            <title>6 at 189 ms</title>
+          </rect>
+          <rect class="bar" x="253.6" y="80.0" width="4.0" height="40.0">
+            <title>4 at 190 ms</title>
+          </rect>
+          <rect class="bar" x="256.8" y="100.0" width="4.0" height="20.0">
+            <title>2 at 191 ms</title>
+          </rect>
+          <rect class="bar" x="259.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 192 ms</title>
+          </rect>
+          <rect class="bar" x="263.0" y="80.0" width="4.0" height="40.0">
+            <title>4 at 193 ms</title>
+          </rect>
+          <rect class="bar" x="266.1" y="90.0" width="4.0" height="30.0">
+            <title>3 at 194 ms</title>
+          </rect>
+          <rect class="bar" x="269.1" y="110.0" width="4.0" height="10.0">
+            <title>1 at 195 ms</title>
+          </rect>
+          <rect class="bar" x="272.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 196 ms</title>
+          </rect>
+          <rect class="bar" x="275.2" y="90.0" width="4.0" height="30.0">
+            <title>3 at 197 ms</title>
+          </rect>
+          <rect class="bar" x="278.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 198 ms</title>
+          </rect>
+          <rect class="bar" x="281.3" y="90.0" width="4.0" height="30.0">
+            <title>3 at 199 ms</title>
+          </rect>
+          <rect class="bar" x="284.3" y="100.0" width="4.0" height="20.0">
+            <title>2 at 200 ms</title>
+          </rect>
+          <rect class="bar" x="287.2" y="90.0" width="4.0" height="30.0">
+            <title>3 at 201 ms</title>
+          </rect>
+          <rect class="bar" x="290.2" y="60.0" width="4.0" height="60.0">
+            <title>6 at 202 ms</title>
+          </rect>
+          <rect class="bar" x="293.2" y="110.0" width="4.0" height="10.0">
+            <title>1 at 203 ms</title>
+          </rect>
+          <rect class="bar" x="296.1" y="70.0" width="4.0" height="50.0">
+            <title>5 at 204 ms</title>
+          </rect>
+          <rect class="bar" x="299.0" y="90.0" width="4.0" height="30.0">
+            <title>3 at 206 ms</title>
+          </rect>
+          <rect class="bar" x="301.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 207 ms</title>
+          </rect>
+          <rect class="bar" x="304.8" y="50.0" width="4.0" height="70.0">
+            <title>7 at 208 ms</title>
+          </rect>
+          <rect class="bar" x="307.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 209 ms</title>
+          </rect>
+          <rect class="bar" x="310.5" y="70.0" width="4.0" height="50.0">
+            <title>5 at 210 ms</title>
+          </rect>
+          <rect class="bar" x="313.4" y="90.0" width="4.0" height="30.0">
+            <title>3 at 211 ms</title>
+          </rect>
+          <rect class="bar" x="316.2" y="100.0" width="4.0" height="20.0">
+            <title>2 at 212 ms</title>
+          </rect>
+          <rect class="bar" x="319.0" y="90.0" width="4.0" height="30.0">
+            <title>3 at 213 ms</title>
+          </rect>
+          <rect class="bar" x="321.8" y="110.0" width="4.0" height="10.0">
+            <title>1 at 214 ms</title>
+          </rect>
+          <rect class="bar" x="324.6" y="70.0" width="4.0" height="50.0">
+            <title>5 at 215 ms</title>
+          </rect>
+          <rect class="bar" x="327.4" y="110.0" width="4.0" height="10.0">
+            <title>1 at 216 ms</title>
+          </rect>
+          <rect class="bar" x="330.1" y="70.0" width="4.0" height="50.0">
+            <title>5 at 217 ms</title>
+          </rect>
+          <rect class="bar" x="332.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 218 ms</title>
+          </rect>
+          <rect class="bar" x="335.6" y="70.0" width="4.0" height="50.0">
+            <title>5 at 219 ms</title>
+          </rect>
+          <rect class="bar" x="338.3" y="110.0" width="4.0" height="10.0">
+            <title>1 at 220 ms</title>
+          </rect>
+          <rect class="bar" x="341.0" y="20.0" width="4.0" height="100.0">
+            <title>10 at 221 ms</title>
+          </rect>
+          <rect class="bar" x="343.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 222 ms</title>
+          </rect>
+          <rect class="bar" x="346.4" y="100.0" width="4.0" height="20.0">
+            <title>2 at 223 ms</title>
+          </rect>
+          <rect class="bar" x="349.1" y="90.0" width="4.0" height="30.0">
+            <title>3 at 224 ms</title>
+          </rect>
+          <rect class="bar" x="351.7" y="80.0" width="4.0" height="40.0">
+            <title>4 at 225 ms</title>
+          </rect>
+          <rect class="bar" x="354.4" y="80.0" width="4.0" height="40.0">
+            <title>4 at 226 ms</title>
+          </rect>
+          <rect class="bar" x="357.0" y="80.0" width="4.0" height="40.0">
+            <title>4 at 228 ms</title>
+          </rect>
+          <rect class="bar" x="359.6" y="90.0" width="4.0" height="30.0">
+            <title>3 at 229 ms</title>
+          </rect>
+          <rect class="bar" x="362.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 230 ms</title>
+          </rect>
+          <rect class="bar" x="364.8" y="90.0" width="4.0" height="30.0">
+            <title>3 at 231 ms</title>
+          </rect>
+          <rect class="bar" x="367.4" y="100.0" width="4.0" height="20.0">
+            <title>2 at 232 ms</title>
+          </rect>
+          <rect class="bar" x="370.0" y="60.0" width="4.0" height="60.0">
+            <title>6 at 233 ms</title>
+          </rect>
+          <rect class="bar" x="372.6" y="100.0" width="4.0" height="20.0">
+            <title>2 at 234 ms</title>
+          </rect>
+          <rect class="bar" x="375.1" y="70.0" width="4.0" height="50.0">
+            <title>5 at 235 ms</title>
+          </rect>
+          <rect class="bar" x="377.7" y="110.0" width="4.0" height="10.0">
+            <title>1 at 236 ms</title>
+          </rect>
+          <rect class="bar" x="380.2" y="60.0" width="4.0" height="60.0">
+            <title>6 at 237 ms</title>
+          </rect>
+          <rect class="bar" x="382.7" y="70.0" width="4.0" height="50.0">
+            <title>5 at 238 ms</title>
+          </rect>
+          <rect class="bar" x="385.2" y="50.0" width="4.0" height="70.0">
+            <title>7 at 239 ms</title>
+          </rect>
+          <rect class="bar" x="387.7" y="50.0" width="4.0" height="70.0">
+            <title>7 at 240 ms</title>
+          </rect>
+          <rect class="bar" x="390.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 241 ms</title>
+          </rect>
+          <rect class="bar" x="392.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 242 ms</title>
+          </rect>
+          <rect class="bar" x="395.1" y="90.0" width="4.0" height="30.0">
+            <title>3 at 243 ms</title>
+          </rect>
+          <rect class="bar" x="397.6" y="90.0" width="4.0" height="30.0">
+            <title>3 at 244 ms</title>
+          </rect>
+          <rect class="bar" x="400.0" y="50.0" width="4.0" height="70.0">
+            <title>7 at 245 ms</title>
+          </rect>
+          <rect class="bar" x="402.4" y="110.0" width="4.0" height="10.0">
+            <title>1 at 246 ms</title>
+          </rect>
+          <rect class="bar" x="404.9" y="80.0" width="4.0" height="40.0">
+            <title>4 at 247 ms</title>
+          </rect>
+          <rect class="bar" x="407.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 249 ms</title>
+          </rect>
+          <rect class="bar" x="409.7" y="90.0" width="4.0" height="30.0">
+            <title>3 at 250 ms</title>
+          </rect>
+          <rect class="bar" x="412.1" y="110.0" width="4.0" height="10.0">
+            <title>1 at 251 ms</title>
+          </rect>
+          <rect class="bar" x="414.4" y="100.0" width="4.0" height="20.0">
+            <title>2 at 252 ms</title>
+          </rect>
+          <rect class="bar" x="416.8" y="80.0" width="4.0" height="40.0">
+            <title>4 at 253 ms</title>
+          </rect>
+          <rect class="bar" x="419.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 254 ms</title>
+          </rect>
+          <rect class="bar" x="421.5" y="80.0" width="4.0" height="40.0">
+            <title>4 at 255 ms</title>
+          </rect>
+          <rect class="bar" x="423.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 256 ms</title>
+          </rect>
+          <rect class="bar" x="426.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 257 ms</title>
+          </rect>
+          <rect class="bar" x="428.5" y="100.0" width="4.0" height="20.0">
+            <title>2 at 258 ms</title>
+          </rect>
+          <rect class="bar" x="430.8" y="90.0" width="4.0" height="30.0">
+            <title>3 at 259 ms</title>
+          </rect>
+          <rect class="bar" x="433.1" y="90.0" width="4.0" height="30.0">
+            <title>3 at 260 ms</title>
+          </rect>
+          <rect class="bar" x="435.4" y="90.0" width="4.0" height="30.0">
+            <title>3 at 261 ms</title>
+          </rect>
+          <rect class="bar" x="437.7" y="110.0" width="4.0" height="10.0">
+            <title>1 at 262 ms</title>
+          </rect>
+          <rect class="bar" x="440.0" y="80.0" width="4.0" height="40.0">
+            <title>4 at 263 ms</title>
+          </rect>
+          <rect class="bar" x="442.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 264 ms</title>
+          </rect>
+          <rect class="bar" x="444.5" y="60.0" width="4.0" height="60.0">
+            <title>6 at 265 ms</title>
+          </rect>
+          <rect class="bar" x="446.8" y="110.0" width="4.0" height="10.0">
+            <title>1 at 266 ms</title>
+          </rect>
+          <rect class="bar" x="449.0" y="70.0" width="4.0" height="50.0">
+            <title>5 at 267 ms</title>
+          </rect>
+          <rect class="bar" x="451.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 268 ms</title>
+          </rect>
+          <rect class="bar" x="455.7" y="70.0" width="4.0" height="50.0">
+            <title>5 at 271 ms</title>
+          </rect>
+          <rect class="bar" x="460.1" y="30.0" width="4.0" height="90.0">
+            <title>9 at 273 ms</title>
+          </rect>
+          <rect class="bar" x="464.4" y="40.0" width="4.0" height="80.0">
+            <title>8 at 275 ms</title>
+          </rect>
+          <rect class="bar" x="468.8" y="50.0" width="4.0" height="70.0">
+            <title>7 at 277 ms</title>
+          </rect>
+          <rect class="bar" x="473.1" y="40.0" width="4.0" height="80.0">
+            <title>8 at 279 ms</title>
+          </rect>
+          <rect class="bar" x="477.4" y="60.0" width="4.0" height="60.0">
+            <title>6 at 281 ms</title>
+          </rect>
+          <rect class="bar" x="481.6" y="30.0" width="4.0" height="90.0">
+            <title>9 at 283 ms</title>
+          </rect>
+          <rect class="bar" x="485.8" y="60.0" width="4.0" height="60.0">
+            <title>6 at 285 ms</title>
+          </rect>
+          <rect class="bar" x="490.0" y="90.0" width="4.0" height="30.0">
+            <title>3 at 287 ms</title>
+          </rect>
+          <rect class="bar" x="494.1" y="60.0" width="4.0" height="60.0">
+            <title>6 at 289 ms</title>
+          </rect>
+          <rect class="bar" x="498.2" y="80.0" width="4.0" height="40.0">
+            <title>4 at 292 ms</title>
+          </rect>
+          <rect class="bar" x="502.3" y="80.0" width="4.0" height="40.0">
+            <title>4 at 294 ms</title>
+          </rect>
+          <rect class="bar" x="506.4" y="30.0" width="4.0" height="90.0">
+            <title>9 at 296 ms</title>
+          </rect>
+          <rect class="bar" x="510.4" y="40.0" width="4.0" height="80.0">
+            <title>8 at 298 ms</title>
+          </rect>
+          <rect class="bar" x="514.4" y="50.0" width="4.0" height="70.0">
+            <title>7 at 300 ms</title>
+          </rect>
+          <rect class="bar" x="518.4" y="20.0" width="4.0" height="100.0">
+            <title>10 at 302 ms</title>
+          </rect>
+          <rect class="bar" x="522.3" y="20.0" width="4.0" height="100.0">
+            <title>10 at 304 ms</title>
+          </rect>
+          <rect class="bar" x="526.2" y="50.0" width="4.0" height="70.0">
+            <title>7 at 306 ms</title>
+          </rect>
+          <rect class="bar" x="530.1" y="20.0" width="4.0" height="100.0">
+            <title>10 at 308 ms</title>
+          </rect>
+          <rect class="bar" x="534.0" y="30.0" width="4.0" height="90.0">
+            <title>9 at 310 ms</title>
+          </rect>
+          <rect class="bar" x="537.8" y="20.0" width="4.0" height="100.0">
+            <title>10 at 312 ms</title>
+          </rect>
+          <rect class="bar" x="541.6" y="60.0" width="4.0" height="60.0">
+            <title>6 at 315 ms</title>
+          </rect>
+          <rect class="bar" x="545.4" y="50.0" width="4.0" height="70.0">
+            <title>7 at 317 ms</title>
+          </rect>
+          <rect class="bar" x="549.2" y="70.0" width="4.0" height="50.0">
+            <title>5 at 319 ms</title>
+          </rect>
+          <rect class="bar" x="552.9" y="70.0" width="4.0" height="50.0">
+            <title>5 at 321 ms</title>
+          </rect>
+          <rect class="bar" x="556.7" y="20.0" width="4.0" height="100.0">
+            <title>10 at 323 ms</title>
+          </rect>
+          <rect class="bar" x="560.3" y="40.0" width="4.0" height="80.0">
+            <title>8 at 325 ms</title>
+          </rect>
+          <rect class="bar" x="564.0" y="70.0" width="4.0" height="50.0">
+            <title>5 at 327 ms</title>
+          </rect>
+          <rect class="bar" x="567.6" y="80.0" width="4.0" height="40.0">
+            <title>4 at 329 ms</title>
+          </rect>
+          <rect class="bar" x="571.3" y="50.0" width="4.0" height="70.0">
+            <title>7 at 331 ms</title>
+          </rect>
+          <rect class="bar" x="574.9" y="40.0" width="4.0" height="80.0">
+            <title>8 at 333 ms</title>
+          </rect>
+          <rect class="bar" x="578.4" y="80.0" width="4.0" height="40.0">
+            <title>4 at 336 ms</title>
+          </rect>
+          <rect class="bar" x="582.0" y="70.0" width="4.0" height="50.0">
+            <title>5 at 338 ms</title>
+          </rect>
+          <rect class="bar" x="585.5" y="50.0" width="4.0" height="70.0">
+            <title>7 at 340 ms</title>
+          </rect>
+          <rect class="bar" x="589.0" y="60.0" width="4.0" height="60.0">
+            <title>6 at 342 ms</title>
+          </rect>
+          <rect class="bar" x="592.5" y="20.0" width="4.0" height="100.0">
+            <title>10 at 344 ms</title>
+          </rect>
+          <rect class="bar" x="596.0" y="30.0" width="4.0" height="90.0">
+            <title>9 at 346 ms</title>
+          </rect>
+          <rect class="bar" x="599.4" y="60.0" width="4.0" height="60.0">
+            <title>6 at 348 ms</title>
+          </rect>
+          <rect class="bar" x="602.8" y="30.0" width="4.0" height="90.0">
+            <title>9 at 350 ms</title>
+          </rect>
+          <rect class="bar" x="606.3" y="10.0" width="4.0" height="110.0">
+            <title>11 at 352 ms</title>
+          </rect>
+          <rect class="bar" x="609.6" y="70.0" width="4.0" height="50.0">
+            <title>5 at 354 ms</title>
+          </rect>
+          <rect class="bar" x="613.0" y="20.0" width="4.0" height="100.0">
+            <title>10 at 357 ms</title>
+          </rect>
+          <rect class="bar" x="616.3" y="100.0" width="4.0" height="20.0">
+            <title>2 at 359 ms</title>
+          </rect>
+          <rect class="bar" x="619.7" y="0.0" width="4.0" height="120.0">
+            <title>12 at 361 ms</title>
+          </rect>
+          <rect class="bar" x="623.0" y="30.0" width="4.0" height="90.0">
+            <title>9 at 363 ms</title>
+          </rect>
+          <rect class="bar" x="626.3" y="50.0" width="4.0" height="70.0">
+            <title>7 at 365 ms</title>
+          </rect>
+          <rect class="bar" x="629.5" y="50.0" width="4.0" height="70.0">
+            <title>7 at 367 ms</title>
+          </rect>
+          <rect class="bar" x="632.8" y="100.0" width="4.0" height="20.0">
+            <title>2 at 369 ms</title>
+          </rect>
+          <rect class="bar" x="636.0" y="20.0" width="4.0" height="100.0">
+            <title>10 at 371 ms</title>
+          </rect>
+          <line class="mark" x1="385.2" y1="0" x2="385.2" y2="120.0"></line>
+          <text class="mark-label" x="388.2" y="12">p50</text>
+          <line class="mark" x1="636.0" y1="0" x2="636.0" y2="120.0"></line>
+          <text class="mark-label" x="639.0" y="12">p99</text>
+          <line class="tick" x1="0.0" y1="120.0" x2="0.0" y2="124.0"></line>
+          <text class="tick-label" x="0.0" y="140">100 ms</text>
+        </svg>
+      </figure>
+    <p class="note">Count is requests and reached is the users that got here, counted once each: a loop multiplies the first and a condition divides it, and a step that made few requests because few users reached it is a different finding from one they each made few at. Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+  </section>
+  <section class="timeline" aria-label="Over time">
+    <h2>Over time</h2>
+    <figure class="chart over-time">
+      <figcaption>requests a second — peak 91</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="requests a second">
+        <polyline class="series count" points="0.0,8.6 20.6,8.6 20.6,9.1 41.3,9.1 41.3,8.6 61.9,8.6 61.9,8.0 82.6,8.0 82.6,8.6 103.2,8.6 103.2,9.1 123.9,9.1 123.9,8.6 144.5,8.6 144.5,8.6 165.2,8.6 165.2,8.0 185.8,8.0 185.8,9.1 206.5,9.1 206.5,8.6 227.1,8.6 227.1,8.0 247.7,8.0 247.7,8.6 268.4,8.6 268.4,9.1 289.0,9.1 289.0,8.6 309.7,8.6 309.7,8.6 330.3,8.6 330.3,8.6 351.0,8.6 351.0,8.0 371.6,8.0 371.6,9.1 392.3,9.1 392.3,8.0 412.9,8.0 412.9,8.6 433.5,8.6 433.5,8.6 454.2,8.6 454.2,8.6 474.8,8.6 474.8,9.1 495.5,9.1 495.5,8.6 516.1,8.6 516.1,8.6 536.8,8.6 536.8,8.0 557.4,8.0 557.4,8.6 578.1,8.6 578.1,9.1 598.7,9.1 598.7,8.6 619.4,8.6 619.4,59.4 640.0,59.4"></polyline>
+        <text class="tick-label series-start" x="0" y="78">0</text>
+        <text class="tick-label series-end" x="640.0" y="78">31.0 s</text>
+      </svg>
+    </figure>
+    <figure class="chart over-time">
+      <figcaption>service time — <span class="key p99">p99</span> peaks at 386 ms, <span class="key p50">p50</span> at 268 ms</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="service time each second">
+        <polyline class="series p50" points="0.0,56.9 20.6,56.9 20.6,56.6 41.3,56.6 41.3,56.8 61.9,56.8 61.9,56.8 82.6,56.8 82.6,56.9 103.2,56.9 103.2,56.6 123.9,56.6 123.9,57.0 144.5,57.0 144.5,56.6 165.2,56.6 165.2,56.6 185.8,56.6 185.8,56.9 206.5,56.9 206.5,57.0 227.1,57.0 227.1,56.6 247.7,56.6 247.7,56.9 268.4,56.9 268.4,56.8 289.0,56.8 289.0,56.9 309.7,56.9 309.7,56.9 330.3,56.9 330.3,56.8 351.0,56.8 351.0,56.8 371.6,56.8 371.6,57.0 392.3,57.0 392.3,57.2 412.9,57.2 412.9,56.9 433.5,56.9 433.5,57.0 454.2,57.0 454.2,57.0 474.8,57.0 474.8,56.9 495.5,56.9 495.5,56.9 516.1,56.9 516.1,57.0 536.8,57.0 536.8,57.2 557.4,57.2 557.4,56.9 578.1,56.9 578.1,56.9 598.7,56.9 598.7,57.0 619.4,57.0 619.4,23.8 640.0,23.8"></polyline>
+        <polyline class="series p99" points="0.0,10.3 20.6,10.3 20.6,8.0 41.3,8.0 41.3,10.3 61.9,10.3 61.9,8.0 82.6,8.0 82.6,10.3 103.2,10.3 103.2,10.3 123.9,10.3 123.9,10.3 144.5,10.3 144.5,8.0 165.2,8.0 165.2,10.3 185.8,10.3 185.8,8.0 206.5,8.0 206.5,10.3 227.1,10.3 227.1,8.0 247.7,8.0 247.7,10.3 268.4,10.3 268.4,10.3 289.0,10.3 289.0,10.3 309.7,10.3 309.7,8.0 330.3,8.0 330.3,10.3 351.0,10.3 351.0,8.0 371.6,8.0 371.6,14.8 392.3,14.8 392.3,10.3 412.9,10.3 412.9,10.3 433.5,10.3 433.5,8.0 454.2,8.0 454.2,10.3 474.8,10.3 474.8,10.3 495.5,10.3 495.5,10.3 516.1,10.3 516.1,10.3 536.8,10.3 536.8,10.3 557.4,10.3 557.4,8.0 578.1,8.0 578.1,12.5 598.7,12.5 598.7,8.0 619.4,8.0 619.4,23.8 640.0,23.8"></polyline>
+        <text class="tick-label series-start" x="0" y="78">0</text>
+        <text class="tick-label series-end" x="640.0" y="78">31.0 s</text>
+      </svg>
+    </figure>
+    <figure class="chart over-time">
+      <figcaption>failures a second — peak 1</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="failures a second">
+        <polyline class="series failed" points="0.0,60.0 20.6,60.0 20.6,60.0 41.3,60.0 41.3,8.0 61.9,8.0 61.9,8.0 82.6,8.0 82.6,60.0 103.2,60.0 103.2,60.0 123.9,60.0 123.9,8.0 144.5,8.0 144.5,8.0 165.2,8.0 165.2,60.0 185.8,60.0 185.8,60.0 206.5,60.0 206.5,60.0 227.1,60.0 227.1,60.0 247.7,60.0 247.7,60.0 268.4,60.0 268.4,60.0 289.0,60.0 289.0,60.0 309.7,60.0 309.7,60.0 330.3,60.0 330.3,60.0 351.0,60.0 351.0,60.0 371.6,60.0 371.6,60.0 392.3,60.0 392.3,60.0 412.9,60.0 412.9,60.0 433.5,60.0 433.5,60.0 454.2,60.0 454.2,8.0 474.8,8.0 474.8,60.0 495.5,60.0 495.5,8.0 516.1,8.0 516.1,60.0 536.8,60.0 536.8,60.0 557.4,60.0 557.4,60.0 578.1,60.0 578.1,60.0 598.7,60.0 598.7,60.0 619.4,60.0 619.4,60.0 640.0,60.0"></polyline>
+        <text class="tick-label series-start" x="0" y="78">0</text>
+        <text class="tick-label series-end" x="640.0" y="78">31.0 s</text>
+      </svg>
+    </figure>
+    <p class="note">One point a second, counted from the run's start, and a second nothing ran in is drawn as the zero it was. These percentiles come from a coarse histogram — good to 6.25%, against 0.78% for the table above — because a full one a second per step is tens of megabytes of counters. Read a shape here and a number there.</p>
+  </section>
+  <section class="tail" aria-label="The tail">
+    <h2>p99.9</h2>
+    <ul class="tail-list">
+      <li><span class="tail-step">GET /cart</span><span class="tail-value none">Not measured — only 900 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">GET /products</span><span class="tail-value none">Not measured — only 900 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">POST /pay</span><span class="tail-value none">Not measured — only 900 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+    </ul>
+    <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
+  </section>
+</main>
+<script type="application/json" id="kestrel-run">
+{
+  "startedAt": "2026-09-01T06:43:14.238194725Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "count": 2700,
+  "ok": 2694,
+  "failed": 6,
+  "behind": {
+    "count": 2700,
+    "p50": 236543,
+    "p95": 434175,
+    "p99": 897023,
+    "p999": 27787263,
+    "max": 27787263
+  },
+  "hiccups": {
+    "count": 30312,
+    "p50": 113151,
+    "p95": 210943,
+    "p99": 448511,
+    "p999": 22937599,
+    "max": 40370175
+  },
+  "arrivals": {
+    "count": 900,
+    "mean": 33333333,
+    "cov": 1.4134250445589755E-8
+  },
+  "steps": [
+    {
+      "name": "GET /cart",
+      "count": 900,
+      "reached": 900,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 900,
+        "p50": 23068671,
+        "p95": 30146559,
+        "p99": 30670847,
+        "p999": null,
+        "max": 54263807
+      },
+      "responseTime": {
+        "count": 900,
+        "p50": 23330815,
+        "p95": 30408703,
+        "p99": 31195135,
+        "p999": null,
+        "max": 54525951
+      },
+      "ok": {
+        "count": 900,
+        "serviceTime": {
+          "count": 900,
+          "p50": 23068671,
+          "p95": 30146559,
+          "p99": 30670847,
+          "p999": null,
+          "max": 54263807
+        },
+        "responseTime": {
+          "count": 900,
+          "p50": 23330815,
+          "p95": 30408703,
+          "p99": 31195135,
+          "p999": null,
+          "max": 54525951
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    },
+    {
+      "name": "GET /products",
+      "count": 900,
+      "reached": 900,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 900,
+        "p50": 8847359,
+        "p95": 11599871,
+        "p99": 12124159,
+        "p999": null,
+        "max": 16383999
+      },
+      "responseTime": {
+        "count": 900,
+        "p50": 9175039,
+        "p95": 11927551,
+        "p99": 13107199,
+        "p999": null,
+        "max": 36175871
+      },
+      "ok": {
+        "count": 900,
+        "serviceTime": {
+          "count": 900,
+          "p50": 8847359,
+          "p95": 11599871,
+          "p99": 12124159,
+          "p999": null,
+          "max": 16383999
+        },
+        "responseTime": {
+          "count": 900,
+          "p50": 9175039,
+          "p95": 11927551,
+          "p99": 13107199,
+          "p999": null,
+          "max": 36175871
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    },
+    {
+      "name": "POST /pay",
+      "count": 900,
+      "reached": 900,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 900,
+        "p50": 239075327,
+        "p95": 360710143,
+        "p99": 371195903,
+        "p999": null,
+        "max": 371195903
+      },
+      "responseTime": {
+        "count": 900,
+        "p50": 239075327,
+        "p95": 360710143,
+        "p99": 371195903,
+        "p999": null,
+        "max": 381681663
+      },
+      "ok": {
+        "count": 894,
+        "serviceTime": {
+          "count": 894,
+          "p50": 239075327,
+          "p95": 360710143,
+          "p99": 371195903,
+          "p999": null,
+          "max": 371195903
+        },
+        "responseTime": {
+          "count": 894,
+          "p50": 239075327,
+          "p95": 360710143,
+          "p99": 371195903,
+          "p999": null,
+          "max": 381681663
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 6,
+        "serviceTime": {
+          "count": 6,
+          "p50": 221249535,
+          "p95": 322961407,
+          "p99": 322961407,
+          "p999": null,
+          "max": 322961407
+        },
+        "responseTime": {
+          "count": 6,
+          "p50": 221249535,
+          "p95": 322961407,
+          "p99": 322961407,
+          "p999": null,
+          "max": 322961407
+        },
+        "reasons": [
+          {
+            "reason": "status 503",
+            "count": 6
+          }
+        ]
+      }
+    }
+  ],
+  "timelinePrecision": 0.0625,
+  "steadyState": {
+    "tolerance": 0.125,
+    "settledAfter": 0,
+    "why": null
+  },
+  "timeline": [
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 25165823,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 89,
+      "failed": 1,
+      "p50": 24117247,
+      "p99": 369098751
+    },
+    {
+      "count": 91,
+      "ok": 90,
+      "failed": 1,
+      "p50": 24117247,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 25165823,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 89,
+      "failed": 1,
+      "p50": 22020095,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 89,
+      "failed": 1,
+      "p50": 25165823,
+      "p99": 385875967
+    },
+    {
+      "count": 91,
+      "ok": 91,
+      "failed": 0,
+      "p50": 25165823,
+      "p99": 369098751
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 22020095,
+      "p99": 369098751
+    },
+    {
+      "count": 91,
+      "ok": 91,
+      "failed": 0,
+      "p50": 25165823,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 24117247,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 24117247,
+      "p99": 369098751
+    },
+    {
+      "count": 91,
+      "ok": 91,
+      "failed": 0,
+      "p50": 24117247,
+      "p99": 385875967
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 22020095,
+      "p99": 335544319
+    },
+    {
+      "count": 91,
+      "ok": 91,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 22020095,
+      "p99": 385875967
+    },
+    {
+      "count": 90,
+      "ok": 89,
+      "failed": 1,
+      "p50": 22020095,
+      "p99": 369098751
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 89,
+      "failed": 1,
+      "p50": 23068671,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 22020095,
+      "p99": 369098751
+    },
+    {
+      "count": 91,
+      "ok": 91,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 369098751
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 385875967
+    },
+    {
+      "count": 89,
+      "ok": 89,
+      "failed": 0,
+      "p50": 23068671,
+      "p99": 352321535
+    },
+    {
+      "count": 90,
+      "ok": 90,
+      "failed": 0,
+      "p50": 22020095,
+      "p99": 385875967
+    },
+    {
+      "count": 1,
+      "ok": 1,
+      "failed": 0,
+      "p50": 268435455,
+      "p99": 268435455
+    }
+  ]
+}
+</script>
+<script>
+(function () {
+  var toggle = document.getElementById('theme-toggle');
+  if (!toggle) return;
+  var root = document.documentElement;
+  toggle.hidden = false;
+
+  // Absent until a reader says otherwise, so an untouched report keeps
+  // following the machine's own setting rather than one this page chose.
+  var kept = null;
+  try { kept = localStorage.getItem('kestrel-theme'); } catch (ignored) { kept = null; }
+  if (kept === 'light' || kept === 'dark') root.setAttribute('data-theme', kept);
+
+  function dark() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function label() {
+    toggle.setAttribute('aria-label', dark() ? 'Switch to the light theme' : 'Switch to the dark theme');
+  }
+  label();
+
+  toggle.addEventListener('click', function () {
+    var next = dark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('kestrel-theme', next); } catch (ignored) { /* a file:// URL may refuse */ }
+    label();
+  });
+})();
+(function () {
+  var table = document.querySelector('.steps table');
+  if (!table) return;
+  var body = table.tBodies[0];
+
+  function rowsOf(step) {
+    return Array.prototype.filter.call(body.rows, function (row) {
+      return row.dataset.step === step || row.dataset.for === step;
+    });
+  }
+
+  Array.prototype.forEach.call(body.querySelectorAll('tr.reasons'), function (row) {
+    row.hidden = true;
+  });
+
+  body.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.step[aria-expanded]');
+    if (!row) return;
+    var open = row.getAttribute('aria-expanded') === 'true';
+    row.setAttribute('aria-expanded', open ? 'false' : 'true');
+    rowsOf(row.dataset.step).forEach(function (each) {
+      if (each.classList.contains('reasons')) each.hidden = open;
+    });
+  });
+
+  var toggle = document.getElementById('mode-toggle');
+  var name = document.getElementById('mode-name');
+  toggle.addEventListener('click', function () {
+    var showing = table.dataset.mode === 'response' ? 'service' : 'response';
+    table.dataset.mode = showing;
+    name.textContent = showing === 'response' ? 'response time' : 'service time';
+    toggle.textContent = showing === 'response' ? 'Show service time' : 'Show response time';
+    Array.prototype.forEach.call(table.querySelectorAll('td.time'), function (cell) {
+      cell.textContent = showing === 'response' ? cell.dataset.response : cell.dataset.service;
+    });
+  });
+
+  function keyOf(row, column, mode) {
+    var cell = row.cells[column];
+    if (cell.classList.contains('time')) {
+      return Number(mode === 'response' ? cell.dataset.responseNs : cell.dataset.serviceNs);
+    }
+    var text = cell.textContent.replace(/[^0-9.]/g, '');
+    return text === '' ? cell.textContent.toLowerCase() : Number(text);
+  }
+
+  Array.prototype.forEach.call(table.tHead.rows[0].cells, function (header, column) {
+    header.querySelector('button').addEventListener('click', function () {
+      var descending = header.getAttribute('aria-sort') !== 'descending';
+      Array.prototype.forEach.call(table.tHead.rows[0].cells, function (each) {
+        each.setAttribute('aria-sort', 'none');
+      });
+      header.setAttribute('aria-sort', descending ? 'descending' : 'ascending');
+
+      var mode = table.dataset.mode === 'response' ? 'response' : 'service';
+      var steps = Array.prototype.filter.call(body.rows, function (row) {
+        return row.classList.contains('step');
+      });
+      steps.sort(function (left, right) {
+        var a = keyOf(left, column, mode);
+        var b = keyOf(right, column, mode);
+        if (a === b) return 0;
+        return (a < b ? -1 : 1) * (descending ? -1 : 1);
+      });
+      steps.forEach(function (row) {
+        rowsOf(row.dataset.step).forEach(function (each) { body.appendChild(each); });
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

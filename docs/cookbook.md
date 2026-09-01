@@ -76,8 +76,8 @@ import io.github.matthewjones372.kestrel.http.exec
 import io.github.matthewjones372.kestrel.junit5.LoadTest
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
@@ -92,8 +92,8 @@ class CheckoutLoadTest {
 
         val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
 
-        assertTrue(result[placeOrder].responseTime.p99 < 200.milliseconds)
-        assertEquals(0L, result.failed)
+        result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
+        result.failed shouldBe 0L
     }
 }
 ```
@@ -112,7 +112,6 @@ that registered nothing it still works.
 ```kotlin
 import io.github.matthewjones372.kestrel.kotest.kestrel
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.comparables.shouldBeLessThan
 
 class CheckoutSpec : StringSpec({
 
@@ -749,7 +748,7 @@ call `observe(id)` from wherever your consumer runs.
 Assert when one number decides the test:
 
 ```kotlin
-assertTrue(result[placeOrder].responseTime.p99 < 200.milliseconds)
+result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
 ```
 
 Declare goals when several do, or when you want the report to say which one

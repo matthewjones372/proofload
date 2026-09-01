@@ -1,0 +1,93 @@
+package io.github.matthewjones372.kestrel.examples
+
+import com.sun.net.httpserver.HttpServer
+import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.engine.run
+import io.github.matthewjones372.kestrel.expecting
+import io.github.matthewjones372.kestrel.failureRate
+import io.github.matthewjones372.kestrel.fedBy
+import io.github.matthewjones372.kestrel.feed
+import io.github.matthewjones372.kestrel.goodput
+import io.github.matthewjones372.kestrel.http.exec
+import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.keptSchedule
+import io.github.matthewjones372.kestrel.p99
+import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import java.net.InetSocketAddress
+import java.nio.file.Path
+import java.util.concurrent.Executors
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
+private val shopper = sessionKey<String>("shopper")
+
+/**
+ * Not a test — a demo that writes a real report. Tagged `timing` so it runs
+ * alone and never inside `build`; the numbers on the page are a real run's.
+ */
+@Tag("timing")
+class ReportShowcase {
+
+    @Test
+    fun `a checkout run, written as a report`() {
+        val server = HttpServer.create(InetSocketAddress(0), 0)
+        server.executor = Executors.newVirtualThreadPerTaskExecutor()
+        val jitter = Random(20260901)
+
+        // A target that answers fast at first and gets slower as the run's
+        // concurrency climbs, so the timeline has something to show and the
+        // pay step's tail is a real tail rather than flat noise.
+        fun context(path: String, base: Long, spread: Long, failIn: Int) =
+            server.createContext(path) { exchange ->
+                Thread.sleep(base + jitter.nextLong(spread))
+                val failed = failIn > 0 && jitter.nextInt(failIn) == 0
+                val body = "{}".toByteArray()
+                exchange.sendResponseHeaders(if (failed) 503 else 200, body.size.toLong())
+                exchange.responseBody.use { it.write(body) }
+            }
+
+        context("/products", base = 5L, spread = 6L, failIn = 0)
+        context("/cart", base = 14L, spread = 16L, failIn = 0)
+        context("/pay", base = 120L, spread = 250L, failIn = 70)
+        server.start()
+
+        val api = http.baseUrl("http://localhost:${server.address.port}")
+        val products = step("GET /products")
+        val cart = step("GET /cart")
+        val pay = step("POST /pay")
+
+        val checkout = scenario("checkout") {
+            exec(products, api.get("/products/{shopper}"))
+            exec(cart, api.get("/cart"))
+            exec(pay, api.post("/pay").body("""{"total":"1 anvil"}""").expecting(200))
+        }
+
+        // Thrown away. The first run of a JVM pays for class loading, JIT and
+        // opening connections, and those land on the earliest departures as
+        // lateness the target never caused. The measured run below is warm.
+        checkout.at(30.perSecond, over = 8.seconds)
+            .fedBy(feed(shopper) { user -> "shopper-$user" })
+            .run()
+
+        val result = checkout.at(30.perSecond, over = 30.seconds)
+            .fedBy(feed(shopper) { user -> "shopper-$user" })
+            .expecting(
+                p99(pay) under 300.milliseconds,
+                goodput(pay, under = 300.milliseconds) atLeast 99.percent,
+                failureRate under 1.percent,
+                keptSchedule,
+            )
+            .run()
+
+        val out = Path.of(System.getProperty("kestrel.showcase.out", "build/reports/showcase.html"))
+        result.writeHtmlReport(out)
+    }
+}

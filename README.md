@@ -114,20 +114,6 @@ on another channel later — the latency you measure is the real round trip, not
 </picture>
 </div>
 
-## Coming from Gatling?
-
-Gatling is mature and battle-tested, and Kestrel is not trying to replace it. But if you
-write Kotlin, the difference is on line one:
-
-| | Gatling, from Kotlin | Kestrel |
-|---|---|---|
-| A captured value | a string key, typed where it is read | `sessionKey<String>`, typed once |
-| A step's name | a string, written again at each assertion | a handle — rename it and it will not compile |
-| A path variable | `#{orderId}`, resolved mid-run | filled from the typed session |
-| A simulation | a class you extend | a value you can print and inspect before it runs |
-| The result | a report directory to parse | a value your test reads a number off |
-| Did the generator keep up? | read the docs and hope | a verdict on every run |
-
 ## Get started
 
 ```kotlin

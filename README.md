@@ -16,14 +16,16 @@ was the slow one.
 </div>
 
 <div align="center">
+<a href="docs/assets/report-full-light.png">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/report-verdict-dark.png">
   <img src="docs/assets/report-verdict-light.png" width="820" alt="A Kestrel run report: 2 of 4 goals met, with each goal's measurement beside it.">
 </picture>
+</a>
 
 <sub>A real run. `POST /pay` blew its 300 ms budget — and the green
 <b>“the generator keeps its schedule”</b> is what proves that’s the target’s
-fault and not the tool’s. <a href="docs/assets/example-report.html">Open the full report →</a></sub>
+fault and not the tool’s. <a href="docs/assets/report-full-light.png">See the whole page →</a></sub>
 </div>
 
 > [!NOTE]
@@ -116,8 +118,12 @@ result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"))
 ```
 
 One self-contained file: the data, the stylesheet and the charts inline, so it
-opens from a `file://` URL and uploads as a CI artifact unchanged. Light and
-dark, sortable, and honest about its own precision.
+opens from a `file://` URL and uploads as a CI artifact unchanged — light and
+dark, sortable, honest about its own precision. The images above are that page,
+straight from a run; the actual file lives at
+[docs/assets/example-report.html](docs/assets/example-report.html) to open after
+a clone, and [docs/cookbook.md](docs/cookbook.md) shows how to publish one to
+GitHub Pages from CI.
 
 ## Going further
 

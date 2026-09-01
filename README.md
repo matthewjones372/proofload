@@ -75,6 +75,15 @@ Everything is typed and named once: capture into `orderId` and it comes back a
 `String`; rename `placeOrder` and the code stops compiling instead of silently
 checking a step that no longer exists.
 
+## Point it at anything
+
+- **HTTP** and **WebSockets**, in the box.
+- **[Pelican](https://github.com/matthewjones372/pelican)** typed endpoints, driven as steps.
+- **Anything you already have a Kotlin client for** — gRPC, a database, a queue — is a
+  plain `exec { }` step, timed exactly like the rest.
+- **Systems that answer somewhere else.** Publish now and match the reply that lands on
+  another channel later, so the latency you measure is the real round trip, not the ack.
+
 ## What you get
 
 - **A verdict you can believe.** Every run tells you whether the generator kept
@@ -96,6 +105,20 @@ checking a step that no longer exists.
   <img src="docs/assets/report-distribution-light.png" width="820" alt="A latency distribution: histogram bars with p50 and p99 markers.">
 </picture>
 </div>
+
+## Coming from Gatling?
+
+Gatling is mature and battle-tested, and Kestrel is not trying to replace it. But if you
+write Kotlin, the difference is on line one:
+
+| | Gatling, from Kotlin | Kestrel |
+|---|---|---|
+| A captured value | a string key, typed where it is read | `sessionKey<String>`, typed once |
+| A step's name | a string, written again at each assertion | a handle — rename it and it will not compile |
+| A path variable | `#{orderId}`, resolved mid-run | filled from the typed session |
+| A simulation | a class you extend | a value you can print and inspect before it runs |
+| The result | a report directory to parse | a value your test reads a number off |
+| Did the generator keep up? | read the docs and hope | a verdict on every run |
 
 ## Get started
 

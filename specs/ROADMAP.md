@@ -43,36 +43,63 @@ built. Each row links the spec that argued for it.
 | [0038](0038-better-worse-or-cannot-tell.md) | `Difference`: a bootstrap interval, and a verdict that can say it cannot tell |
 | [0043](0043-void-is-not-the-same-question-as-behind.md) | a rung judged on the schedule it kept, not on the target's slowness |
 | [0039](0039-what-this-machine-can-resolve.md) | hiccups, the floor, and a comparison that consults it |
+| [0022](0022-a-token-that-stays-fresh.md) | `refreshing`, a credential fetched off the measured path |
+| [0023](0023-a-number-you-can-follow.md) | `traced()`: a `traceparent` and a synthetic-traffic `baggage` entry on every request |
+| [0024](0024-think-time-and-closed-model.md) | `pause`, a step that records nothing and is not latency |
+| [0026](0026-checks-and-retries.md) | `checking`, a body check that fails the step under its own name |
+| [0027](0027-the-docs-a-newcomer-needs.md) | `docs/modules.md` with a test behind every row, and the cookbook |
+| [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | a booking window, so a run books departures a window at a time |
+| [0029](0029-cutting-0-1-0.md) | `publishToMavenLocal` plus a smoke project that resolves the published coordinates, and the changelog |
+| [0030](0030-a-baseline-in-ci.md) | `calibrate()`, measured once per JVM, and the CI recipe |
+| [0048](0048-a-floor-measured-where-the-claim-is.md) | the absolute floor, read at the magnitude of the claim |
+| [0049](0049-response-time-second-by-second.md) | response time on every `Second`, so the steady segment narrows both clocks |
+| [0050](0050-one-run-at-a-time.md) | one run at a time — in the JVM, and across processes with a file lock that degrades rather than fails |
+| [0051](0051-an-engine-core-declares.md) | `Engine` in core, `VirtualThreads` as one of them, `RunsOn` / `kestrel(engine)` to name another |
+| [0052](0052-more-than-one-scenario.md) | a mix of arms on one merged schedule, named per row on the page |
+| [0053](0053-control-flow-in-a-scenario.md) | `repeat`, `during`, `doIf`, and `reached` beside `count` |
+| [0054](0054-a-feeder-that-reads-a-file.md) | `csv(path)` and `feeding(keys)`, a column per key, failing before the run |
+| [0055](0055-a-session-that-survives-a-redirect.md) | a per-user cookie jar, and `following(max)` walked in the step |
+| [0056](0056-a-ceiling-measured-over-a-socket.md) | the HTTP ceiling measured over a loopback socket, on the page as a lower bound |
+| [0057](0057-a-run-you-can-watch.md) | `Progress`: a line every five seconds, silent under a test framework, a countdown and a bound |
+| [0058](0058-what-was-actually-sent.md) | `trace`, one user walked with what each step did printed |
+| [0059](0059-an-answer-that-streams.md) | `kestrel-websocket`: `open`, `send`, `awaiting`, `close`, a connection per user |
+| [0062](0062-a-spread-measured-on-the-thing-compared.md) | `RegressionTest` judged over populations, and a page that says what a single-run interval does not bound |
+| [0063](0063-a-reason-with-a-type.md) | `Reason`: a failure is a value, and the module that made the request names it |
+| [0064](0064-how-long-this-will-take.md) | a run says its schedule and counts down; a search says its bound and narrows it |
 
 ## Drafted, not built
 
-In the order the architect would take them. The eight specs numbered 0052 and
-above were drafted in one pass and their interleaving here is a proposal, not a
-decision.
+In the order the architect would take them. The specs numbered 0065 and above
+were drafted in one pass from an outside review of what a serious load-testing
+tool still lacks here; their interleaving is a proposal, not a decision.
 
 | Spec | Why it is next |
 |---|---|
-| [0056](0056-a-ceiling-measured-over-a-socket.md) | the published ceiling excludes the socket every user sends through |
-| [0058](0058-what-was-actually-sent.md) | a wrong scenario says `status 404` and nothing else |
-| [0057](0057-a-run-you-can-watch.md) | a ten-minute run prints nothing, so people kill it |
-| [0022](0022-a-token-that-stays-fresh.md) | a soak longer than a token's life cannot authenticate |
-| [0030](0030-a-baseline-in-ci.md) | the plan and the machine landed; the probe and the CI recipe have not |
-| [0024](0024-think-time-and-closed-model.md) | `pause`, and the closed model with its caveat stated |
-| [0053](0053-control-flow-in-a-scenario.md) | every user does every step once, so a cart holds one item |
-| [0026](0026-checks-and-retries.md) | a 200 with an error page in it is counted as a success |
-| [0055](0055-a-session-that-survives-a-redirect.md) | a target with a login form cannot be tested at all |
-| [0052](0052-more-than-one-scenario.md) | a run is one scenario, so a traffic mix cannot be expressed |
-| [0054](0054-a-feeder-that-reads-a-file.md) | a file of real ids is a page of setup in every project |
-| [0027](0027-the-docs-a-newcomer-needs.md) | `AGENTS.md` points at a `docs/modules.md` that does not exist |
-| [0023](0023-a-number-you-can-follow.md) | exemplars, so a p99 leads somewhere |
-| [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | the whole run is booked before the first request |
-| [0059](0059-an-answer-that-streams.md) | a price feed or a notification channel cannot be loaded |
-| [0029](0029-cutting-0-1-0.md) | a publishing pipeline that has never run does not work |
+| [0065](0065-the-injectors-own-limits.md) | the 10,000/s sweep blamed the target for 29,568 failures that were almost certainly the injector's own ports |
+| [0066](0066-a-warm-up-the-runner-does.md) | a cold JVM flipped `keptSchedule` from met to missed; the throwaway run is hand-written five times |
+| [0076](0076-a-run-that-fell-behind-is-still-a-measurement.md) | "behind schedule" is a diagnosis with no treatment; the service times are still the target at the load that left |
+| [0075](0075-a-step-that-records-more-than-one-sample.md) | a step is one sample, so a stream of a hundred messages is one number |
+| [0067](0067-think-time-that-is-not-a-constant.md) | a constant pause makes every user click again at the same instant |
+| [0068](0068-littles-law-on-every-run.md) | L = λW is the cheapest check there is, and the run holds all three numbers |
+| [0069](0069-a-transport-the-http-module-can-swap.md) | 2,500 a second on four cores is the JDK client's ceiling, not the tool's |
+| [0071](0071-grpc-steps.md) | the default JVM service protocol has no typed step |
+| [0072](0072-replaying-real-arrivals.md) | production is burstier than Poisson, and 0034 said no replay |
+| [0073](0073-exporting-what-a-run-measured.md) | a run's numbers cannot reach Grafana, an OTel backend or an hlog tool |
+| [0074](0074-trends-across-baselines.md) | a 2%-a-week creep is inside every pairwise interval until it is 30% |
+| [0070](0070-more-than-one-injector.md) | one JVM; 0004 said so, and it is the first wall a serious user hits |
+| [0060](0060-kafka-and-the-answer-on-another-topic.md) | the one asynchronous system everyone means, and a module that needs no broker to be right |
+| [0061](0061-what-the-kafka-path-costs.md) | what 0060's path costs, and what a socket proves that a mock does not |
+| [0044](0044-one-stylesheet-one-place-to-change-it.md) | a CSS change moves six page goldens |
+| [0045](0045-a-clock-the-recorder-owns.md) | `kestrel-pelican` times from construction, not from the run's start |
+| [0047](0047-a-precision-that-travels-with-the-number.md) | the report prints a precision it was handed, not one it read |
+
+Unbuilt tails of specs otherwise landed: `0022-failure`, `0023-exemplars` and
+`-report`, `0024-closed`, `0026-attempts` and `-retrying`, `0029-tag`,
+`0055`'s attempts count (blocked on 0026), `0057-counts`, `0058-exchange`,
+`0059-report`.
 
 ## Known and unwritten
 
 Real, small, and not worth a spec each until someone wants them: per-stage
-results, trends across more than one baseline, OpenAPI import for the Pelican
-module, streaming request bodies, server-sent events beside the WebSocket
-transport 0059 argues for, and a warm-up phase that is excluded from the
-numbers rather than discarded by hand.
+results, OpenAPI import for the Pelican module, streaming request bodies, and
+server-sent events beside the WebSocket transport.

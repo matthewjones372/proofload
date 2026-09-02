@@ -72,7 +72,7 @@ also why equality follows `CsvFile`: `Runs` prints a profile into its refusal an
 
 ## Stack
 
-- [ ] **`spec-0072-capture`** — `ArrivalSeries`, `arrivalsFrom` over a column
+- [x] **`spec-0072-capture`** — `ArrivalSeries`, `arrivalsFrom` over a column
       and over instants, and `count`, `span`, `cov`.
       Done when: ISO-8601 instants read back as a series whose figures are
       values before anything departs, an unordered column is sorted rather than

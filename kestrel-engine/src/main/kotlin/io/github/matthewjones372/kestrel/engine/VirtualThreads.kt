@@ -330,8 +330,9 @@ internal fun Scenario.runOneUser(
     departure: Duration,
     started: Session,
     drain: Drain?,
+    narrating: ((String, List<String>) -> Unit)? = null,
 ) {
-    UserWalk(sink, runStart, schedulingDelay, departure, drain).walk(steps, started)
+    UserWalk(sink, runStart, schedulingDelay, departure, drain, narrating).walk(steps, started)
 }
 
 /**
@@ -362,6 +363,10 @@ private class UserWalk(
     private val schedulingDelay: Duration,
     private val departure: Duration,
     private val drain: Drain?,
+    // Null for a run and a list for a trace: what a step did is collected here
+    // and handed to whoever asked, so a measuring run builds no lines and a
+    // diagnostic gets them without a route of its own.
+    private val narrating: ((String, List<String>) -> Unit)? = null,
 ) : SampleSink {
 
     // The one mutable thing a walk keeps, and one per user rather than per
@@ -438,7 +443,8 @@ private class UserWalk(
     private fun runOn(action: Action, name: String, session: Session, reached: Boolean): Session? {
         sampling = name
         samplingReached = reached
-        val scope = StepScope(session, samples = this)
+        val notes = if (narrating == null) null else mutableListOf<String>()
+        val scope = StepScope(session, samples = this, notes = notes)
         val startedAt = System.nanoTime()
         val result = action.attempt(session, scope)
         val serviceTime = (System.nanoTime() - startedAt).nanoseconds
@@ -459,6 +465,7 @@ private class UserWalk(
             )
         }
         sampling = null
+        notes?.let { narrating?.invoke(name, it) }
         return if (reason == null) result.session else null
     }
 

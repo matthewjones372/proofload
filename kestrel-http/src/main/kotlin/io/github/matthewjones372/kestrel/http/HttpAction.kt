@@ -118,7 +118,17 @@ class HttpAction internal constructor(
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {
         val url = path.fill(scope) ?: return null
+        // Only where something is listening: a run builds none of these.
+        if (scope.narrating) {
+            scope.note("$method ${origin.baseUrl}$url")
+            headers.forEach { (name, value) -> scope.note("> $name: $value") }
+            body?.let { scope.note("> $it") }
+        }
         val response = attempts(url, scope) ?: return null
+        if (scope.narrating) {
+            scope.note("< ${response.status}")
+            response.body.takeIf { it.isNotBlank() }?.let { scope.note("< $it") }
+        }
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that

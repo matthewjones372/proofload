@@ -72,6 +72,35 @@ class TraceTest {
 
         kestrel.summary() shouldBe null
     }
+
+    @Test
+    fun `a step that says what it did has those lines printed under it`() {
+        val checkout = scenario("checkout") {
+            exec("browse") {
+                note("GET https://orders.internal/products")
+                note("< 200")
+            }
+        }
+
+        val printed = printedBy { checkout.trace() }
+
+        printed shouldContainExactly listOf(
+            "kestrel: trace checkout",
+            "kestrel:   browse  ok",
+            "kestrel:           GET https://orders.internal/products",
+            "kestrel:           < 200",
+        )
+    }
+
+    @Test
+    fun `a step that says nothing prints only its line`() {
+        val checkout = scenario("checkout") { exec("browse") { } }
+
+        printedBy { checkout.trace() } shouldContainExactly listOf(
+            "kestrel: trace checkout",
+            "kestrel:   browse  ok",
+        )
+    }
 }
 
 private fun printedBy(block: () -> Unit): List<String> {

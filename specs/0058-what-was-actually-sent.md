@@ -78,19 +78,15 @@ request bodies, and an answer for what a shared report may carry.
       through the ordinary step machinery.
       Done when: a three-step scenario prints three lines in order, and a
       failing step prints the failure and stops.
-- [ ] **`spec-0058-exchange`** — the HTTP module reporting the substituted URL,
+- [x] **`spec-0058-exchange`** — the HTTP module reporting the substituted URL,
       the headers it sent, the body and the response.
       Done when: a templated path prints filled, a capture prints the value it
       took, and a failed capture prints what it was reading.
-      **Blocked, established by trying.** The trace walks with the run's own
-      walker and a printing `StepSink`, which is right — a diagnostic on a
-      route of its own can disagree with the run it explains — but a sink is
-      handed a step name and a reason, and nothing else. For the HTTP module to
-      report the URL it filled, something has to reach it: a flag is what "Why
-      this shape" above rejects, and the alternative (an observer on the
-      `StepScope`, a no-op singleton in a real run) needs the engine to build
-      the scope and hand it in, which is `spec-0075-seam`. Until that lands,
-      the trace prints the step and its outcome and nothing about the exchange.
+      Unblocked by `spec-0075-seam`, and without the flag this spec rejects:
+      whoever runs the step builds the scope, so a trace builds one that
+      collects notes and a run builds one that does not. There is no setting
+      to flip — a measuring run cannot be turned into a narrating one — and a
+      body asks `narrating` before it builds a line, so a run builds none.
 
 ## Acceptance
 

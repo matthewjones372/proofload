@@ -18,6 +18,11 @@ internal class Capture<T : Any>(
         // A capture that quietly does nothing surfaces three steps later as an
         // unfilled path; failing here names the step that actually broke.
         if (value == null) scope.fail(NothingCaptured(key.name)) else scope.set(key, value)
+        // What it took, or that it took nothing — the second is the line a
+        // reader running a trace is usually looking for.
+        if (scope.narrating) {
+            scope.note(if (value == null) "captured nothing for ${key.name}" else "captured ${key.name} = $value")
+        }
     }
 }
 

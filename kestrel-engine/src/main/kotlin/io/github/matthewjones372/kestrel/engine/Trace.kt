@@ -19,13 +19,18 @@ fun Scenario.trace(feeder: Feeder = Feeder.empty) {
     // The walk a run uses, with a sink that prints where a run's records: a
     // diagnostic taking a route of its own can disagree with the run it is
     // there to explain.
+    val width = stepNames.maxOfOrNull { it.length } ?: 0
     runOneUser(
-        printedTo(stepNames.maxOfOrNull { it.length } ?: 0),
+        printedTo(width),
         runStart = System.nanoTime(),
         schedulingDelay = Duration.ZERO,
         departure = Duration.ZERO,
         started = feeder.forUser(0),
         drain = null,
+        // What the step actually did, under the line saying that it did it.
+        // Indented past the step names so a chain of hops and captures reads
+        // as detail rather than as more steps.
+        narrating = { _, notes -> notes.forEach { println("kestrel:   ${" ".repeat(width)}  $it") } },
     )
 }
 

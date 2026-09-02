@@ -105,7 +105,11 @@ fun interface SampleSink {
  * the caller, and the accumulator is frozen into a `StepResult` the moment the
  * body returns.
  */
-class StepScope(session: Session, private val samples: SampleSink? = null) {
+class StepScope(
+    session: Session,
+    private val samples: SampleSink? = null,
+    private val notes: MutableList<String>? = null,
+) {
 
     /**
      * The session as it stands, readable for a body that needs the whole of it
@@ -175,6 +179,27 @@ class StepScope(session: Session, private val samples: SampleSink? = null) {
      */
     fun traced(id: String) {
         trace = id
+    }
+
+    /**
+     * Whether anything is listening to [note], so a body can skip building a
+     * line nobody will read.
+     *
+     * Not a flag on the run: a scope is built by whatever is running the step,
+     * so only a diagnostic that made the scope can be narrated to, and a
+     * measuring run cannot be switched into one by a setting somebody changed.
+     */
+    val narrating: Boolean get() = notes != null
+
+    /**
+     * A line about what this step actually did — the URL it filled in, the
+     * header it sent, the value it captured — for a diagnostic that is
+     * printing rather than measuring.
+     *
+     * Dropped where nothing is listening, which is every run.
+     */
+    fun note(line: String) {
+        notes?.add(line)
     }
 
     /**

@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.seeds
+import io.github.matthewjones372.kestrel.startRate
 import java.util.Locale
 import kotlin.time.Duration
 
@@ -19,8 +20,21 @@ internal fun RunResult.planLines(): List<String> {
             "${plan.asked()}. Planned ${plan.plannedUsers.grouped()} " +
             "${"user".plural(plan.plannedUsers)}, ${plan.plannedRequests.grouped()} " +
             "${"request".plural(plan.plannedRequests)}.</p>",
-        """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}</p>""",
+        """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}${plan.warmed()}</p>""",
     ) + mixLines() + plan.shapeCharts() + listOf("  </section>")
+}
+
+/**
+ * What was thrown away before the measurement, where a run declared one.
+ *
+ * Absent otherwise rather than "no warm-up": a page saying a run did not do
+ * something it never asked to do is a line every reader learns to skip.
+ */
+private fun Plan.warmed(): String {
+    val warmUp = warmUp ?: return ""
+    val rate = arms.firstNotNullOfOrNull { it.profile }?.startRate?.perSecond?.asRate()
+    val at = if (rate == null) "" else " at $rate"
+    return " Warmed for ${warmUp.over.forPlan()}$at, not counted."
 }
 
 /** Every arm's scenario: one is the run's name, and several are the mix that ran. */

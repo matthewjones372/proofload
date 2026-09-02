@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,4 +56,32 @@ class WarmUpTest {
     }
 
     private fun Int.minutes() = (this * 60).seconds
+
+    @Test
+    fun `the line a run announces itself with names the warm-up`() {
+        val warmed = checkout.at(45.perSecond, over = 2.minutes()).warmingUp(5.seconds).plan()
+
+        val printed = printed { Progress.lines().starting(warmed) }
+
+        printed shouldContain "after warming for 5s"
+    }
+
+    @Test
+    fun `a run that warms nothing announces nothing about warming`() {
+        val printed = printed { Progress.lines().starting(checkout.at(45.perSecond, over = 2.minutes()).plan()) }
+
+        printed shouldNotContain "warming"
+    }
+
+    private fun printed(block: () -> Unit): String {
+        val out = java.io.ByteArrayOutputStream()
+        val before = System.out
+        System.setOut(java.io.PrintStream(out))
+        try {
+            block()
+        } finally {
+            System.setOut(before)
+        }
+        return out.toString()
+    }
 }

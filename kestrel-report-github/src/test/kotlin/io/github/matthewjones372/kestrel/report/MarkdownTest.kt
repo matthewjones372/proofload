@@ -18,6 +18,7 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.perSecond
@@ -426,6 +427,21 @@ class MarkdownTest {
     )
 
     private val nothing = listOf(Duration.ZERO)
+
+    @Test
+    fun `the summary says what a warmed run threw away before measuring`() {
+        val result = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+            .let { it.copy(plan = it.plan.copy(warmUp = WarmUp(5.seconds))) }
+
+        result.markdown() shouldContain "Warmed for 5.00s at 200/s, not counted."
+    }
+
+    @Test
+    fun `a summary of a run that warmed nothing says nothing about warming`() {
+        val result = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+
+        result.markdown() shouldNotContain "Warmed"
+    }
 
     private fun ran(profile: InjectionProfile, arrivals: Arrivals) = RunResult(
         startedAt = startedAt,

@@ -11,6 +11,7 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.seeds
+import io.github.matthewjones372.kestrel.startRate
 import io.github.matthewjones372.kestrel.unanswered
 import java.util.Locale
 import kotlin.math.floor
@@ -125,6 +126,10 @@ private fun Floor.line(): String =
 
 private fun Double.asPercent(): String = String.format(Locale.ROOT, "%.2f%%", this * PERCENT)
 
+/** A rate as a reader writes it: 45 rather than 45.000000. */
+private fun trimmed(rate: Double): String =
+    String.format(Locale.ROOT, "%,.6g", rate).trimEnd('0').trimEnd('.')
+
 /**
  * Under the table rather than over it, because it is what the tail above is
  * measured against. Absent when nothing watched: a result assembled from
@@ -149,9 +154,22 @@ private fun RunResult.arrivalLine(): String? {
             "in production."
         else "Arrivals were drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}."
 
-    if (arrivals.count < 2L) return asked
+    val warmed = plan.warmed()
+    if (arrivals.count < 2L) return asked + warmed
     return "$asked Measured ${arrivals.mean.report()} between departures, coefficient of variation " +
-        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}."
+        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}.$warmed"
+}
+
+/**
+ * What a run threw away before measuring, where it declared one. Empty
+ * otherwise: a summary that says a run did not warm up is noise on every run
+ * that never asked to.
+ */
+private fun Plan.warmed(): String {
+    val warmUp = warmUp ?: return ""
+    val rate = arms.firstNotNullOfOrNull { it.profile }?.startRate?.perSecond
+    val at = if (rate == null) "" else " at ${trimmed(rate)}/s"
+    return " Warmed for ${warmUp.over.report()}$at, not counted."
 }
 
 /**

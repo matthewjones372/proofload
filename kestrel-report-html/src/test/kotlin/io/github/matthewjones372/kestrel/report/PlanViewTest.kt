@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.rampRate
@@ -102,5 +103,17 @@ class PlanViewTest {
 
         page shouldContain "Arrivals were evenly spaced"
         page shouldNotContain "Measured"
+    }
+
+    @Test
+    fun `a warmed run says how long it warmed, at what rate, and that none of it counted`() {
+        val page = pageFor(held.copy(warmUp = WarmUp(5.seconds)))
+
+        page shouldContain "Warmed for 5.00 s at 120/s, not counted."
+    }
+
+    @Test
+    fun `a run that warmed nothing says nothing about warming`() {
+        pageFor(held) shouldNotContain "Warmed"
     }
 }

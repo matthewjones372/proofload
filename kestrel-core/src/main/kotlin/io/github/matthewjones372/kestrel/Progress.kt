@@ -108,9 +108,13 @@ private class Lines(private val every: Duration) : Progress {
 
     override fun starting(plan: Plan) {
         if (plan.profile == null) return
+        // The warm-up is named where the run is announced rather than ticked
+        // through: a reader watching a run start otherwise sees nothing for as
+        // long as it warms and assumes the tool has hung.
+        val warming = plan.warmUp?.let { " (after warming for ${it.over})" }.orEmpty()
         println(
             "kestrel: ${plan.scenario} — ${plan.plannedUsers.grouped()} users over ${plan.plannedWindow}, " +
-                "${plan.steps.size} ${if (plan.steps.size == 1) "step" else "steps"} each",
+                "${plan.steps.size} ${if (plan.steps.size == 1) "step" else "steps"} each$warming",
         )
     }
 

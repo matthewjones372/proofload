@@ -37,6 +37,12 @@ data class Offered(val asked: Rate, val left: Rate, val over: Duration) {
  */
 val RunResult.offered: Offered?
     get() {
+        // A closed run asked for no load: it asked for a population, and what
+        // left was whatever the target allowed. `asked` would otherwise be a
+        // window divided by a user count — a rate nobody named — sitting
+        // beside a real measured one as though the two were comparable.
+        if (plan.closed) return null
+
         val window = plan.plannedWindow
         val took = timeline.size.seconds
         if (window <= Duration.ZERO || took <= Duration.ZERO) return null

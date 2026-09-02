@@ -10,14 +10,28 @@ import kotlin.time.Duration.Companion.nanoseconds
  * shared structure puts a lock on the path being timed and the tool starts
  * measuring itself.
  */
-class RunRecorder(private val startedAt: Instant, private val origin: Long) {
+class RunRecorder(
+    private val startedAt: Instant,
+    private val origin: Long,
+    /**
+     * Whether this run promised its departures a time to leave at.
+     *
+     * False for a closed population, where the target decides when a user goes
+     * round again. Lateness is then not recorded at all rather than recorded
+     * as zero: a generator is not late for a departure nobody promised, and a
+     * `behind` full of zeros would read as perfect punctuality rather than as
+     * a question that does not apply.
+     */
+    private val keepingSchedule: Boolean = true,
+) {
 
     /**
      * A recorder for a run beginning now. The origin is read here rather than
      * asked of a caller, because the object that holds a run's measurements is
      * the one place a run's zero point can live without being agreed.
      */
-    constructor(startedAt: Instant) : this(startedAt, System.nanoTime())
+    constructor(startedAt: Instant, keepingSchedule: Boolean = true) :
+        this(startedAt, System.nanoTime(), keepingSchedule)
 
     private val steps = LinkedHashMap<String, StepRecorder>()
     private val behind = Histogram()
@@ -47,7 +61,7 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
      * the agreement is by construction rather than by how close together they
      * happened to be built.
      */
-    fun shard(): RunRecorder = RunRecorder(startedAt, origin)
+    fun shard(): RunRecorder = RunRecorder(startedAt, origin, keepingSchedule)
 
     /**
      * @param schedulingDelay how late the request left against the departure the
@@ -74,8 +88,10 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
         trace: String? = null,
     ) {
         require(at >= Duration.ZERO) { "a request cannot have left before the run began, but left at $at" }
-        behind.record(schedulingDelay)
-        lateness.record(at, schedulingDelay)
+        if (keepingSchedule) {
+            behind.record(schedulingDelay)
+            lateness.record(at, schedulingDelay)
+        }
         steps.getOrPut(step) { StepRecorder() }
             .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, attempts, trace)
     }

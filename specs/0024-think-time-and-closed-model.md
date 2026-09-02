@@ -68,7 +68,7 @@ it stops them using a tool that tells them the truth about it.
       schedule* below.
       Done when: every figure in that section either has a value a closed run
       can honestly produce, or is absent, or is refused where it is written.
-- [ ] **`spec-0024-closed`** — `ClosedUsers`, and the engine running a fixed
+- [x] **`spec-0024-closed`** — `ClosedUsers`, and the engine running a fixed
       population.
       Done when: fifty users produce fifty concurrent journeys, the run reports
       the rate it actually achieved, and nothing in *A run with no schedule*
@@ -96,8 +96,11 @@ footnote.
 **Absent, not zero.** `behind` and `latePerSecond` are `Timing.none` and empty.
 A generator is not late for a departure nobody promised, and zero would read as
 perfect punctuality rather than as a question that does not apply.
-`heldScheduleFor` and `offered` follow from them and are null, which is what
-they already answer for a result with no plan.
+`heldScheduleFor` follows from them and is null, which is what it already
+answers for a result with no plan. `offered` has to be refused explicitly
+rather than inherited: it reads the window and the request count rather than
+the interval, so left alone it reports a rate nobody named beside a real
+measured one, as though the two were comparable.
 
 **Refused where it is written**, rather than answered meaninglessly:
 
@@ -114,10 +117,15 @@ is the case where the L it predicts is a number the caller chose. It becomes
 the headline check rather than a footnote. `SteadyState` (0032) is unchanged —
 it reads response time second by second and that still exists.
 
-**Kept, relabelled.** `arrivals` (0034) reports the spacing the run produced
-and its coefficient of variation. Under a closed model that spacing is the
-target's cadence rather than the profile's shape, and the page must say which
-it is looking at.
+**Absent, and this revision had it wrong.** `arrivals` (0034) was to be kept
+and relabelled as the target's cadence. It cannot be: `ArrivalRecorder` folds a
+running mean and variance into plain fields and is documented as seeing
+departures in order, which in an open run the pump guarantees because it is the
+one thread that books them. A population has no such thread. Fifty users
+writing to it is a race whose symptom is a spacing figure quietly wrong — found
+by building it, as an arrivals count three short of the request count. A closed
+run records none. Recovering the cadence would need a per-user recorder merged
+at the end, which is a change to 0034 rather than a line here.
 
 **Refused across the two.** `Plan.unlike` separates a closed plan from an open
 one, so `Runs` and `Shards` cannot pool them: they are not one population and a

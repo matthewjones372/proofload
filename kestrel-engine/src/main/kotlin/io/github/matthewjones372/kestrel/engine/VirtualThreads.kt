@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Completing
 import io.github.matthewjones372.kestrel.Engine
+import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.Reason
@@ -21,6 +22,7 @@ import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.StepScope
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.WarmUp
+import io.github.matthewjones372.kestrel.closed
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.plan
 import io.github.matthewjones372.kestrel.requireSeededThinking
@@ -82,7 +84,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     // long it waited. Nothing else is coordinated — a sample is two readings
     // of this injector's own monotonic clock.
     shard?.let { waitFor(it, progress) }
-    val recorders = Recorders(Instant.now())
+    val recorders = Recorders(Instant.now(), keepingSchedule = !closed)
     val watch = watchForHiccups()
     val room = watchForRoom()
     // The recorder's origin rather than a second reading of the clock: a
@@ -133,6 +135,10 @@ private fun Simulation.departAll(
     runStart: Long = System.nanoTime(),
 ) {
     // One platform thread. Its only job is to start virtual threads at the
+    // A fixed population is not a schedule and has no pump: its users start
+    // once each and then go round again whenever the target lets them.
+    if (closed) return departPopulation(sink, users, departed, drain, runStart)
+
     // offsets the profile named; a step never runs on it, so a slow target
     // cannot push a departure back.
     val scheduler = Executors.newSingleThreadScheduledExecutor(::schedulerThread)
@@ -181,6 +187,93 @@ private fun Simulation.departAll(
 }
 
 /**
+ * A fixed population, each user restarting the scenario until the window ends.
+ *
+ * No scheduler and no booking window: nothing here decides when a user goes,
+ * because after its first journey the target does. Every journey is recorded
+ * at the moment it actually started, with no lateness — the recorder was told
+ * this run keeps no schedule, so `behind` stays empty rather than filling with
+ * zeros, and response time collapses onto service time. That collapse is the
+ * finding, not a gap: it is coordinated omission, which is what a closed model
+ * buys and what the page has to say.
+ *
+ * A user that is still mid-journey when the window ends finishes it. Cutting
+ * one off would record a step that never happened and leave a session half
+ * written.
+ */
+private fun Simulation.departPopulation(
+    sink: StepSink,
+    users: Departures,
+    departed: Departed,
+    drain: Drain?,
+    runStart: Long,
+) {
+    val closesAt = over.inWholeNanoseconds
+    arms.forEach { arm ->
+        val population = (arm.profile as InjectionProfile.ClosedUsers).count
+        repeat(population) { index ->
+            users.booked()
+            Thread.ofVirtual().start {
+                users.departed()
+                try {
+                    goRound(arm, index, population, sink, runStart, closesAt, drain, departed)
+                } finally {
+                    users.finished()
+                }
+            }
+        }
+    }
+    // The population is the whole of what this run books, and it is booked by
+    // the time this line is reached. Without it the latch keeps the pump's
+    // standing count of one — which a closed run has no pump to clear.
+    users.allScheduled()
+    users.awaitAll()
+}
+
+/**
+ * One of the population, until the window ends.
+ *
+ * Each journey gets its own user number — the population's size times the lap,
+ * plus this user's index — so a feeder gives a looping user new data each time
+ * round rather than the same row for ten minutes.
+ */
+@Suppress("LongParameterList")
+private fun goRound(
+    arm: Arm,
+    index: Int,
+    population: Int,
+    sink: StepSink,
+    runStart: Long,
+    closesAt: Long,
+    drain: Drain?,
+    departed: Departed,
+) {
+    var lap = 0L
+    while (System.nanoTime() - runStart < closesAt) {
+        val at = (System.nanoTime() - runStart).nanoseconds
+        // No arrivals. `ArrivalRecorder` folds a running mean and variance
+        // into plain fields and is documented as seeing departures in order —
+        // in an open run the pump is the one thread that does. A population
+        // has no such thread, and fifty of them writing to it is a race whose
+        // symptom is a spacing figure quietly wrong rather than a crash.
+        departed.left(0L)
+        arm.scenario.runOneUser(
+            sink,
+            runStart,
+            // Nothing promised this journey a departure, so there is no
+            // lateness to carry. The recorder drops it rather than counting a
+            // zero, and the two clocks become one.
+            schedulingDelay = Duration.ZERO,
+            departure = at,
+            started = arm.feeder.forUser(lap * population + index),
+            drain = drain,
+            thinking = arm.thinkingFor(lap * population + index),
+        )
+        lap++
+    }
+}
+
+/**
  * The run a warm-up sends: the same arms and the same data, each held at the
  * rate its own shape opens at for the length the caller declared.
  *
@@ -188,7 +281,16 @@ private fun Simulation.departAll(
  * nothing may be recorded from one.
  */
 private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
-    Simulation(arms.map { arm -> arm.copy(profile = hold(arm.profile.startRate, over = warmUp.over)) })
+    Simulation(
+        arms.map { arm ->
+            // A closed arm warms as itself for the declared length: its
+            // population is the shape, and there is no rate to hold it at.
+            val warming = (arm.profile as? InjectionProfile.ClosedUsers)
+                ?.copy(over = warmUp.over)
+                ?: hold(arm.profile.startRate, over = warmUp.over)
+            arm.copy(profile = warming)
+        },
+    )
 
 /**
  * Holds this injector until the instant every injector was given.

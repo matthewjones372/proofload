@@ -86,6 +86,13 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
       the send it answers, the caveat gone from its KDoc and the cookbook. Done
       when: `awaiting(count = 100)` is 100 samples under one name and a
       disconnect part-way reports what arrived plus one failure.
+      **Ticked early, corrected later.** The gRPC stream carried the failure on
+      a sample of its own; the websocket `awaiting` did not, so a wait that
+      timed out after ninety of a hundred reported ninety successes and no
+      failure — the engine records nothing for a body that reported its own
+      samples, and the reason rides a sample. Fixed the same way gRPC does it,
+      timed from the last answer that arrived (`Messages.kt:96-105`), and both
+      halves are now covered by a test that reads the reason per sample.
 - [ ] **`spec-0075-page`** — the count/reached note and both goldens. Done when:
       the note names a step whose samples outnumber its reaches and the goldens
       move once, the diff read rather than regenerated.

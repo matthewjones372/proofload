@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.websocket
 
 import io.github.matthewjones372.kestrel.Outstanding
+import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.TimedOut
@@ -142,7 +143,30 @@ class AwaitingTest {
 
             result.shouldBeInstanceOf<StepResult.Failed>().reason shouldBe TimedOut
             withClue("the one that arrived was measured rather than thrown away with the failure") {
-                took.size shouldBe 1
+                took.size shouldBe 2
+            }
+        }
+    }
+
+    @Test
+    fun `a wait that times out records the failure as a sample of its own`() {
+        accepting(answering = true) { server ->
+            val ids = AtomicLong()
+            val reasons = mutableListOf<Reason?>()
+            // One send and one answer, but the step waits for two. The body
+            // has reported a sample, so the engine records none for it: if the
+            // timeout does not ride a sample of its own it is recorded nowhere,
+            // and the run reports one good answer and no failure at all.
+            val watching = scenario("watching") {
+                open(connect, ws.at(server.url))
+                send(publish, ws.text("more"), keyedBy = { ids.incrementAndGet() })
+                awaiting(tick, count = 2, within = 1.seconds)
+            }
+
+            watching.walk(samples = { _, _, why -> reasons += why }).shouldBeInstanceOf<StepResult.Failed>()
+
+            withClue("the answer that arrived is a success and the one that never came is the failure") {
+                reasons shouldBe listOf(null, TimedOut)
             }
         }
     }

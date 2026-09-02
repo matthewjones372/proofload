@@ -94,7 +94,16 @@ private fun StepScope.awaitOn(count: Long, within: Duration) {
     // were measured, and a step that timed out after ninety of a hundred has
     // ninety real latencies to show beside the failure.
     open.inbound.takeAnswered().forEach { sample(it) }
-    why?.let { fail(it) }
+    why?.let { reason ->
+        // The failure is a sample of its own, timed from the last answer that
+        // did arrive: how long the one that never came had been outstanding.
+        // Without it the failure would not be recorded at all — a body that
+        // reports its own samples is not given one by the engine, and the
+        // reason rides a sample. Ninety good answers and a silent success is
+        // the wrong report to leave behind.
+        sample(open.inbound.sinceLastAnswer(), reason = reason)
+        fail(reason)
+    }
 }
 
 /** The JDK's two writes, chosen by which frame this is. */
@@ -134,6 +143,11 @@ internal class Inbound : WebSocket.Listener {
     // client's reader thread never touches a recorder.
     private val answered = ConcurrentLinkedQueue<Duration>()
 
+    // When the last answer arrived, so a wait that fails can say how long the
+    // one that never came had been outstanding rather than how long the batch
+    // took. Zero until the first answer, which is the connection's own origin.
+    private val lastAnswer = AtomicLong()
+
     // What a step has already waited for, touched by that user's thread alone:
     // two `awaiting` steps in one scenario wait for their own answers rather
     // than both being satisfied by the first one's.
@@ -170,6 +184,17 @@ internal class Inbound : WebSocket.Listener {
      * reported, oldest first, taken out as they are read.
      */
     fun takeAnswered(): List<Duration> = generateSequence { answered.poll() }.toList()
+
+    /**
+     * How long since the last answer arrived, or since the connection opened
+     * when none has.
+     *
+     * What an answer that never came had been outstanding for, which is the
+     * only duration a failed wait can honestly be given: from the step's start
+     * it would be the whole batch, and that is a number about the batch rather
+     * than about the answer that is missing.
+     */
+    fun sinceLastAnswer(): Duration = elapsed() - lastAnswer.get().nanoseconds
 
     fun outstanding(window: Duration): Outstanding = pending.close(elapsed(), window)
 
@@ -223,6 +248,7 @@ internal class Inbound : WebSocket.Listener {
             return
         }
         pending.observed(id, at)?.let(answered::add)
+        lastAnswer.set(at.inWholeNanoseconds)
         paired.incrementAndGet()
         signal()
     }

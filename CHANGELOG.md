@@ -14,7 +14,7 @@ one.
 
 ## [0.1.0] — unreleased
 
-The first release. Ten modules, published together and versioned together.
+The first release. Fourteen modules, published together and versioned together.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
@@ -191,7 +191,11 @@ enough to list, and long enough to matter.
   reports an answer as the body observes it. A WebSocket `awaiting(count)` is
   now one sample per message, each measured from the send it answers, rather
   than one sample for the batch; a body that reports none is recorded exactly
-  as before. Anything implementing `Action` by hand changes shape, and
+  as before. A wait that runs out part-way reports the answers that did arrive
+  and a sample of its own carrying the failure, timed from the last answer:
+  the engine records nothing for a body that reported its own samples, so
+  without that sample ninety good answers and a timeout would read as ninety
+  successes. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
 - **The closed model.** `users(50, over = 10.minutes)` holds a fixed population,
   each user restarting the scenario when it finishes — "fifty users, looping",
@@ -318,12 +322,16 @@ commit this section was written on, not planned or assumed.
   `reached`, the users counted at each step. That is exact for a scenario every
   user walks and a floor for one that opens with a condition, and the page says
   so. The progress line still names the first arm of a mix.
-- **No closed model.** Every profile states departure times up front. There is
-  no "hold 50 concurrent users", which is the shape a queueing model wants and
-  the shape some teams' targets are specified in.
-- **No Kafka, and no queue or database steps.** HTTP, WebSocket handshakes and
-  Pelican endpoints are the protocols. `emit` is the seam for anything else, and
-  the caller writes the client.
+- **A closed run answers nothing about a schedule.** `users(50, over = ...)`
+  holds a population rather than stating departure times, so there is no
+  schedule to fall behind: the run records no arrivals, no `behind` and no
+  `lateness`, its offered rate is null, and `Goal.KeptSchedule` is refused
+  rather than answered off numbers that were never taken. The rate such a run
+  reaches is the target's speed, not a rate anybody asked for, and the report
+  says so.
+- **No database steps, and no queue beyond Kafka.** HTTP, WebSocket handshakes,
+  gRPC, Kafka and Pelican endpoints are the protocols. `emit` is the seam for
+  anything else, and the caller writes the client.
 - **Read `behind` before any percentile.** Coordinated omission is handled
   rather than avoided: `ResponseTime` measures from the departure the profile
   promised, so a generator that fell behind reports it. But if `behind` is

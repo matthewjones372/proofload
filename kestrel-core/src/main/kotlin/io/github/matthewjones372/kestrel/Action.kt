@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel
 
+import kotlin.time.Duration
+
 /**
  * What one step does. Core declares it without a protocol type, so an HTTP
  * module can implement it without core growing a dependency on a client.
@@ -54,10 +56,18 @@ sealed interface StepResult {
      */
     val trace: String?
 
+    /**
+     * Whether the body recorded its own samples, in which case the engine
+     * records none for the step: a body that measured a hundred messages has
+     * already said what it saw.
+     */
+    val sampled: Boolean
+
     data class Ok(
         override val session: Session,
         override val attempts: Int = 1,
         override val trace: String? = null,
+        override val sampled: Boolean = false,
     ) : StepResult
 
     data class Failed(
@@ -65,7 +75,29 @@ sealed interface StepResult {
         val reason: Reason,
         override val attempts: Int = 1,
         override val trace: String? = null,
+        override val sampled: Boolean = false,
     ) : StepResult
+}
+
+/**
+ * Where a step body's own samples go, so a body that observes several answers
+ * records several rather than one.
+ *
+ * Named for the sink rather than for the samples: `Samples` is already a
+ * population of runs in [Difference].
+ *
+ * In core because [StepScope] is, and an engine in any module supplies it. An
+ * engine that supplies none — or a caller running a step outside a run — gets
+ * a scope that reports one sample for the whole body, which is every step
+ * written before this existed.
+ */
+fun interface SampleSink {
+
+    /**
+     * One answer under this step's name: it took [took], and was observed
+     * [at] into the run, or now where the body does not know.
+     */
+    fun sample(took: Duration, at: Duration?, reason: Reason?)
 }
 
 /**
@@ -73,7 +105,7 @@ sealed interface StepResult {
  * the caller, and the accumulator is frozen into a `StepResult` the moment the
  * body returns.
  */
-class StepScope(session: Session) {
+class StepScope(session: Session, private val samples: SampleSink? = null) {
 
     /**
      * The session as it stands, readable for a body that needs the whole of it
@@ -88,6 +120,12 @@ class StepScope(session: Session) {
     private var attempts = 1
 
     private var trace: String? = null
+
+    // Whether the body reported its own samples. The engine records one for
+    // the whole body only when it did not: a step that measured a hundred
+    // messages and then had a hundred-and-first recorded over it would report
+    // a latency nobody saw.
+    private var sampled = false
 
     // The builder case AGENTS.md allows: a step body is written as statements,
     // so the session and the reason accumulate across them and are frozen into
@@ -140,6 +178,21 @@ class StepScope(session: Session) {
     }
 
     /**
+     * One answer this body observed: [took] long, [at] into the run where the
+     * body knows and now where it does not, failed with [reason] where it did.
+     *
+     * A body that calls this is measuring its own answers — a stream of
+     * messages, the attempts behind a retry — and the engine then records none
+     * of its own for the step, because a sample over the whole body would be a
+     * latency nobody experienced. The step is still one row and the users that
+     * reached it are still counted once.
+     */
+    fun sample(took: Duration, at: Duration? = null, reason: Reason? = null) {
+        sampled = true
+        samples?.sample(took, at, reason)
+    }
+
+    /**
      * What the body reported, frozen.
      *
      * Public because [Engine] is: an engine in another module builds the scope
@@ -147,8 +200,8 @@ class StepScope(session: Session) {
      * seam in core precisely so one could.
      */
     fun result(): StepResult =
-        reason?.let { StepResult.Failed(session, it, attempts, trace) }
-            ?: StepResult.Ok(session, attempts, trace)
+        reason?.let { StepResult.Failed(session, it, attempts, trace, sampled) }
+            ?: StepResult.Ok(session, attempts, trace, sampled)
 }
 
 /** A step body as a value, so one action can be shared by several scenarios. */

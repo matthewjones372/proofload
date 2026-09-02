@@ -9,6 +9,7 @@ import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.SampleSink
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Session
@@ -361,13 +362,44 @@ private class UserWalk(
     private val schedulingDelay: Duration,
     private val departure: Duration,
     private val drain: Drain?,
-) {
+) : SampleSink {
 
     // The one mutable thing a walk keeps, and one per user rather than per
     // request: `reached` counts users, so the first time this user records
     // under a name has to be told from every later time, and only the walk
     // knows which user it is on.
     private val met = HashSet<String>()
+
+    // Which step is running and whether this user had reached it, so a body's
+    // own samples land under the right name. Fields on the walk rather than a
+    // sampler allocated per step: a walk is one user on one virtual thread and
+    // runs one step at a time, and an allocation per step is one the report
+    // would read as the target's latency. Reset by `runOn` before each step.
+    private var sampling: String? = null
+    private var samplingReached = false
+
+    /**
+     * A sample the body observed, recorded as it observed it rather than
+     * buffered: a buffer would flatten every sample into the second the body
+     * started, and hold a step's worth of them for nothing.
+     *
+     * `reached` rides the first only — a user that received a hundred messages
+     * reached the step once.
+     */
+    override fun sample(took: Duration, at: Duration?, reason: Reason?) {
+        val step = sampling ?: return
+        sink.record(
+            step,
+            reason,
+            took,
+            schedulingDelay,
+            at ?: (System.nanoTime() - runStart).nanoseconds,
+            samplingReached,
+            attempts = 1,
+            trace = null,
+        )
+        samplingReached = false
+    }
 
     // A failed step abandons the user. A null session carries that decision
     // through the walk and out of any loop it was inside: the steps after it
@@ -377,7 +409,7 @@ private class UserWalk(
         steps.fold(from) { session, step -> session?.let { run(step, it) } }
 
     private fun run(step: Step, session: Session): Session? = when (step) {
-        is Step.Exec -> step.action.runOn(step.name, session, sink, runStart, schedulingDelay, met.add(step.name))
+        is Step.Exec -> runOn(step.action, step.name, session, met.add(step.name))
 
         is Step.Emit -> emit(step, session)
 
@@ -396,6 +428,40 @@ private class UserWalk(
         is Step.Pause -> step.thoughtAbout(session)
     }
 
+    /**
+     * One step, timed and recorded.
+     *
+     * On the walk rather than beside it, because the scope a body reports
+     * through is this walk's: the samples it writes have to land under the
+     * step being run, and only the walk knows which that is.
+     */
+    private fun runOn(action: Action, name: String, session: Session, reached: Boolean): Session? {
+        sampling = name
+        samplingReached = reached
+        val scope = StepScope(session, samples = this)
+        val startedAt = System.nanoTime()
+        val result = action.attempt(session, scope)
+        val serviceTime = (System.nanoTime() - startedAt).nanoseconds
+        val reason = result.reason()
+        // Only where the body reported none of its own: a step that measured a
+        // hundred messages has said what it saw, and one more sample over the
+        // whole body would be a latency nobody experienced.
+        if (!result.sampled) {
+            sink.record(
+                name,
+                reason,
+                serviceTime,
+                schedulingDelay,
+                (startedAt - runStart).nanoseconds,
+                reached,
+                result.attempts,
+                result.trace,
+            )
+        }
+        sampling = null
+        return if (reason == null) result.session else null
+    }
+
     private tailrec fun looping(step: Step.During, session: Session?, startedAt: Long): Session? {
         if (session == null || (System.nanoTime() - startedAt).nanoseconds >= step.duration) return session
         return looping(step, walk(step.steps, session), startedAt)
@@ -409,7 +475,7 @@ private class UserWalk(
      */
     private fun emit(step: Step.Emit, session: Session): Session? {
         val reached = met.add(step.name)
-        val published = step.action.runOn(step.name, session, sink, runStart, schedulingDelay, reached)
+        val published = runOn(step.action, step.name, session, reached)
             ?: return null
         drain?.departed(step.correlation.of(published), departure)
         return published
@@ -419,40 +485,13 @@ private class UserWalk(
 // The second a request is counted in is the one it left in, not the one it came
 // back in: a step that takes six seconds belongs on the timeline where the load
 // was offered, beside the profile that offered it.
-private fun Action.runOn(
-    name: String,
-    session: Session,
-    sink: StepSink,
-    runStart: Long,
-    schedulingDelay: Duration,
-    reached: Boolean,
-): Session? {
-    val startedAt = System.nanoTime()
-    val result = attempt(session)
-    val serviceTime = (System.nanoTime() - startedAt).nanoseconds
-    val reason = result.reason()
-    sink.record(
-        name,
-        reason,
-        serviceTime,
-        schedulingDelay,
-        (startedAt - runStart).nanoseconds,
-        reached,
-        result.attempts,
-        result.trace,
-    )
-    return if (reason == null) result.session else null
-}
 
 // The one place in the library allowed to catch a throwable. An action is code
 // the caller wrote against a target the caller does not control, so a throw out
 // of it is a request that failed, to be measured and named — not a bug in the
 // engine and not a reason to lose the rest of the run.
-private fun Action.attempt(session: Session): StepResult {
-    // One scope per step, built here rather than by the action: it is the
-    // run's, and it is what a body reports through.
-    val scope = StepScope(session)
-    return try {
+private fun Action.attempt(session: Session, scope: StepScope): StepResult =
+    try {
         run(scope)
         scope.result()
     } catch (throwable: Throwable) {
@@ -461,7 +500,6 @@ private fun Action.attempt(session: Session): StepResult {
         // stranger several steps later.
         StepResult.Failed(session, Threw(throwable.javaClass.name))
     }
-}
 
 private fun StepResult.reason(): Reason? = when (this) {
     is StepResult.Ok -> null

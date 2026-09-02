@@ -79,7 +79,7 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
 - [x] **`spec-0075-seam`** — the engine builds the `StepScope`; `Action` takes
       one; http, websocket and pelican follow. Done when: every existing test
       and golden passes untouched and the API dump moves once.
-- [ ] **`spec-0075-sample`** — `sample` through the sink as the body observes
+- [x] **`spec-0075-sample`** — `sample` through the sink as the body observes
       it, `reached` on the first, the implicit sample only when none was. Done
       when: three samples are one row of count 3, reached 1, each in its second.
 - [ ] **`spec-0075-awaiting`** — `awaiting` reporting a sample per message from

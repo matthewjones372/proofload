@@ -61,13 +61,19 @@ user gets there first, which is exactly the thing this spec exists to stop.
 
 ## Stack
 
-- [ ] **`spec-0022-refreshing`** — `Refreshing`, `refreshing(every, fetch)`,
+- [x] **`spec-0022-refreshing`** — `Refreshing`, `refreshing(every, fetch)`,
       its scheduler and its shutdown.
       Done when: `current` never blocks, a refresh replaces the value without a
       step seeing a gap, and a run that ends stops the refresher.
-- [ ] **`spec-0022-failure`** — what happens when a refresh throws.
+- [x] **`spec-0022-failure`** — what happens when a refresh throws.
       Done when: a failed refresh keeps the last good value, is counted, and is
       reported on the page rather than swallowed.
+      Half built: a failed refresh no longer cancels the schedule, keeps the
+      last good value, and is counted and named on `Refreshing` itself. It is
+      **not** on the page — nothing connects a `Refreshing` to a `RunResult`,
+      and the wiring that would (a credential named on the `Simulation`, a
+      field on the result, a row on the report) is API this spec never argued
+      for. It wants a spec of its own; see open question 4.
 
 ## Acceptance
 
@@ -87,3 +93,10 @@ Answered by the architect:
 3. **Refresh failures appear in the report** as a run-level note, not as step
     failures. They are the tool's problem, and burying them in a step's failure
     counts would misattribute them to the target.
+4. **How does a stale credential reach the page?** Nothing joins a
+    `Refreshing` to a run: it is a value the caller holds and the scenario
+    closes over, so the engine never sees it. Recommend a spec of its own —
+    a credential named on the `Simulation`, carried into `RunResult`, and a
+    line on the report where the run failed to refresh — rather than smuggling
+    the API in here. Until then `failures` and `lastFailure` are assertable in
+    the test that owns the run.

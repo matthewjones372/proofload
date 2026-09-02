@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 
@@ -20,13 +21,36 @@ class Refreshing<T : Any> internal constructor(initial: T, private val stopping:
     // mutable field, and `get` allocates nothing on the path a step takes.
     private val value = AtomicReference(initial)
 
+    private val failed = AtomicLong()
+
+    private val why = AtomicReference<Reason?>(null)
+
     /** The one in force now. */
     val current: T get() = value.get()
+
+    /**
+     * How many refreshes threw.
+     *
+     * A credential that stopped refreshing is a run whose target starts
+     * answering 401 and a report that says the target began failing — the
+     * exact misreading this whole value exists to prevent. Counted rather than
+     * thrown, because the thread that fetches is not the thread that could
+     * catch it, and a run that loses one refresh of twelve is still a run.
+     */
+    val failures: Long get() = failed.get()
+
+    /** What the last failed refresh threw, or nothing where none has. */
+    val lastFailure: Reason? get() = why.get()
 
     /** Ends the schedule. What was last fetched stays readable. */
     fun stop() = stopping()
 
     internal fun replaceWith(next: T) = value.set(next)
+
+    internal fun failedWith(thrown: Throwable) {
+        why.set(Threw(thrown::class.simpleName ?: thrown.javaClass.name))
+        failed.incrementAndGet()
+    }
 
     companion object {
         /** One that never changes: a token a test already holds, with no scheduler under it. */
@@ -53,7 +77,19 @@ internal fun <T : Any> refreshing(
 ): Refreshing<T> {
     val refreshing = Refreshing(fetch()) { executor.shutdownNow() }
     executor.scheduleAtFixedRate(
-        { refreshing.replaceWith(fetch()) },
+        {
+            // Caught rather than allowed out: a task that throws out of
+            // scheduleAtFixedRate cancels its own schedule, so one failed
+            // refresh would leave every later one unscheduled and the run
+            // reading a credential that expired an hour ago. The last good
+            // value stays in force, and the failure is counted rather than
+            // swallowed.
+            try {
+                refreshing.replaceWith(fetch())
+            } catch (thrown: Throwable) {
+                refreshing.failedWith(thrown)
+            }
+        },
         every.inWholeNanoseconds,
         every.inWholeNanoseconds,
         TimeUnit.NANOSECONDS,

@@ -48,7 +48,12 @@ exceptions:
     # VirtualThreads.kt runs a step body the caller wrote. A throw out of one is
     # a failed request to name and count, not a crash of the run; see the
     # comment on `attempt`.
-    excludes: ['**/kestrel/engine/VirtualThreads.kt']
+    #
+    # Refreshing.kt runs a fetch the caller wrote, on a scheduler. A throw out
+    # of one is a failed refresh to count and name; allowed out, it cancels the
+    # schedule and every later refresh with it, so the run reads a credential
+    # that expired an hour ago. See the comment on the scheduled task.
+    excludes: ['**/kestrel/engine/VirtualThreads.kt', '**/kestrel/Refreshing.kt']
   SwallowedException:
     excludes: ['**/test/**']
 

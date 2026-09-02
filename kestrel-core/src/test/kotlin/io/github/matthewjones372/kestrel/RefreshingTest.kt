@@ -88,6 +88,54 @@ class RefreshingTest {
         token.stop()
         token.current shouldBe "token"
     }
+
+    @Test
+    fun `a refresh that throws keeps the last good value, and the next one still runs`() {
+        val fetches = AtomicInteger()
+        val recovered = CountDownLatch(1)
+
+        // Fetch 1 is the cold start, 2 throws, 3 must still happen: a
+        // scheduled task that throws cancels its own schedule, which would
+        // leave a soak reading a token that expired an hour ago.
+        val token = refreshing(every = interval) {
+            when (fetches.incrementAndGet()) {
+                1 -> "token-1"
+                2 -> error("the identity provider said no")
+                else -> "token-3".also { recovered.countDown() }
+            }
+        }
+
+        withClue("the third fetch never ran, so one failure stopped the schedule") {
+            recovered.await(GATE_SECONDS, TimeUnit.SECONDS) shouldBe true
+        }
+        token.current shouldBe "token-3"
+        token.stop()
+    }
+
+    @Test
+    fun `a failed refresh is counted and named rather than swallowed`() {
+        val fetches = AtomicInteger()
+        val failed = CountDownLatch(1)
+
+        val token = refreshing(every = interval) {
+            if (fetches.incrementAndGet() == 1) {
+                "token-1"
+            } else {
+                failed.countDown()
+                error("the identity provider said no")
+            }
+        }
+
+        withClue("a run whose credential stopped refreshing must be able to say so") {
+            failed.await(GATE_SECONDS, TimeUnit.SECONDS) shouldBe true
+            while (token.failures == 0L) Thread.onSpinWait()
+            token.lastFailure shouldBe Threw("IllegalStateException")
+        }
+        withClue("and the value a step reads is still the last one that worked") {
+            token.current shouldBe "token-1"
+        }
+        token.stop()
+    }
 }
 
 // Long enough that a loaded machine cannot fail these, since what each asserts

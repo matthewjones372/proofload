@@ -171,7 +171,7 @@ private fun InjectionProfile.replays(): List<InjectionProfile.Replay> = when (th
     is InjectionProfile.Replay -> listOf(this)
     is InjectionProfile.Stages -> stages.flatMap { it.replays() }
     is InjectionProfile.Randomized -> of.replays()
-    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> emptyList()
+    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.ClosedUsers -> emptyList()
 }
 
 /** Measured from the departures that went out, so the claim above it has a number under it. */
@@ -182,6 +182,11 @@ private fun Arrivals.achieved(): String =
 
 /** The shape in words, one clause per stage, in the order they run. */
 private fun InjectionProfile.described(): String = when (this) {
+    // Users rather than a rate, because a closed run asked for no rate: what
+    // it asked for is this many users, and the target decided the rest.
+    is InjectionProfile.ClosedUsers ->
+        "$count ${if (count == 1) "user" else "users"} looping for ${over.forPlan()}"
+
     is InjectionProfile.ConstantRate -> "${perSecond.asRate()} held for ${over.forPlan()}"
 
     is InjectionProfile.RampRate -> "${from.asRate()} to ${to.asRate()} over ${over.forPlan()}"
@@ -248,6 +253,11 @@ private fun InjectionProfile.corners(from: Duration = Duration.ZERO): List<Pair<
     // and drawing a flat line at its mean would claim a shape it never had.
     // The chart is skipped and the arrivals line says what happened instead.
     is InjectionProfile.Replay -> emptyList()
+
+    // Nothing to draw: the rate line of a closed run is what the target let it
+    // reach, and that is measured rather than asked for. The page draws the
+    // achieved rate instead, and says which it is looking at.
+    is InjectionProfile.ClosedUsers -> emptyList()
 
     is InjectionProfile.RampRate -> listOf(from to this.from, (from + over) to to)
 

@@ -19,6 +19,27 @@ sealed interface InjectionProfile {
 
     data class ConstantRate(val perSecond: Double, override val over: Duration) : InjectionProfile
 
+    /**
+     * A fixed population, each user restarting the scenario when it finishes,
+     * for [over].
+     *
+     * The closed model, and the one shape here that states no departures. Its
+     * users are throttled by the target's own responses: when the target slows
+     * down the offered load falls, so a report of one shows a service that
+     * stayed fast while doing less work. That is coordinated omission, which
+     * is why the open model is the default — and why a closed run reports one
+     * clock rather than two, and says so.
+     *
+     * Every consumer that asks a profile *when* users depart has to refuse
+     * this one, because the honest answer is that the target decides.
+     */
+    data class ClosedUsers(val count: Int, override val over: Duration) : InjectionProfile {
+        init {
+            require(count > 0) { "a closed run holds at least one user, but count was $count" }
+            require(over > Duration.ZERO) { "a closed run lasts longer than nothing, but over was $over" }
+        }
+    }
+
     data class RampRate(val from: Double, val to: Double, override val over: Duration) : InjectionProfile
 
     /**
@@ -109,6 +130,8 @@ fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when 
     // the thing being replayed with a model of it.
     is InjectionProfile.Replay -> throw IllegalArgumentException(alreadyAnArrivalProcess(series.source))
 
+    is InjectionProfile.ClosedUsers -> throw IllegalArgumentException(NO_ARRIVALS_TO_SHAPE)
+
     is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Stages ->
         InjectionProfile.Randomized(this, seed)
 }
@@ -123,7 +146,11 @@ fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when 
 val InjectionProfile.seeds: List<Long>
     get() = when (this) {
         // A replay is drawn from nothing: its arrivals are what happened.
-        is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Replay -> emptyList()
+        is InjectionProfile.ConstantRate,
+        is InjectionProfile.RampRate,
+        is InjectionProfile.Replay,
+        is InjectionProfile.ClosedUsers,
+        -> emptyList()
 
         is InjectionProfile.Stages -> stages.flatMap { it.seeds }
 
@@ -136,8 +163,15 @@ val InjectionProfile.seeds: List<Long>
  * Flattened rather than nested: two ways of writing one shape have to compare
  * equal, or a profile is only half a value.
  */
-infix fun InjectionProfile.then(next: InjectionProfile): InjectionProfile =
-    InjectionProfile.Stages(asStages() + next.asStages())
+infix fun InjectionProfile.then(next: InjectionProfile): InjectionProfile {
+    // A stage is a window of departures at a shape, and a closed population
+    // has none to shape. Following one with a rate, or a rate with one, would
+    // also mean two models in one run and one page trying to describe both.
+    require(this !is InjectionProfile.ClosedUsers && next !is InjectionProfile.ClosedUsers) {
+        NO_ARRIVALS_TO_SHAPE
+    }
+    return InjectionProfile.Stages(asStages() + next.asStages())
+}
 
 private fun InjectionProfile.asStages(): List<InjectionProfile> = when (this) {
     is InjectionProfile.Stages -> stages
@@ -148,6 +182,7 @@ private fun InjectionProfile.asStages(): List<InjectionProfile> = when (this) {
     is InjectionProfile.RampRate,
     is InjectionProfile.Randomized,
     is InjectionProfile.Replay,
+    is InjectionProfile.ClosedUsers,
     -> listOf(this)
 }
 
@@ -184,6 +219,8 @@ val InjectionProfile.startRate: Rate
         // The mean over the window, which is the honest single number for a
         // shape that has no one rate.
         is InjectionProfile.Replay -> meanRate()
+
+        is InjectionProfile.ClosedUsers -> 0.perSecond
     }
 
 /** What this shape is running at when it finishes. */
@@ -194,11 +231,28 @@ val InjectionProfile.endRate: Rate
         is InjectionProfile.Stages -> stages.lastOrNull()?.endRate ?: 0.perSecond
         is InjectionProfile.Randomized -> of.endRate
         is InjectionProfile.Replay -> meanRate()
+        is InjectionProfile.ClosedUsers -> 0.perSecond
     }
 
 /** A replay's users over its window: no single rate describes it, and this is the mean. */
 private fun InjectionProfile.Replay.meanRate(): Rate =
     if (over <= Duration.ZERO) 0.perSecond else (userCount() / over.seconds()).perSecond
+
+/**
+ * A fixed population of [count] users, each restarting the scenario when it
+ * finishes, for [over].
+ *
+ * The closed model — "fifty users, looping" — which is how most people
+ * describe load. Supported and labelled rather than refused: a run of one
+ * measures a queue of its own making, because when the target slows down the
+ * offered load falls and the report shows a service that stayed fast while
+ * doing less work. Refusing to build it does not stop anyone needing it; it
+ * stops them using a tool that tells them the truth about it.
+ */
+fun users(count: Int, over: Duration): InjectionProfile.ClosedUsers {
+    requireWindow(over)
+    return InjectionProfile.ClosedUsers(count, over)
+}
 
 fun constantRate(rate: Rate, over: Duration): InjectionProfile.ConstantRate {
     requireRate(rate.perSecond, "rate")
@@ -216,10 +270,19 @@ fun rampRate(from: Rate, to: Rate, over: Duration): InjectionProfile.RampRate {
 /** How many users the profile describes: the area under its rate line. */
 fun InjectionProfile.userCount(): Long = when (this) {
     is InjectionProfile.ConstantRate -> usersBy(over)
+
     is InjectionProfile.RampRate -> usersBy(over)
+
     is InjectionProfile.Stages -> stages.sumOf { it.userCount() }
+
     is InjectionProfile.Randomized -> of.userCount()
+
     is InjectionProfile.Replay -> taken.size.toLong()
+
+    // The population, not a count of departures: a closed user departs once
+    // and then goes round again for as long as the window lasts, so how many
+    // times it will do that is the target's to decide.
+    is InjectionProfile.ClosedUsers -> count.toLong()
 }
 
 /**
@@ -257,6 +320,8 @@ fun InjectionProfile.departures(): Sequence<Duration> = when (this) {
     // Divided rather than resampled: at one the departures are the capture's
     // gaps nanosecond for nanosecond.
     is InjectionProfile.Replay -> taken.asSequence().map { (it / scaled).toLong().nanoseconds }
+
+    is InjectionProfile.ClosedUsers -> error(NO_OFFSETS)
 }
 
 /**
@@ -279,6 +344,8 @@ private fun InjectionProfile.drawnWith(seed: Long): Sequence<Duration> = when (t
     // A capture is already an arrival process. Drawing one from it would
     // replace the thing being replayed with a model of it.
     is InjectionProfile.Replay -> throw IllegalArgumentException(alreadyAnArrivalProcess(series.source))
+
+    is InjectionProfile.ClosedUsers -> throw IllegalArgumentException(NO_ARRIVALS_TO_SHAPE)
 }
 
 /**
@@ -371,3 +438,13 @@ fun ArrivalSeries.replaying(
 
 private fun alreadyAnArrivalProcess(source: String): String =
     "a replay of $source is already an arrival process; drawing from it would replace what happened with a model"
+
+/** What a shape that spaces departures says when handed one that has none. */
+private const val NO_ARRIVALS_TO_SHAPE: String =
+    "a closed population has no arrivals to shape: its users depart when the target lets them, so there is " +
+        "nothing here to space, jitter or put in a stage"
+
+/** What a caller asking a closed profile when its users depart is told. */
+internal const val NO_OFFSETS: String =
+    "a closed population has no departure offsets — after a user's first journey the target decides when the " +
+        "next one starts, which is the whole difference between the two models"

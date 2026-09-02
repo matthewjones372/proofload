@@ -410,7 +410,21 @@ data class Plan(
      * the spacing it actually asked for.
      */
     val plannedInterval: Duration
-        get() = if (plannedUsers == 0L) Duration.ZERO else plannedWindow / plannedUsers.toDouble()
+        get() = when {
+            // A window shared out over a population is a number about nothing:
+            // those users depart once each and then go round again whenever
+            // the target lets them. Zero is what makes `lostGround`, `offered`
+            // and `heldScheduleFor` fall away by construction rather than by a
+            // special case in each of them.
+            closed -> Duration.ZERO
+
+            plannedUsers == 0L -> Duration.ZERO
+
+            else -> plannedWindow / plannedUsers.toDouble()
+        }
+
+    /** Whether this run held a fixed population rather than promising departures. */
+    val closed: Boolean get() = arms.any { it.profile is InjectionProfile.ClosedUsers }
 
     companion object {
         /** For a result built from samples rather than run, which claims nothing. */

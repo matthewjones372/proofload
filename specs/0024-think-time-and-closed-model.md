@@ -63,7 +63,7 @@ it stops them using a tool that tells them the truth about it.
       recorded separately from service time.
       Done when: a scenario with a two-second pause takes two seconds longer
       per user and reports no latency for it.
-- [ ] **`spec-0024-shape`** — what a closed run reports about its own
+- [x] **`spec-0024-shape`** — what a closed run reports about its own
       schedule, decided before any of it is built. See *A run with no
       schedule* below.
       Done when: every figure in that section either has a value a closed run
@@ -103,9 +103,8 @@ they already answer for a result with no plan.
 
 - a `keptSchedule` goal on a closed simulation, because there is no
   `plannedInterval` to judge against;
-- `sustainable` (0031) on a closed profile, because a capacity search climbs a
-  rate ladder and a closed model has no rate to climb — its ladder is a
-  population, which is a different search and a different spec;
+- asking a closed profile for its departure offsets, because after a user's
+  first journey the target decides when the next one starts;
 - `ClosedUsers` inside `then`, `randomized` or `replaying`, because each of
   those shapes departures and a closed model has none to shape.
 
@@ -120,9 +119,18 @@ and its coefficient of variation. Under a closed model that spacing is the
 target's cadence rather than the profile's shape, and the page must say which
 it is looking at.
 
-**Refused across the two.** `Plan.unlike` must separate a closed plan from an
-open one, so `Runs` and `Shards` cannot pool them: they are not one population
-and a merged percentile over both is a number about neither.
+**Refused across the two.** `Plan.unlike` separates a closed plan from an open
+one, so `Runs` and `Shards` cannot pool them: they are not one population and a
+merged percentile over both is a number about neither. It already did, by
+comparing profiles — the closed variant is simply a profile they differ on.
+
+A capacity search needs no refusal after all: `sustainable` takes a scenario
+and builds its own rates, so a closed profile has no way to reach one.
+
+The baseline format goes to **version 7**, carrying the population and the
+window — the whole of what a closed run asked for. A version 6 file still
+reads, and could never have held one, because there was no closed model to
+write it from.
 
 
 ## Acceptance

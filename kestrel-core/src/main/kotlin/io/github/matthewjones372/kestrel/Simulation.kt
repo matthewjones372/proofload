@@ -110,7 +110,20 @@ fun Simulation.completing(step: StepName, from: Completions, drainingFor: Durati
     completing(step.name, from, drainingFor)
 
 /** What this run has to achieve to count as good. */
-fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goals + goals)
+fun Simulation.expecting(vararg goals: Goal): Simulation {
+    // Refused where it is written rather than answered meaninglessly. A closed
+    // run promises no departures, so there is no interval for one to be late
+    // against and no schedule for it to have kept — and a verdict printed
+    // against a schedule that never existed is worse than no verdict.
+    require(!closed || goals.none { it is Goal.KeptSchedule }) {
+        "a closed run keeps no schedule: its users depart when the target lets them, so there is no promised " +
+            "interval for `keptSchedule` to judge. Read Little's law and the achieved rate instead"
+    }
+    return copy(goals = this.goals + goals)
+}
+
+/** Whether any arm holds a fixed population rather than promising departures. */
+val Simulation.closed: Boolean get() = arms.any { it.profile is InjectionProfile.ClosedUsers }
 
 /** What this run is asking for, before any of it happens, every arm of it. */
 fun Simulation.plan(): Plan = Plan(
@@ -178,5 +191,8 @@ fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.cop
 fun Scenario.at(rate: Rate, over: Duration): Simulation = Simulation(this, constantRate(rate, over))
 
 fun Scenario.injecting(profile: InjectionProfile): Simulation = Simulation(this, profile)
+
+/** A fixed population looping this scenario, which is the closed model. */
+fun Scenario.at(population: InjectionProfile.ClosedUsers): Simulation = Simulation(this, population)
 
 private const val SECONDS_PER_MINUTE = 60.0

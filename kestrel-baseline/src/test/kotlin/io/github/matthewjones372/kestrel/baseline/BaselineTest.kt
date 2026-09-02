@@ -24,6 +24,7 @@ import io.github.matthewjones372.kestrel.randomized
 import io.github.matthewjones372.kestrel.replaying
 import io.github.matthewjones372.kestrel.then
 import io.github.matthewjones372.kestrel.timing
+import io.github.matthewjones372.kestrel.users
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -37,6 +38,7 @@ import java.time.Instant
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class BaselineTest {
@@ -260,6 +262,38 @@ class BaselineTest {
             .replaceFirst("kestrel-baseline\t6", "kestrel-baseline\t4")
 
         parseBaseline(older).plan.warmUp shouldBe null
+    }
+
+    @Test
+    fun `a closed population travels as the population and window it was`(@TempDir dir: Path) {
+        val plan = planOf(users(50, over = 10.minutes))
+
+        val read = runOf(plan = plan).throughAFile(dir)
+
+        withClue("a closed run asked for no rate and no offsets; this is the whole of what it asked for") {
+            read.plan.profile shouldBe plan.profile
+        }
+    }
+
+    @Test
+    fun `a closed run and an open one are refused rather than compared`(@TempDir dir: Path) {
+        runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds))).writeBaseline(dir.resolve("b.kestrel"))
+
+        val why = runOf(plan = planOf(users(50, over = 2.seconds)))
+            .against(readBaseline(dir.resolve("b.kestrel")))
+            .shouldBeInstanceOf<Comparison.NotComparable>()
+            .why
+
+        withClue(why) { why shouldContain "profile" }
+    }
+
+    @Test
+    fun `a version 6 baseline reads, since nothing could have written a closed population into one`() {
+        val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
+            .asBaseline()
+            .replaceFirst("kestrel-baseline\t7", "kestrel-baseline\t6")
+
+        parseBaseline(older).plan.profile shouldBe constantRate(100.perSecond, over = 2.seconds)
     }
 
     @Test

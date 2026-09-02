@@ -87,6 +87,10 @@ private fun Plan.lines(): List<String> =
 private fun InjectionProfile?.postfix(): List<String> = when (this) {
     null -> emptyList()
 
+    // The population and the window, which is the whole of what a closed
+    // profile asked for: it named no rate and no offsets.
+    is InjectionProfile.ClosedUsers -> listOf("closed\t$count\t${over.inWholeNanoseconds}")
+
     is InjectionProfile.ConstantRate -> listOf("constant\t$perSecond\t${over.inWholeNanoseconds}")
 
     is InjectionProfile.RampRate -> listOf("ramp\t$from\t$to\t${over.inWholeNanoseconds}")
@@ -239,6 +243,11 @@ private fun List<List<String>>.asProfile(): InjectionProfile? =
 
             "random" -> stack.dropLast(1) + InjectionProfile.Randomized(stack.last(), fields[2].toLong())
 
+            "closed" -> {
+                val (_, _, count, over) = fields
+                stack + InjectionProfile.ClosedUsers(count.toInt(), over.toLong().nanoseconds)
+            }
+
             // What the capture was, not what it held: enough to compare a run
             // against its own baseline and to refuse one replayed from another
             // capture, without the file carrying a million timestamps.
@@ -316,13 +325,14 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "6"
+private const val VERSION = "7"
 
 // Each older version is this one missing a line, so a file written before
 // there was one still answers every question a comparison asks of it except
 // the one that line carries: 3 has no probe, 4 no warm-up, 5 no lateness,
-// stalls or shard.
-private val READABLE = listOf("3", "4", "5", VERSION)
+// stalls or shard, 6 no closed population — which nothing could write, since
+// there was no closed model to write one from.
+private val READABLE = listOf("3", "4", "5", "6", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

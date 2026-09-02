@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.grpc
 import io.grpc.CallOptions
 import io.grpc.Channel
 import io.grpc.ManagedChannel
+import io.grpc.Metadata
 import io.grpc.MethodDescriptor
 import io.grpc.Server
 import io.grpc.ServerServiceDefinition
@@ -67,13 +68,43 @@ internal object Orders {
             .build()
 }
 
+/**
+ * What the server saw on a call's metadata, in the order the calls arrived.
+ *
+ * The point of reading it server-side rather than asserting on what the client
+ * built: what a target's tracing backend joins on is what reached the wire.
+ */
+internal class Heard {
+    val traceparents: MutableList<String?> = java.util.Collections.synchronizedList(mutableListOf())
+    val baggage: MutableList<String?> = java.util.Collections.synchronizedList(mutableListOf())
+}
+
+/** Records the trace metadata of every call, then lets it through. */
+internal class Listening(private val heard: Heard) : io.grpc.ServerInterceptor {
+
+    override fun <Q, A> interceptCall(
+        call: io.grpc.ServerCall<Q, A>,
+        headers: Metadata,
+        next: io.grpc.ServerCallHandler<Q, A>,
+    ): io.grpc.ServerCall.Listener<Q> {
+        heard.traceparents += headers.get(Metadata.Key.of("traceparent", Metadata.ASCII_STRING_MARSHALLER))
+        heard.baggage += headers.get(Metadata.Key.of("baggage", Metadata.ASCII_STRING_MARSHALLER))
+        return next.startCall(call, headers)
+    }
+}
+
 /** An in-process server and a channel onto it, both closed when [use] returns. */
-internal class InProcess(service: ServerServiceDefinition = Orders.serving()) : AutoCloseable {
+internal class InProcess(
+    service: ServerServiceDefinition = Orders.serving(),
+    val heard: Heard = Heard(),
+) : AutoCloseable {
 
     private val name: String = InProcessServerBuilder.generateName()
 
     private val server: Server =
-        InProcessServerBuilder.forName(name).directExecutor().addService(service).build().start()
+        InProcessServerBuilder.forName(name).directExecutor()
+            .addService(io.grpc.ServerInterceptors.intercept(service, Listening(heard)))
+            .build().start()
 
     /** The pool. Tests build stubs on `Grpc.channel`, which is this with the interceptor around it. */
     val managed: ManagedChannel = InProcessChannelBuilder.forName(name).directExecutor().build()

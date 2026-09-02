@@ -1,12 +1,17 @@
 package io.github.matthewjones372.kestrel.grpc
 
+import io.github.matthewjones372.kestrel.SYNTHETIC
+import io.github.matthewjones372.kestrel.StepScope
+import io.github.matthewjones372.kestrel.Traceparent
 import io.grpc.CallOptions
 import io.grpc.Channel
 import io.grpc.ClientCall
 import io.grpc.ClientInterceptor
 import io.grpc.ClientInterceptors
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.Metadata
 import io.grpc.MethodDescriptor
 import kotlin.time.Duration
 
@@ -50,7 +55,7 @@ class Grpc internal constructor(
      * through a stub gets the budget and the trace whether or not the caller
      * remembered to ask. [managed] is the pool itself, for shutting it down.
      */
-    val channel: Channel by lazy { ClientInterceptors.intercept(managed, Budget(deadline)) }
+    val channel: Channel by lazy { ClientInterceptors.intercept(managed, Budget(deadline), Tracing(traced)) }
 
     /** Calls this service instead. */
     fun target(target: String): Grpc = Grpc(target, traced, deadline, opened)
@@ -129,10 +134,74 @@ val grpc: Grpc = Grpc("")
  * own executor threads, where writing into a recorder sharded per user is a
  * race the report reads as a missing request.
  */
+
+/**
+ * Puts a W3C `traceparent` and the synthetic-traffic `baggage` entry on every
+ * call's outgoing metadata, so a slow measurement has a trace id to follow into
+ * whatever the target exports its spans to.
+ *
+ * An interceptor, unlike the measuring: metadata belongs to the call rather
+ * than to the step around it, and it has to be attached where gRPC starts the
+ * call rather than where the action starts timing. The id is told to the step's
+ * scope as well as sent, because a percentile with no id beside it leaves a
+ * reader searching a backend by timestamp — the search this exists to replace.
+ *
+ * The scope is reached through a thread local rather than passed: an
+ * interceptor's signature is gRPC's, and a call made through a caller's own
+ * generated stub goes straight from the step body into the channel with nowhere
+ * to thread one through.
+ */
+private class Tracing(private val traced: Boolean) : ClientInterceptor {
+
+    override fun <Q, A> interceptCall(
+        method: MethodDescriptor<Q, A>,
+        options: CallOptions,
+        next: Channel,
+    ): ClientCall<Q, A> {
+        if (!traced) return next.newCall(method, options)
+        return object : SimpleForwardingClientCall<Q, A>(next.newCall(method, options)) {
+            override fun start(responses: Listener<A>, headers: Metadata) {
+                val traceparent = Traceparent.next()
+                headers.put(TRACEPARENT, traceparent)
+                headers.put(BAGGAGE, SYNTHETIC)
+                telling?.get()?.traced(Traceparent.idIn(traceparent))
+                super.start(responses, headers)
+            }
+        }
+    }
+}
+
+/**
+ * The step whose body is making a call on this thread, so the interceptor can
+ * tell it the id it sent.
+ *
+ * A user runs on one virtual thread and a call is made from inside its own step
+ * body, so the thread holding this is the one the interceptor runs on: gRPC
+ * starts the call on the calling thread. Cleared as soon as the body returns,
+ * so a later call from a step that is not traced tells nobody.
+ */
+private val telling: ThreadLocal<StepScope?>? = ThreadLocal.withInitial { null }
+
+/** Runs [body] with [scope] reachable by the tracing interceptor. */
+internal fun <T> tellingScope(scope: StepScope, body: () -> T): T {
+    val before = telling?.get()
+    telling?.set(scope)
+    return try {
+        body()
+    } finally {
+        telling?.set(before)
+    }
+}
+
+private val TRACEPARENT: Metadata.Key<String> =
+    Metadata.Key.of("traceparent", Metadata.ASCII_STRING_MARSHALLER)
+
+private val BAGGAGE: Metadata.Key<String> = Metadata.Key.of("baggage", Metadata.ASCII_STRING_MARSHALLER)
+
 private class Budget(private val within: Duration?) : ClientInterceptor {
 
     override fun <Q, A> interceptCall(
-        method: io.grpc.MethodDescriptor<Q, A>,
+        method: MethodDescriptor<Q, A>,
         options: CallOptions,
         next: Channel,
     ): ClientCall<Q, A> {

@@ -86,7 +86,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 - [x] **`spec-0071-deadline`** — the interceptor's default deadline.
       Done when: a call with no deadline of its own is cancelled at the
       channel's and recorded as `TimedOut`, and `withDeadlineAfter` survives.
-- [ ] **`spec-0071-traced`** — `traceparent` and `baggage` on outgoing metadata.
+- [x] **`spec-0071-traced`** — `traceparent` and `baggage` on outgoing metadata.
       Done when: an in-process server reads a well-formed `traceparent` off
       every call, ids differ per call, and an untraced target sends neither.
 - [ ] **`spec-0071-streams`** — `stream`, `send` and `awaiting`, on `Pending`.
@@ -116,6 +116,18 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
     `CallOptions` have none, so a caller's own survives untouched rather than
     being lengthened or shortened by a default they never asked for; a run that
     declared no budget writes nothing at all.
+8. **Where the trace-id generator lives.** It was `internal` to
+    `kestrel-http`, which would have meant a second copy here and a third in
+    the next protocol module — two of them disagreeing about the format is the
+    kind of difference nobody notices until a backend has half a run in it. It
+    moved to core as `Traceparent`, beside `StepScope.traced`, which was
+    already there. The http module keeps only the two header names.
+9. **How the interceptor reaches the step.** A thread local, set for the length
+    of the call and cleared after. An interceptor's signature is gRPC's, and a
+    call made through a caller's own generated stub goes from the step body
+    straight into the channel with nowhere to thread a scope through. A user
+    runs on one virtual thread and gRPC starts a call on the calling thread, so
+    the thread holding it is the one the interceptor runs on.
 7. **What a caller builds a stub on.** `Grpc.channel` is the pool with this
     module's interceptor around it, and `Grpc.managed` is the pool itself, for
     shutting it down. A stub built on the raw pool gets no budget and no trace,

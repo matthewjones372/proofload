@@ -55,7 +55,10 @@ class GrpcAction<Q, A> internal constructor(
     internal fun callFrom(scope: StepScope): A? {
         if (scope.narrating) scope.note("${descriptor.type} ${descriptor.fullMethodName} to ${origin.target}")
         val answer = try {
-            body()
+            // The scope is reachable from the tracing interceptor for the
+            // length of the call and no longer, so the id it sends lands
+            // beside the percentile this step is about.
+            tellingScope(scope, body)
         } catch (refused: StatusRuntimeException) {
             scope.fail(refused.status.asReason())
             return null

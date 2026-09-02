@@ -337,7 +337,7 @@ private fun bootstrap(now: List<Samples>, before: List<Samples>, statistic: Stat
     }
     ratios.sort()
 
-    return Spread(low = ratios.at(LOW), high = ratios.at(HIGH))
+    return Spread(low = ratios.quantile(LOW), high = ratios.quantile(HIGH))
 }
 
 /**
@@ -345,7 +345,7 @@ private fun bootstrap(now: List<Samples>, before: List<Samples>, statistic: Stat
  * addition of a few long arrays rather than the merge of a few histograms ten
  * thousand times over.
  */
-private class Resampler(private val samples: List<Samples>) {
+internal class Resampler(private val samples: List<Samples>) {
 
     private val bounds: List<Duration> =
         samples.flatMap { it.timing.distribution.map(Bucket::upperBound) }.distinct().sorted()
@@ -381,21 +381,21 @@ private fun List<Samples>?.readMerged(statistic: Statistic): Double = this
     ?.let(statistic::read)
     ?: 0.0
 
-private fun DoubleArray.at(quantile: Double): Double = this[((size - 1) * quantile).roundToInt()]
+internal fun DoubleArray.quantile(at: Double): Double = this[((size - 1) * at).roundToInt()]
 
 /** Five runs a side. A bootstrap over three values is arithmetic wearing a lab coat. */
-private const val ENOUGH = 5
+internal const val ENOUGH = 5
 
 /** Milliseconds over ten runs, and it takes the question out of the reader's mind. */
-private const val RESAMPLES = 10_000
+internal const val RESAMPLES = 10_000
 
 /**
  * One seed rather than a parameter. A verdict that changed between two readings
  * of one set of results would not be a verdict, and a seed a caller can turn is
  * a knob for making one say what they wanted.
  */
-private const val SEED = 38L
+internal const val SEED = 38L
 
-private const val LOW = 0.025
-private const val HIGH = 0.975
+internal const val LOW = 0.025
+internal const val HIGH = 0.975
 private const val HUNDRED = 100.0

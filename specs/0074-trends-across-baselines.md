@@ -80,7 +80,7 @@ and buckets, and nothing that names what was built.
 
 ## Stack
 
-- [ ] **`spec-0074-band`** — `Band`, from the existing resampler.
+- [x] **`spec-0074-band`** — `Band`, from the existing resampler.
       Done when: a band contains its point's merged reading, runs that landed
       further apart give a wider one, and a point under five runs has none.
 - [ ] **`spec-0074-trend`** — `Trend`, `ends`, `steps`, `comparisons`.

@@ -113,7 +113,14 @@ fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goa
 /** What this run is asking for, before any of it happens, every arm of it. */
 fun Simulation.plan(): Plan = Plan(
     arms = arms.map { arm ->
-        PlannedArm(arm.scenario.name, arm.scenario.stepNames, arm.profile, arm.scenario.pauses)
+        PlannedArm(
+            scenario = arm.scenario.name,
+            steps = arm.scenario.stepNames,
+            profile = arm.profile,
+            pauses = arm.scenario.pauses,
+            thinkTimes = arm.scenario.thinkTimes,
+            thinkSeed = arm.thinkSeed,
+        )
     },
     goals = goals,
     warmUp = warmUp,

@@ -320,6 +320,10 @@ data class PlannedArm(
      * flight has to know, so the plan carries it.
      */
     val pauses: Boolean = false,
+    /** The waits this arm declares, so the page can name what was asked for. */
+    val thinkTimes: List<ThinkTime> = emptyList(),
+    /** What its drawn waits came from, where it draws any. */
+    val thinkSeed: Long? = null,
 ) {
 
     val plannedUsers: Long get() = profile?.userCount() ?: 0L

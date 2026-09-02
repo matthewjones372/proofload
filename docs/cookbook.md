@@ -326,6 +326,28 @@ val checkout = scenario("checkout") {
 A pause has no name and no row in the report. It is not a step that took two
 seconds; it is the absence of one.
 
+A constant pause has a consequence worth knowing: two hundred users that reach
+it together leave it together, to the scheduler's resolution, and click again in
+the same instant. That is the metronome [Poisson arrivals](#stop-sending-on-a-metronome)
+took out of the arrivals, put back inside the journey. Draw the wait instead:
+
+```kotlin
+val checkout = scenario("checkout") {
+    exec(browse, api.get("/products"))
+    pause(exponential(mean = 2.seconds))
+    exec(placeOrder, api.post("/orders").body("""{"cart":"1 anvil"}"""))
+}
+
+val soak = checkout.at(50.perSecond, over = 10.minutes).thinkingFrom(seed = 20260826)
+```
+
+`constant`, `exponential`, `lognormal(median, sigma)` and `uniform(from, until)`
+are the shapes. A scenario that draws is refused without a seed — an unseeded
+random run is not one anybody can reproduce — and a scenario of constants still
+needs none. Each user's waits come from that seed and its own user number, so
+user 4,001 parks the same tomorrow whatever the target did today, and the report
+names the distribution and the seed beside the arrivals line.
+
 ## Loops and conditions
 
 A scenario is a tree, not a list, so a loop is a step holding steps rather than

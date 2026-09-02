@@ -12,6 +12,7 @@ import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
+import io.github.matthewjones372.kestrel.ThinkTime
 import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
@@ -170,10 +171,35 @@ private fun RunResult.arrivalLine(): String? {
             "in production."
         else "Arrivals were drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}."
 
+    val thinking = plan.thinking()
     val warmed = plan.warmed()
-    if (arrivals.count < 2L) return asked + warmed
+    if (arrivals.count < 2L) return asked + thinking + warmed
     return "$asked Measured ${arrivals.mean.report()} between departures, coefficient of variation " +
-        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}.$warmed"
+        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}.$thinking$warmed"
+}
+
+/**
+ * What the users waited between steps, where they waited at all — and whether
+ * every one of them waited the same, which is what makes them click again
+ * together.
+ */
+private fun Plan.thinking(): String {
+    val waits = arms.flatMap { it.thinkTimes }.ifEmpty { return "" }
+    val drawn = arms.filter { arm -> arm.thinkTimes.any { it !is ThinkTime.Constant } }.mapNotNull { it.thinkSeed }
+    val described = waits.distinct().joinToString(separator = ", ") { it.described() }
+    val from = if (drawn.isEmpty()) {
+        "every user waited exactly that long"
+    } else {
+        "drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}"
+    }
+    return " Think time: $described, $from."
+}
+
+private fun ThinkTime.described(): String = when (this) {
+    is ThinkTime.Constant -> "a fixed ${duration.report()}"
+    is ThinkTime.Exponential -> "exponential, mean ${mean.report()}"
+    is ThinkTime.Lognormal -> "lognormal, median ${median.report()}, sigma $sigma"
+    is ThinkTime.Uniform -> "uniform, ${from.report()} to ${until.report()}"
 }
 
 /**

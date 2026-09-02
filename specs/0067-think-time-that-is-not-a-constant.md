@@ -93,7 +93,7 @@ tail makes that longer.
       Done when: two runs at one seed park the same user for the same duration,
       constant pauses still run unseeded, and a distributed pause with no seed
       fails before anything departs.
-- [ ] **`spec-0067-honest`** — the plan carrying the distributions and the seed,
+- [x] **`spec-0067-honest`** — the plan carrying the distributions and the seed,
       the line on the page and in the markdown, the cookbook's examples.
       Done when: a drawn pause names its distribution and seed beside the
       arrivals line, and constant pauses say so.

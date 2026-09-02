@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.ThinkTime
 import io.github.matthewjones372.kestrel.seeds
 import io.github.matthewjones372.kestrel.startRate
 import java.util.Locale
@@ -21,7 +22,7 @@ internal fun RunResult.planLines(): List<String> {
             "${"user".plural(plan.plannedUsers)}, ${plan.plannedRequests.grouped()} " +
             "${"request".plural(plan.plannedRequests)}.</p>",
         """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}${plan.warmed()}</p>""",
-    ) + listOf("""    <p class="note">${plan.rateMeans()}</p>""") +
+    ) + plan.thinkingLines() + listOf("""    <p class="note">${plan.rateMeans()}</p>""") +
         mixLines() + plan.shapeCharts() + listOf("  </section>")
 }
 
@@ -36,6 +37,33 @@ private fun Plan.warmed(): String {
     val rate = arms.firstNotNullOfOrNull { it.profile }?.startRate?.perSecond?.asRate()
     val at = if (rate == null) "" else " at $rate"
     return " Warmed for ${warmUp.over.forPlan()}$at, not counted."
+}
+
+/**
+ * What the users waited between steps, where they waited at all.
+ *
+ * Named rather than left to the reader for the reason the arrivals line is: a
+ * constant pause is a choice whose consequence — every user that met it
+ * leaving it in the same instant — is invisible unless the page says which was
+ * asked for. Absent where a scenario has no pause at all.
+ */
+private fun Plan.thinkingLines(): List<String> {
+    val waits = arms.flatMap { it.thinkTimes }.ifEmpty { return emptyList() }
+    val drawn = arms.filter { arm -> arm.thinkTimes.any { it !is ThinkTime.Constant } }.mapNotNull { it.thinkSeed }
+    val described = waits.distinct().joinToString(separator = ", ") { it.described() }
+    val from = if (drawn.isEmpty()) {
+        " Every user waited exactly that long, so users that arrive together click again together."
+    } else {
+        " Drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}."
+    }
+    return listOf("""    <p class="note">Think time: $described.$from</p>""")
+}
+
+private fun ThinkTime.described(): String = when (this) {
+    is ThinkTime.Constant -> "a fixed ${duration.forPlan()}"
+    is ThinkTime.Exponential -> "exponential, mean ${mean.forPlan()}"
+    is ThinkTime.Lognormal -> "lognormal, median ${median.forPlan()}, sigma $sigma"
+    is ThinkTime.Uniform -> "uniform, ${from.forPlan()} to ${until.forPlan()}"
 }
 
 /**

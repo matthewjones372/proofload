@@ -10,6 +10,8 @@ import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.fellBehind
+import io.github.matthewjones372.kestrel.heldScheduleFor
+import io.github.matthewjones372.kestrel.offered
 import io.github.matthewjones372.kestrel.seeds
 import io.github.matthewjones372.kestrel.startRate
 import io.github.matthewjones372.kestrel.unanswered
@@ -194,7 +196,19 @@ private fun RunResult.cutShortWarning(): String? {
 private fun RunResult.behindWarning(): String? {
     if (!fellBehind()) return null
     return "> **Behind schedule:** ${behind.p99.report()} late at p99, ${behind.max.report()} at worst. " +
-        "The response times below include that backlog."
+        "The response times below include that backlog.${whatLeft()}"
+}
+
+/**
+ * The load that actually left, and how long the schedule held before it went:
+ * the two facts that turn "behind schedule" from a diagnosis into something a
+ * reader can act on. Empty where the run named no plan or recorded no seconds.
+ */
+private fun RunResult.whatLeft(): String {
+    val offered = offered ?: return ""
+    val held = heldScheduleFor?.let { " The schedule held for ${it.report()}." }.orEmpty()
+    return " Asked for ${trimmed(offered.asked.perSecond)}/s; ${trimmed(offered.left.perSecond)}/s left over " +
+        "${offered.over.report()}.$held Service times below are the target at that load."
 }
 
 /**

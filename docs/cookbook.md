@@ -893,8 +893,27 @@ result.behind.p99     // how late the late departures were
 
 Where `fellBehind()` is true, every latency in the run includes time spent
 waiting in a queue this tool created — coordinated omission, which is the
-default bug in a load generator rather than an exotic one. The fix is a lower
-rate or a bigger machine, not a closer reading of the percentiles.
+default bug in a load generator rather than an exotic one. Response times are
+the ones that carry it, and a response-time goal on such a run fails; the
+failure is the finding.
+
+The run is not wasted. Service time was measured from the departure that
+actually happened, so it is still a true measurement of the target — at the
+load that reached it rather than the load you asked for:
+
+```kotlin
+result.offered?.asked          // 2500/s — what the plan asked for
+result.offered?.left           // 1923/s — what actually left
+result.heldScheduleFor         // 11s — before the first second that lost ground
+result.latePerSecond[12].p99   // how late that second's departures were
+```
+
+So the answer to "it fell behind, now what" is: re-run at a rate the machine
+held, and read the service times of this run as the target at `left` in the
+meantime. Kestrel will not quietly lower the rate for you mid-run — a run that
+throttles itself measures a load it then does not report, which is the bug this
+tool exists to close. A [capacity search](#find-the-rate-it-sustains) is the
+supported way to adapt, because every rung is a separate, labelled run.
 
 `arrivals` says the same thing from the other side: the spacing the run actually
 produced, and its coefficient of variation.

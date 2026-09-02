@@ -16,6 +16,7 @@ import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
+import io.github.matthewjones372.kestrel.Second
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.WarmUp
@@ -442,6 +443,33 @@ class MarkdownTest {
 
         result.markdown() shouldNotContain "Warmed"
     }
+
+    @Test
+    fun `the behind warning says what left and how long the schedule held`() {
+        val late = timingOf(List(10) { 2.seconds })
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse),
+            behind = timingOf(List(10) { 900.milliseconds }),
+            plan = Plan("checkout", listOf("browse"), hold(10.perSecond, over = 10.seconds)),
+            timeline = List(15) { second() },
+            latePerSecond = List(11) { Timing.none } + List(4) { late },
+        )
+
+        val markdown = result.markdown()
+
+        markdown shouldContain "Asked for"
+        markdown shouldContain "left over 15.0s"
+        markdown shouldContain "The schedule held for 11.0s."
+        markdown shouldContain "Service times below are the target at that load."
+    }
+
+    private fun second() = Second(
+        okServiceTime = timingOf(List(10) { 20.milliseconds }),
+        failedServiceTime = Timing.none,
+        okResponseTime = timingOf(List(10) { 40.milliseconds }),
+        failedResponseTime = Timing.none,
+    )
 
     private fun ran(profile: InjectionProfile, arrivals: Arrivals) = RunResult(
         startedAt = startedAt,

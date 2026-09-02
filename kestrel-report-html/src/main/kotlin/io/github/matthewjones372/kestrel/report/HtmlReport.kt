@@ -9,7 +9,9 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.fellBehind
+import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.inFlight
+import io.github.matthewjones372.kestrel.offered
 import io.github.matthewjones372.kestrel.unanswered
 import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
@@ -149,9 +151,28 @@ private fun RunResult.behindLines(): List<String> =
     else listOf(
         """  <p class="behind" id="kestrel-behind" role="status">""",
         "    <strong>Behind schedule.</strong> ${behind.p99.forReport()} late at p99, " +
-            "${behind.max.forReport()} at worst. The response times below include that backlog.",
+            "${behind.max.forReport()} at worst. The response times below include that backlog." +
+            whatLeft(),
         "  </p>",
     )
+
+/**
+ * What a reader does about it, which the warning above has never said.
+ *
+ * Two facts and no advice: the load that actually left, and how long the
+ * schedule held before it went. Service time was measured from the departure
+ * that happened, so it describes the target at the load that left — a smaller
+ * experiment than the one asked for, and the one this page can still answer
+ * for. Deriving "re-run at 1,900/s" from them is the reader's, because under a
+ * ramp the rate that held is the profile's rate at that second and nothing
+ * here knows it.
+ */
+private fun RunResult.whatLeft(): String {
+    val offered = offered ?: return ""
+    val held = heldScheduleFor?.let { " The schedule held for ${it.forPlan()}." }.orEmpty()
+    return " Asked for ${offered.asked.perSecond.asRate()}; ${offered.left.perSecond.asRate()} left over " +
+        "${offered.over.forPlan()}.$held Service times below are the target at that load."
+}
 
 private fun RunResult.headLines(): List<String> =
     listOf(

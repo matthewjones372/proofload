@@ -24,7 +24,8 @@ internal fun RunResult.timelineLines(): List<String> {
     return listOf(
         """  <section class="timeline" aria-label="Over time">""",
         "    <h2>Over time</h2>",
-    ) + throughputChart() + latencyChart() + failureChart() + noteLines() + listOf("  </section>")
+    ) + throughputChart() + latencyChart() + latenessChart() + failureChart() + noteLines() +
+        listOf("  </section>")
 }
 
 private fun RunResult.throughputChart(): List<String> {
@@ -46,6 +47,26 @@ private fun RunResult.latencyChart(): List<String> {
         label = "service time each second",
         series = listOf("p50" to p50, "p99" to p99),
         over = timeline.size,
+    )
+}
+
+/**
+ * How late each second's departures were.
+ *
+ * Absent where the injector kept its schedule — the chart draws nothing when
+ * every second is zero — so it appears exactly on the runs where the question
+ * "when did it go?" has an answer worth having. The whole-run figure above
+ * says a schedule was lost; this says which second lost it.
+ */
+private fun RunResult.latenessChart(): List<String> {
+    if (latePerSecond.isEmpty()) return emptyList()
+
+    val late = latePerSecond.map { it.p99.inWholeNanoseconds.toDouble() }
+    return chart(
+        caption = "how late departures were — p99 peaks at ${late.max().asDuration()}",
+        label = "lateness each second",
+        series = listOf("late" to late),
+        over = latePerSecond.size,
     )
 }
 

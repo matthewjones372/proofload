@@ -47,6 +47,17 @@ class NoBrokerDependenciesTest {
     }
 
     @Test
+    fun `no registry on the test classpath either, so the stub is the JDK's own server`() {
+        val testing = System.getProperty("java.class.path").split(File.pathSeparator)
+            .map { File(it).name }
+            .filter { it.startsWith("kafka-avro") || it.startsWith("kafka-schema-registry") }
+
+        withClue("what stands in for a registry here is com.sun.net.httpserver: $testing") {
+            testing.shouldBeEmpty()
+        }
+    }
+
+    @Test
     fun `what is here is kestrel-core, kafka-clients and what kafka-clients itself brings`() {
         val allowed = listOf(
             "kotlin-stdlib", "annotations-", "kestrel-core", "kafka-clients",

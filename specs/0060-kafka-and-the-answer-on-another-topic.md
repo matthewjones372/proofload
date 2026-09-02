@@ -97,7 +97,7 @@ tunes against them will ship a consumer that cannot keep up.
       `correlatedBy` reading the id from a header.
       Done when: a run whose completions come from a second topic reports
       `unmatched` and `inFlight` as 0040 defines them.
-- [ ] **`spec-0060-round-trip`** — the produced records fed to the consuming
+- [x] **`spec-0060-round-trip`** — the produced records fed to the consuming
       side through `MockProducer` and `MockConsumer`, and a stub registry on
       `com.sun.net.httpserver`.
       Done when: a correlation header written by an `emit` is the one
@@ -110,6 +110,15 @@ tunes against them will ship a consumer that cannot keep up.
       lands in `behind` rather than the target's latency, because the lambda is
       the caller's code on the departure thread; and that `result.steady` is
       where to read the run without it.
+      **The middle claim is wrong, and measured wrong.** The lambda runs inside
+      the step body, so the fetch is in that step's own *service time*; `behind`
+      is scheduling lateness and stays clean, because every user runs on a
+      thread of its own and one blocked in a serializer holds up nobody's
+      departure. `RegistryTest` asserts both halves. The page says the true
+      thing instead: the first record — and any that depart while it is
+      fetching, since a cached serializer makes them wait on it — carries the
+      round trip as its own latency, and reading that as the broker's is the
+      mistake. `result.steady` is still where to read the run without it.
 
 ## Acceptance
 

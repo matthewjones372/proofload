@@ -83,7 +83,7 @@ Values in core beside `Machine`, sampler in the engine beside `Hiccups.kt`, and
       the progress line saying which.
       Done when: a rung reporting `ranOutOfRoom()` is `Void`, the search stops
       there as for `lostGround()`, and the rung line names the limit.
-- [ ] **`spec-0065-record`** — `docs/what-it-costs.md`, re-run with sampling.
+- [x] **`spec-0065-record`** — `docs/what-it-costs.md`, re-run with sampling.
       Done when: the table carries peak descriptors and ports per rate, and the
       paragraph that cannot separate client from server either does or says
       what is still missing.

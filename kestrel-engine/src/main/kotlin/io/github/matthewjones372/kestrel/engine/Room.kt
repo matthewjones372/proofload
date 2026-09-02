@@ -172,8 +172,16 @@ private fun cpu(): Room.Source? {
     }
 }
 
+/**
+ * Read as a stream rather than with `Files.readString`.
+ *
+ * A file under `/proc` reports a size of zero, and `readString` sizes its
+ * buffer from that: on this machine it returns `3` for a port range whose
+ * content is `32768\t60999`. A stream read asks the file rather than its
+ * metadata.
+ */
 private fun read(path: String): String? =
-    runCatching { Files.readString(Path.of(path)) }.getOrNull()
+    runCatching { Files.newInputStream(Path.of(path)).use { it.readBytes().decodeToString() } }.getOrNull()
 
 private fun roomThread(runnable: Runnable): Thread =
     Thread(runnable, "kestrel-room").apply { isDaemon = true }

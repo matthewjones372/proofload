@@ -70,6 +70,7 @@ built. Each row links the spec that argued for it.
 | [0066](0066-a-warm-up-the-runner-does.md) | a warm-up declared on the run and on every rung, sent and recorded nowhere |
 | [0076](0076-a-run-that-fell-behind-is-still-a-measurement.md) | the load that left, the second the schedule went, and what a void rung still measured |
 | [0075](0075-a-step-that-records-more-than-one-sample.md) | the engine builds the scope a step reports through, and a body can record every answer it saw |
+| [0065](0065-the-injectors-own-limits.md) | descriptors, ports and CPU sampled while a run measures, so a failure count says which end ran out |
 
 ## Drafted, not built
 
@@ -79,7 +80,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 
 | Spec | Why it is next |
 |---|---|
-| [0065](0065-the-injectors-own-limits.md) | the 10,000/s sweep blamed the target for 29,568 failures that were almost certainly the injector's own ports |
 | [0067](0067-think-time-that-is-not-a-constant.md) | a constant pause makes every user click again at the same instant |
 | [0068](0068-littles-law-on-every-run.md) | L = λW is the cheapest check there is, and the run holds all three numbers |
 | [0069](0069-a-transport-the-http-module-can-swap.md) | 2,500 a second on four cores is the JDK client's ceiling, not the tool's |

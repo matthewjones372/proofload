@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.benchmarks
 
+import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Scenario
@@ -111,6 +112,21 @@ internal class Measured(
         .ifEmpty { NOTHING }
 
     val relativeVerdict: String get() = if (result.fellBehind()) "yes" else "no"
+
+    /**
+     * How close this process came to its own descriptor and port ceilings.
+     *
+     * The column the failure counts needed: a row with seventeen thousand
+     * IOExceptions cannot say whose end they came from, and a peak against the
+     * real limit implicates this process or clears it.
+     */
+    val room: String get() = listOf(result.limits.openFiles, result.limits.ports)
+        .joinToString(separator = " | ") { it.readable() }
+}
+
+private fun Headroom.readable(): String = when (this) {
+    is Headroom.Measured -> "${peak.grouped()} / ${limit.grouped()}"
+    is Headroom.Absent -> NOTHING
 }
 
 internal fun report(withoutASocket: List<Measured>, overASocket: List<Measured>): String =
@@ -155,9 +171,17 @@ private fun overSocketSection(measured: List<Measured>): List<String> {
         "and nowhere else, so a rate that failed requests is not a rate this tool",
         "sustained: such a row cannot be the ceiling however well it kept its schedule.",
         "",
+        "**Files** and **Ports** are the other half of that question, sampled a second",
+        "while each row ran: the peak this process reached against its own descriptor",
+        "limit, and sockets in TIME_WAIT against the ephemeral port range. A row whose",
+        "failures came with a peak near either ceiling ran out of room at this end of the",
+        "wire, and its failures are the generator's rather than the target's. The port",
+        "reading is machine-wide — `tw` counts every socket on the host — so it is read",
+        "against a range that is machine-wide too, and a busy neighbour inflates both.",
+        "",
         "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
-            "Served p50 | Served p99 | p50 within $BUDGET | fellBehind() |",
-        "|---:|---:|---:|:---|---:|---:|---:|---:|---:|:---:|:---:|",
+            "Served p50 | Served p99 | Files | Ports | p50 within $BUDGET | fellBehind() |",
+        "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
     ) + measured.map { it.socketRow() } + listOf(
         "",
         ceiling?.let { "Ceiling over a socket: **${it.rate.grouped()} a second** on this machine, a lower bound." }
@@ -203,7 +227,7 @@ private fun footer(measured: List<Measured>): List<String> {
 private fun Measured.socketRow(): String =
     "| ${rate.grouped()} | ${result.count.grouped()} | ${result.failed.grouped()} | $whyFailed | " +
         "${result.behind.p50.readable()} | ${result.behind.p99.readable()} | ${result.behind.max.readable()} | " +
-        "${served?.p50.readable()} | ${served?.p99.readable()} | " +
+        "${served?.p50.readable()} | ${served?.p99.readable()} | $room | " +
         "${if (keptSchedule) "yes" else "no"} | $relativeVerdict |"
 
 private fun Measured.nullStepRow(): String =

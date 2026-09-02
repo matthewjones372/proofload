@@ -397,7 +397,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
       </table>
     </div>
   </section>
-  <p class="note">Each rung held its rate for the whole window and was judged on all of it; there is no warm-up. Response time counts from the departure the profile promised, so it carries any backlog of the generator's own. A rung is void rather than failed when the injector's own lateness passed one whole departure interval at p99 — a departure behind at the tail — because the load it asked for was never offered, so nothing there is the target's. Void rungs are still drawn: the rate the generator itself ran out at is worth seeing. Offered is what left, against the rate the rung asked for.</p>
+  <p class="note">Each rung held its rate for the whole window and was judged on all of it. A search that declared a warm-up warmed every rung at that rung's own rate first, and none of the warming was recorded. Response time counts from the departure the profile promised, so it carries any backlog of the generator's own. A rung is void rather than failed when the injector's own lateness passed one whole departure interval at p99 — a departure behind at the tail — because the load it asked for was never offered, so nothing there is the target's. Void rungs are still drawn: the rate the generator itself ran out at is worth seeing. Offered is what left, against the rate the rung asked for.</p>
 </main>
 <script>
 (function () {

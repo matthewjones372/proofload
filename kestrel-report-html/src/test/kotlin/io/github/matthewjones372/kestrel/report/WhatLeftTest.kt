@@ -1,7 +1,9 @@
 package io.github.matthewjones372.kestrel.report
 
+import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.Rung
 import io.github.matthewjones372.kestrel.Second
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.hold
@@ -55,6 +57,21 @@ class WhatLeftTest {
     fun `the timeline draws when the lateness went, and draws nothing where there was none`() {
         behindByFive().toHtmlReport() shouldContain "how late departures were"
         Fixtures.fellBehind.toHtmlReport() shouldNotContain "how late departures were"
+    }
+
+    @Test
+    fun `a void rung names the load that left and what the target did at it`() {
+        val void = Rung(
+            rate = 100.perSecond,
+            result = Fixtures.fellBehind.copy(
+                plan = Plan("checkout", listOf("browse", "pay"), hold(100.perSecond, over = 10.seconds)),
+            ),
+        )
+
+        val page = Capacity(listOf(void)).toHtmlReport()
+
+        page shouldContain "not judged — the injector lost the schedule"
+        page shouldContain "left, service p99"
     }
 
     private fun second(count: Int) = Second(

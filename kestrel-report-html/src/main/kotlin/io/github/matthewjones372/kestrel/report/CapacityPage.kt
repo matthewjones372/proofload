@@ -207,7 +207,12 @@ private fun Rung.rowLines(chosen: Boolean): List<String> {
 
 /** What the rung was judged to be, in the words the goals themselves use. */
 private fun Rung.judgement(): String = when (outcome) {
-    Rung.Outcome.Void -> "not judged — the injector lost the schedule"
+    // Named rather than left as a dead row: the load that did leave was still
+    // sent at the target, and its service time still measured the target at
+    // that load. The rung is not the answer anyone asked for; it is an answer.
+    Rung.Outcome.Void ->
+        "not judged — the injector lost the schedule; ${offered.perSecond.asRate()} left, " +
+            "service p99 ${servicep99().forReport()} at that load"
 
     Rung.Outcome.Passed -> "every goal met"
 
@@ -217,8 +222,10 @@ private fun Rung.judgement(): String = when (outcome) {
 
 private fun Capacity.noteLines(): List<String> =
     listOf(
-        """  <p class="note">Each rung held its rate for the whole window and was judged on all of it; """ +
-            "there is no warm-up. Response time counts from the departure the profile promised, so it " +
+        """  <p class="note">Each rung held its rate for the whole window and was judged on all of it. """ +
+            "A search that declared a warm-up warmed every rung at that rung's own rate first, and none " +
+            "of the warming was recorded. " +
+            "Response time counts from the departure the profile promised, so it " +
             "carries any backlog of the generator's own. A rung is void rather than failed when the " +
             "injector's own lateness passed one whole departure interval at p99 — a departure behind at " +
             "the tail — because the load it asked for was never offered, so nothing there is the " +
@@ -240,6 +247,9 @@ private fun Rung.Outcome.word(): String = when (this) {
 
 /** The slowest thing the rung measured, which is what a goal is judged against. */
 private fun Rung.p99(): Duration = result.steps.values.maxOfOrNull { it.responseTime.p99 } ?: Duration.ZERO
+
+/** The clock a void rung can still be read by: measured from the departure that happened. */
+private fun Rung.servicep99(): Duration = result.steps.values.maxOfOrNull { it.serviceTime.p99 } ?: Duration.ZERO
 
 private fun String.plural(count: Int): String = if (count == 1) this else "${this}s"
 

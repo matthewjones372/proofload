@@ -135,9 +135,13 @@ private class Lines(private val every: Duration) : Progress {
 
             Rung.Outcome.Failed -> "failed"
 
-            // The ladder stops here, so there is no bound left to narrow: what
-            // a reader needs is that the answer is about this machine.
-            Rung.Outcome.Void -> "void — the generator lost ground, so nothing was learned about the target"
+            // The ladder stops here, so there is no bound left to narrow. What
+            // a reader needs is that the answer is about this machine, and
+            // what the rung did measure: the load that left, and the target's
+            // service time at it.
+            Rung.Outcome.Void ->
+                "void — the generator lost ground, so this is about the machine: " +
+                    "${rung.offered.forReading()}/s left, service p99 ${rung.serviceAtThatLoad()}"
         }
         val left = if (rung.outcome == Rung.Outcome.Void) "" else ", at most $atMost left"
         println("kestrel: rung $number — ${rung.rate.forReading()}/s $became$left")
@@ -183,6 +187,11 @@ private fun Duration.clock(): String = "${inWholeMinutes.padded()}:${(inWholeSec
 private fun Long.padded(): String = toString().padStart(2, '0')
 
 /** A whole rate reads as one; a bisected one keeps the digit that makes it different from its neighbours. */
+
+/** What a void rung still measured: the target's service time at the load that left. */
+private fun Rung.serviceAtThatLoad(): Duration =
+    result.steps.values.maxOfOrNull { it.serviceTime.p99 } ?: Duration.ZERO
+
 private fun Rate.forReading(): String =
     if (perSecond == floor(perSecond)) perSecond.toLong().grouped() else String.format(Locale.ROOT, "%.1f", perSecond)
 

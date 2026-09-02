@@ -60,6 +60,10 @@ data class Runs(val each: List<RunResult>) {
             arrivals = Arrivals.none,
             machine = first.machine,
             timeline = each.map { it.timeline }.superimposed(),
+            // Superimposed with the timeline it is indexed with: second n of
+            // every run is second n here, so the lateness of second n is every
+            // run's lateness in that second pooled.
+            latePerSecond = each.map { it.latePerSecond }.superimposedLateness(),
         )
     }
 
@@ -120,6 +124,15 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
  * asked for the same length; what is left is jitter in where the last response
  * landed, which the plan check has already seen.
  */
+
+/** Second *n* of every run's lateness as second *n* of one, on [superimposed]'s reasoning. */
+private fun List<List<Timing>>.superimposedLateness(): List<Timing> {
+    if (all { it.isEmpty() }) return emptyList()
+    return (0 until maxOf { it.size }).map { second ->
+        mapNotNull { it.getOrNull(second) }.merged()
+    }
+}
+
 private fun List<List<Second>>.superimposed(): List<Second> =
     (0 until maxOf { it.size }).map { second ->
         val counted = mapNotNull { it.getOrNull(second) }

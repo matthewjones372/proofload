@@ -42,6 +42,10 @@ internal fun RunResult.toJson(): String = jsonObject(
         "timelinePrecision" to Histogram.COARSE_PRECISION.toString(),
         "steadyState" to steadyState.toJson(depth = 1),
         "timeline" to timeline.jsonArray(depth = 1) { it.toJson(depth = 2) },
+        // Beside the timeline it is indexed with: how late that second's
+        // departures were, which is what says when a schedule was lost rather
+        // than only that it was.
+        "latePerSecond" to latePerSecond.jsonArray(depth = 1) { it.toJson(depth = 2) },
     ),
 ) + "\n"
 

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel
 import java.time.Instant
 import kotlin.math.ceil
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * One bucket of a distribution: everything counted at or below [upperBound] and
@@ -338,6 +339,17 @@ data class RunResult(
     val timeline: List<Second> = emptyList(),
 
     /**
+     * How late that second's departures were, second by second, from the run's
+     * start.
+     *
+     * [behind] over the whole run says a schedule was lost and cannot say
+     * when, which leaves a reader with "lower the rate" and no idea which rate
+     * held. Coarse, like the rest of the timeline, and empty for a result
+     * built from samples rather than run.
+     */
+    val latePerSecond: List<Timing> = emptyList(),
+
+    /**
      * What a fixed, target-free measurement took on this machine, where one was
      * taken. It travels into a baseline so a later run can ask whether it is on
      * a slower machine before it blames a step for the difference.
@@ -427,6 +439,28 @@ fun RunResult.fellBehind(): Boolean {
  * target's own slowness: a fast target makes that gate impossible to pass and a
  * slow one hides real backlog, and neither says anything about the schedule.
  */
+
+/**
+ * How long the run kept the schedule it promised, before the first second
+ * whose departures were a whole planned interval late at p99.
+ *
+ * [lostGround]'s rule read second by second rather than over the whole run.
+ * The whole window where no second lost ground, and absent where nothing was
+ * planned or nothing was recorded — a run with no schedule to keep did not
+ * keep one for zero seconds.
+ *
+ * The rate that held is deliberately not derived from it here: under a ramp
+ * that is the profile's rate at this offset, and no shape answers that yet.
+ */
+val RunResult.heldScheduleFor: Duration?
+    get() {
+        val interval = plan.plannedInterval
+        if (interval <= Duration.ZERO || latePerSecond.isEmpty()) return null
+
+        val lost = latePerSecond.indexOfFirst { it.count > 0L && it.p99 > interval }
+        return if (lost < 0) latePerSecond.size.seconds else lost.seconds
+    }
+
 fun RunResult.lostGround(): Boolean =
     plan.plannedInterval > Duration.ZERO && behind.p99 > plan.plannedInterval
 

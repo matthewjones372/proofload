@@ -22,6 +22,11 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
     private val steps = LinkedHashMap<String, StepRecorder>()
     private val behind = Histogram()
 
+    // Beside the run's own seconds rather than each step's: a departure is
+    // late once, for the user, not once per step it goes on to make. One
+    // coarse table a second at run level, which is what makes it affordable.
+    private val lateness = Lateness()
+
     /**
      * How long this run has been going, on the monotonic clock this recorder
      * was made with.
@@ -68,6 +73,7 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
     ) {
         require(at >= Duration.ZERO) { "a request cannot have left before the run began, but left at $at" }
         behind.record(schedulingDelay)
+        lateness.record(at, schedulingDelay)
         steps.getOrPut(step) { StepRecorder() }
             .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached)
     }
@@ -94,6 +100,7 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
 
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
+        lateness.merge(other.lateness)
         other.steps.forEach { (name, theirs) -> steps.getOrPut(name) { StepRecorder() }.merge(theirs) }
     }
 
@@ -102,6 +109,7 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
         steps = steps.mapValues { (name, recorder) -> recorder.freeze(name) },
         behind = behind.timing(),
         timeline = everySecond().freeze(),
+        latePerSecond = lateness.freeze(),
     )
 
     /**
@@ -214,6 +222,32 @@ private class Seconds {
     // starts rather than when a request does.
     private fun reaching(second: Int): SecondRecorder {
         while (counted.size <= second) counted.add(SecondRecorder())
+        return counted[second]
+    }
+}
+
+/**
+ * How late the departures of each second were, from the run's start.
+ *
+ * The whole-run [RunRecorder.behind] cannot say *when* a schedule was lost,
+ * only that it was, so a reader is told to lower the rate with no idea which
+ * rate held. Kept coarse and only at run level: one table a second for the run
+ * is a few kilobytes a minute, where one per step per second is what 0025
+ * refused to pay for a second time.
+ */
+private class Lateness {
+
+    private val counted = ArrayList<Histogram>()
+
+    fun record(at: Duration, schedulingDelay: Duration) =
+        reaching(at.inWholeSeconds.toInt()).record(schedulingDelay)
+
+    fun merge(other: Lateness) = other.counted.forEachIndexed { index, theirs -> reaching(index).merge(theirs) }
+
+    fun freeze(): List<Timing> = counted.map { it.timing() }
+
+    private fun reaching(second: Int): Histogram {
+        while (counted.size <= second) counted.add(Histogram.coarse())
         return counted[second]
     }
 }

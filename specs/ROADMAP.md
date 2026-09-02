@@ -77,6 +77,7 @@ built. Each row links the spec that argued for it.
 | [0072](0072-replaying-real-arrivals.md) | a captured hour replayed as the arrival process it was, scaled by time so its burstiness survives |
 | [0070](0070-more-than-one-injector.md) | a run split across injectors on a user-number partition, aligned on one instant and merged back into the run it was |
 | [0074](0074-trends-across-baselines.md) | a series of points, each a population with its own band, and the creep no pair of them can see |
+| [0044](0044-one-stylesheet-one-place-to-change-it.md) | the stylesheet asserted once, so a CSS rule moves one golden rather than every page |
 
 ## Drafted, not built
 
@@ -90,7 +91,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | [0073](0073-exporting-what-a-run-measured.md) | a run's numbers cannot reach Grafana, an OTel backend or an hlog tool |
 | [0060](0060-kafka-and-the-answer-on-another-topic.md) | the one asynchronous system everyone means, and a module that needs no broker to be right |
 | [0061](0061-what-the-kafka-path-costs.md) | what 0060's path costs, and what a socket proves that a mock does not |
-| [0044](0044-one-stylesheet-one-place-to-change-it.md) | a CSS change moves six page goldens |
 | [0047](0047-a-precision-that-travels-with-the-number.md) | the report prints a precision it was handed, not one it read |
 
 Unbuilt tails of specs otherwise landed: `0024-closed`, which wants a revision

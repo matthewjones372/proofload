@@ -63,7 +63,7 @@ the page still carries the stylesheet — has to exist rather than being obvious
 
 ## Stack
 
-- [ ] **`spec-0044-split`** — the stylesheet as its own golden, page goldens
+- [x] **`spec-0044-split`** — the stylesheet as its own golden, page goldens
       without it, and a test that the page still carries it.
       Done when: adding one CSS rule moves exactly one golden file, the page
       goldens are unchanged by it, and deleting the style block from the
@@ -88,3 +88,11 @@ the page still carries the stylesheet — has to exist rather than being obvious
     inlines the same rules whether it uses them or not. If a page ever ships a
     subset, this splits again — recommend noting that here rather than designing
     for it now.
+4. **The scripts have the same problem, smaller.** Found when building this:
+    eight goldens carried 2,208 lines of duplicated stylesheet and they also
+    carry 660 lines of duplicated script — `THEME_JS` alone on the capacity and
+    trend pages, `REPORT_JS` and `THEME_JS` on the six run reports. A change to
+    either moves every page that inlines it, which is the same trap. Not built
+    here: the split is the same three lines of test code, but two scripts and a
+    rule about which page gets which is design this spec did not argue, and the
+    stylesheet was 77% of the duplication. Recommend its own entry.

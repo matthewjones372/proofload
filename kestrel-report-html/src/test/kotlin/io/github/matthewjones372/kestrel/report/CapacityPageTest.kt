@@ -14,7 +14,7 @@ class CapacityPageTest {
 
     @Test
     fun `the page for a capacity matches its golden`() {
-        Fixtures.capacity.toHtmlReport() matches "capacity.html"
+        Fixtures.capacity.toHtmlReport().withoutStylesheet() matches "capacity.html"
     }
 
     @Test

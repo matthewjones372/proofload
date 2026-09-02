@@ -11,7 +11,7 @@ class TrendPageTest {
 
     @Test
     fun `the page for a trend matches its golden`() {
-        page matches "trend.html"
+        page.withoutStylesheet() matches "trend.html"
     }
 
     @Test

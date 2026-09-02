@@ -54,6 +54,6 @@ class MixTest {
 
     @Test
     fun `the page for a mix matches its golden`() {
-        Fixtures.mixed.toHtmlReport() matches "report-mix.html"
+        Fixtures.mixed.toHtmlReport().withoutStylesheet() matches "report-mix.html"
     }
 }

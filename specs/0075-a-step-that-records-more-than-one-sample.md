@@ -89,6 +89,15 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
 - [ ] **`spec-0075-page`** — the count/reached note and both goldens. Done when:
       the note names a step whose samples outnumber its reaches and the goldens
       move once, the diff read rather than regenerated.
+      **Cannot be built as written, found by building it.** A step whose
+      samples outnumber its reaches is not necessarily a stream: `repeat` and
+      `during` (0053) produce exactly the same shape, one sample per visit over
+      several visits, and the mix golden already has one. The frozen result
+      cannot tell the two apart, so the clause this entry asks for would call a
+      loop a stream on the page it is meant to explain. Naming it needs a
+      *visits* count beside `count` and `reached` — a step invocation counted
+      once however many samples it reported — which is a fourth number this
+      spec did not argue for. Open question 7.
 
 ## Acceptance
 
@@ -118,3 +127,8 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
     the one before it is cadence. Recommend cadence, named as cadence — 0071's.
 6. **Does the batch reading survive?** `awaiting`'s one sample answered "how
     long to receive a hundred". Recommend not: a step around it measures that.
+7. **Does the page need a visits count?** `count` is samples, `reached` is
+    users, and neither says how many times a user visited a step — so a loop
+    and a stream read identically on the page. Recommend adding it only with
+    the note that needs it: a run whose steps each sample once has `visits`
+    equal to `count`, and the column would be noise on every such run.

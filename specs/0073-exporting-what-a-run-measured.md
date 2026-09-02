@@ -90,7 +90,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
       Done when: a run sent at a collector that is not there returns a refusal
       naming it rather than throwing, and against a recording collector the
       boundaries and counts equal the exposition's.
-- [ ] **`spec-0073-docs`** — both modules in `docs/modules.md`, and a page
+- [x] **`spec-0073-docs`** — both modules in `docs/modules.md`, and a page
       saying what each export carries and what it leaves in the report.
       Done when: both rows are named and proven by a test below them, and the
       page carries the interpolation caveat.

@@ -193,6 +193,20 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **`kestrel-export` and `kestrel-otel`** — a run's measurements in formats
+  other tools already read. `writeHistogramLog(path)` writes HdrHistogram's log
+  format, one tagged line per step per side per clock plus the run's lateness
+  and the injector's stalls, with nothing re-bucketed: this counter table *is*
+  HdrHistogram's, and its own reader is the test oracle. `openMetrics()` and
+  `writeOpenMetrics(path)` write a Prometheus/OpenMetrics exposition, cumulative
+  buckets on the histogram's own boundaries, no `_sum` because nothing here adds
+  latencies up. `sendOtlp(endpoint)` pushes the same measurements as one delta
+  export and answers `Accepted` or `Refused` rather than throwing. The exports
+  carry measurements only — the plan, the goals, the verdicts, the intervals and
+  every "cannot tell" stay in the report. `kestrel-export` is core and the JDK
+  only; `kestrel-otel` carries the SDK, over `java.net.http` rather than the
+  OkHttp the exporter ships with. See
+  [docs/exporting.md](docs/exporting.md).
 - **A precision that travels with the number.** `Timing.precision` carries the
   width of the bucket its percentiles were read off, set at the freeze from the
   histogram behind it, and `List<Timing>.merged()` refuses across unlike widths

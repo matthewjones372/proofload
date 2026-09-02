@@ -59,6 +59,7 @@ test that quietly asserts about a step nobody runs.
 [more than one run, and a verdict worth having](#more-than-one-run-and-a-verdict-worth-having) ·
 [more than one injector](#more-than-one-injector) ·
 [what a statistic has been doing](#what-a-statistic-has-been-doing) ·
+[send the numbers somewhere else](#send-the-numbers-somewhere-else) ·
 [publish the reports to GitHub Pages](#publish-the-reports-to-github-pages) ·
 [do not gate a merge on latency](#do-not-gate-a-merge-on-latency) ·
 [what the comparison will refuse to say](#what-the-comparison-will-refuse-to-say) ·
@@ -1380,6 +1381,31 @@ about two named steps in a series that never moved, so a named step is a place
 to look rather than a finding. Widening every interval by the comparison count
 was the alternative, and it would make 95% here mean something other than 95%
 on the run report.
+
+## Send the numbers somewhere else
+
+A run's measurements in formats other tools read: an HdrHistogram log, a
+Prometheus or OpenMetrics exposition, and an OTLP push at a collector.
+
+```kotlin
+import io.github.matthewjones372.kestrel.export.writeHistogramLog
+import io.github.matthewjones372.kestrel.export.writeOpenMetrics
+import io.github.matthewjones372.kestrel.otel.sendOtlp
+
+result.writeHistogramLog(Path.of("build/kestrel/run.hlog"))
+result.writeOpenMetrics(Path.of("/var/lib/node_exporter/kestrel.prom"))
+result.sendOtlp("http://collector:4318/v1/metrics")
+```
+
+All three read a frozen result after the run: nothing is scraped while requests
+are departing. All three carry the measurements — the latencies, the run's own
+lateness, the injector's stalls, the failures by reason — and none of them
+carries the judgement, which stays where the sentence next to it survives.
+
+Read [exporting.md](exporting.md) before writing a query against them. The
+short version: these are the histogram's own buckets, so `histogram_quantile()`
+interpolating inside one gives you something the numbers do not support, and
+there is no `_sum` to make a mean out of.
 
 ## Publish the reports to GitHub Pages
 

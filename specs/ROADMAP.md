@@ -79,6 +79,7 @@ built. Each row links the spec that argued for it.
 | [0074](0074-trends-across-baselines.md) | a series of points, each a population with its own band, and the creep no pair of them can see |
 | [0044](0044-one-stylesheet-one-place-to-change-it.md) | the stylesheet asserted once, so a CSS rule moves one golden rather than every page |
 | [0047](0047-a-precision-that-travels-with-the-number.md) | a bucket width carried on the frozen value, refused across a merge, and read off the number a page prints |
+| [0073](0073-exporting-what-a-run-measured.md) | a run's measurements as an HdrHistogram log, an OpenMetrics exposition and an OTLP push — the judgement left in the report |
 
 ## Drafted, not built
 
@@ -89,7 +90,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | Spec | Why it is next |
 |---|---|
 | [0071](0071-grpc-steps.md) | the default JVM service protocol has no typed step |
-| [0073](0073-exporting-what-a-run-measured.md) | a run's numbers cannot reach Grafana, an OTel backend or an hlog tool |
 | [0060](0060-kafka-and-the-answer-on-another-topic.md) | the one asynchronous system everyone means, and a module that needs no broker to be right |
 | [0061](0061-what-the-kafka-path-costs.md) | what 0060's path costs, and what a socket proves that a mock does not |
 

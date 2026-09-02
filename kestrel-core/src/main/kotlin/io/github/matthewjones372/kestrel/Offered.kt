@@ -43,7 +43,14 @@ val RunResult.offered: Offered?
 
         val counted = timeline.sumOf { it.count }
         return Offered(
-            asked = (plan.plannedRequests / window.inWholeMilliseconds.toDouble() * MILLIS_PER_SECOND).perSecond,
+            // One injector's share of what the run was asked for, where a run
+            // was split: every injector carries the whole plan unmodified, so
+            // the share is derived here rather than written into a plan that
+            // would then differ from its neighbours' and refuse to merge.
+            asked = (
+                plan.plannedRequests.toDouble() / (shard?.of ?: 1) /
+                    window.inWholeMilliseconds.toDouble() * MILLIS_PER_SECOND
+                ).perSecond,
             left = (counted / took.inWholeMilliseconds.toDouble() * MILLIS_PER_SECOND).perSecond,
             over = took,
         )

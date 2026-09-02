@@ -15,6 +15,16 @@ data class Runs(val each: List<RunResult>) {
 
     init {
         require(each.isNotEmpty()) { "there are no runs here to merge" }
+        // One injector's quarter of a run is not a run. Handed four of them
+        // this would offer an interval across four quarters of one experiment
+        // and call it the variance between processes, which is 0038's question
+        // answered with samples taken from somebody else's. `Shards` merges
+        // them into the run they were pieces of; that run belongs here.
+        val injectors = each.mapNotNull { it.shard }
+        require(injectors.isEmpty()) {
+            "these are injectors rather than runs — ${injectors.joinToString { "${it.index} of ${it.of}" }}; " +
+                "merge each set with Shards first, and compare the runs those give you"
+        }
         val differences = each.drop(1).flatMapIndexed { index, run -> run.unlike(each.first(), index + 2) }
         require(differences.isEmpty()) {
             "these runs are not one population, and merging them would pool two: ${differences.joinToString()}"

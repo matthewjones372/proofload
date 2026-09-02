@@ -101,6 +101,18 @@ class ManyRunsTest {
     }
 
     @Test
+    fun `a directory of injectors is not a set of runs, and says which they are`(@TempDir directory: Path) {
+        val together = Instant.parse("2026-08-26T09:00:00Z")
+        (0 until 4).forEach { index ->
+            runOf(together).copy(shard = Shard(index = index, of = 4, startingAt = together)).writeInto(directory)
+        }
+
+        val why = shouldThrow<IllegalArgumentException> { Runs.readAll(directory) }.message.orEmpty()
+
+        withClue(why) { why shouldContain "injectors rather than runs" }
+    }
+
+    @Test
     fun `a directory with no runs in it says so rather than reading as one`(@TempDir directory: Path) {
         val refusal = shouldThrow<IllegalArgumentException> { Runs.readAll(directory) }
 

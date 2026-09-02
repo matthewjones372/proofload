@@ -458,7 +458,23 @@ data class RunResult(
      * merge with three others as though four had been asked for.
      */
     val shard: Shard? = null,
+
+    /**
+     * How many injectors sent the departures [behind] measured, where this
+     * result is nobody's shard.
+     *
+     * One for an ordinary run, and the size of the set for the merge of one.
+     * A merged run has no [shard] — it is the whole run again — and still has
+     * to be judged on the spacing the lateness it carries was measured
+     * against, which is the worst injector's. Where there is a shard it says
+     * how many there were, and this is not consulted.
+     */
+    val injectors: Int = 1,
 ) {
+    init {
+        require(injectors > 0) { "a run is sent by at least one injector, but injectors was $injectors" }
+    }
+
     val count: Long get() = steps.values.sumOf { it.count }
 
     val ok: Long get() = steps.values.sumOf { it.ok.count }
@@ -533,17 +549,6 @@ fun RunResult.fellBehind(): Boolean {
 }
 
 /**
- * Whether the injector lost ground on the rate it promised: a p99 lateness
- * above one whole [Plan.plannedInterval] is a departure of backlog at the tail,
- * so the load the profile named is not the load that left.
- *
- * The threshold for that judgement, in the one place it is stated. A different
- * question from [fellBehind], which measures the same backlog against the
- * target's own slowness: a fast target makes that gate impossible to pass and a
- * slow one hides real backlog, and neither says anything about the schedule.
- */
-
-/**
  * How long the run kept the schedule it promised, before the first second
  * whose departures were a whole planned interval late at p99.
  *
@@ -557,15 +562,34 @@ fun RunResult.fellBehind(): Boolean {
  */
 val RunResult.heldScheduleFor: Duration?
     get() {
-        val interval = plan.plannedInterval
+        val interval = ownInterval
         if (interval <= Duration.ZERO || latePerSecond.isEmpty()) return null
 
         val lost = latePerSecond.indexOfFirst { it.count > 0L && it.p99 > interval }
         return if (lost < 0) latePerSecond.size.seconds else lost.seconds
     }
 
-fun RunResult.lostGround(): Boolean =
-    plan.plannedInterval > Duration.ZERO && behind.p99 > plan.plannedInterval
+/**
+ * Whether the injector lost ground on the rate it promised: a p99 lateness
+ * above one whole [ownInterval] is a departure of backlog at the tail, so the
+ * load the profile named is not the load that left.
+ *
+ * The threshold for that judgement, in the one place it is stated. A different
+ * question from [fellBehind], which measures the same backlog against the
+ * target's own slowness: a fast target makes that gate impossible to pass and a
+ * slow one hides real backlog, and neither says anything about the schedule.
+ */
+fun RunResult.lostGround(): Boolean = ownInterval > Duration.ZERO && behind.p99 > ownInterval
+
+/**
+ * The spacing the departures this result counted were actually asked for.
+ *
+ * The run's own interval, except where more than one injector sent it: shard
+ * *k* of *N* sends every *N*th user, so it is judged against *N* intervals.
+ * Reading the whole run's spacing off one injector's lateness would call a
+ * host late that kept perfect time.
+ */
+val RunResult.ownInterval: Duration get() = plan.plannedInterval * (shard?.of ?: injectors)
 
 private const val HUNDRED = 100.0
 private const val P50 = 50.0

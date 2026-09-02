@@ -91,7 +91,7 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
       **Built as version 6.** 0066 took 5 for the warm-up line and 0072 wrote
       the replay line into it, both after this spec was drafted; the number is
       the format's, not this spec's, and 3, 4 and 5 all still read.
-- [ ] **`spec-0070-shards`** — `Shards`: the merge, the derived share, the worst
+- [x] **`spec-0070-shards`** — `Shards`: the merge, the derived share, the worst
       injector's lateness, the refusals.
       Done when: four shards merge to summed counts with a p99 off them; three
       of four are refused by index; an unlike machine is refused; one shard

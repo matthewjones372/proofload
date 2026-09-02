@@ -94,6 +94,24 @@ data class Scenario(val name: String, val steps: List<Step>)
  * the value before anything departs: `plan()` reports the steps a run can take,
  * and a run cannot record under a name that is not here.
  */
+
+/**
+ * Whether this scenario parks a user anywhere in its tree.
+ *
+ * Read off the tree rather than counted at build time, for the reason
+ * [stepNames] is: a scenario is a value, and what it contains is a question it
+ * can answer about itself before anything runs.
+ */
+val Scenario.pauses: Boolean get() = steps.any { it.parks() }
+
+private fun Step.parks(): Boolean = when (this) {
+    is Step.Pause -> true
+    is Step.Repeat -> steps.any { it.parks() }
+    is Step.During -> steps.any { it.parks() }
+    is Step.When -> steps.any { it.parks() }
+    is Step.Exec, is Step.Emit -> false
+}
+
 val Scenario.stepNames: List<String> get() = steps.flatMap { it.names() }
 
 private fun Step.names(): List<String> = when (this) {

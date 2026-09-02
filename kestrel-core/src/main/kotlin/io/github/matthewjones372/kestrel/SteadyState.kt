@@ -75,6 +75,9 @@ private fun RunResult.from(offset: Duration): RunResult = RunResult(
     machine = machine,
     hiccups = Timing.none,
     timeline = timeline.secondsFrom(offset),
+    // Narrowed with the timeline it is indexed with, so the law is asked of
+    // the same seconds the throughput and latency come from.
+    usersInFlight = usersInFlight.drop(offset.inWholeSeconds.toInt()),
 )
 
 private fun StepStats.from(offset: Duration): StepStats {

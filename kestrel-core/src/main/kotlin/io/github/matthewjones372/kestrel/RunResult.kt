@@ -307,7 +307,20 @@ data class StepStats(
 }
 
 /** One arm as a plan carries it: what it sends, the names it can record under, and the rate it is sent at. */
-data class PlannedArm(val scenario: String, val steps: List<String>, val profile: InjectionProfile?) {
+data class PlannedArm(
+    val scenario: String,
+    val steps: List<String>,
+    val profile: InjectionProfile?,
+    /**
+     * Whether this arm's scenario parks its users between steps.
+     *
+     * A pause is a step that records nothing, so nothing in a result can see
+     * one afterwards — and a user inside a pause is a user in flight that is
+     * making no request. Anything reading the in-flight count as requests in
+     * flight has to know, so the plan carries it.
+     */
+    val pauses: Boolean = false,
+) {
 
     val plannedUsers: Long get() = profile?.userCount() ?: 0L
 }
@@ -352,6 +365,9 @@ data class Plan(
 
     /** An upper bound: a scenario that abandons users sends fewer, which is the point of showing it. */
     val plannedRequests: Long get() = arms.sumOf { it.plannedUsers * it.steps.size }
+
+    /** Whether any arm parks its users, which stops in-flight users standing for in-flight requests. */
+    val pauses: Boolean get() = arms.any { it.pauses }
 
     /**
      * How long the profile promised between departures: its window shared out

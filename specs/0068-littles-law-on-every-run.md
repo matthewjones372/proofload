@@ -82,7 +82,7 @@ invent a meaning for two runs' concurrency added. This overrides 0057's question
       one-second sampler, indexed by the second it was taken in.
       Done when: a ten-second run reports about ten samples, `Progress.silent` the
       same ones, a missed second is absent rather than zero, and the ceiling holds.
-- [ ] **`spec-0068-law`** — `Concurrency` over the steady segment: the ratio, the
+- [x] **`spec-0068-law`** — `Concurrency` over the steady segment: the ratio, the
       backlog, and the tolerance in one named place.
       Done when: agreeing quantities report `agrees`, a doubled latency reports the
       ratio and not `agrees`, a `Step.Pause` reports `Absent` with the reason, and
@@ -101,10 +101,12 @@ invent a meaning for two runs' concurrency added. This overrides 0057's question
 
 ## Open questions
 
-1. **What tolerance?** The derived side is biased one way, so the gate is asymmetric:
-    `observed` above the prediction is a finding at any margin, below it needs the
-    allowance. Recommend one constant at `2 × Histogram.COARSE_PRECISION`, what
-    `SteadyState.TOLERANCE` already is; 0047 has not landed, so this reads it direct.
+1. **What tolerance?** ~~Asymmetric: `observed` above the prediction is a
+    finding at any margin.~~ Built symmetric at `SteadyState.TOLERANCE`, and
+    the recommendation was wrong about why. The derived side is indeed biased
+    high — every mean is read off bucket tops — but the *measured* side is a
+    one-hertz sample of a count that moves, and that error runs both ways. A
+    one-sided gate fires on sampling noise and calls it a bug in the tool.
 2. **How is `observed` averaged?** A sample a second is a sample of `L`, not its
     mean. Recommend the arithmetic mean of the steady segment's samples with the
     count printed, and no smoothing: an interpolated concurrency is the same lie

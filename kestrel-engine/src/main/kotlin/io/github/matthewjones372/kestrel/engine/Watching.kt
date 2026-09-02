@@ -33,12 +33,20 @@ internal class Departed {
         lateness = nanos
     }
 
-    fun snapshot(inFlight: Long, ended: Boolean, scheduled: Duration): Snapshot = Snapshot(
+    fun snapshot(
+        inFlight: Long,
+        ended: Boolean,
+        scheduled: Duration,
+        requests: Long = 0L,
+        failed: Long = 0L,
+    ): Snapshot = Snapshot(
         departed = count,
         inFlight = inFlight,
         behind = lateness.nanoseconds,
         ended = ended,
         scheduled = scheduled,
+        requests = requests,
+        failed = failed,
     )
 }
 

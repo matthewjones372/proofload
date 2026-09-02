@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicLongArray
 import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.time.Duration
 
@@ -58,6 +59,27 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
             .also { array -> repeat(shards) { index -> array.set(index, first.shard()) } }
 
     private val completions = first.shard()
+
+    // One counter per shard, written only by the thread holding that shard and
+    // read approximately by the ticker. Single-writer, so a plain volatile
+    // store is enough and no reader can tear one; adding them up is the
+    // ticker's work, off the path being timed. A shared counter here would be
+    // a contended increment per request, which is the thing this whole class
+    // is arranged to avoid.
+    private val counted = AtomicLongArray(shards)
+
+    private val failures = AtomicLongArray(shards)
+
+    /** What has been recorded so far, added up without stopping anything. */
+    fun counts(): Pair<Long, Long> {
+        var requests = 0L
+        var failed = 0L
+        repeat(counted.length()) { index ->
+            requests += counted.get(index)
+            failed += failures.get(index)
+        }
+        return requests to failed
+    }
 
     /** How long the run has been going, for a caller that was told no offset. */
     fun sinceStart(): Duration = first.sinceStart()
@@ -113,6 +135,12 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         if (recorder != null) {
             try {
                 recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, attempts)
+                // Lazy: this thread owns the slot, so nothing else writes these
+                // two, and a ticker reading a count one store stale is what a
+                // watcher is for. An ordered store would cost a fence per
+                // request to make a progress line a moment fresher.
+                counted.lazySet(index, counted.get(index) + 1)
+                if (failure != null) failures.lazySet(index, failures.get(index) + 1)
             } finally {
                 slots.set(index, recorder)
             }

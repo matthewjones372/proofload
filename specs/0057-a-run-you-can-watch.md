@@ -79,7 +79,7 @@ ceiling did not move.
       supplying `silent`.
       Done when: neither framework's output gains a line, and a `main` still
       prints.
-- [ ] **`spec-0057-counts`** — per-shard volatile counts, so a tick can report
+- [x] **`spec-0057-counts`** — per-shard volatile counts, so a tick can report
       requests and failures.
       Done when: the numbers match the frozen result at the end, and
       `:benchmarks:ceiling` shows no change against the row before it.

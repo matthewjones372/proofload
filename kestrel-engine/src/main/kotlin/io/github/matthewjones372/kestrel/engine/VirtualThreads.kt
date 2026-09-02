@@ -77,7 +77,8 @@ private fun Simulation.send(progress: Progress): RunResult {
     val watching = watchProgress(progress, runStart) { ended ->
         // The whole run's window, which is the longest arm's: a mix is over
         // when its last arm is.
-        departed.snapshot(users.inFlight(), ended, scheduled = over)
+        val (requests, failed) = recorders.counts()
+        departed.snapshot(users.inFlight(), ended, scheduled = over, requests = requests, failed = failed)
     }
     // Read where the offsets are consumed rather than off the profile: what the
     // report names is the spacing that was produced, and a profile asked the

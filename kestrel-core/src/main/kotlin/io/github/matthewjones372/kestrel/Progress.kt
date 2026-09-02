@@ -24,6 +24,19 @@ data class Snapshot(
     val ended: Boolean,
 
     /**
+     * Requests recorded so far, and how many of them failed.
+     *
+     * Read approximately: each shard publishes its own count through a
+     * volatile store as it records, and the ticker adds them up without
+     * stopping anything. A tick can therefore land between a shard's two
+     * stores and report a total a moment stale, which is what a watcher wants
+     * — the alternative is a lock on the path being timed, and a tool that
+     * moves what it measures reports its own weight as the target's latency.
+     */
+    val requests: Long = 0L,
+    val failed: Long = 0L,
+
+    /**
      * The window the profile asked for, which the scheduler has held since
      * before the first departure.
      *
@@ -155,9 +168,23 @@ private fun Snapshot.line(elapsed: Duration): String = listOfNotNull(
     "kestrel: ${elapsed.clock()}",
     "departed ${departed.grouped()}",
     "in flight ${inFlight.grouped()}",
+    counted(),
     "behind $behind",
     left(elapsed),
 ).joinToString(separator = "  ")
+
+/**
+ * What has been recorded, where anything has.
+ *
+ * Absent before the first request lands rather than printed as a zero: a run
+ * whose first departures have not answered yet has counted nothing, and a line
+ * saying so reads as a run that is failing to send.
+ */
+private fun Snapshot.counted(): String? = when {
+    requests == 0L -> null
+    failed == 0L -> "${requests.grouped()} ok"
+    else -> "${requests.grouped()} requests, ${failed.grouped()} failed"
+}
 
 /**
  * What the schedule has left, or that it has none.

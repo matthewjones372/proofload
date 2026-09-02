@@ -1,7 +1,6 @@
 package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.StepScope
-import java.net.http.HttpRequest
 import java.util.concurrent.ThreadLocalRandom
 
 private const val TRACEPARENT = "traceparent"
@@ -54,14 +53,14 @@ private const val SHIFT_C = 31
  * Applied before the request's own headers, so a scenario that sets either name
  * itself is the one a reader sees first on the wire.
  */
-internal fun HttpRequest.Builder.tracing(traced: Boolean, scope: StepScope): HttpRequest.Builder {
-    if (!traced) return this
+internal fun tracing(traced: Boolean, scope: StepScope): Map<String, String> {
+    if (!traced) return emptyMap()
     val traceparent = nextTraceparent()
     // Told to the scope as well as sent: a percentile with no id beside it
     // leaves a reader to search a tracing backend by timestamp, which is the
     // search this exists to replace.
     scope.traced(traceparent.traceId())
-    return header(TRACEPARENT, traceparent).header(BAGGAGE, SYNTHETIC)
+    return mapOf(TRACEPARENT to traceparent, BAGGAGE to SYNTHETIC)
 }
 
 /** The trace id out of a `traceparent`: the middle field, which is what a backend is searched by. */

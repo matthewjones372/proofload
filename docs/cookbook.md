@@ -605,6 +605,33 @@ yourself. A retry written inside a step body is timed as one long request, so a
 p99 climbs by the backoff you chose and describes this tool's patience rather
 than the target.
 
+## Send through a different client
+
+`docs/what-it-costs.md` measures the shipped path at a lower bound of a couple
+of thousand a second on four shared cores, and that is the JDK client's number
+rather than Kestrel's. A caller who needs more hands in a transport:
+
+```kotlin
+val api = http.baseUrl("https://orders.internal").over(FasterClient())
+```
+
+A `Transport` is one method — a `Request` in, an `Exchange` out — and it lives
+on the `Http` value, so a run against two services can speed up one and leave
+the other alone.
+
+What a transport may **not** change is what a number means. The redirect walk,
+the per-user cookie jar, the `traceparent`, the status and the body checks all
+stay above the seam, and it is handed no `StepScope`, so it cannot write to a
+user's session. It owes exactly two failures — `TimedOut` where the target did
+not answer in time and `Threw(class)` for anything else — and no duration:
+service time is measured by the engine around the step, and a clock inside a
+transport would be a third one to reconcile.
+
+`TransportContractTest` in `kestrel-http` is what an implementation is judged
+against: a 503 is an answer and not a failure, a silent target is
+`Failed(TimedOut)`, a refused connection is `Failed(Threw("ConnectException"))`,
+and a redirect is never followed of the transport's own accord.
+
 ## Sign in once and carry the cookie
 
 ```kotlin

@@ -82,17 +82,17 @@ lines everybody writes, once per client.
 
 ## Stack
 
-- [ ] **`spec-0069-seam`** — the three types, and `JdkHttpClient`.
+- [x] **`spec-0069-seam`** — the three types, and `JdkHttpClient`.
       Done when: an `HttpAction` sends through a recording double touching no
       socket, and the existing tests pass unchanged.
-- [ ] **`spec-0069-chosen`** — `Http.over(transport)`, carried like `cookies`.
+- [x] **`spec-0069-chosen`** — `Http.over(transport)`, carried like `cookies`.
       Done when: two `Http` values in one run send through two transports, with
       cookies, `following` and `traceparent` unchanged over a double.
-- [ ] **`spec-0069-contract`** — the contract a transport owes, as a test any
+- [x] **`spec-0069-contract`** — the contract a transport owes, as a test any
       implementation runs through against `com.sun.net.httpserver`.
       Done when: a 503 is `Answered`, a silent target `Failed(TimedOut)`, a
       refused connection `Failed(Threw("ConnectException"))`.
-- [ ] **`spec-0069-docs`** — the `docs/modules.md` row and the HTTP page.
+- [x] **`spec-0069-docs`** — the `docs/modules.md` row and the HTTP page.
       Done when: `ModulesDocTest` passes, and the page says what a transport
       must preserve and must not do.
 
@@ -112,7 +112,13 @@ lines everybody writes, once per client.
     Recommend fixtures, named unsupported surface.
 3. **Does a transport need closing?** Nothing closes `sharedClient` today and
     `Http` has no lifecycle. Recommend no `close` on the seam; a transport with
-    a pool to release exposes its own.
+    a pool to release exposes its own. Built that way.
+6. **`Response` had to become constructible.** Found by writing the seam: its
+    constructor was internal, so a transport in another module could not build
+    what it must return — a seam that seams nothing. It now has a public
+    constructor taking header pairs, which lowercases the names rather than
+    trusting them, so a transport cannot change what `header("Location")`
+    finds by casing its keys differently.
 4. **Does connection-per-user land here?** Recommend a spec of its own: it is
     cheap once the seam exists, and needs the page that says what it measures.
 5. **HTTP/3?** The JDK client does not speak it, so no configuration of

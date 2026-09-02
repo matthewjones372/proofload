@@ -10,6 +10,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpTimeoutException
 import java.time.Duration
+import kotlin.time.toJavaDuration
 
 /** How long a request is given before it is a failure rather than a slow success. */
 internal val requestTimeout: Duration = Duration.ofSeconds(30)
@@ -32,23 +33,54 @@ internal val sharedClient: HttpClient by lazy {
 }
 
 /**
- * Sends [request], turning the transport's exceptions into a failure on [scope]
+ * The transport this module ships: the JDK's own client, one for the whole run.
+ *
+ * The default rather than the only one. `docs/what-it-costs.md` measures this
+ * path at a lower bound of a couple of thousand a second on four shared cores,
+ * and a caller who needs more can hand in a transport built on a client that
+ * goes faster — carrying its own dependency, in its own module, without core
+ * or this module growing one.
+ */
+class JdkHttpClient(private val client: HttpClient = sharedClient) : Transport {
+
+    override fun exchange(request: Request): Exchange =
+        try {
+            Exchange.Answered(Response.of(client.send(request.asJdk(), HttpResponse.BodyHandlers.ofString())))
+        } catch (failure: IOException) {
+            Exchange.Failed(failure.reason())
+        } catch (interrupted: InterruptedException) {
+            // The engine is stopping this user; leave the flag set for
+            // whatever checks it next, and report the failure it is.
+            Thread.currentThread().interrupt()
+            Exchange.Failed(interrupted.className())
+        }
+}
+
+private fun publisher(body: String?): HttpRequest.BodyPublisher =
+    body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()
+
+private fun Request.asJdk(): HttpRequest = headers.entries
+    .fold(
+        HttpRequest.newBuilder(uri)
+            .timeout(timeout.toJavaDuration())
+            .method(method, publisher(body)),
+    ) { builder, (name, value) -> builder.header(name, value) }
+    .build()
+
+/**
+ * Sends [request] through [transport], turning a failure into one on [scope]
  * and returning null. Nothing throws out of here: an engine reads the step's
  * result to measure a failure, so a target's bad day must not arrive by the
  * same route as a bug in the generator.
  */
-internal fun exchange(request: HttpRequest, scope: StepScope): Response? =
-    try {
-        Response.of(sharedClient.send(request, HttpResponse.BodyHandlers.ofString()))
-    } catch (failure: IOException) {
-        scope.fail(failure.reason())
-        null
-    } catch (interrupted: InterruptedException) {
-        // The engine is stopping this user; leave the flag set for whatever
-        // checks it next, and record the step as the failure it is.
-        Thread.currentThread().interrupt()
-        scope.fail(interrupted.className())
-        null
+internal fun exchange(request: Request, scope: StepScope, transport: Transport): Response? =
+    when (val answer = transport.exchange(request)) {
+        is Exchange.Answered -> answer.response
+
+        is Exchange.Failed -> {
+            scope.fail(answer.reason)
+            null
+        }
     }
 
 /**

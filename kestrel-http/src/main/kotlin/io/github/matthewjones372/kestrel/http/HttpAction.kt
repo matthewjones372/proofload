@@ -5,10 +5,10 @@ import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.SessionKey
 import io.github.matthewjones372.kestrel.StepScope
 import java.net.URI
-import java.net.http.HttpRequest
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.toKotlinDuration
 
 /** What a retry is: how many more sends, on what, and the first wait between them. */
 internal data class Retries(
@@ -193,7 +193,7 @@ class HttpAction internal constructor(
      * set and none of them can arrive as somebody else's measurement.
      */
     private tailrec fun follow(hop: Hop, hopsLeft: Int, scope: StepScope): Response? {
-        val response = exchange(request(hop, scope), scope) ?: return null
+        val response = exchange(request(hop, scope), scope, origin.transport) ?: return null
         // Kept whatever the status was, unlike a capture: a cookie is state the
         // target set on the user, not a value this step asked for, and dropping
         // the one that came with an unexpected status would make the next step
@@ -239,14 +239,16 @@ class HttpAction internal constructor(
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.
-    private fun request(hop: Hop, scope: StepScope): HttpRequest = headersFor(scope).entries
-        .fold(
-            HttpRequest.newBuilder(hop.uri)
-                .timeout(timeout)
-                .method(hop.method, publisher(hop.body))
-                .tracing(traced, scope),
-        ) { builder, (name, value) -> builder.header(name, value) }
-        .build()
+    private fun request(hop: Hop, scope: StepScope): Request = Request(
+        method = hop.method,
+        uri = hop.uri,
+        // The trace headers are put on here rather than by the transport: what
+        // a run is followed by downstream is this module's to decide, and a
+        // transport that had to add them could forget to.
+        headers = tracing(traced, scope) + headersFor(scope),
+        body = hop.body,
+        timeout = timeout.toKotlinDuration(),
+    )
 
     // `HttpRequest.Builder.header` appends, so a jar and a hand-written cookie
     // header would send two of them; the one the scenario wrote wins.
@@ -257,9 +259,6 @@ class HttpAction internal constructor(
             else -> mapOf(COOKIE to sending) + headers
         }
     }
-
-    private fun publisher(body: String?): HttpRequest.BodyPublisher =
-        body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()
 }
 
 /** Names the step for the path template, which is the row a report wants. */

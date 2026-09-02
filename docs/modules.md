@@ -9,7 +9,7 @@ uses and inherits no stack it did not ask for.
 |---|---|---|
 | `kestrel-core` | scenarios, profiles, goals and results, all as values, and the `Engine` that runs one | **nothing** |
 | `kestrel-engine` | runs a simulation on virtual threads, departures on a schedule | core |
-| `kestrel-http` | HTTP steps on the JDK's `java.net.http` client | core |
+| `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |

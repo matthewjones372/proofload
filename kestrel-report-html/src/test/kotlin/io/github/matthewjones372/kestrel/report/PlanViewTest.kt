@@ -116,4 +116,12 @@ class PlanViewTest {
     fun `a run that warmed nothing says nothing about warming`() {
         pageFor(held) shouldNotContain "Warmed"
     }
+
+    @Test
+    fun `the page says the rate is users a second, so a stream test is not read as messages`() {
+        val page = pageFor(held)
+
+        page shouldContain "The rate above is users a second"
+        page shouldContain "opens a connection or makes a request"
+    }
 }

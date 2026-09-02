@@ -21,7 +21,8 @@ internal fun RunResult.planLines(): List<String> {
             "${"user".plural(plan.plannedUsers)}, ${plan.plannedRequests.grouped()} " +
             "${"request".plural(plan.plannedRequests)}.</p>",
         """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}${plan.warmed()}</p>""",
-    ) + mixLines() + plan.shapeCharts() + listOf("  </section>")
+    ) + listOf("""    <p class="note">${plan.rateMeans()}</p>""") +
+        mixLines() + plan.shapeCharts() + listOf("  </section>")
 }
 
 /**
@@ -36,6 +37,20 @@ private fun Plan.warmed(): String {
     val at = if (rate == null) "" else " at $rate"
     return " Warmed for ${warmUp.over.forPlan()}$at, not counted."
 }
+
+/**
+ * What the rate above counts, said in words rather than left to the reader.
+ *
+ * A profile's rate is users a second, never requests or messages a second: a
+ * user goes on to make as many requests as its scenario has steps, and in a
+ * stream test it opens one connection and receives many messages on it. A
+ * reader who takes `2,000/s` on a page about a price feed for messages a
+ * second has misread it by three orders of magnitude, and the page can prevent
+ * that for the cost of a line.
+ */
+private fun Plan.rateMeans(): String =
+    "The rate above is users a second — each one opens a connection or makes a request and then walks its " +
+        "${steps.size} ${"step".plural(steps.size)}. What was recorded a second is on the timeline below."
 
 /** Every arm's scenario: one is the run's name, and several are the mix that ran. */
 private fun Plan.named(): String = arms.joinToString(separator = " + ") { it.scenario.escapedForHtml() }

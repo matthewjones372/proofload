@@ -86,9 +86,15 @@ prevent for the cost of a line.
       Done when: a hundred answers to a hundred sends report a hundred matched
       and none outstanding, and a server push with no send reports as
       unsolicited rather than as a match.
-- [ ] **`spec-0059-report`** — the connection rate named as a connection rate.
+- [x] **`spec-0059-report`** — the connection rate named as a connection rate.
       Done when: the page says the profile's rate opened connections, and
       prints messages a second separately.
+      Said generally rather than only for a stream test: nothing in the plan
+      marks a run as one — the report module cannot depend on the websocket
+      module, and step names are the caller's — so the page says the true
+      thing for every run, that the rate is users a second and each user
+      opens a connection or makes a request. What was recorded a second is
+      the timeline, which is where messages a second already appear.
 
 ## Acceptance
 

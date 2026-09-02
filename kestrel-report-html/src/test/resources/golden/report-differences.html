@@ -303,6 +303,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   <section class="plan" aria-label="What was asked for">
     <p><strong>checkout</strong> — 1 step, 10/s held for 10.0 s. Planned 100 users, 100 requests.</p>
     <p class="arrivals">Arrivals were evenly spaced, which understates queueing against the same mean rate in production.</p>
+    <p class="note">The rate above is users a second — each one opens a connection or makes a request and then walks its 1 step. What was recorded a second is on the timeline below.</p>
     <figure class="chart shape">
       <figcaption>the shape that was asked for — peak 10/s</figcaption>
       <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">

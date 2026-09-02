@@ -82,6 +82,15 @@ request bodies, and an answer for what a shared report may carry.
       the headers it sent, the body and the response.
       Done when: a templated path prints filled, a capture prints the value it
       took, and a failed capture prints what it was reading.
+      **Blocked, established by trying.** The trace walks with the run's own
+      walker and a printing `StepSink`, which is right — a diagnostic on a
+      route of its own can disagree with the run it explains — but a sink is
+      handed a step name and a reason, and nothing else. For the HTTP module to
+      report the URL it filled, something has to reach it: a flag is what "Why
+      this shape" above rejects, and the alternative (an observer on the
+      `StepScope`, a no-op singleton in a real run) needs the engine to build
+      the scope and hand it in, which is `spec-0075-seam`. Until that lands,
+      the trace prints the step and its outcome and nothing about the exchange.
 
 ## Acceptance
 

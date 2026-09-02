@@ -76,6 +76,7 @@ private fun RunResult.documentLines(
         differences.differenceLines(),
         planLines(),
         cutShortLines(),
+        closedLines(),
         lostLines(),
         behindLines(),
         totalsLines(),
@@ -155,6 +156,32 @@ private fun Floor?.resolutionLines(): List<String> =
  * counts a wait this tool caused. Absent otherwise: a warning that is always
  * there is one nobody reads.
  */
+
+/**
+ * What a closed run cannot tell anyone, said before any of its numbers.
+ *
+ * First thing on the page for the reason a void rung is: every percentile
+ * below it was shaped by the target's own responses, and read as an open run's
+ * they say a service stayed fast while doing less work. That is coordinated
+ * omission, and this is the one place a reader is told they are looking at it.
+ */
+private fun RunResult.closedLines(): List<String> {
+    if (!plan.closed) return emptyList()
+    val population = plan.plannedUsers.grouped()
+    return listOf(
+        """  <p class="behind" id="kestrel-closed" role="status">""",
+        "    <strong>A closed run: $population " +
+            "${"user".let { if (plan.plannedUsers == 1L) it else "${it}s" }} looping.</strong> " +
+            "The load here was throttled by the target's own responses rather than offered at a rate — " +
+            "so when the target slowed down, less work was sent, and these percentiles describe a " +
+            "smaller experiment than a slower one would have been. There is one clock rather than two: " +
+            "nothing promised a departure after each user's first, so response time and service time are " +
+            "the same number and there is no backlog to report. The rate below is what was achieved, " +
+            "which is the only rate a closed run has.",
+        "  </p>",
+    )
+}
+
 private fun RunResult.behindLines(): List<String> =
     if (!fellBehind()) emptyList()
     else listOf(

@@ -73,7 +73,7 @@ it stops them using a tool that tells them the truth about it.
       Done when: fifty users produce fifty concurrent journeys, the run reports
       the rate it actually achieved, and nothing in *A run with no schedule*
       prints a number the run did not measure.
-- [ ] **`spec-0024-honesty`** — the caveat on the page and in the docs.
+- [x] **`spec-0024-honesty`** — the caveat on the page and in the docs.
       Done when: a closed run's report says the load was shaped by the target,
       and an open run's does not.
 

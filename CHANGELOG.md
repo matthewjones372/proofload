@@ -193,6 +193,18 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **The closed model.** `users(50, over = 10.minutes)` holds a fixed population,
+  each user restarting the scenario when it finishes — "fifty users, looping",
+  which is how most people describe load. Supported and labelled: a closed run
+  sends less when the target slows down, so its report shows a service that
+  stayed fast while doing less work, and the page says that before it says
+  anything else. It reports no lateness (absent, not zero — nothing promised a
+  departure), one clock rather than two, no `offered` or `heldScheduleFor`, and
+  no arrival spacing; a `keptSchedule` goal on one is refused where it is
+  written, as is putting a population inside `then`, `randomized` or a replay.
+  Little's law is the check it makes better than an open run. The baseline
+  format goes to version 7 to carry the population and window; version 6 files
+  still read.
 - **What the Kafka path costs.** `:benchmarks:kafkaCeiling` sweeps the produce
   path with the broker removed, and `docs/what-it-costs.md` carries the figure
   with what is missing from it: no accumulator, no sender thread, no

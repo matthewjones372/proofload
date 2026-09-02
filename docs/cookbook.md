@@ -30,6 +30,7 @@ test that quietly asserts about a step nobody runs.
 [quieten the progress lines](#quieten-the-progress-lines)
 
 **Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
+[fifty users, looping](#fifty-users-looping) ·
 [stop sending on a metronome](#stop-sending-on-a-metronome) ·
 [think time](#think-time) ·
 [loops and conditions](#loops-and-conditions) ·
@@ -299,6 +300,45 @@ profile.over          // 6m
 profile.userCount()   // 32100
 profile.endRate       // 200.0/s
 ```
+
+## Fifty users, looping
+
+The closed model — how most people describe load, and the one shape here that
+measures a queue of its own making:
+
+```kotlin
+import io.github.matthewjones372.kestrel.users
+
+val soak = looping.at(users(50, over = 10.minutes))
+```
+
+Fifty users start at once and each restarts the scenario when it finishes.
+
+**Read this before the numbers.** When the target slows down, a closed run
+sends *less*, so its report shows a service that stayed fast while doing less
+work. That is coordinated omission, and it is why the open model is the default
+here. The page says so at the top of a closed run and nowhere else.
+
+What a closed run does not report, because it never promised a departure:
+
+- **no lateness.** `behind` and the per-second lateness are empty rather than
+  zero — a generator is not late for a departure nobody promised, and zero
+  would read as perfect punctuality;
+- **one clock, not two.** Response time counts from the departure the profile
+  promised, and after each user's first journey there is none, so response time
+  and service time are the same number;
+- **no `offered`, no `heldScheduleFor`**, and a `keptSchedule` goal is refused
+  where it is written rather than judged against a schedule that never existed;
+- **no arrival spacing.** That figure needs one thread seeing departures in
+  order, and a population has none.
+
+What it does report is the rate it achieved, which is the only rate it has, and
+[Little's law](#read-only-the-part-that-settled) — which needs no promised
+departure and is the one check a fixed population makes better than an open
+run, because the concurrency it predicts is a number you chose.
+
+`users(...)` cannot go inside `then`, `randomized` or a replay: those shape
+departures, and this has none to shape.
 
 ## Stop sending on a metronome
 

@@ -45,7 +45,7 @@ built. Each row links the spec that argued for it.
 | [0039](0039-what-this-machine-can-resolve.md) | hiccups, the floor, and a comparison that consults it |
 | [0022](0022-a-token-that-stays-fresh.md) | `refreshing`, a credential fetched off the measured path |
 | [0023](0023-a-number-you-can-follow.md) | `traced()`: a `traceparent` on every request, and an exemplar beside the percentile |
-| [0024](0024-think-time-and-closed-model.md) | `pause`, a step that records nothing and is not latency |
+| [0024](0024-think-time-and-closed-model.md) | `pause`, a step that records nothing and is not latency, and `users(n)` looping — the closed model, labelled with what it cannot see |
 | [0026](0026-checks-and-retries.md) | `checking`, a body check that fails under its own name, and `retrying` whose latency is the last attempt |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `docs/modules.md` with a test behind every row, and the cookbook |
 | [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | a booking window, so a run books departures a window at a time |
@@ -88,9 +88,7 @@ built. Each row links the spec that argued for it.
 
 Nothing. Every drafted spec is built, bar the tails listed below.
 
-Unbuilt tails of specs otherwise landed: `0024-closed`, whose revision is
-written — 0024 now decides what each schedule figure says when there is no
-schedule — and which is ready to build,
+Unbuilt tails of specs otherwise landed:
 `0029-tag`, which is the release itself, `0075`'s page entry, which cannot be
 built as written because a looped step and a streaming one read alike in a
 frozen result, `0071`'s server-streaming half, whose samples are either

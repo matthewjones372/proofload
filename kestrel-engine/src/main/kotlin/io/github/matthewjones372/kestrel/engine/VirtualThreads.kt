@@ -132,7 +132,7 @@ private fun Simulation.departAll(
                 allBooked = users::allScheduled,
             ) { departure ->
                 arrivals?.record(departure.offset)
-                users.starting()
+                users.booked()
                 scheduler.schedule(
                     {
                         // Each arm's own feeder, asked for its own user number:
@@ -190,6 +190,9 @@ private fun Scenario.depart(
     // says when this tool fired, the other when a request left.
     departed.left(lateness(runStart, departure).inWholeNanoseconds)
     Thread.ofVirtual().start {
+        // Counted here rather than where it was booked: until this thread is
+        // mounted, nothing has left.
+        users.departed()
         try {
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
@@ -291,29 +294,45 @@ private fun schedulerThread(runnable: Runnable): Thread =
  */
 private class Departures {
 
+    // Two counts, because they answer two questions. `outstanding` is what the
+    // run waits on: a user is counted the moment it is booked, so the latch
+    // cannot fire while a booked user has yet to start. `running` is what a
+    // watcher reads: a user is counted when its thread actually departs.
+    //
+    // One counter served both and was wrong for the second. The pump books a
+    // window ahead — BOOKING_WINDOW of departures — so at fifty a second it
+    // counted two hundred and fifty users as in flight that had not left, and
+    // any reading of concurrency off it was that window rather than the
+    // target's latency.
     private val outstanding = AtomicLong(1)
+    private val running = AtomicLong()
     private val allFinished = CountDownLatch(1)
-    private val booking = CountDownLatch(1)
 
-    fun starting() {
+    /** Booked, and owed a departure: the run cannot end until this user has run. */
+    fun booked() {
         outstanding.incrementAndGet()
     }
 
-    fun finished() {
-        if (outstanding.decrementAndGet() == 0L) allFinished.countDown()
+    /** Left: its thread is mounted and its first step is about to run. */
+    fun departed() {
+        running.incrementAndGet()
     }
 
-    fun allScheduled() {
-        // Released before the token it stands for, so a watcher between the two
-        // reads one user too few rather than the loop as a user.
-        booking.countDown()
-        finished()
+    fun finished() {
+        running.decrementAndGet()
+        release()
+    }
+
+    fun allScheduled() = release()
+
+    private fun release() {
+        if (outstanding.decrementAndGet() == 0L) allFinished.countDown()
     }
 
     fun awaitAll() = allFinished.await()
 
-    /** Users still running, which is everything outstanding but the scheduling loop's own token. */
-    fun inFlight(): Long = (outstanding.get() - booking.count).coerceAtLeast(0)
+    /** Users whose journey has started and not yet ended. */
+    fun inFlight(): Long = running.get().coerceAtLeast(0)
 }
 
 /**

@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel
 import java.time.Instant
 import kotlin.math.ceil
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -70,6 +71,25 @@ data class Timing(
 
         return valueAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong()))
     }
+
+    /**
+     * The arithmetic mean, read off [distribution] rather than kept beside it.
+     *
+     * Every sample is counted at the top of the bucket it fell in, as every
+     * percentile here is, so this is at or above the true mean and within the
+     * histogram's own precision of it — never below. A mean kept as a running
+     * sum would be exact and would be a second number that could disagree with
+     * the buckets the rest of this value is read from.
+     *
+     * Zero where nothing was recorded, which the count beside it says.
+     */
+    val mean: Duration
+        get() {
+            if (count == 0L || distribution.isEmpty()) return Duration.ZERO
+
+            val total = distribution.sumOf { it.upperBound.inWholeNanoseconds * it.count }
+            return (total / count).nanoseconds
+        }
 
     /**
      * A trace id belonging to a request that landed at [percentile], where the

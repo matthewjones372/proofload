@@ -69,11 +69,11 @@ invent a meaning for two runs' concurrency added. This overrides 0057's question
 
 ## Stack
 
-- [ ] **`spec-0068-mean`** — `Timing.mean`, read off `distribution`.
+- [x] **`spec-0068-mean`** — `Timing.mean`, read off `distribution`.
       Done when: a timing of known samples reports a mean at or above their true
       mean and within its own precision of it, and a merged timing's is the
       merge's rather than the average of two.
-- [ ] **`spec-0068-departed`** — a user counted in flight when it departs rather
+- [x] **`spec-0068-departed`** — a user counted in flight when it departs rather
       than when it is booked.
       Done when: a run against a target slower than one departure interval reports
       rate × latency in flight, not rate × `BOOKING_WINDOW`, and `awaitAll` still

@@ -80,7 +80,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
       Done when: a unary call on an in-process server is one row named
       `orders.v1.Orders/PlaceOrder`, a streaming descriptor fails at build time,
       and the runtime classpath is core, `grpc-api` and its jars — nothing else.
-- [ ] **`spec-0071-status`** — `GrpcStatus`, `DEADLINE_EXCEEDED` as `TimedOut`.
+- [x] **`spec-0071-status`** — `GrpcStatus`, `DEADLINE_EXCEEDED` as `TimedOut`.
       Done when: `NOT_FOUND` reads back as `failedWith(GrpcStatus(NOT_FOUND))`,
       a refused connection as `GrpcStatus(UNAVAILABLE)`, a marshaller as `Threw`.
 - [ ] **`spec-0071-deadline`** — the interceptor's default deadline.
@@ -122,3 +122,9 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 5. **Is "transport failures to `Threw`" right?** Mostly not: a refused
     connection arrives as `Status.UNAVAILABLE`, not a `ConnectException`.
     Recommend `Threw` only for what escapes the status model, a marshaller.
+    Confirmed against a real socket, which needed a transport on the *test*
+    classpath — an in-process server has none to refuse. The module borrowing
+    one to write that test is its own dependency claim demonstrating itself.
+6. **`DEADLINE_EXCEEDED` under whose name?** Core's `TimedOut`, not a
+    `GrpcStatus` of its own, so "how many timed out" has one answer across
+    HTTP, WebSocket and gRPC rather than three spellings of it.

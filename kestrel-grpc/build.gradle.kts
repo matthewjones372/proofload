@@ -28,6 +28,13 @@ dependencies {
     testImplementation("io.grpc:grpc-inprocess:1.78.0")
     testImplementation("io.grpc:grpc-stub:1.78.0")
 
+    // A real transport, on the test classpath only, and for one test: that a
+    // refused connection arrives as `UNAVAILABLE` rather than as a
+    // `ConnectException` needs a socket, and an in-process server has none.
+    // That this module needs to borrow one to write that test is the
+    // dependency claim demonstrating itself.
+    testImplementation("io.grpc:grpc-okhttp:1.78.0")
+
     // An engine to run the scenarios these tests build. Test-only:
     // a module of steps does not depend on the thing that runs them.
     testImplementation(project(":kestrel-engine"))

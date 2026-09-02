@@ -92,7 +92,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 - [x] **`spec-0071-streams`** — `stream`, `send` and `awaiting`, on `Pending`.
       Done when: a hundred answers to a hundred sends report a hundred matched
       and none outstanding, and a stream that stops early fails the wait.
-- [ ] **`spec-0071-docs`** — the `docs/modules.md` row and a cookbook page.
+- [x] **`spec-0071-docs`** — the `docs/modules.md` row and a cookbook page.
       Done when: `ModulesDocTest` names the module, `smoke` resolves the
       coordinate, and the page says an `awaiting(n)` sample is a batch of n.
 

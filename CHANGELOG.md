@@ -193,6 +193,20 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **`kestrel-grpc`** — gRPC steps over a caller's own stubs. `grpc.target(...)`
+  gives a channel to build a stub on, `call(descriptor) { }` times one round
+  trip and names the row `orders.v1.Orders/PlaceOrder` off the descriptor, and
+  a status is a value: `failedWith(GrpcStatus(UNAVAILABLE))` reads a run back,
+  with `DEADLINE_EXCEEDED` recorded as core's own `TimedOut`. `traced()` puts a
+  `traceparent` and the synthetic `baggage` marker on every call's metadata,
+  and `deadline(...)` gives a call a budget where it set none of its own —
+  a caller's `withDeadlineAfter` still wins. `open`/`send`/`awaiting`/`done`
+  measure a bidirectional or client stream as one sample per answer, timed from
+  the message it answers. `grpc-api` and `grpc-stub` only: no transport, no
+  protobuf runtime, no coroutines, so the thread model stays the caller's.
+- **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
+  which is where it was first needed, so every protocol that can carry a trace
+  uses the same one rather than a copy per module.
 - **`kestrel-export` and `kestrel-otel`** — a run's measurements in formats
   other tools already read. `writeHistogramLog(path)` writes HdrHistogram's log
   format, one tagged line per step per side per clock plus the run's lateness

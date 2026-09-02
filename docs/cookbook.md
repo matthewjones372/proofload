@@ -44,6 +44,7 @@ test that quietly asserts about a step nobody runs.
 [sign in once and carry the cookie](#sign-in-once-and-carry-the-cookie) ·
 [follow a slow request into your traces](#follow-a-slow-request-into-your-traces) ·
 [a step that is not HTTP](#a-step-that-is-not-http) ·
+[gRPC](#grpc) ·
 [WebSockets](#websockets) ·
 [work that finishes somewhere else](#work-that-finishes-somewhere-else)
 
@@ -1381,6 +1382,65 @@ about two named steps in a series that never moved, so a named step is a place
 to look rather than a finding. Widening every interval by the comparison count
 was the alternative, and it would make 95% here mean something other than 95%
 on the run report.
+
+## gRPC
+
+The caller runs protoc; this module never sees a `.proto`. You hand it the
+descriptor your generated code already carries, and build your own stub on the
+channel it gives you:
+
+```kotlin
+import io.github.matthewjones372.kestrel.grpc.exec
+import io.github.matthewjones372.kestrel.grpc.grpc
+
+val orders = grpc.target("orders.internal:8443").traced().deadline(2.seconds)
+val stub = OrdersGrpc.newBlockingStub(orders.channel)
+
+val checkout = scenario("checkout") {
+    exec(orders.call(OrdersGrpc.getPlaceOrderMethod()) { stub.placeOrder(anvil) })
+}
+```
+
+The row is named `orders.v1.Orders/PlaceOrder`, off the descriptor rather than
+off a string you typed, so two call sites of one method are one row.
+
+A status is a value the target sent, so it reads back by name:
+
+```kotlin
+result[placeOrder].failedWith(GrpcStatus(Status.Code.UNAVAILABLE))
+result[placeOrder].failedWith(TimedOut)   // DEADLINE_EXCEEDED, under the one name every module uses
+```
+
+`deadline(...)` is the budget a call gets when it sets none of its own — a call
+with no deadline waits as long as the target likes, which in a load test is a
+user who never departs again. Your own `withDeadlineAfter` still wins.
+
+**One channel for the run, not one per user.** A `ManagedChannel` is a
+thread-safe pool, and one per user would measure TLS handshakes rather than the
+target. The cost is gRPC's known trap: one channel resolves to one subchannel,
+so a run can land on one backend with HTTP/2 capping concurrent streams. That
+is the generator's ceiling, not the target's — read `behind` and the injector's
+own limits before believing a gRPC number.
+
+**No transport here.** `grpc-netty-shaded` or `grpc-okhttp` is your choice and
+already on your classpath with your stubs; `forTarget` finds it.
+
+### A stream
+
+```kotlin
+open(orders.stream(OrdersGrpc.getChatMethod()) { answers -> stub.chat(answers) })
+repeat(100) { send(each, message) }
+awaiting(answers, count = 100, within = 30.seconds)
+```
+
+`awaiting(count = 100)` is a hundred samples under one name, each timed from
+the message it answers — not one sample covering a hundred messages and the
+gaps between them. An answer arriving with nothing outstanding is counted as
+unsolicited and not timed: there is no departure to measure it from.
+
+Server-streaming calls are not covered by this. Their messages answer no send
+of their own, so a sample is either time-to-the-*k*th or cadence, and neither
+belongs in the same histogram as a round trip.
 
 ## Send the numbers somewhere else
 

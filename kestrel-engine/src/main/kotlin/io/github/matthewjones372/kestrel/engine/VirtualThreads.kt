@@ -135,7 +135,7 @@ private fun Simulation.departAll(
         scheduler.execute(
             Pump(
                 scheduler,
-                BookingWindow(arms.schedule().iterator(), BOOKING_WINDOW),
+                BookingWindow(arms.schedule().ownedBy(shard).iterator(), BOOKING_WINDOW),
                 runStart,
                 allBooked = users::allScheduled,
             ) { departure ->

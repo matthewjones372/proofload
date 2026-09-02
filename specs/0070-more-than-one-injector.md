@@ -77,7 +77,7 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
 
 ## Stack
 
-- [ ] **`spec-0070-shard`** — `Shard`, `Simulation.sharded`, the per-arm filter.
+- [x] **`spec-0070-shard`** — `Shard`, `Simulation.sharded`, the per-arm filter.
       Done when: four shards depart exactly the departures one JVM departs, at
       the same offsets, each user sent by exactly one shard.
 - [ ] **`spec-0070-start`** — waiting for the instant on the injector's own

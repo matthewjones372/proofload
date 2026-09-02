@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Arm
+import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.departures
 import kotlin.time.Duration
 
@@ -22,6 +23,23 @@ internal data class Departure(val arm: Arm, val user: Long, val offset: Duration
  * mix at half a million a second is not a list.
  */
 internal fun List<Arm>.schedule(): Sequence<Departure> = if (size == 1) first().departures() else merged()
+
+/**
+ * The departures this injector owns, filtered per arm so every injector sends
+ * the same mix.
+ *
+ * The whole schedule is walked and most of it dropped, rather than each
+ * injector computing a quarter of a rate. 0004 computes every offset from its
+ * own index, so the union over all injectors is every user exactly once, at
+ * exactly the offsets one JVM would have used — which is what makes a
+ * distributed run checkable against a local one.
+ *
+ * The cost is that each injector iterates the whole sequence. It is lazy and
+ * allocates nothing per skipped departure, and the alternative gives up the
+ * property above.
+ */
+internal fun Sequence<Departure>.ownedBy(shard: Shard?): Sequence<Departure> =
+    if (shard == null) this else filter { shard.sends(it.user) }
 
 /** An arm's own users, numbered from zero whatever the other arms are sending. */
 private fun Arm.departures(): Sequence<Departure> =

@@ -44,6 +44,8 @@ data class Simulation(
     val goals: List<Goal> = emptyList(),
     val completing: Completing? = null,
     val warmUp: WarmUp? = null,
+    /** Which injector this is, where the run is split across several. */
+    val shard: Shard? = null,
 ) {
 
     constructor(

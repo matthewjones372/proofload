@@ -46,6 +46,24 @@ data class Timing(
     val max: Duration,
     /** What was counted, bucket by bucket: what a chart draws, and what [percentile] is read from. */
     val distribution: List<Bucket>,
+
+    /**
+     * The worst relative error of any percentile read off [distribution] —
+     * the width of the bucket every sample here is reported at the top of.
+     *
+     * Carried rather than looked up, because the guarantee otherwise stops at
+     * the freeze: [Histogram] refuses to merge across precisions, and a frozen
+     * value that did not know its own could be pooled with a coarser one to
+     * produce a distribution half of one bucket scheme and half of another,
+     * silently. It is also what a report has to print beside a number, and
+     * reading it off the value beats a page knowing statically which numbers
+     * came from which histogram.
+     *
+     * Null where nothing was counted: an empty timing has no bucket to be the
+     * width of, and one that claimed a precision it never measured is the lie
+     * this exists to stop. No default, for the same reason.
+     */
+    val precision: Double?,
 ) {
 
     /**
@@ -138,6 +156,7 @@ data class Timing(
             p99 = Duration.ZERO,
             max = Duration.ZERO,
             distribution = emptyList(),
+            precision = null,
         )
     }
 }
@@ -149,16 +168,24 @@ fun Histogram.timing(): Timing = Timing(
     p99 = percentile(P99),
     max = max,
     distribution = distribution(),
+    precision = precision,
 )
 
 /**
  * A timing over buckets that were counted somewhere else — added together from
  * several runs, or read back out of a file — with every percentile read off
  * them rather than carried alongside them.
+ *
+ * [precision] is asked for rather than assumed: these buckets came off some
+ * histogram, and the caller is the only one left who knows which.
  */
-fun List<Bucket>.timing(): Timing {
+fun List<Bucket>.timing(precision: Double?): Timing {
     val counted = sumOf { it.count }
-    if (counted == 0L) return Timing.none
+    // Nothing counted, but the width is a property of the counter table rather
+    // than of the samples: an empty coarse second still knows how wide it would
+    // have been, and dropping that on the way through a merge would make the
+    // merged run's timeline claim less than the run's did.
+    if (counted == 0L) return Timing.none.copy(precision = precision)
     return Timing(
         count = counted,
         p50 = at(counted, P50),
@@ -166,6 +193,7 @@ fun List<Bucket>.timing(): Timing {
         p99 = at(counted, P99),
         max = at(counted, HUNDRED),
         distribution = this,
+        precision = precision,
     )
 }
 
@@ -590,6 +618,23 @@ fun RunResult.lostGround(): Boolean = ownInterval > Duration.ZERO && behind.p99 
  * host late that kept perfect time.
  */
 val RunResult.ownInterval: Duration get() = plan.plannedInterval * (shard?.of ?: injectors)
+
+/**
+ * The bucket width this run's step percentiles were counted at, or null where
+ * nothing was counted.
+ *
+ * Read off a value that was frozen from a histogram rather than off the
+ * constant the recorder chose, so a page states the precision of the number it
+ * is printing rather than one it was told to assume. `Runs` and `Shards` both
+ * refuse to merge unlike widths, so one step's answers for all of them.
+ */
+val RunResult.precision: Double? get() = steps.values.firstNotNullOfOrNull { it.serviceTime.precision }
+
+/**
+ * The same for the timeline, which is counted an eighth of the counters wide
+ * and so eight times the bucket. Null where no second was recorded.
+ */
+val RunResult.timelinePrecision: Double? get() = timeline.firstNotNullOfOrNull { it.okServiceTime.precision }
 
 private const val HUNDRED = 100.0
 private const val P50 = 50.0

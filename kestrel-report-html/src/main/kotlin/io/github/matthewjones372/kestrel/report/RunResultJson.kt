@@ -2,7 +2,6 @@ package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Headroom
-import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Limits
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
@@ -11,7 +10,9 @@ import io.github.matthewjones372.kestrel.SteadyState
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Tail
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.precision
 import io.github.matthewjones372.kestrel.steadyState
+import io.github.matthewjones372.kestrel.timelinePrecision
 
 /**
  * A `RunResult` as JSON, so the page carries a machine-readable copy of the run
@@ -30,7 +31,10 @@ internal fun RunResult.toJson(): String = jsonObject(
     fields = listOf(
         "startedAt" to jsonString(startedAt.toString()),
         "durationUnit" to jsonString("nanoseconds"),
-        "precision" to Histogram.PRECISION.toString(),
+        // Read off the timings rather than off the constant the recorder
+        // chose: a consumer pulling a percentile out of this needs the width
+        // of the bucket that percentile actually came from.
+        "precision" to (precision?.toString() ?: "null"),
         "count" to count.toString(),
         "ok" to ok.toString(),
         "failed" to failed.toString(),
@@ -44,7 +48,7 @@ internal fun RunResult.toJson(): String = jsonObject(
         // Its own precision beside it: these percentiles come from the coarse
         // histograms the timeline keeps, and a reader pulling one out has no
         // other way to know it is not the `precision` above.
-        "timelinePrecision" to Histogram.COARSE_PRECISION.toString(),
+        "timelinePrecision" to (timelinePrecision?.toString() ?: "null"),
         "steadyState" to steadyState.toJson(depth = 1),
         "timeline" to timeline.jsonArray(depth = 1) { it.toJson(depth = 2) },
         // Beside the timeline it is indexed with: how late that second's

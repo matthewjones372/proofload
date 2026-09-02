@@ -198,10 +198,27 @@ private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
     reasons = flatMap { it.reasons.entries }.groupingBy { it.key }.fold(0L) { total, e -> total + e.value },
 )
 
-/** The buckets of every timing here added together, with the percentiles read off the sum. */
-internal fun List<Timing>.merged(): Timing = flatMap { it.distribution }
-    .groupingBy { it.upperBound }
-    .fold(0L) { counted, bucket -> counted + bucket.count }
-    .map { (upperBound, count) -> Bucket(upperBound, count) }
-    .sortedBy { it.upperBound }
-    .timing()
+/**
+ * The buckets of every timing here added together, with the percentiles read
+ * off the sum.
+ *
+ * Refused across unlike precisions, as `Histogram.merge` already refuses:
+ * grouping on `upperBound` and summing would otherwise produce a distribution
+ * half of one bucket scheme and half of another, and read percentiles off it
+ * without saying anything. An empty timing claims no precision and so merges
+ * with anything — it is the neutral element half of this file folds over.
+ */
+internal fun List<Timing>.merged(): Timing {
+    val precisions = mapNotNull { it.precision }.distinct()
+    require(precisions.size <= 1) {
+        "these timings were counted at different bucket widths and cannot be added: " +
+            "${precisions.sorted().joinToString()}; a percentile off the sum would be half one scheme " +
+            "and half the other"
+    }
+    return flatMap { it.distribution }
+        .groupingBy { it.upperBound }
+        .fold(0L) { counted, bucket -> counted + bucket.count }
+        .map { (upperBound, count) -> Bucket(upperBound, count) }
+        .sortedBy { it.upperBound }
+        .timing(precisions.singleOrNull())
+}

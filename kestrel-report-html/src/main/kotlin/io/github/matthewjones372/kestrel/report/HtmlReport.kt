@@ -5,7 +5,6 @@ import io.github.matthewjones372.kestrel.Concurrency
 import io.github.matthewjones372.kestrel.Difference
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Headroom
-import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
@@ -16,6 +15,7 @@ import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.inFlight
 import io.github.matthewjones372.kestrel.offered
+import io.github.matthewjones372.kestrel.precision
 import io.github.matthewjones372.kestrel.ranOutOfRoom
 import io.github.matthewjones372.kestrel.unanswered
 import io.github.matthewjones372.kestrel.unmatched
@@ -389,9 +389,12 @@ private fun RunResult.stepsLines(): List<String> =
             "requests because few users reached it is a different finding from one they each made few " +
             "at. Service time is what the target took; response time counts from the " +
             "departure the profile promised, so it carries the generator's own backlog. Percentiles are " +
-            "the top of the histogram bucket a sample fell in, never a point interpolated between two: " +
-            "each is good to ${Histogram.PRECISION.asPercent()}, and rounds away from the target rather " +
-            "than towards it.</p>",
+            "the top of the histogram bucket a sample fell in, never a point interpolated between two" +
+            // Off the timings themselves: a run that counted nothing has no
+            // bucket width to quote, and quoting one anyway is the same lie as
+            // a fourth significant figure.
+            precision?.let { ": each is good to ${it.asPercent()}," }.orEmpty() +
+            " and rounds away from the target rather than towards it.</p>",
         "  </section>",
     )
 

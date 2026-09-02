@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.baseline
 
 import io.github.matthewjones372.kestrel.ArrivalSeries
 import io.github.matthewjones372.kestrel.Bucket
+import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
@@ -273,8 +274,19 @@ private fun merged(left: Timing, right: Timing): Timing =
         .sortedBy { it.upperBound }
         .frozen()
 
+/**
+ * Buckets from a file, as a timing.
+ *
+ * Every timing this format has ever carried was counted at full precision —
+ * the step timings, the run's lateness and the injector's own stalls, all off
+ * a plain `Histogram`; the coarse tables are the timeline and the per-second
+ * lateness, and neither is written here. So the width is a fact about the file
+ * rather than a guess about it. A format that ever writes a coarse table will
+ * have to carry the figure per timing; see 0047's second open question.
+ */
 private fun List<Bucket>.frozen(): Timing {
     val count = sumOf { it.count }
+    if (count == 0L) return Timing.none
     return Timing(
         count = count,
         p50 = at(count, HALF),
@@ -282,6 +294,7 @@ private fun List<Bucket>.frozen(): Timing {
         p99 = at(count, NINETY_NINE),
         max = lastOrNull()?.upperBound ?: Duration.ZERO,
         distribution = this,
+        precision = Histogram.PRECISION,
     )
 }
 

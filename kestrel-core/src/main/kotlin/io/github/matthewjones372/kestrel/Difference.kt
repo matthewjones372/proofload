@@ -350,6 +350,11 @@ internal class Resampler(private val samples: List<Samples>) {
     private val bounds: List<Duration> =
         samples.flatMap { it.timing.distribution.map(Bucket::upperBound) }.distinct().sorted()
 
+    // The runs resampled here are one population — `Runs` refuses an unlike
+    // set before this is reached — so a resample of them is as wide as they
+    // were, and claims nothing where none of them counted anything.
+    private val width: Double? = samples.firstNotNullOfOrNull { it.timing.precision }
+
     // Mutable accumulators inside a builder that freezes them: nothing outside
     // this class ever sees an array of counts.
     private val rows: List<LongArray> = samples.map { sample ->
@@ -366,7 +371,7 @@ internal class Resampler(private val samples: List<Samples>) {
         return Samples(
             timing = bounds.mapIndexedNotNull { at, bound ->
                 if (summed[at] == 0L) null else Bucket(bound, summed[at])
-            }.timing(),
+            }.timing(width),
             count = picks.sumOf { samples[it].count },
             failed = picks.sumOf { samples[it].failed },
         )

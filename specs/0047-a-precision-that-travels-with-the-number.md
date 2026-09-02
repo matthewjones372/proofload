@@ -62,7 +62,7 @@ repository already made that argument once.
 
 ## Stack
 
-- [ ] **`spec-0047-carried`** — `Timing.precision`, set at freeze, refused
+- [x] **`spec-0047-carried`** — `Timing.precision`, set at freeze, refused
       across unlike values in the merge.
       Done when: a timing frozen from a coarse histogram reports the coarse
       figure, merging unlike precisions fails naming both, and the report prints
@@ -82,6 +82,24 @@ repository already made that argument once.
 2. **Does the baseline format carry it?** Recommend yes. A baseline read back
     and compared against a run of a different precision is exactly the silent
     pooling this spec exists to stop, and the format is already at version 3.
+    **Not built here.** Every timing the format has ever carried was counted at
+    full precision — the step timings, and since version 6 the run's lateness
+    and the injector's own stalls, all off a plain `Histogram`; the coarse
+    tables are the timeline and the per-second lateness, and neither is
+    written. So the reader states full precision as a fact about those files
+    rather than a guess about them, and a version that ever writes a coarse
+    table has to carry the figure per timing. Recommend its own entry then.
 3. **Does `Second` still need `COARSE_PRECISION` in public view?** Recommend
     keeping the constant but letting the page read `precision` off the value.
     The constant is how the recorder chooses; the field is how a reader checks.
+4. **What is an empty table's precision?** Settled when built: the width is a
+    property of the counters rather than of what landed in them, so an empty
+    `Histogram.coarse()` still freezes to a timing claiming 6.25% and a merge
+    of empty seconds keeps it. `Timing.none` — which stands for no histogram at
+    all rather than an empty one — carries null. `Runs.merged`'s guard test
+    caught the difference.
+5. **What was the page claiming before?** Three goldens printed a
+    `timelinePrecision` of 6.25% for runs whose timeline was empty. Nothing was
+    counted at that width because nothing was counted at all, which is exactly
+    "a fact about the code holding a fact about the data". They now print
+    nothing, and that is the whole of this change's golden diff.

@@ -17,6 +17,7 @@ import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.offered
+import io.github.matthewjones372.kestrel.precision
 import io.github.matthewjones372.kestrel.ranOutOfRoom
 import io.github.matthewjones372.kestrel.seeds
 import io.github.matthewjones372.kestrel.startRate
@@ -50,7 +51,7 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
         ) +
             comparison.blocks(floor) + mixBlocks() +
             stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
-            listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
+            listOfNotNull(arrivalLine()) + measurementNote()
     }
 
 /**
@@ -487,15 +488,21 @@ private const val NANOS_PER_SECOND = 1_000_000_000L
 
 private const val PERCENT = 100.0
 
-private val PRECISION_PERCENT: String = String.format(Locale.ROOT, "%.2f", Histogram.PRECISION * PERCENT)
-
 private const val COMPARISON_NOTE: String =
     "Compared at p99 of response time. A sampling interval bounds which sample the p99 landed on, given how " +
         "many there were. It does not bound how far a repeat of this run would land from it, because two runs " +
         "of one unchanged target drift by the machine as well as by the code. So this says these samples " +
         "differ, not that the target did — repeated runs are what answers the second."
 
-private val MEASUREMENT_NOTE: String =
+/**
+ * The width is read off the timings being reported rather than off the constant
+ * the recorder chose with: a report that knows statically which histogram its
+ * numbers came from is one refactor away from stating a precision they do not
+ * have. A run that counted nothing quotes none.
+ */
+private fun RunResult.measurementNote(): String =
     "Latency is response time, measured from the departure the profile promised. " +
-        "Each percentile is the top of its histogram bucket, so it is within " +
-        "$PRECISION_PERCENT% and never interpolated."
+        precision?.let {
+            "Each percentile is the top of its histogram bucket, so it is within " +
+                "${String.format(Locale.ROOT, "%.2f", it * PERCENT)}% and never interpolated."
+        }.orEmpty().ifEmpty { "Each percentile is the top of its histogram bucket and never interpolated." }

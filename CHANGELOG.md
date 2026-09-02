@@ -193,6 +193,16 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **A precision that travels with the number.** `Timing.precision` carries the
+  width of the bucket its percentiles were read off, set at the freeze from the
+  histogram behind it, and `List<Timing>.merged()` refuses across unlike widths
+  the way `Histogram.merge` already did — grouping on `upperBound` and summing
+  would otherwise produce a distribution half of one bucket scheme and half of
+  another, silently. Both reports now read the figure off the value they are
+  printing rather than off a constant: three of them had been claiming a 6.25%
+  timeline precision for runs whose timeline was empty. Null where nothing was
+  counted, and no default on the field, so nothing can quietly claim a
+  precision it never had.
 - **Trends across baselines.** `readTrend(history, statistic)` reads a
   directory of directories — one subdirectory per point, holding that point's
   runs, the subdirectory name being the only label a baseline file can carry —

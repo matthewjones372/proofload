@@ -1,7 +1,8 @@
 package io.github.matthewjones372.kestrel.report
 
-import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.precision
+import io.github.matthewjones372.kestrel.timelinePrecision
 import java.util.Locale
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
@@ -24,8 +25,8 @@ internal fun RunResult.timelineLines(): List<String> {
     return listOf(
         """  <section class="timeline" aria-label="Over time">""",
         "    <h2>Over time</h2>",
-    ) + throughputChart() + latencyChart() + latenessChart() + failureChart() + noteLines() +
-        listOf("  </section>")
+    ) + throughputChart() + latencyChart() + latenessChart() + failureChart() +
+        noteLines(timelinePrecision, precision) + listOf("  </section>")
 }
 
 private fun RunResult.throughputChart(): List<String> {
@@ -109,13 +110,24 @@ private fun stepped(values: List<Double>, peak: Double): String =
         "${from.round()},${y.round()} ${to.round()},${y.round()}"
     }
 
-private fun noteLines(): List<String> = listOf(
+/**
+ * [coarse] and [full] are read off the values being drawn rather than off the
+ * constants the recorder chose with: a page that knows statically which
+ * numbers came from which histogram is one refactor away from being wrong.
+ */
+private fun noteLines(coarse: Double?, full: Double?): List<String> = listOf(
     """    <p class="note">One point a second, counted from the run's start, and a second nothing ran in is """ +
-        "drawn as the zero it was. These percentiles come from a coarse histogram — good to " +
-        "${Histogram.COARSE_PRECISION.asPercent()}, against ${Histogram.PRECISION.asPercent()} for the table " +
-        "above — because a full one a second per step is tens of megabytes of counters. Read a shape here and " +
+        "drawn as the zero it was. These percentiles come from a coarse histogram" +
+        widths(coarse, full) +
+        " because a full one a second per step is tens of megabytes of counters. Read a shape here and " +
         "a number there.</p>",
 )
+
+private fun widths(coarse: Double?, full: Double?): String = when {
+    coarse == null -> ","
+    full == null -> " — good to ${coarse.asPercent()} —"
+    else -> " — good to ${coarse.asPercent()}, against ${full.asPercent()} for the table above —"
+}
 
 private fun Double.asDuration(): String = toLong().nanoseconds.forReport()
 

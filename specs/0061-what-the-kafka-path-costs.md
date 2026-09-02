@@ -91,7 +91,7 @@ which is the user's own cluster's job.
       Done when: the table names a rate at which the Kafka path stops keeping
       its schedule; the page states that the accumulator is not in it; and
       `benchmarks` is still outside the Kover aggregation and outside `check`.
-- [ ] **`spec-0061-spike`** — a throwaway proving whether a fake broker built
+- [x] **`spec-0061-spike`** — a throwaway proving whether a fake broker built
       from `kafka-clients`' own protocol classes can satisfy a real
       `KafkaProducer` and a real `KafkaConsumer` using `assign()`.
       Done when: it either produces and fetches over a socket with no new
@@ -144,4 +144,28 @@ which is the user's own cluster's job.
     suite, rather than letting the row read like its neighbours.
 4. **Does the spike get a time box?** A fake broker is the kind of thing that is
     eighty percent done for a long time. Recommend one sitting, and a written
-    refusal being an acceptable and useful outcome.
+    refusal being an acceptable and useful outcome. **It worked, in one
+    sitting, and further than expected.** A real `KafkaProducer` — idempotence
+    on, its accumulator, its sender thread, its ack path — and a real
+    `KafkaConsumer` using `assign()` both work over a socket against a broker
+    built entirely from `kafka-clients`' own protocol classes, with no
+    dependency this module did not already have. Six requests answer it:
+    `ApiVersions`, `Metadata`, `InitProducerId`, `Produce`, `ListOffsets`,
+    `Fetch`.
+    The two things the spec worried about were both real and both small.
+    `AbstractResponse.serializeWithHeader` is package-private, so the response
+    header is written by hand — `ApiKeys.responseHeaderVersion(apiVersion)` is
+    public and is what decides whether tagged fields follow it. And the batch
+    problem does not exist: a Produce request carries a valid record batch and
+    a Fetch response takes one, so the batches go back out exactly as they came
+    in and nothing here encodes one.
+    The one thing not anticipated: idempotence has been on by default since
+    3.0, so the client's transaction manager refuses to send at all until
+    `InitProducerId` is answered. Turning idempotence off in the test would
+    have hidden that, and would have measured a producer nobody runs.
+5. **Does the spike change what `spec-0061-containers` is for?** It removes the
+    strongest reason for it. The wire is now proved without Docker, by a
+    producer and consumer that are the real ones. What containers would still
+    add is a genuine broker's own behaviour — retries under real leader
+    changes, a registry answering for real — which is further from what this
+    repository can claim and closer to the user's own cluster's job.

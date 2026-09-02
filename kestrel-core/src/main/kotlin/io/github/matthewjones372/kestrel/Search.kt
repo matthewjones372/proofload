@@ -15,7 +15,11 @@ data class Search(
     val holding: Duration,
     val goals: List<Goal>,
     val feeder: Feeder = Feeder.empty,
+    val warmUp: WarmUp? = null,
 ) {
+
+    /** A rung's warm-up, counted in every bound below rather than left out of them. */
+    private val warming: Duration get() = warmUp?.over ?: Duration.ZERO
 
     /** The ladder it climbs, lowest first; bisection then works between two of these. */
     val rungs: List<Rate> get() = (1..LADDER).map { rung -> (upTo.perSecond * rung / LADDER).perSecond }
@@ -26,7 +30,7 @@ data class Search(
      * stops as soon as it has the knee — and it counts the holds only, since a
      * run also waits out the users it started and that wait is the target's.
      */
-    val worstCase: Duration get() = holding * (rungs.size + BISECTIONS)
+    val worstCase: Duration get() = (holding + warming) * (rungs.size + BISECTIONS)
 
     /**
      * The most the holds can still add up to once [climbed] rungs have run.
@@ -37,7 +41,7 @@ data class Search(
      * where a forecast that is missed is a tool that lied.
      */
     fun atMostAfter(climbed: Int): Duration =
-        holding * ((rungs.size - climbed).coerceAtLeast(0) + BISECTIONS)
+        (holding + warming) * ((rungs.size - climbed).coerceAtLeast(0) + BISECTIONS)
 }
 
 /** What one rung learned: the rate it held, and the run that judged it. */
@@ -115,9 +119,19 @@ fun Scenario.sustainable(upTo: Rate, holding: Duration, expecting: List<Goal>): 
 /** The same search, with each user seeded from [feeder] before its first step. */
 fun Search.fedBy(feeder: Feeder): Search = copy(feeder = feeder)
 
+/**
+ * The same search, with every rung warmed for [over] before it is measured.
+ *
+ * Per rung and at that rung's own rate, rather than once for the search: a
+ * rung is judged on its own schedule, and one warm-up at the start leaves the
+ * first rung — the one whose verdict decides whether the ladder climbs at all
+ * — measuring a cold JVM.
+ */
+fun Search.warmingUp(over: Duration): Search = copy(warmUp = WarmUp(over))
+
 /** One rung as a run: the scenario held at [rate] for the search's window, judged by its goals. */
 fun Search.at(rate: Rate): Simulation =
-    Simulation(scenario, constantRate(rate, over = holding), feeder, goals)
+    Simulation(scenario, constantRate(rate, over = holding), feeder, goals, warmUp = warmUp)
 
 /**
  * Climbs the ladder until a goal is missed, then bisects between the last rung
@@ -127,9 +141,9 @@ fun Search.at(rate: Rate): Simulation =
  * every higher one does and it leaves no curve behind. The ladder buys the
  * curve at linear cost and the bisection spends its resolution at the knee.
  *
- * A rung holds for the whole window and is judged on all of it. Warm-up is
- * deliberately not a thing here: 0032 owns finding one, and inventing a second
- * rule in the meantime would leave two.
+ * A rung holds for the whole window and is judged on all of it. A search that
+ * declared a warm-up pays for one per rung, at that rung's own rate, and none
+ * of it is recorded.
  */
 fun Search.judgedBy(climbed: (Rung) -> Unit = {}, run: (Simulation) -> RunResult): Capacity {
     val told: (Simulation) -> RunResult = run

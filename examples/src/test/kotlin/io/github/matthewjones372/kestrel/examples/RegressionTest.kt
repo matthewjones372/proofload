@@ -17,6 +17,7 @@ import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.warmingUp
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -76,7 +77,11 @@ class RegressionTest {
 
     private fun measure(kestrel: Kestrel) = kestrel.run(
         scenario("paying") { exec(http.baseUrl("http://localhost:${server.address.port}").get("/pay")) }
-            .at(100.perSecond, over = 2.seconds),
+            .at(100.perSecond, over = 2.seconds)
+            // Declared rather than thrown away by hand: every run of both
+            // populations pays for the same warm-up, which is what makes them
+            // one population rather than a first run and the rest.
+            .warmingUp(2.seconds),
     )
 
     private fun population(kestrel: Kestrel) = Runs(List(REPEATS) { measure(kestrel) })
@@ -97,12 +102,6 @@ class RegressionTest {
                 "$fast this test makes its claims about, so the machine cannot answer the question and is not " +
                 "being asked",
         )
-
-        // Thrown away. The first run of a JVM pays for class loading, JIT and
-        // opening connections, and it is measurably slower than every run
-        // after it — so a baseline taken from a cold process would report the
-        // next release as an improvement.
-        measure(kestrel)
 
         // A directory rather than a file: a population is what a comparison
         // needs, and one file per run is what a team's loop leaves behind.

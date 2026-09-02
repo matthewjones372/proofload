@@ -3,7 +3,6 @@ package io.github.matthewjones372.kestrel.examples
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Rung
-import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.http.http
 import io.github.matthewjones372.kestrel.junit5.LoadTest
@@ -12,6 +11,7 @@ import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.step
 import io.github.matthewjones372.kestrel.sustainable
+import io.github.matthewjones372.kestrel.warmingUp
 import io.kotest.assertions.withClue
 import io.kotest.matchers.doubles.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.doubles.shouldBeLessThanOrEqual
@@ -66,12 +66,13 @@ class CapacitySearchTest {
         val api = http.baseUrl("http://localhost:${server.address.port}")
         val fastEnough = p99(serve) under 200.milliseconds
         val hitting = scenario("serve") { exec(serve, api.get("/serve")) }
-        val search = hitting.sustainable(upTo = 40.perSecond, holding = 2.seconds, expecting = listOf(fastEnough))
-
-        // Not a warm-up rule inside the search — 0032 owns that — but a run
-        // before it, so the first rung is not measuring the JIT and the first
-        // connection to a socket that has never been opened.
-        kestrel.run(hitting.at(10.perSecond, over = 2.seconds))
+        // Warmed per rung, at that rung's own rate: the first rung decides
+        // whether the ladder climbs at all, so it is the one that must not be
+        // measuring the JIT and the first connection to a socket that has
+        // never been opened. The search counts the warm-ups in what it quotes.
+        val search = hitting
+            .sustainable(upTo = 40.perSecond, holding = 2.seconds, expecting = listOf(fastEnough))
+            .warmingUp(2.seconds)
 
         val capacity = kestrel.run(search)
 

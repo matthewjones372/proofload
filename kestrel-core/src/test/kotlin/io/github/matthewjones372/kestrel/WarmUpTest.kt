@@ -84,4 +84,30 @@ class WarmUpTest {
         }
         return out.toString()
     }
+
+    @Test
+    fun `a search warms every rung at that rung's own rate`() {
+        val search = checkout
+            .sustainable(upTo = 100.perSecond, holding = 10.seconds, expecting = emptyList())
+            .warmingUp(2.seconds)
+
+        val rung = search.at(40.perSecond)
+
+        rung.warmUp shouldBe WarmUp(2.seconds)
+        rung.plan().warmUp shouldBe WarmUp(2.seconds)
+        // The rung's own shape opens at the rung's rate, so that is what warms.
+        rung.profile.startRate.perSecond shouldBe 40.0
+    }
+
+    @Test
+    fun `the bound a search quotes counts a warm-up for every rung and every bisection`() {
+        val cold = checkout.sustainable(upTo = 100.perSecond, holding = 10.seconds, expecting = emptyList())
+        val warmed = cold.warmingUp(2.seconds)
+
+        val rungsAndBisections = cold.worstCase / 10.seconds
+
+        warmed.worstCase shouldBe cold.worstCase + 2.seconds * rungsAndBisections
+        warmed.atMostAfter(climbed = 3) shouldBe
+            cold.atMostAfter(climbed = 3) + 2.seconds * (cold.atMostAfter(climbed = 3) / 10.seconds)
+    }
 }

@@ -6,10 +6,12 @@ import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
+import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.timing
 import java.nio.file.Files
 import java.nio.file.Path
@@ -56,6 +58,11 @@ private fun Probe?.lines(): List<String> =
 
 private fun Plan.lines(): List<String> =
     listOf("plan\t${scenario.escaped()}") +
+        // A warmed run and a cold one did not measure the same thing, and a
+        // comparison refuses to pool them — so a file that did not carry this
+        // would refuse every warmed run against every baseline ever written.
+        // Absent where nothing was warmed, as the probe line is.
+        warmUp?.let { listOf("warmup\t${it.over.inWholeNanoseconds}") }.orEmpty() +
         steps.map { "planned\t${it.escaped()}" } +
         profile.postfix().map { "profile\t$it" }
 
@@ -142,10 +149,20 @@ private fun List<String>.asMachine(): Machine {
 // than work sent at the target, and it is not part of what makes two runs
 // comparable.
 private fun List<String>.asPlan(): Plan = Plan(
-    scenario = first { it.startsWith("plan$SEPARATOR") }.split(SEPARATOR)[1].unescaped(),
-    steps = filter { it.startsWith("planned$SEPARATOR") }.map { it.split(SEPARATOR)[1].unescaped() },
-    profile = filter { it.startsWith("profile$SEPARATOR") }.map { it.split(SEPARATOR) }.asProfile(),
+    arms = listOf(
+        PlannedArm(
+            scenario = first { it.startsWith("plan$SEPARATOR") }.split(SEPARATOR)[1].unescaped(),
+            steps = filter { it.startsWith("planned$SEPARATOR") }.map { it.split(SEPARATOR)[1].unescaped() },
+            profile = filter { it.startsWith("profile$SEPARATOR") }.map { it.split(SEPARATOR) }.asProfile(),
+        ),
+    ),
+    warmUp = asWarmUp(),
 )
+
+/** Absent in a version 4 file, and in any run that warmed nothing. */
+private fun List<String>.asWarmUp(): WarmUp? =
+    firstOrNull { it.startsWith("warmup$SEPARATOR") }
+        ?.let { WarmUp(it.split(SEPARATOR)[1].toLong().nanoseconds) }
 
 private fun List<List<String>>.asProfile(): InjectionProfile? =
     fold(emptyList<InjectionProfile>()) { stack, fields ->
@@ -217,11 +234,11 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "4"
+private const val VERSION = "5"
 
 // 3 is 4 without the probe line, so a file written before there was one still
 // answers every question a comparison asks of it except that one.
-private val READABLE = listOf("3", VERSION)
+private val READABLE = listOf("3", "4", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

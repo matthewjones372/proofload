@@ -11,6 +11,7 @@ import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.against
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.perSecond
@@ -135,7 +136,7 @@ class BaselineTest {
 
         withClue(why) {
             why shouldContain "version 99"
-            why shouldContain "4"
+            why shouldContain "5"
         }
     }
 
@@ -156,9 +157,43 @@ class BaselineTest {
     fun `a baseline written by the version before this one reads, and claims no probe`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t4", "kestrel-baseline\t3")
+            .replaceFirst("kestrel-baseline\t5", "kestrel-baseline\t3")
 
         parseBaseline(older).probe shouldBe null
+    }
+
+    @Test
+    fun `the warm-up travels, so a warmed run is comparable to a warmed baseline`(@TempDir dir: Path) {
+        val plan = planOf(constantRate(100.perSecond, over = 2.seconds)).copy(warmUp = WarmUp(5.seconds))
+
+        val read = runOf(plan = plan).throughAFile(dir)
+
+        read.plan.warmUp shouldBe WarmUp(5.seconds)
+        runOf(plan = plan).against(read).shouldBeInstanceOf<Comparison.Compared>()
+    }
+
+    @Test
+    fun `a warmed run is refused against a baseline that warmed nothing`(@TempDir dir: Path) {
+        val cold = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
+        cold.writeBaseline(dir.resolve("b.kestrel"))
+
+        val warmed = runOf(
+            plan = planOf(constantRate(100.perSecond, over = 2.seconds)).copy(warmUp = WarmUp(5.seconds)),
+        )
+        val why = warmed.against(readBaseline(dir.resolve("b.kestrel")))
+            .shouldBeInstanceOf<Comparison.NotComparable>()
+            .why
+
+        withClue(why) { why shouldContain "warm-up" }
+    }
+
+    @Test
+    fun `a version 4 baseline reads, and claims no warm-up`() {
+        val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
+            .asBaseline()
+            .replaceFirst("kestrel-baseline\t5", "kestrel-baseline\t4")
+
+        parseBaseline(older).plan.warmUp shouldBe null
     }
 
     @Test

@@ -39,7 +39,8 @@ data class Simulation(
         feeder: Feeder = Feeder.empty,
         goals: List<Goal> = emptyList(),
         completing: Completing? = null,
-    ) : this(listOf(Arm(scenario, profile, feeder)), goals, completing)
+        warmUp: WarmUp? = null,
+    ) : this(listOf(Arm(scenario, profile, feeder)), goals, completing, warmUp)
 
     init {
         require(arms.isNotEmpty()) { "a simulation sends at least one arm" }

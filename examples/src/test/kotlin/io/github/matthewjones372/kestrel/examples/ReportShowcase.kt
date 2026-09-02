@@ -17,6 +17,7 @@ import io.github.matthewjones372.kestrel.report.writeHtmlReport
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.sessionKey
 import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.kestrel.warmingUp
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
@@ -69,14 +70,13 @@ class ReportShowcase {
             exec(pay, api.post("/pay").body("""{"total":"1 anvil"}""").expecting(200))
         }
 
-        // Thrown away. The first run of a JVM pays for class loading, JIT and
-        // opening connections, and those land on the earliest departures as
-        // lateness the target never caused. The measured run below is warm.
-        checkout.at(30.perSecond, over = 8.seconds)
-            .fedBy(feed(shopper) { user -> "shopper-$user" })
-            .run()
-
+        // Declared on the run rather than sent by hand before it. The first
+        // departures of a JVM pay for class loading, the JIT and opening
+        // connections, and they pay for it as lateness the target never
+        // caused; the page below says how long was warmed and that none of it
+        // was counted.
         val result = checkout.at(30.perSecond, over = 30.seconds)
+            .warmingUp(8.seconds)
             .fedBy(feed(shopper) { user -> "shopper-$user" })
             .expecting(
                 p99(pay) under 300.milliseconds,

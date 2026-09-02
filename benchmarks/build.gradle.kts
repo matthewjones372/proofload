@@ -9,6 +9,9 @@ dependencies {
     // shipped client is the point of it, so the harness takes the module
     // rather than writing a client of its own.
     implementation(project(":kestrel-http"))
+    // The Kafka sweep sends the step a user sends, for the same reason: what
+    // is being weighed is the shipped adapter rather than one written here.
+    implementation(project(":kestrel-kafka"))
 }
 
 tasks.register<JavaExec>("ceiling") {
@@ -22,6 +25,17 @@ tasks.register<JavaExec>("ceiling") {
     classpath = sourceSets.main.get().runtimeClasspath
     // The harness spawns a virtual thread per user, and the point is to see
     // where that stops keeping up rather than where the heap does.
+    jvmArgs("-Xmx2g")
+}
+
+tasks.register<JavaExec>("kafkaCeiling") {
+    // A benchmark measures this machine, so it must not queue behind a test
+    // run and must not make one queue behind it.
+    systemProperty("kestrel.exclusive", "false")
+    group = "verification"
+    description = "Finds the rate at which the Kafka adapter stops keeping its own schedule."
+    mainClass.set("io.github.matthewjones372.kestrel.benchmarks.KafkaCeilingKt")
+    classpath = sourceSets.main.get().runtimeClasspath
     jvmArgs("-Xmx2g")
 }
 

@@ -11,6 +11,10 @@ mean anything. This is that overhead, measured rather than claimed.
 - **Without a socket — 100,000 a second.** A step that returns immediately, so
   the row is this tool and nothing else. An upper bound, on a path nobody runs.
 
+`./gradlew :benchmarks:kafkaCeiling` runs a third, over the Kafka adapter with
+the broker taken out; it is [below](#the-kafka-adapter) and its number is not
+comparable to either of the two above without reading what is missing from it.
+
 Both come from one sweep on **Linux amd64, 4 processors, JDK 21.0.10**, under a
 one-minute load average of **0.41 to 1.29** across the sweep. That is a quiet
 machine, and it is what these figures describe. A busier one gives smaller
@@ -329,6 +333,49 @@ delta may be the runner rather than the service — on shared CI that is most
 runs, not an edge case. It is a warning rather than a refusal; a plan that
 differs is the refusal.
 
+## The Kafka adapter
+
+`./gradlew :benchmarks:kafkaCeiling`. An `emit` producing through a producer
+that answers immediately and keeps nothing, so what is left between the
+departure the profile promised and the sample the recorder took is what
+`kestrel-kafka` adds: the serializer lambda, the record, the correlation
+header, and waiting on the send's future.
+
+| Rate | Records | Failed | Behind p50 | Behind p99 | Behind max | p50 within 1ms |
+|---:|---:|---:|---:|---:|---:|:---:|
+| 1,000 | 5,000 | 0 | 270.335us | 4.784127ms | 27.525119ms | yes |
+| 5,000 | 25,000 | 0 | 91.135us | 32.767999ms | 73.400319ms | yes |
+| 10,000 | 50,000 | 0 | 81.919us | 22.020095ms | 47.972351ms | yes |
+| 25,000 | 125,000 | 0 | 81.407us | 29.097983ms | 47.972351ms | yes |
+| 50,000 | 250,000 | 0 | 78.847us | 57.671679ms | 90.177535ms | yes |
+| 100,000 | 500,000 | 0 | 86.527us | 179.306495ms | 205.520895ms | yes |
+| 250,000 | 1,250,000 | 0 | 348.127231ms | 754.974719ms | 759.169023ms | no |
+| 500,000 | 2,500,000 | 0 | 3.070230527s | 5.133828095s | 5.200936959s | no |
+
+By the median rule this page uses throughout, the adapter's ceiling is
+**100,000 a second** on this machine. Two things have to be said next to that
+number or it is worse than useless.
+
+**The accumulator is not in it.** A real `KafkaProducer` batches into an
+accumulator, hands batches to a sender thread, and blocks up to `max.block.ms`
+when that fills. None of that is here. This bounds the adapter — the part this
+repository wrote — and says nothing whatever about what producing to a broker
+costs. What a real producer costs is not measured anywhere yet.
+
+**Read the p99 column before the verdict.** The median rule is what names the
+ceiling, and it is the only reason this table and the two above are comparable
+at all. But a median can sit inside a millisecond while the tail is hundreds of
+them, and it does: at 100,000 a second the median departure is 87 µs late and
+the 99th is 179 ms late. That is not a rate anyone should drive. The p99 column
+is where the adapter stopped keeping up for the users who would notice, and it
+starts climbing around 50,000.
+
+`fellBehind()` is not reported for this sweep, for the reason the null step does
+not report it: it asks whether the backlog is large against the response time it
+inflates, and a producer that answers immediately has no response time to speak
+of, so it says yes at every rate. A constant column tells a reader nothing and
+reads like it does.
+
 ## What is not measured here
 
 - **No comparison** with Gatling, k6 or anything else. A benchmark that ranks
@@ -343,6 +390,11 @@ differs is the refusal.
   read against the ephemeral range, which is machine-wide too, so the reading
   and its ceiling describe the same thing — but it cannot prove a particular
   socket was Kestrel's.
+- **What a real Kafka producer costs.** The adapter sweep above removes the
+  broker with a producer that answers immediately, which also removes the
+  accumulator, the batching and the sender thread — the parts most likely to
+  decide what a Kafka run can drive. Measuring those needs a broker on a
+  socket, and there is not one in this build.
 - **Nothing is in `./gradlew build`.** The sweeps are benchmarks, they want a
   machine to themselves, and `AGENTS.md` keeps a benchmark of the tool out of
   the tests of the tool and out of the coverage denominator. Run them on

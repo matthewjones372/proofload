@@ -236,7 +236,7 @@ private fun Measured.nullStepRow(): String =
         "${if (keptSchedule) "yes" else "no"} | $relativeVerdict |"
 
 /** What the machine was carrying, so a figure taken on a busy one says so. */
-private fun loadAverage(): Double = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
+internal fun loadAverage(): Double = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
 
 private fun machine(): String =
     "${System.getProperty("os.name")} ${System.getProperty("os.arch")}, " +
@@ -245,12 +245,12 @@ private fun machine(): String =
 
 private fun Double.rounded(): String = String.format(Locale.ROOT, "%.2f", this)
 
-private fun Duration?.readable(): String = this?.toString() ?: NOTHING
+internal fun Duration?.readable(): String = this?.toString() ?: NOTHING
 
 /** What a cell holds where there was nothing to measure. */
 private const val NOTHING = "—"
 
-private fun Number.grouped(): String =
+internal fun Number.grouped(): String =
     toLong().toString().reversed().chunked(THOUSAND).joinToString(",").reversed()
 
 private const val THOUSAND = 3

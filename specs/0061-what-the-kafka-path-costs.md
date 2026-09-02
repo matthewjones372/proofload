@@ -86,7 +86,7 @@ which is the user's own cluster's job.
 
 ## Stack
 
-- [ ] **`spec-0061-ceiling`** — `kafkaCeiling` in `benchmarks`, and its figure in
+- [x] **`spec-0061-ceiling`** — `kafkaCeiling` in `benchmarks`, and its figure in
       `docs/what-it-costs.md`.
       Done when: the table names a rate at which the Kafka path stops keeping
       its schedule; the page states that the accumulator is not in it; and
@@ -119,6 +119,25 @@ which is the user's own cluster's job.
     adapter, which is the part this repository wrote, and it is free. Recommend
     yes, on the condition that the page says what is missing — an unlabelled
     number here would be the exact failure this spec's "not doing" refuses.
+    Built with two labels rather than one, because building it turned up a
+    second thing that had to be said. The median rule this repository uses to
+    name a ceiling calls 100,000 a second "kept its schedule" while the 99th
+    percentile departure is 179 ms late; the median is 87 µs. So the page says
+    the ceiling the rule names, says the tail beside it, and says plainly that
+    the named rate is not one anyone should drive. The rule is kept rather than
+    changed only because it is the one thing making the three sweeps
+    comparable.
+5. **`MockProducer` is not what the sweep uses.** The spec proposed it, and it
+    retains every record handed to it: at a hundred thousand a second over five
+    seconds that is half a million records held live, and the allocation and
+    collection of that list would have been measured as the adapter's cost. The
+    sweep uses a producer written in `benchmarks` that answers immediately and
+    keeps nothing. The dependency argument is unchanged — it needs nothing that
+    was not already there.
+6. **`fellBehind()` is not in the table.** It says yes at every rate, for the
+    reason it does on the null step: a producer that answers immediately has no
+    response time for the backlog to be large against. A constant column tells a
+    reader nothing and reads like it does, so the page says why instead.
 3. **What does `docs/modules.md` say for a module whose wire is untested
     without Docker?** Every other row there names a test that proves its claim.
     Recommend saying plainly that the wire is proved only by the container

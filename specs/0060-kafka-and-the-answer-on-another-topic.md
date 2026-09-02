@@ -93,7 +93,7 @@ tunes against them will ship a consumer that cannot keep up.
       carries the key, value and correlation the scenario named; a send that
       fails is a failed step naming why; the module's runtime classpath is
       `kafka-clients`, core and the JDK.
-- [ ] **`spec-0060-completing`** — `Completions` over a consumer, and
+- [x] **`spec-0060-completing`** — `Completions` over a consumer, and
       `correlatedBy` reading the id from a header.
       Done when: a run whose completions come from a second topic reports
       `unmatched` and `inFlight` as 0040 defines them.
@@ -138,6 +138,11 @@ tunes against them will ship a consumer that cannot keep up.
     site, and threaded to both the departure the run counts and the header the
     record carries: naming it twice is how a run ends up matching on an id it
     never sent.
+6. **A record on the completions topic carrying no id this run can read.**
+    Counted on the sink rather than dropped in silence: it answers no
+    departure, so without the counter every one of them shows up as something
+    unmatched with nothing on the page to say the id was the problem rather
+    than the consumer.
 5. **What a produce step does when the scenario gave it no value.** Refused as
     `NothingToSend` rather than produced empty: a record nobody meant to send
     is a row in the report and a message on somebody's topic.

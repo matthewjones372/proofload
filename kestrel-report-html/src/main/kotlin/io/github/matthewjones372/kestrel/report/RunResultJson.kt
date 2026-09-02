@@ -1,7 +1,9 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Limits
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Second
@@ -34,6 +36,9 @@ internal fun RunResult.toJson(): String = jsonObject(
         "failed" to failed.toString(),
         "behind" to behind.toJson(depth = 1),
         "hiccups" to hiccups.toJson(depth = 1),
+        // What this process had left while it measured, so a reader pulling
+        // the failures out has the other half of the explanation.
+        "limits" to limits.toJson(depth = 1),
         "arrivals" to arrivals.toJson(depth = 1),
         "steps" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
         // Its own precision beside it: these percentiles come from the coarse
@@ -187,3 +192,28 @@ private fun unicodeEscape(char: Char): String =
 private const val INDENT = "  "
 private const val HEX_RADIX = 16
 private const val UNICODE_ESCAPE_DIGITS = 4
+
+/** The three ceilings, each measured or absent with its reason. */
+
+/** Keyed as the properties are named, not as the page words them: a reader here is reading the API. */
+private fun Limits.toJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "openFiles" to openFiles.toJson(depth + 1),
+        "ports" to ports.toJson(depth + 1),
+        "cpu" to cpu.toJson(depth + 1),
+    ),
+)
+
+/** Both keys always, so a reader testing for `peak` does not have to know that absent spells it another way. */
+private fun Headroom.toJson(depth: Int): String = when (this) {
+    is Headroom.Measured -> jsonObject(
+        depth = depth,
+        fields = listOf("peak" to peak.toString(), "limit" to limit.toString(), "because" to "null"),
+    )
+
+    is Headroom.Absent -> jsonObject(
+        depth = depth,
+        fields = listOf("peak" to "null", "limit" to "null", "because" to jsonString(because)),
+    )
+}

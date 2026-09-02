@@ -3,15 +3,18 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.offered
+import io.github.matthewjones372.kestrel.ranOutOfRoom
 import io.github.matthewjones372.kestrel.seeds
 import io.github.matthewjones372.kestrel.startRate
 import io.github.matthewjones372.kestrel.unanswered
@@ -34,7 +37,7 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), cutShortWarning(), floor?.line(), behindWarning()) +
+        listOfNotNull(lostWarning(), cutShortWarning(), floor?.line(), behindWarning(), roomWarning()) +
             comparison.blocks(floor) + mixBlocks() +
             stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
@@ -191,6 +194,23 @@ private fun RunResult.cutShortWarning(): String? {
 
     return "> **Cut short:** the schedule asked for ${asked.report()} and the run recorded ${recorded.report()}. " +
         "Every number below is over the shorter window."
+}
+
+/**
+ * What this process ran out of, where it did: the failures below are its own
+ * ceiling as readily as the target's refusal, and a summary that does not say
+ * so hands a reader the wrong end of the wire.
+ */
+private fun RunResult.roomWarning(): String? {
+    if (!ranOutOfRoom()) return null
+
+    val tight = limits.all
+        .mapNotNull { (name, headroom) ->
+            (headroom as? Headroom.Measured)?.takeIf { it.used >= TIGHT }?.let { "$name ${it.peak} of ${it.limit}" }
+        }
+        .joinToString(separator = ", ")
+    return "> **The injector ran out of room:** $tight. Failures below are this process hitting its own " +
+        "ceiling as readily as the target refusing work."
 }
 
 private fun RunResult.behindWarning(): String? {

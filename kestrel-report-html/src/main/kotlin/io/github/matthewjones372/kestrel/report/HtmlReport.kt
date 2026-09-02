@@ -3,15 +3,18 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Difference
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
+import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.inFlight
 import io.github.matthewjones372.kestrel.offered
+import io.github.matthewjones372.kestrel.ranOutOfRoom
 import io.github.matthewjones372.kestrel.unanswered
 import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
@@ -76,6 +79,7 @@ private fun RunResult.documentLines(
         goodputLines(),
         floor.resolutionLines(),
         hiccupLines(),
+        roomLines(),
         attemptLines(),
         readingLines(),
         failedLines(),
@@ -263,6 +267,38 @@ private fun RunResult.hiccupTile(): List<String> =
  * requests took 480 attempts is one nobody needs. It is a note rather than a
  * column because it is true of some runs and no steps of most.
  */
+
+/**
+ * What the injector ran out of, where it did.
+ *
+ * Above the counts rather than beside them, because a run that exhausted its
+ * own descriptors was failing requests at this end of the wire: the failures
+ * below are about this process, and a reader who takes them for the target's
+ * has been misled by the page. Absent where the run had room, and absent where
+ * nothing was sampled — a page saying a limit was not measured on every
+ * platform that cannot measure it is a line nobody reads.
+ */
+private fun RunResult.roomLines(): List<String> {
+    if (!ranOutOfRoom()) return emptyList()
+
+    val tight = limits.all
+        .mapNotNull { (name, headroom) ->
+            (headroom as? Headroom.Measured)?.takeIf { it.used >= TIGHT }?.let {
+                name to
+                    it
+            }
+        }
+        .joinToString(separator = ", ") { (name, at) ->
+            "$name reached ${at.peak.grouped()} of ${at.limit.grouped()}"
+        }
+    return listOf(
+        """  <p class="behind" id="kestrel-room" role="status">""",
+        "    <strong>The injector ran out of room.</strong> $tight. Failures below are this process " +
+            "hitting its own ceiling as readily as the target refusing work.",
+        "  </p>",
+    )
+}
+
 private fun RunResult.attemptLines(): List<String> {
     val retried = steps.values.filter { it.attempts > it.count }
     if (retried.isEmpty()) return emptyList()

@@ -75,7 +75,7 @@ Values in core beside `Machine`, sampler in the engine beside `Hiccups.kt`, and
       Done when: a Linux run's peak descriptor count is above zero and under
       that JVM's `ulimit -n`, a missing source reads `Absent` with a reason
       rather than a zero, and `:benchmarks:ceiling` is unchanged.
-- [ ] **`spec-0065-page`** — the warning, tile and JSON on the HTML report,
+- [x] **`spec-0065-page`** — the warning, tile and JSON on the HTML report,
       and the markdown line.
       Done when: a result that ran out of room names which limit and what it
       reached, one that did not shows nothing, an unmeasured one says so.

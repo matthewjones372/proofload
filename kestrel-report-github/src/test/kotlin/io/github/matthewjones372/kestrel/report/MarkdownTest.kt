@@ -4,9 +4,11 @@ import io.github.matthewjones372.kestrel.Arrivals
 import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
 import io.github.matthewjones372.kestrel.Floor
+import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Interval
+import io.github.matthewjones372.kestrel.Limits
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
@@ -462,6 +464,31 @@ class MarkdownTest {
         markdown shouldContain "left over 15.0s"
         markdown shouldContain "The schedule held for 11.0s."
         markdown shouldContain "Service times below are the target at that load."
+    }
+
+    @Test
+    fun `the summary says what the injector ran out of`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse),
+            behind = timingOf(nothing),
+            limits = Limits(ports = Headroom.Measured(peak = 27_998, limit = 28_232)),
+        )
+
+        result.markdown() shouldContain "The injector ran out of room:"
+        result.markdown() shouldContain "ephemeral ports 27998 of 28232"
+    }
+
+    @Test
+    fun `a summary of a run with room to spare says nothing about it`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse),
+            behind = timingOf(nothing),
+            limits = Limits(ports = Headroom.Measured(peak = 100, limit = 28_232)),
+        )
+
+        result.markdown() shouldNotContain "ran out of room"
     }
 
     private fun second() = Second(

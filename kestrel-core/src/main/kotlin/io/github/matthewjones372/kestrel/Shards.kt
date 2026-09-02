@@ -115,6 +115,8 @@ data class Shards(val each: List<RunResult>) {
             arrivals = Arrivals.none,
         )
     }
+
+    companion object
 }
 
 /** Where two injectors disagree about what they were measuring, in [Runs]'s vocabulary. */

@@ -57,6 +57,7 @@ test that quietly asserts about a step nobody runs.
 [one run at a time, on the whole machine](#one-run-at-a-time-on-the-whole-machine) ·
 [a baseline in GitHub Actions](#a-baseline-in-github-actions) ·
 [more than one run, and a verdict worth having](#more-than-one-run-and-a-verdict-worth-having) ·
+[more than one injector](#more-than-one-injector) ·
 [publish the reports to GitHub Pages](#publish-the-reports-to-github-pages) ·
 [do not gate a merge on latency](#do-not-gate-a-merge-on-latency) ·
 [what the comparison will refuse to say](#what-the-comparison-will-refuse-to-say) ·
@@ -1315,6 +1316,29 @@ result.writeInto(Path.of("baselines/checkout"))   // run-<started>-<pid>.kestrel
 
 Both halves of the name are needed: two runs of one JVM start at different
 times, and two JVMs started together do not.
+
+## More than one injector
+
+When one JVM cannot send the load — `docs/what-it-costs.md` puts that wall
+somewhere between ten and twenty-five thousand a second on four shared cores —
+split the run across hosts. Each is given which one it is, how many there are,
+and the instant they all start on:
+
+```kotlin
+kestrel.run(soak.sharded(index = 2, of = 4, startingAt = at))
+```
+
+Injector *k* of *N* sends the users whose number is `k` modulo `N`, so the four
+of them offer exactly the departures one JVM would. Each writes one file, and
+the directory reads back as the run they were pieces of:
+
+```kotlin
+Shards.readAll(Path.of("run")).merged[pay].responseTime.p99
+```
+
+The launcher is a shell loop and ssh; the refusals, the worst injector's
+lateness and what one host can and cannot stand in for are in
+[more-than-one-injector.md](more-than-one-injector.md).
 
 ## Publish the reports to GitHub Pages
 

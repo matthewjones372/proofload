@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.baseline
 
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Runs
+import io.github.matthewjones372.kestrel.Shards
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -38,6 +39,23 @@ fun Runs.Companion.readAll(directory: Path): Runs {
         "no runs in $directory: each invocation writes one there, named run-<started>-<pid>$EXTENSION"
     }
     return Runs(files.map { readBaseline(it) }.sortedBy { it.startedAt })
+}
+
+/**
+ * Every injector [writeInto] left in [directory], as the one run they were
+ * pieces of.
+ *
+ * The coordinator, and the whole of it: a directory somebody's shell copied
+ * four files into. Nothing here talked to an injector while it ran, and
+ * nothing had to — each was given three scalars and the same jar, and the
+ * plan lines in the files prove they ran the same thing.
+ */
+fun Shards.Companion.readAll(directory: Path): Shards {
+    val files = runsIn(directory)
+    require(files.isNotEmpty()) {
+        "no injectors in $directory: each writes one there, named run-<started>-<index>of<N>-<pid>$EXTENSION"
+    }
+    return Shards(files.map { readBaseline(it) }.sortedBy { it.shard?.index })
 }
 
 private fun runsIn(directory: Path): List<Path> {

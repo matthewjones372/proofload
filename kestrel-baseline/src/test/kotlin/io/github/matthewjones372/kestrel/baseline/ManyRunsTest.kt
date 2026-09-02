@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Runs
 import io.github.matthewjones372.kestrel.Shard
+import io.github.matthewjones372.kestrel.Shards
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.perSecond
@@ -110,6 +111,28 @@ class ManyRunsTest {
         val why = shouldThrow<IllegalArgumentException> { Runs.readAll(directory) }.message.orEmpty()
 
         withClue(why) { why shouldContain "injectors rather than runs" }
+    }
+
+    @Test
+    fun `a directory of injectors reads back as the run they were pieces of`(@TempDir directory: Path) {
+        val together = Instant.parse("2026-08-26T09:00:00Z")
+        (0 until 4).forEach { index ->
+            runOf(together).copy(shard = Shard(index = index, of = 4, startingAt = together)).writeInto(directory)
+        }
+
+        val shards = Shards.readAll(directory)
+
+        shards.of shouldBe 4
+        withClue("counts are summed, and the percentile is read off the added buckets") {
+            shards.merged["pay"].count shouldBe 400L
+        }
+    }
+
+    @Test
+    fun `a directory with no injectors in it says so rather than reading as one`(@TempDir directory: Path) {
+        val refusal = shouldThrow<IllegalArgumentException> { Shards.readAll(directory) }
+
+        refusal.message.orEmpty() shouldContain directory.toString()
     }
 
     @Test

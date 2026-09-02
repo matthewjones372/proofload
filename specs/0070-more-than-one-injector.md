@@ -96,7 +96,7 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
       Done when: four shards merge to summed counts with a p99 off them; three
       of four are refused by index; an unlike machine is refused; one shard
       losing ground voids the run; `Runs.readAll` refuses a directory of them.
-- [ ] **`spec-0070-recipe`** — `Shards.readAll`, and the docs page for ssh.
+- [x] **`spec-0070-recipe`** — `Shards.readAll`, and the docs page for ssh.
       Done when: four JVMs on one host, given one instant, read back as one
       `Shards` whose merged count is `userCount()`.
 

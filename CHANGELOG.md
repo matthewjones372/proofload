@@ -193,11 +193,24 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
-- **The baseline format is version 5.** It carries the warm-up a run
-  declared, because a comparison refuses to pool a warmed run with a cold one
-  and a file that did not carry it would refuse every warmed run against every
-  baseline ever written. Version 4 and version 3 files still read, and claim no
-  warm-up.
+- **More than one injector.** `simulation.sharded(index, of, startingAt)`
+  splits a run across JVMs: injector *k* of *N* sends the users whose number is
+  `k` modulo `N`, so the set of them offers exactly the departures one JVM
+  would. Every injector carries the whole plan unmodified and derives its own
+  share, waits for one instant on its own wall clock after warming and after
+  taking its host's lock, and writes one file. `Shards.readAll(directory)`
+  merges those back into the run they were pieces of — counts summed,
+  percentiles off the added buckets, lateness and stalls from the worst
+  injector rather than the pool, and an incomplete or unlike set refused by
+  name. `Runs` refuses injectors outright. See
+  [docs/more-than-one-injector.md](docs/more-than-one-injector.md).
+- **The baseline format is version 6.** It carries the warm-up a run declared,
+  because a comparison refuses to pool a warmed run with a cold one and a file
+  that did not carry it would refuse every warmed run against every baseline
+  ever written; and, since version 6, the run's lateness and the injector's own
+  stalls as buckets plus the shard that wrote it, without which a merged
+  distributed run could not say which injector lost ground. Versions 5, 4 and 3
+  still read, each claiming nothing about the lines it did not have.
 - **A failed credential refresh no longer stops refreshing.** A fetch that
   threw out of `refreshing`'s scheduled task cancelled its own schedule, so one
   failure left every later refresh unscheduled and a soak reading a credential

@@ -30,6 +30,7 @@ data class Simulation(
     val arms: List<Arm>,
     val goals: List<Goal> = emptyList(),
     val completing: Completing? = null,
+    val warmUp: WarmUp? = null,
 ) {
 
     constructor(
@@ -99,7 +100,21 @@ fun Simulation.expecting(vararg goals: Goal): Simulation = copy(goals = this.goa
 fun Simulation.plan(): Plan = Plan(
     arms = arms.map { arm -> PlannedArm(arm.scenario.name, arm.scenario.stepNames, arm.profile) },
     goals = goals,
+    warmUp = warmUp,
 )
+
+/**
+ * The same run, with [over] of load sent before the measurement starts and
+ * recorded nowhere.
+ *
+ * Each arm is held at the rate its own shape opens at, so a ramp warms at the
+ * load its first measured departures meet rather than at a peak the run has
+ * not climbed to yet.
+ *
+ * Named for what it does rather than `warmingUp(for = ...)`: `for` is a hard
+ * keyword and would need backticks at every call site.
+ */
+fun Simulation.warmingUp(over: Duration): Simulation = copy(warmUp = WarmUp(over))
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })

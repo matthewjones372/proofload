@@ -149,7 +149,11 @@ private fun format(times: Double): String = String.format(Locale.ROOT, "%.2f", t
 internal fun Plan.unlike(other: Plan): List<String> {
     val mine = arms.associateBy { it.scenario }
     val theirs = other.arms.associateBy { it.scenario }
-    return (theirs.keys - mine.keys).map { "arm \"$it\" was sent before and is not sent here" } +
+    // A warmed run and a cold one measured different things: the cold one paid
+    // for class loading inside its own numbers, which is the whole reason a
+    // warm-up is declared rather than assumed.
+    return listOfNotNull("warm-up".difference(other.warmUp, warmUp)) +
+        (theirs.keys - mine.keys).map { "arm \"$it\" was sent before and is not sent here" } +
         (mine.keys - theirs.keys).map { "arm \"$it\" is sent here and was not before" } +
         mine.keys.intersect(theirs.keys).flatMap { arm -> mine.getValue(arm).unlike(theirs.getValue(arm)) }
 }

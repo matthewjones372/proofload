@@ -266,7 +266,11 @@ data class PlannedArm(val scenario: String, val steps: List<String>, val profile
  * without this, and every latency on that page would be describing a lighter
  * test than the one somebody asked for.
  */
-data class Plan(val arms: List<PlannedArm>, val goals: List<Goal> = emptyList()) {
+data class Plan(
+    val arms: List<PlannedArm>,
+    val goals: List<Goal> = emptyList(),
+    val warmUp: WarmUp? = null,
+) {
 
     constructor(
         scenario: String,

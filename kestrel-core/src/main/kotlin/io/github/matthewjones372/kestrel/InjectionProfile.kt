@@ -104,6 +104,21 @@ fun hold(rate: Rate, over: Duration): InjectionProfile.ConstantRate = constantRa
 fun InjectionProfile.thenRampTo(rate: Rate, over: Duration): InjectionProfile =
     then(rampRate(from = endRate, to = rate, over = over))
 
+/**
+ * What this shape is running at when it starts.
+ *
+ * [endRate]'s mirror, and what a warm-up holds: warming a ramp at its peak
+ * would leave the measurement inheriting a state the run never climbed to,
+ * while its opening rate is the load the first measured departures meet.
+ */
+val InjectionProfile.startRate: Rate
+    get() = when (this) {
+        is InjectionProfile.ConstantRate -> perSecond.perSecond
+        is InjectionProfile.RampRate -> from.perSecond
+        is InjectionProfile.Stages -> stages.firstOrNull()?.startRate ?: 0.perSecond
+        is InjectionProfile.Randomized -> of.startRate
+    }
+
 /** What this shape is running at when it finishes. */
 val InjectionProfile.endRate: Rate
     get() = when (this) {

@@ -78,7 +78,7 @@ invent a meaning for two runs' concurrency added. This overrides 0057's question
       Done when: a run against a target slower than one departure interval reports
       rate × latency in flight, not rate × `BOOKING_WINDOW`, and `awaitAll` still
       cannot fire early.
-- [ ] **`spec-0068-sampled`** — `RunResult.usersInFlight`, from the existing
+- [x] **`spec-0068-sampled`** — `RunResult.usersInFlight`, from the existing
       one-second sampler, indexed by the second it was taken in.
       Done when: a ten-second run reports about ten samples, `Progress.silent` the
       same ones, a missed second is absent rather than zero, and the ceiling holds.

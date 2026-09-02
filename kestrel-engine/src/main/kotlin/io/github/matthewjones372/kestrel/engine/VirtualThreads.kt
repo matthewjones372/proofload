@@ -95,7 +95,9 @@ private fun Simulation.send(progress: Progress): RunResult {
     departAll(recorders, users, departed, arrivals, drain, runStart)
     drain?.close()
     watching.stop()
-    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop(), limits = room.stop())
+    val sampled = watching.usersInFlight()
+    return recorders.freeze(plan(), arrivals.freeze())
+        .copy(hiccups = watch.stop(), limits = room.stop(), usersInFlight = sampled)
 }
 
 /**

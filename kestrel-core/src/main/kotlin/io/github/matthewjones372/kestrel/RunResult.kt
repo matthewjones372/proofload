@@ -402,6 +402,17 @@ data class RunResult(
     val latePerSecond: List<Timing> = emptyList(),
 
     /**
+     * How many users were running in each second of the run, sampled once a
+     * second on the scheduler's side.
+     *
+     * The measured half of Little's law: throughput and latency come off the
+     * histograms, and this is the count they predict. A second the sampler
+     * missed is absent rather than zero, because nothing counted no users — it
+     * counted nothing.
+     */
+    val usersInFlight: List<Long?> = emptyList(),
+
+    /**
      * What the injector itself ran up against while it measured: descriptors,
      * ephemeral ports, its share of the cores.
      *

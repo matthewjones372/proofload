@@ -115,4 +115,14 @@ class LimitsTest {
         }
         return out.toString()
     }
+
+    @Test
+    fun `a merged set adds the users each run had in flight in that second`() {
+        val one = resultWith(Limits.none).copy(usersInFlight = listOf(5L, 6L, null))
+        val other = resultWith(Limits.none).copy(usersInFlight = listOf(4L, null, null))
+
+        val merged = Runs.of(one, other).merged
+
+        merged.usersInFlight shouldBe listOf(9L, 6L, null)
+    }
 }

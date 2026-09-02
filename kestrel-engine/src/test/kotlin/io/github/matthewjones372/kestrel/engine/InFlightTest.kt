@@ -57,4 +57,31 @@ class InFlightTest {
 
         ticks.last().inFlight shouldBe 0L
     }
+
+    @Test
+    fun `a run keeps a sample a second, and a silent run keeps the same ones`() {
+        val slow = scenario("slow") { exec("wait") { Thread.sleep(50) } }
+
+        val watched = slow.at(10.perSecond, over = 3.seconds).run(Progress { _, _ -> })
+        val silent = slow.at(10.perSecond, over = 3.seconds).run(Progress.silent)
+
+        withClue("about one sample a second of a three-second run") {
+            (watched.usersInFlight.size >= 2) shouldBe true
+            (silent.usersInFlight.size >= 2) shouldBe true
+        }
+        withClue("a measurement that vanishes when nobody is looking is not one") {
+            silent.usersInFlight.count { it != null } shouldBe watched.usersInFlight.count { it != null }
+        }
+    }
+
+    @Test
+    fun `a result built from samples has no in-flight readings rather than zeroes`() {
+        val quick = scenario("quick") { exec("touch") { } }
+
+        val result = quick.at(20.perSecond, over = 1.seconds).run(Progress.silent)
+
+        withClue("every reading present is a count somebody took") {
+            result.usersInFlight.filterNotNull().all { it >= 0L } shouldBe true
+        }
+    }
 }

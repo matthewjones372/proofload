@@ -100,6 +100,24 @@ which is the user's own cluster's job.
       registry images, opted into rather than required.
       Done when: it runs where Docker is present, is skipped rather than failed
       where it is not, and nothing in `build` depends on it.
+      **Deliberately not built, and the owner's call to reverse.** Two reasons,
+      one of them new.
+      The spike above removed this entry's strongest justification. It was for
+      the accumulator, the sender thread and the ack path — the parts a mock
+      does not model — and those now run against a socket, with the real
+      producer and the real consumer, in `./gradlew build`, with no dependency
+      and no Docker. What containers would still add is a genuine broker's own
+      behaviour under real leader changes and a registry answering for real,
+      which is further from what this repository can claim and closer to the
+      user's own cluster's job.
+      The second reason is about who could check it. Testcontainers Kafka is
+      23.0 MB across 13 jars on this module's test classpath, and the half of
+      this entry worth having — that it *runs* where Docker is present — cannot
+      be verified where it was written: the CLI is there and no daemon is.
+      Building the skip path alone would add the weight and prove the half that
+      does not matter. Recommend building it on a machine with a daemon, or
+      dropping the entry and saying in `docs/modules.md` that the wire is proved
+      by the fake broker rather than by a container suite.
 
 ## Acceptance
 
@@ -141,7 +159,10 @@ which is the user's own cluster's job.
 3. **What does `docs/modules.md` say for a module whose wire is untested
     without Docker?** Every other row there names a test that proves its claim.
     Recommend saying plainly that the wire is proved only by the container
-    suite, rather than letting the row read like its neighbours.
+    suite, rather than letting the row read like its neighbours. **The premise
+    went away**: the wire is proved by `FakeBrokerTest`, in `./gradlew build`,
+    against the real client over a real socket. The row can read like its
+    neighbours because it now is like them.
 4. **Does the spike get a time box?** A fake broker is the kind of thing that is
     eighty percent done for a long time. Recommend one sitting, and a written
     refusal being an acceptable and useful outcome. **It worked, in one

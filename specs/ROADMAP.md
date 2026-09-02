@@ -82,22 +82,20 @@ built. Each row links the spec that argued for it.
 | [0073](0073-exporting-what-a-run-measured.md) | a run's measurements as an HdrHistogram log, an OpenMetrics exposition and an OTLP push — the judgement left in the report |
 | [0071](0071-grpc-steps.md) | gRPC steps over a caller's own stubs, named by the descriptor, with the status a value and no transport chosen for them |
 | [0060](0060-kafka-and-the-answer-on-another-topic.md) | Kafka produce steps, and the answer read off another topic by a correlation header |
+| [0061](0061-what-the-kafka-path-costs.md) | what the Kafka adapter costs, and a fake broker that satisfies the real client over a socket |
 
 ## Drafted, not built
 
-In the order the architect would take them. The specs numbered 0065 and above
-were drafted in one pass from an outside review of what a serious load-testing
-tool still lacks here; their interleaving is a proposal, not a decision.
-
-| Spec | Why it is next |
-|---|---|
-| [0061](0061-what-the-kafka-path-costs.md) | what 0060's path costs, and what a socket proves that a mock does not |
+Nothing. Every drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed: `0024-closed`, which wants a revision
 before code — every schedule number a run now reports assumes an open model —
-`0029-tag`, which is the release itself, and `0075`'s page entry, which cannot
-be built as written because a looped step and a streaming one read alike in a
-frozen result.
+`0029-tag`, which is the release itself, `0075`'s page entry, which cannot be
+built as written because a looped step and a streaming one read alike in a
+frozen result, `0071`'s server-streaming half, whose samples are either
+time-to-the-kth or cadence and belong under a verb naming which, and
+`0061-containers`, which the fake broker made largely redundant and which
+cannot be verified without a Docker daemon.
 
 ## Known and unwritten
 

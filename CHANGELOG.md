@@ -193,6 +193,12 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **What the Kafka path costs.** `:benchmarks:kafkaCeiling` sweeps the produce
+  path with the broker removed, and `docs/what-it-costs.md` carries the figure
+  with what is missing from it: no accumulator, no sender thread, no
+  `max.block.ms`, so it bounds the adapter and says nothing about producing to
+  a broker. It also says that the median rule naming the ceiling calls 100,000 a
+  second "kept its schedule" while the 99th percentile departure is 179 ms late.
 - **`kestrel-kafka`** — Kafka produce steps, and the answer read off another
   topic. `kafka.brokers(...).topic(name).keyed { }.value { }` produces through
   an `emit`, and `topic.correlatedBy(Header(...)).completions()` is the sink a

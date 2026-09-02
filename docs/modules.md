@@ -107,7 +107,11 @@ says what did *not* arrive: no broker, embedded or containerised, and no schema
 registry — `io.confluent:kafka-avro-serializer` is not on Maven Central, so
 depending on it would force a `packages.confluent.io` declaration on every
 consumer and break the smoke project below, which resolves from
-`mavenCentral()` on purpose.
+`mavenCentral()` on purpose. Its wire is proved rather than assumed:
+`FakeBrokerTest` stands up a broker built from `kafka-clients`' own protocol
+classes and drives a real `KafkaProducer` and a real `KafkaConsumer` at it over
+a socket, so the accumulator, the sender thread and the ack path — the parts no
+mock models — run inside `./gradlew build` with no container and no Docker.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module

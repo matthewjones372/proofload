@@ -103,6 +103,42 @@ failing at the same time. It narrows the question from "the client, the loopback
 stack or the server" to "port exhaustion at this end, or the accept path at the
 other".
 
+### What the wall actually is
+
+The sweep stops at rates it can send, so it does not show where the shipped
+path breaks. Pushed past its published rates on this machine, it breaks in one
+particular way:
+
+| Rate | Requests | Failed | Behind p50 | Served p99 | Files | Ports |
+|---:|---:|---:|---:|---:|---:|---:|
+| 10,000 | 50,000 | 27 | 140.287us | 397.311us | 486 / 20,000 | 20,630 / 28,232 |
+| 25,000 | 125,000 | 111,989 | 9.371647ms | 303.103us | 94 / 20,000 | 34,666 / 28,232 |
+| 50,000 | 250,000 | 229,000 | 570.425343ms | 313.343us | 160 / 20,000 | 52,288 / 28,232 |
+
+Nine tenths of the requests failed at twenty-five thousand a second, and the two
+columns that explain it are the last two. Descriptors never went above one per
+cent of what this JVM was allowed. Sockets in TIME_WAIT went past the whole
+ephemeral port range. And the target answered every request that reached it in
+about three hundred microseconds at p99, at every rate, unchanged.
+
+So the wall here is **ephemeral ports**, not the client's throughput and not the
+target's speed. Connections are being recycled faster than the kernel will give
+their ports back. A faster HTTP client would hit the same wall at the same
+place, which is worth knowing before anyone writes one: the seam in
+`kestrel-http` makes a different client easy to try, and this measurement says
+trying one is not what raises this number.
+
+Two things would, and they are different projects. Holding connections open
+rather than churning them — which is partly the target's policy here, and
+`com.sun.net.httpserver` is not a server anyone tunes — or sending from more
+than one host, where each has an ephemeral range of its own.
+
+One caveat on the Ports column, visible in the rows above: it can read past its
+own limit. `tw` is machine-wide and counts both ends of a loopback connection,
+while the range it is read against describes only the end that dials out. Over
+loopback both ends are this machine, so the count roughly doubles. It is right
+about *what* ran out and approximate about by how much.
+
 The pick is deliberately conservative. Five thousand a second kept the budget —
 a median departure 101 µs late — and is still not the ceiling, because three
 requests in twenty-five thousand failed. A refused request is not a request this

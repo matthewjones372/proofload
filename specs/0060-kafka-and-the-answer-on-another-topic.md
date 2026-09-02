@@ -104,7 +104,7 @@ tunes against them will ship a consumer that cannot keep up.
       `Completions` matches on; a caller's serializer resolves a schema against
       the stub; nothing new is on the test classpath; and it runs inside
       `./gradlew build`.
-- [ ] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`.
+- [x] **`spec-0060-recipe`** — the schema registry page in `docs/cookbook.md`.
       Done when: the page says a serializer fetches its schema once per subject
       and caches it, so the first record pays an HTTP round trip; that the stall
       lands in `behind` rather than the target's latency, because the lambda is

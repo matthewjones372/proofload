@@ -193,6 +193,18 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **`kestrel-kafka`** — Kafka produce steps, and the answer read off another
+  topic. `kafka.brokers(...).topic(name).keyed { }.value { }` produces through
+  an `emit`, and `topic.correlatedBy(Header(...)).completions()` is the sink a
+  `completing` drains — so the latency that matters is a consumer having done
+  the work, measured from the departure the profile promised, rather than a
+  broker's ack. The correlation is stated once and rides a header, so the
+  completion side needs no deserializer. The serializer stays the caller's, a
+  `(Session) -> ByteArray?` this module never looks inside: Confluent's is not
+  on Maven Central, and depending on it would force a `packages.confluent.io`
+  declaration on every consumer. `linger.ms` defaults to 0, since a producer
+  that lingers makes the arrivals figure describe the injector rather than the
+  broker. No broker in the build, embedded or containerised.
 - **`kestrel-grpc`** — gRPC steps over a caller's own stubs. `grpc.target(...)`
   gives a channel to build a stub on, `call(descriptor) { }` times one round
   trip and names the row `orders.v1.Orders/PlaceOrder` off the descriptor, and

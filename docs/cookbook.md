@@ -46,7 +46,8 @@ test that quietly asserts about a step nobody runs.
 [a step that is not HTTP](#a-step-that-is-not-http) ·
 [gRPC](#grpc) ·
 [WebSockets](#websockets) ·
-[work that finishes somewhere else](#work-that-finishes-somewhere-else)
+[work that finishes somewhere else](#work-that-finishes-somewhere-else) ·
+[Kafka, and the answer on another topic](#kafka-and-the-answer-on-another-topic)
 
 **Asking the question** — [assert, or declare goals](#assert-or-declare-goals) ·
 [ask what actually failed](#ask-what-actually-failed) ·
@@ -1441,6 +1442,84 @@ unsolicited and not timed: there is no departure to measure it from.
 Server-streaming calls are not covered by this. Their messages answer no send
 of their own, so a sample is either time-to-the-*k*th or cadence, and neither
 belongs in the same histogram as a round trip.
+
+## Kafka, and the answer on another topic
+
+A broker acking a produce is not a consumer having done the work, and a team
+load-testing Kafka almost always wants the second. So a produce is an `emit`
+and the answer is a `completing`, the shape [work that finishes somewhere
+else](#work-that-finishes-somewhere-else) already describes:
+
+```kotlin
+import io.github.matthewjones372.kestrel.kafka.Header
+import io.github.matthewjones372.kestrel.kafka.completions
+import io.github.matthewjones372.kestrel.kafka.emit
+import io.github.matthewjones372.kestrel.kafka.kafka
+
+val broker = kafka.brokers("localhost:9092").acks(Acks.All)
+
+val trades = scenario("trades") {
+    emit(
+        submitted,
+        broker.topic("trades")
+            .keyed { it[account]?.toString()?.toByteArray() }
+            .value { avro.serialize(it[trade]) }        // your serializer
+            .correlatedBy(Header("trade-id")),
+        keyedBy = { it[account] ?: 0L },
+    )
+}
+
+trades.at(5_000.perSecond, over = 5.minutes)
+    .completing(
+        settled,
+        from = broker.topic("settlements").correlatedBy(Header("trade-id")).completions(),
+        drainingFor = 30.seconds,
+    )
+```
+
+The correlation is stated once, at the `emit`, and goes to both the departure
+the run counts and the header the record carries. The completion side reads
+that header and never touches the payload — which is why it needs no
+deserializer, and why no schema registry is involved in reading an answer.
+
+`submitted` times the broker's ack, which is `acks` deep: an in-sync-replica
+round trip at `Acks.All` and nothing at all at `Acks.None`. `settled` is the
+number that matters — measured from the departure the profile promised, not
+from when the record reached the broker.
+
+**No serializer here, and no registry.** `io.confluent:kafka-avro-serializer`
+is not on Maven Central, so depending on it would force a
+`packages.confluent.io` declaration on everyone who took this module. Your
+serializer is a `(Session) -> ByteArray?` lambda and this module never looks
+inside it.
+
+### What a schema lookup costs, and where it shows
+
+A registry-backed serializer fetches a schema once per subject and caches it,
+so the first record pays an HTTP round trip. Because the cache is shared, any
+record departing while that fetch is in flight waits behind it.
+
+That cost lands in **the produce step's own latency** — the lambda runs inside
+the step body, so it is timed as that step. It does *not* land in `behind`:
+every user runs on a thread of its own, so one blocked in a serializer holds up
+nobody else's departure. Reading that first spike as the broker being slow is
+the mistake to avoid.
+
+Read `result.steady` for the run without it — that is what the steady segment
+is for.
+
+### Two more things worth knowing
+
+`linger.ms` is set to 0 unless you say otherwise. A producer that lingers turns
+an evenly spaced departure stream into bursts at the broker, so the arrivals
+figure would report a smoothness the broker never saw. If you raise it, that
+figure describes the injector rather than the broker.
+
+When the accumulator fills, `send` blocks up to `max.block.ms` on the calling
+thread. That is real backpressure and it is reported honestly — but it arrives
+as generator lateness in `behind`, not as target latency, so read [did the
+generator keep up?](#did-the-generator-keep-up) before concluding the cluster
+is fine.
 
 ## Send the numbers somewhere else
 

@@ -22,14 +22,18 @@ honestly is still not the rate. The JDK client is the right default, asserted by
   third-party or native client. Done when: it passes this spec's contract test,
   its classpath is core plus `kestrel-http` plus one client stack, and its
   ceiling, from 0056's sweep, is on `docs/what-it-costs.md` beside the JDK one.
-  **Measured before writing one, and the answer was no.** Pushed to 25,000 a
-  second the shipped path fails nine requests in ten — with descriptors at one
-  per cent of their limit, sockets in TIME_WAIT past the whole ephemeral port
-  range, and the target still answering in 300µs at p99. The wall is ports, not
-  the client, so a faster client hits it in the same place. The two things that
-  would move it are holding connections open rather than churning them, and
-  sending from more than one host (0070). See "What the wall actually is" in
-  `docs/what-it-costs.md`.
+  **Measured before writing one, and the measurement does not justify it.**
+  Pushed past its published rates the shipped path breaks between ten and
+  twenty-five thousand a second, and which resource runs out moves with the
+  configuration: ports as shipped, descriptors when the target is told to hold
+  connections open, descriptors again when the client is pinned to HTTP/1.1.
+  Three configurations, three resources, one wall — a saturated arrangement
+  rather than a bottleneck with a name. The sweep cannot say whether the client
+  or the target ran out first, because the target shares this JVM and these
+  cores, and `Served p99` times only the handler. A faster client is not ruled
+  out; it is unevidenced, and getting evidence needs a target that is not
+  competing for the machine. See "Where it breaks, and what that does not tell
+  you" in `docs/what-it-costs.md`.
 - No connection-per-user transport, though the seam is what makes one sayable.
 - No second engine. 0051's `Engine` is a different seam — see below.
 - No HTTP/3. Named as a question.

@@ -103,41 +103,49 @@ failing at the same time. It narrows the question from "the client, the loopback
 stack or the server" to "port exhaustion at this end, or the accept path at the
 other".
 
-### What the wall actually is
+### Where it breaks, and what that does not tell you
 
 The sweep stops at rates it can send, so it does not show where the shipped
-path breaks. Pushed past its published rates on this machine, it breaks in one
-particular way:
+path breaks. Pushed past its published rates on this machine it breaks between
+ten and twenty-five thousand a second, and *which resource runs out depends on
+how the machine is configured*:
 
-| Rate | Requests | Failed | Behind p50 | Served p99 | Files | Ports |
-|---:|---:|---:|---:|---:|---:|---:|
-| 10,000 | 50,000 | 27 | 140.287us | 397.311us | 486 / 20,000 | 20,630 / 28,232 |
-| 25,000 | 125,000 | 111,989 | 9.371647ms | 303.103us | 94 / 20,000 | 34,666 / 28,232 |
-| 50,000 | 250,000 | 229,000 | 570.425343ms | 313.343us | 160 / 20,000 | 52,288 / 28,232 |
+| Rate | Requests | Failed | Served p99 | Files | Ports |
+|---:|---:|---:|---:|---:|---:|
+| 10,000 | 50,000 | 27 | 397.311us | 486 / 20,000 | 20,630 / 28,232 |
+| 25,000 | 125,000 | 111,989 | 303.103us | 94 / 20,000 | 34,666 / 28,232 |
+| 50,000 | 250,000 | 229,000 | 313.343us | 160 / 20,000 | 52,288 / 28,232 |
 
-Nine tenths of the requests failed at twenty-five thousand a second, and the two
-columns that explain it are the last two. Descriptors never went above one per
-cent of what this JVM was allowed. Sockets in TIME_WAIT went past the whole
-ephemeral port range. And the target answered every request that reached it in
-about three hundred microseconds at p99, at every rate, unchanged.
+As shipped it is ephemeral ports: sockets in TIME_WAIT go past the whole range
+while descriptors stay under one per cent of their limit. Told to hold its
+connections open instead — a wider idle-connection cap on the target — the same
+rates exhaust *descriptors* rather than ports, at 14,589 of 20,000, and fail
+every request. Pinned to HTTP/1.1 rather than negotiating, they exhaust
+descriptors too, at 19,999 of 20,000.
 
-So the wall here is **ephemeral ports**, not the client's throughput and not the
-target's speed. Connections are being recycled faster than the kernel will give
-their ports back. A faster HTTP client would hit the same wall at the same
-place, which is worth knowing before anyone writes one: the seam in
-`kestrel-http` makes a different client easy to try, and this measurement says
-trying one is not what raises this number.
+Three configurations, three different resources, the same wall between ten and
+twenty-five thousand. That is what a saturated arrangement looks like, not a
+single bottleneck with a name.
 
-Two things would, and they are different projects. Holding connections open
-rather than churning them — which is partly the target's policy here, and
-`com.sun.net.httpserver` is not a server anyone tunes — or sending from more
-than one host, where each has an ephemeral range of its own.
+**What this cannot say is whether the client or the target ran out first**, and
+it is worth being plain about why, because the served columns look like they
+answer it. They do not. `Served p99` is the time inside the target's handler:
+it stays near three hundred microseconds at every rate above, which says
+handler execution is not the limit — and says nothing about the target's accept
+path, its connection handling, or the cores it is taking from the generator to
+do any of it. `com.sun.net.httpserver` runs in this same JVM on these same four
+cores and is not a server anyone tunes.
 
-One caveat on the Ports column, visible in the rows above: it can read past its
-own limit. `tw` is machine-wide and counts both ends of a loopback connection,
-while the range it is read against describes only the end that dials out. Over
-loopback both ends are this machine, so the count roughly doubles. It is right
-about *what* ran out and approximate about by how much.
+Separating the two needs a target that is not competing with the generator for
+the machine — a real server, on other hardware, over a network this sweep
+deliberately excludes. Until then the number stays a lower bound for the reason
+it always was, and the honest reading of the rows above is that this
+arrangement saturates, not that the JDK client does.
+
+The consequence for anyone thinking of a faster client: `kestrel-http`'s
+transport seam makes one easy to write, and this measurement is not a reason to.
+It is not evidence the client is slow. Getting evidence either way means
+measuring against a target that is not in the way.
 
 The pick is deliberately conservative. Five thousand a second kept the budget —
 a median departure 101 µs late — and is still not the ceiling, because three

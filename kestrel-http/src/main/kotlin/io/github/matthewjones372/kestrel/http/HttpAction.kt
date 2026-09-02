@@ -2,11 +2,8 @@ package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ScenarioBuilder
-import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.SessionKey
-import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.StepScope
-import io.github.matthewjones372.kestrel.action
 import java.net.URI
 import java.net.http.HttpRequest
 import java.time.Duration
@@ -68,7 +65,9 @@ class HttpAction internal constructor(
     fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction =
         copy(captures = captures + Capture(key, extract))
 
-    override fun run(session: Session): StepResult = action { sendTo(this) }.run(session)
+    override fun run(scope: StepScope) {
+        sendTo(scope)
+    }
 
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {

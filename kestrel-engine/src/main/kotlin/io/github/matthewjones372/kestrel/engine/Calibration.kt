@@ -4,7 +4,6 @@ import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.Progress
-import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.perSecond
@@ -76,7 +75,7 @@ internal const val RESOLUTION_PROPERTY: String = "kestrel.resolution"
 
 private const val STEP = "null"
 
-private val nothing = scenario("calibration") { exec(STEP, Action { session -> StepResult.Ok(session) }) }
+private val nothing = scenario("calibration") { exec(STEP, Action { }) }
 
 /** Fast enough that a p99 rests on hundreds of samples rather than on ten. */
 private val RATE = 5_000.perSecond

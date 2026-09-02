@@ -5,7 +5,28 @@ package io.github.matthewjones372.kestrel
  * module can implement it without core growing a dependency on a client.
  */
 fun interface Action {
-    fun run(session: Session): StepResult
+
+    /**
+     * Does the step, reporting through [scope] rather than returning.
+     *
+     * The scope is handed in rather than made here because it is the run's,
+     * not the action's: it carries the session, and it is where a body says
+     * what it did. An action that made its own could report nothing the engine
+     * had not asked for, which is what stops a step body recording more than
+     * one sample, retrying without burying the retry, or telling a trace what
+     * it sent.
+     */
+    fun run(scope: StepScope)
+
+    /**
+     * The step against a session, on a scope of its own, for a caller that has
+     * one and wants the outcome — a test, or anything that is not an engine.
+     *
+     * An engine does not use this: it builds one scope, runs the step through
+     * it and reads the result off it, because the scope is where a body
+     * reports and the engine is what asked.
+     */
+    fun run(session: Session): StepResult = StepScope(session).also(::run).result()
 }
 
 /**
@@ -52,7 +73,15 @@ sealed interface StepResult {
  * the caller, and the accumulator is frozen into a `StepResult` the moment the
  * body returns.
  */
-class StepScope internal constructor(private var session: Session) {
+class StepScope(session: Session) {
+
+    /**
+     * The session as it stands, readable for a body that needs the whole of it
+     * — a correlation key computed from several values — and writable only
+     * through [set], so what a step reads back is what it put there.
+     */
+    var session: Session = session
+        private set
 
     // The builder case again: a body that goes to the target more than once
     // counts here, and the count is frozen into the StepResult with the rest.
@@ -110,12 +139,17 @@ class StepScope internal constructor(private var session: Session) {
         trace = id
     }
 
-    internal fun result(): StepResult =
+    /**
+     * What the body reported, frozen.
+     *
+     * Public because [Engine] is: an engine in another module builds the scope
+     * a step reports through and reads the outcome off it, and 0051 put that
+     * seam in core precisely so one could.
+     */
+    fun result(): StepResult =
         reason?.let { StepResult.Failed(session, it, attempts, trace) }
             ?: StepResult.Ok(session, attempts, trace)
 }
 
 /** A step body as a value, so one action can be shared by several scenarios. */
-fun action(block: StepScope.() -> Unit): Action = Action { session ->
-    StepScope(session).apply(block).result()
-}
+fun action(block: StepScope.() -> Unit): Action = Action { scope -> scope.block() }

@@ -6,12 +6,10 @@ import io.github.matthewjones372.kestrel.Outstanding
 import io.github.matthewjones372.kestrel.Pending
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.ScenarioBuilder
-import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.StepName
 import io.github.matthewjones372.kestrel.StepScope
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.TimedOut
-import io.github.matthewjones372.kestrel.action
 import java.net.http.WebSocket
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
@@ -40,10 +38,10 @@ internal val writeTimeout: Duration = 30.seconds
 fun ScenarioBuilder.send(name: StepName, frame: WsFrame, keyedBy: Correlation) {
     // The correlation reads the whole session, which a step scope does not hand
     // out, so the body runs inside an action that has both.
-    exec(name, Action { session -> action { sendOn(session, frame, keyedBy) }.run(session) })
+    exec(name, Action { scope -> scope.sendOn(frame, keyedBy) })
 }
 
-private fun StepScope.sendOn(session: Session, frame: WsFrame, keyedBy: Correlation) {
+private fun StepScope.sendOn(frame: WsFrame, keyedBy: Correlation) {
     val open = this[connection] ?: return fail(NotConnected)
     val id = keyedBy.of(session)
     // Registered before the write rather than after it: a quick target can

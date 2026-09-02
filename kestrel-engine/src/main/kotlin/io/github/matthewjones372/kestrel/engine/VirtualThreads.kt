@@ -15,6 +15,7 @@ import io.github.matthewjones372.kestrel.Session
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
+import io.github.matthewjones372.kestrel.StepScope
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.hold
@@ -447,10 +448,19 @@ private fun Action.runOn(
 // the caller wrote against a target the caller does not control, so a throw out
 // of it is a request that failed, to be measured and named — not a bug in the
 // engine and not a reason to lose the rest of the run.
-private fun Action.attempt(session: Session): StepResult = try {
-    run(session)
-} catch (throwable: Throwable) {
-    StepResult.Failed(session, Threw(throwable.javaClass.name))
+private fun Action.attempt(session: Session): StepResult {
+    // One scope per step, built here rather than by the action: it is the
+    // run's, and it is what a body reports through.
+    val scope = StepScope(session)
+    return try {
+        run(scope)
+        scope.result()
+    } catch (throwable: Throwable) {
+        // The session the step started with, not what it had written before it
+        // threw: a half-written session is a failure that reappears as a
+        // stranger several steps later.
+        StepResult.Failed(session, Threw(throwable.javaClass.name))
+    }
 }
 
 private fun StepResult.reason(): Reason? = when (this) {

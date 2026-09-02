@@ -89,12 +89,10 @@ built. Each row links the spec that argued for it.
 Nothing. Every drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed:
-`0029-tag`, which is the release itself, `0075`'s page entry, which cannot be
-built as written because a looped step and a streaming one read alike in a
-frozen result, `0071`'s server-streaming half, whose samples are either
-time-to-the-kth or cadence and belong under a verb naming which, and
-`0061-containers`, which the fake broker made largely redundant and which
-cannot be verified without a Docker daemon.
+`0029-tag`, which is the release itself, `0071`'s server-streaming half, whose
+samples are either time-to-the-kth or cadence and belong under a verb naming
+which, and `0061-containers`, which the fake broker made largely redundant and
+which cannot be verified without a Docker daemon.
 
 ## Known and unwritten
 

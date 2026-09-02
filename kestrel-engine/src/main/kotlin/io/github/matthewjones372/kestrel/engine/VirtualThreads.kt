@@ -320,7 +320,7 @@ private fun waitFor(shard: Shard, progress: Progress) {
 }
 
 /** Where a warm-up's samples go: nowhere. */
-private val unrecorded = StepSink { _, _, _, _, _, _, _, _ -> }
+private val unrecorded = StepSink { _, _, _, _, _, _, _, _, _ -> }
 
 /**
  * This user's own source of waits, seeded from the arm's seed and the user's
@@ -582,6 +582,7 @@ private class UserWalk(
     // would read as the target's latency. Reset by `runOn` before each step.
     private var sampling: String? = null
     private var samplingReached = false
+    private var samplingVisit = false
 
     /**
      * A sample the body observed, recorded as it observed it rather than
@@ -589,7 +590,8 @@ private class UserWalk(
      * started, and hold a step's worth of them for nothing.
      *
      * `reached` rides the first only — a user that received a hundred messages
-     * reached the step once.
+     * reached the step once — and so does `visit`, for the same reason read the
+     * other way: those hundred messages are one run of the body.
      */
     override fun sample(took: Duration, at: Duration?, reason: Reason?) {
         val step = sampling ?: return
@@ -600,10 +602,12 @@ private class UserWalk(
             schedulingDelay,
             at ?: (System.nanoTime() - runStart).nanoseconds,
             samplingReached,
+            samplingVisit,
             attempts = 1,
             trace = null,
         )
         samplingReached = false
+        samplingVisit = false
     }
 
     // A failed step abandons the user. A null session carries that decision
@@ -643,6 +647,7 @@ private class UserWalk(
     private fun runOn(action: Action, name: String, session: Session, reached: Boolean): Session? {
         sampling = name
         samplingReached = reached
+        samplingVisit = true
         val notes = if (narrating == null) null else mutableListOf<String>()
         val scope = StepScope(session, samples = this, notes = notes)
         val startedAt = System.nanoTime()
@@ -660,11 +665,13 @@ private class UserWalk(
                 schedulingDelay,
                 (startedAt - runStart).nanoseconds,
                 reached,
+                samplingVisit,
                 result.attempts,
                 result.trace,
             )
         }
         sampling = null
+        samplingVisit = false
         notes?.let { narrating?.invoke(name, it) }
         return if (reason == null) result.session else null
     }

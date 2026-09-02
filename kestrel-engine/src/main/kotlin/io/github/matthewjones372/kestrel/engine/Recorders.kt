@@ -29,6 +29,7 @@ internal fun interface StepSink {
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        visit: Boolean,
         attempts: Int,
         trace: String?,
     )
@@ -103,13 +104,14 @@ internal class Recorders(
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        visit: Boolean,
         attempts: Int,
         trace: String?,
     ) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
-        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, attempts, trace)
+        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, visit, attempts, trace)
     }
 
     /**
@@ -130,9 +132,9 @@ internal class Recorders(
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 
-    // One parameter past the limit, and deliberately: the alternative is a
-    // value holding the seven, which is an allocation per request on the very
-    // path this class exists to keep allocation off.
+    // Several parameters past the limit, and deliberately: the alternative is a
+    // value holding them, which is an allocation per request on the very path
+    // this class exists to keep allocation off.
     @Suppress("LongParameterList")
     private tailrec fun recordFrom(
         index: Int,
@@ -142,13 +144,14 @@ internal class Recorders(
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        visit: Boolean,
         attempts: Int,
         trace: String?,
     ) {
         val recorder = slots.getAndSet(index, null)
         if (recorder != null) {
             try {
-                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, attempts, trace)
+                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, visit, attempts, trace)
                 // Lazy: this thread owns the slot, so nothing else writes these
                 // two, and a ticker reading a count one store stale is what a
                 // watcher is for. An ordered store would cost a fence per
@@ -169,6 +172,7 @@ internal class Recorders(
             schedulingDelay,
             at,
             reached,
+            visit,
             attempts,
             trace,
         )

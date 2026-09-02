@@ -30,7 +30,7 @@ class RecordersTest {
                 repeat(EACH) { at ->
                     recorders.record(
                         "browse", null, 1.milliseconds, Duration.ZERO, (at % SECONDS).seconds,
-                        reached = at == 0, attempts = 1, trace = null,
+                        reached = at == 0, visit = true, attempts = 1, trace = null,
                     )
                 }
             }
@@ -40,6 +40,9 @@ class RecordersTest {
         result["browse"].count shouldBe (WRITERS * EACH).toLong()
         withClue("each writer is one user, and it reached the step on its first request") {
             result["browse"].reached shouldBe WRITERS.toLong()
+        }
+        withClue("every request here is its own run of the body, and the shards add up") {
+            result["browse"].visits shouldBe (WRITERS * EACH).toLong()
         }
         result.behind.count shouldBe (WRITERS * EACH).toLong()
 
@@ -58,7 +61,8 @@ class RecordersTest {
                     if (index ==
                         0
                     ) Said("503") else null,
-                    1.milliseconds, Duration.ZERO, Duration.ZERO, reached = true, attempts = 1, trace = null,
+                    1.milliseconds, Duration.ZERO, Duration.ZERO,
+                    reached = true, visit = true, attempts = 1, trace = null,
                 )
             }
         }.forEach { it.join() }

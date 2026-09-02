@@ -311,6 +311,19 @@ data class StepStats(
     val reached: Long = 0L,
 
     /**
+     * How many times a body ran under this name, counted once however many
+     * samples it reported.
+     *
+     * The number between [count] and [reached], and the only one that tells a
+     * loop from a stream: a loop visits many times and samples once each, a
+     * stream visits once and samples many times, and both make [count]
+     * outnumber [reached] in exactly the same way. Zero where whatever recorded
+     * the run did not count them, which the report prints as unmeasured rather
+     * than as none — a baseline written before this existed is such a run.
+     */
+    val visits: Long = 0L,
+
+    /**
      * The round trips behind [count]: one per request, and more where a step
      * followed a redirect or retried.
      *
@@ -329,6 +342,17 @@ data class StepStats(
     val timeline: List<Second> = emptyList(),
 ) {
     val count: Long get() = ok.count + failed.count
+
+    /**
+     * Whether a body here reported more answers than it was run — a stream,
+     * told apart from a loop, which is run many times and reports one answer
+     * each.
+     *
+     * False where [visits] is zero, which is a run nobody counted them on
+     * rather than a run with no stream in it: answering "no streams here" off a
+     * number nobody took would put a finding on the page that nothing measured.
+     */
+    val streamed: Boolean get() = visits > 0L && count > visits
 
     /** How many failed for [reason]; none is zero rather than absent. */
     fun failedWith(reason: Reason): Long = failed.reasons[reason] ?: 0L

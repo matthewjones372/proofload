@@ -50,7 +50,7 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
             concurrencyLine(),
         ) +
             comparison.blocks(floor) + mixBlocks() +
-            stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
+            stepTable() + listOfNotNull(streamLine(), hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + measurementNote()
     }
 
@@ -358,6 +358,27 @@ private fun Long.shareOf(whole: Long): String =
 private fun Plan.armOf(step: String): String? =
     if (arms.size < 2) null
     else arms.firstOrNull { step in it.steps }?.scenario?.escapeMarkdown() ?: NOTHING_MEASURED
+
+/**
+ * The steps whose answers outnumbered the runs of their body, or null where
+ * none did.
+ *
+ * Directly under the table, because it is what the Requests column means on
+ * those rows: a stream's answers are not requests, and a reader adding the
+ * column up as trips to the target would be counting something else. Absent on
+ * a run with no stream in it, and on one that counted no visits at all.
+ */
+private fun RunResult.streamLine(): String? {
+    val streams = steps.values.filter { it.streamed }
+    if (streams.isEmpty()) return null
+
+    val named = streams.joinToString(separator = ", ") {
+        "${it.name.escapeMarkdown()} ${it.count} answers over ${it.visits} runs"
+    }
+    return "Some steps reported more than one answer per run of their body — a stream rather than a " +
+        "loop: $named. Requests counts the answers there, each its own sample, so the percentiles are " +
+        "about the messages rather than about the batch."
+}
 
 private fun RunResult.stepTable(): String = table(
     columns = listOf(

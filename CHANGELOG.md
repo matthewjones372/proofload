@@ -195,7 +195,13 @@ enough to list, and long enough to matter.
   and a sample of its own carrying the failure, timed from the last answer:
   the engine records nothing for a body that reported its own samples, so
   without that sample ninety good answers and a timeout would read as ninety
-  successes. Anything implementing `Action` by hand changes shape, and
+  successes. `StepStats.visits` counts how many times a body ran, beside the
+  answers it reported and the users that reached it: a stream visits once and
+  samples many times, a loop the other way round, and both make `count`
+  outnumber `reached` identically without it. Both reports name the steps whose
+  answers outnumbered their runs, and say nothing on a run with none — a
+  baseline written before this existed counts no visits, which reads as
+  unmeasured rather than as no stream. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
 - **The closed model.** `users(50, over = 10.minutes)` holds a fixed population,
   each user restarting the scenario when it finishes — "fifty users, looping",

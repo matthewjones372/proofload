@@ -95,6 +95,7 @@ private fun StepStats.toJson(depth: Int): String = jsonObject(
         "name" to jsonString(name),
         "count" to count.toString(),
         "reached" to reached.toString(),
+        "visits" to visits.toString(),
         "unmatched" to unmatched.toString(),
         "inFlight" to inFlight.toString(),
         "serviceTime" to serviceTime.toJson(depth + 1),

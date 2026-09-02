@@ -71,6 +71,40 @@ class SampleTest {
     }
 
     @Test
+    fun `three samples from one body are one visit, so a stream is not a loop`() {
+        val streaming = scenario("streaming") {
+            exec("tick") {
+                sample(10.milliseconds)
+                sample(20.milliseconds)
+                sample(30.milliseconds)
+            }
+            repeat(3) { exec("poll") { } }
+        }
+
+        val result = streaming.at(1.perSecond, over = 1.seconds).run(Progress.silent)
+
+        withClue("a hundred answers to one call are one visit, however many samples they were") {
+            result["tick"].visits shouldBe 1L
+            result["tick"].count shouldBe 3L
+        }
+        withClue("and a loop is the other way round: three visits, one sample each") {
+            result["poll"].visits shouldBe 3L
+            result["poll"].count shouldBe 3L
+            result["poll"].reached shouldBe 1L
+        }
+    }
+
+    @Test
+    fun `a body that reports nothing is one visit as well as one sample`() {
+        val ordinary = scenario("ordinary") { exec("touch") { } }
+
+        val result = ordinary.at(5.perSecond, over = 1.seconds).run(Progress.silent)
+
+        result["touch"].visits shouldBe 5L
+        result["touch"].count shouldBe 5L
+    }
+
+    @Test
     fun `each sample lands in the second it was observed in`() {
         val overTwo = scenario("over two") {
             exec("tick") {

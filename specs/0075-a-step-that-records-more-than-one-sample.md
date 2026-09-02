@@ -20,7 +20,8 @@ by walking the body N times.
 - **No allocation per sample on the timed path**, and no buffer until the body
   returns: 0003 refused a per-request event log.
 - **No making a stream look like N steps.** The row is the stream.
-- **No new column or timing on `StepStats`.** `count` counts samples already.
+- **No new timing on `StepStats`.** `count` counts samples already. One new
+  *count* — `visits` — is argued for below, and was not in this spec as drafted.
 
 ## Shape
 
@@ -74,6 +75,31 @@ reached") gains a clause: a step whose samples outnumber its reaches is a
 stream. The cell (`:314`) and the arm's users off its most-reached step
 (`Markdown.kt:238`) are unchanged.
 
+**A visit, and the note that needs it.** The clause above is wrong, found by
+building it: `repeat` and `during` (0053) make samples outnumber reaches too,
+one sample per visit over several visits, and the mix golden already has one.
+`count` and `reached` cannot tell a loop from a stream because the number
+between them is missing — how many times a body *ran*. So `StepStats.visits`,
+counted where `reached` is counted and by the same means: the walk knows which
+invocation this is, the recorder is told rather than guessing, and the flag
+rides the first record of each visit so a hundred samples are one visit. Then
+`count > visits` is a stream and `visits > reached` is a loop, each read off a
+frozen result rather than off the scenario that is no longer there.
+
+It is a note, not a column, and only where there is something to note. On a run
+where every step samples once `visits` equals `count`, and a column repeating
+another column is noise on every row. `attempts` is the same number in the same
+position — equal to `count` on almost every run — and the page already answers
+it as a conditional note naming the steps it applies to
+(`HtmlReport.kt:374-387`); a note can also say *which* steps streamed and what
+that means, which a column of numbers cannot. So `visits` follows it: no column,
+one note beside the attempts one, and a run with no stream in it reads exactly
+as it does today.
+
+`visits` is zero where whatever recorded the run did not count them, printed as
+unmeasured rather than as none — `reached` and `attempts` already answer that
+way, and a baseline written before this exists is such a run.
+
 ## Stack
 
 - [x] **`spec-0075-seam`** — the engine builds the `StepScope`; `Action` takes
@@ -93,18 +119,17 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
       samples, and the reason rides a sample. Fixed the same way gRPC does it,
       timed from the last answer that arrived (`Messages.kt:96-105`), and both
       halves are now covered by a test that reads the reason per sample.
-- [ ] **`spec-0075-page`** — the count/reached note and both goldens. Done when:
+- [x] **`spec-0075-page`** — the count/reached note and both goldens. Done when:
       the note names a step whose samples outnumber its reaches and the goldens
       move once, the diff read rather than regenerated.
-      **Cannot be built as written, found by building it.** A step whose
-      samples outnumber its reaches is not necessarily a stream: `repeat` and
-      `during` (0053) produce exactly the same shape, one sample per visit over
-      several visits, and the mix golden already has one. The frozen result
-      cannot tell the two apart, so the clause this entry asks for would call a
-      loop a stream on the page it is meant to explain. Naming it needs a
-      *visits* count beside `count` and `reached` — a step invocation counted
-      once however many samples it reported — which is a fourth number this
-      spec did not argue for. Open question 7.
+      **Built as amended, not as drafted.** The entry as written would have
+      called a loop a stream: `repeat` and `during` (0053) make samples
+      outnumber reaches too, and the mix golden already has one. Naming a
+      stream needed the number between `count` and `reached` — `visits`, a body
+      invocation counted once however many samples it reported — which this
+      spec did not argue for until "A visit, and the note that needs it"
+      above. Open question 7 is answered there: the column and the clause
+      appear together, and only on a run that has a stream in it.
 
 ## Acceptance
 
@@ -134,8 +159,10 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
     the one before it is cadence. Recommend cadence, named as cadence — 0071's.
 6. **Does the batch reading survive?** `awaiting`'s one sample answered "how
     long to receive a hundred". Recommend not: a step around it measures that.
-7. **Does the page need a visits count?** `count` is samples, `reached` is
+7. **Does the page need a visits count?** ~~`count` is samples, `reached` is
     users, and neither says how many times a user visited a step — so a loop
-    and a stream read identically on the page. Recommend adding it only with
-    the note that needs it: a run whose steps each sample once has `visits`
-    equal to `count`, and the column would be noise on every such run.
+    and a stream read identically on the page.~~ **Answered: yes, conditionally.**
+    `StepStats.visits` is recorded the way `reached` is, and reported the way
+    `attempts` is: a note naming the steps whose samples outnumbered their
+    visits, on the runs that have one. A run whose steps each sample once reads
+    exactly as it did before.

@@ -86,6 +86,7 @@ private fun RunResult.documentLines(
         roomLines(),
         concurrencyLines(),
         attemptLines(),
+        streamLines(),
         readingLines(),
         failedLines(),
         stepsLines(),
@@ -383,6 +384,29 @@ private fun RunResult.attemptLines(): List<String> {
         """  <p class="note" id="kestrel-attempts">Some steps went to the target more than once per """ +
             "request — a redirect followed, or a retry: $named. The service time is the request's, and " +
             "the attempts are the trips behind it.</p>",
+    )
+}
+
+/**
+ * A step whose samples outnumber the times its body ran, which is a stream.
+ *
+ * Only where there is one: on a run where every step samples once `visits` is
+ * `count`, and a number repeating another number is noise on every row. Beside
+ * the attempts note rather than a column of its own, for the same reason that
+ * one is a note — it can say which steps, and what the number means.
+ */
+private fun RunResult.streamLines(): List<String> {
+    val streams = steps.values.filter { it.streamed }
+    if (streams.isEmpty()) return emptyList()
+
+    val named = streams.joinToString(separator = ", ") {
+        "${it.name.escapedForHtml()} ${it.count.grouped()} answers over ${it.visits.grouped()} runs"
+    }
+    return listOf(
+        """  <p class="note" id="kestrel-streams">Some steps reported more than one answer per """ +
+            "run of their body — a stream rather than a loop: $named. Each answer is its own sample, " +
+            "timed from whatever the body could name as its departure, so the percentiles above are " +
+            "about the messages rather than about the batch.</p>",
     )
 }
 

@@ -76,6 +76,11 @@ class RunRecorder(
      *   it is on, and a recorder that guessed would count a loop's iterations as
      *   users. It defaults to false, so a caller that does not track users
      *   reports no reaches instead of a number nobody counted.
+     * @param visit whether this is the first record of this run of the body.
+     *   Told for the same reason [reached] is: a body that reported a hundred
+     *   samples ran once, and only the walk that called it knows that. Defaults
+     *   to false, so a caller that does not track visits reports none rather
+     *   than a number nobody counted.
      */
     fun record(
         step: String,
@@ -84,6 +89,7 @@ class RunRecorder(
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean = false,
+        visit: Boolean = false,
         attempts: Int = 1,
         trace: String? = null,
     ) {
@@ -93,7 +99,7 @@ class RunRecorder(
             lateness.record(at, schedulingDelay)
         }
         steps.getOrPut(step) { StepRecorder() }
-            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, attempts, trace)
+            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, visit, attempts, trace)
     }
 
     /**
@@ -167,6 +173,10 @@ private class StepRecorder {
     // under this step, which is the only moment anything knows it is the first.
     private var reached = 0L
 
+    // The same again, one per run of the body: told by the walk on the first
+    // record of each, so a body that reported a hundred samples counts one.
+    private var visits = 0L
+
     // And the round trips behind those requests: one each unless a step
     // followed a redirect or retried.
     private var attempts = 0L
@@ -179,10 +189,12 @@ private class StepRecorder {
         response: Duration,
         at: Duration,
         reached: Boolean = false,
+        visit: Boolean = false,
         attempts: Int = 1,
         trace: String? = null,
     ) {
         if (reached) this.reached++
+        if (visit) this.visits++
         this.attempts += attempts
         if (failure == null) {
             ok.record(service, response, trace)
@@ -205,6 +217,7 @@ private class StepRecorder {
         failed.merge(other.failed)
         seconds.merge(other.seconds)
         reached += other.reached
+        visits += other.visits
         attempts += other.attempts
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
         leftOver(other.outstanding)
@@ -217,6 +230,7 @@ private class StepRecorder {
         serviceTime = ok.serviceTime.and(failed.serviceTime).timing(),
         responseTime = ok.responseTime.and(failed.responseTime).timing(),
         reached = reached,
+        visits = visits,
         attempts = attempts,
         unmatched = outstanding.unmatched,
         inFlight = outstanding.inFlight,

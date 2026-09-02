@@ -15,6 +15,10 @@ import io.grpc.stub.ClientCalls
 import io.grpc.stub.ServerCalls
 import io.grpc.stub.StreamObserver
 import java.io.InputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A service with no `.proto` behind it.
@@ -58,6 +62,17 @@ internal object Orders {
         silent: Boolean = false,
         /** How many messages of a [chat] call get answered; null is all of them. */
         answersEach: Int? = null,
+        /** How many messages a [watchFills] call pushes before completing. */
+        fills: Int = 0,
+        /**
+         * How long a [watchFills] call waits before its first message, and not
+         * at all before the rest.
+         *
+         * So the two readings of a server stream come out plainly different:
+         * from the call that opened it every message is about this long, and
+         * from the message before it only the first one is.
+         */
+        beforeFirstFill: Duration = 200.milliseconds,
     ): ServerServiceDefinition =
         ServerServiceDefinition.builder("orders.v1.Orders")
             .addMethod(
@@ -91,6 +106,22 @@ internal object Orders {
                         override fun onError(error: Throwable) = Unit
 
                         override fun onCompleted() = answers.onCompleted()
+                    }
+                },
+            )
+            .addMethod(
+                watchFills,
+                ServerCalls.asyncServerStreamingCall { _: String, answers: StreamObserver<String> ->
+                    // On a thread of its own: the channel is `directExecutor`,
+                    // so pushing from here would run inside the caller's own
+                    // `open` and there would be no stream to wait on.
+                    Thread.ofPlatform().start {
+                        // A latch nothing counts down, rather than a sleep:
+                        // the intent is "wait until", and this repository bans
+                        // parking a thread by name.
+                        CountDownLatch(1).await(beforeFirstFill.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                        repeat(fills) { answers.onNext("fill $it") }
+                        answers.onCompleted()
                     }
                 },
             )

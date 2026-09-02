@@ -14,8 +14,9 @@ anything else — the README calls gRPC "just a step body" — but not honestly:
 - **No trace**: 0023's `traceparent` and synthetic `baggage` ride HTTP only.
 - **The row is named whatever string was typed**, where 0005 names an HTTP row
   by its path template and 0010 recovers one for Pelican.
-- **A stream is one sample**: a server-streaming call drained inside one `exec`
-  measures N messages and the gaps between them together.
+- ~~**A stream is one sample**: a server-streaming call drained inside one
+  `exec` measures N messages and the gaps between them together.~~ Undone by
+  0075, and then by `firstAnswer`/`cadence` below.
 
 ## Not doing
 
@@ -73,6 +74,36 @@ the target's, unless it is measured.
 caller's `CoroutineStub` is named, traced and bounded anyway, while the Kotlin
 stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 
+**A server stream is two numbers, so it is two verbs.** A server-streaming call
+sends one request and reads many answers, none of which answers a send of its
+own. There are exactly two honest readings and they are not the same number:
+how long the call took to say anything, which is a round trip; and how long it
+left between the things it said, which is cadence. Put in one histogram they
+average into a figure describing neither, so each gets a verb that names it.
+
+`firstAnswer(name, within)` is the round trip: one sample, from the call being
+opened to the first message arriving. It belongs beside a unary call's latency
+and can be compared with one.
+
+`cadence(name, count, within)` is the gaps: one sample per answer after the
+first, each measured from the answer before it. `count` is answers, so
+`cadence(count = 99)` is 99 samples and, with the `firstAnswer` before it, a
+hundred messages read.
+
+The order is enforced rather than documented. `cadence` before any
+`firstAnswer` fails with `NoFirstAnswer` instead of quietly handing the round
+trip out as a gap — the one mistake this split exists to prevent, and the one a
+reader of the report could never catch. `send`, `awaiting` and `done` fail with
+`NotSending` on a server stream: its one request went with the call, and
+`awaiting` pairs answers to sends that do not exist.
+
+The seam matches the stub: `serverStream(descriptor) { request, answers -> }`
+is what `ServerCalls.asyncServerStreamingCall` hands a generated stub, so
+generated code goes in unchanged. A descriptor that is not `SERVER_STREAMING`
+is refused where it is written, as `stream` refuses a unary one; and `stream`
+now refuses a server-streaming descriptor for the same reason, rather than
+opening a call whose every answer it would count as unsolicited.
+
 ## Stack
 
 - [x] **`spec-0071-module`** — the module, its dependency test, `grpc.target`,
@@ -92,6 +123,12 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 - [x] **`spec-0071-streams`** — `stream`, `send` and `awaiting`, on `Pending`.
       Done when: a hundred answers to a hundred sends report a hundred matched
       and none outstanding, and a stream that stops early fails the wait.
+- [x] **`spec-0071-server`** — `serverStream`, `firstAnswer` and `cadence`, and
+      the refusals that keep the two numbers apart.
+      Done when: a server stream of a hundred messages is one round trip under
+      one name and ninety-nine gaps under another, a `cadence` with no
+      `firstAnswer` before it fails rather than reporting the round trip as a
+      gap, and `send` on a server stream fails.
 - [x] **`spec-0071-docs`** — the `docs/modules.md` row and a cookbook page.
       Done when: `ModulesDocTest` names the module, `smoke` resolves the
       coordinate, and the page says an `awaiting(n)` sample is a batch of n.
@@ -136,13 +173,15 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
     in `grpc-stub` rather than in `grpc-api`. It adds nothing a gRPC caller
     does not already have — generated code depends on it — and none of the
     refusals move: still no transport, no protobuf runtime, no coroutines.
-12. **Server streaming is not built.** `stream` matches each answer to the
-    message it answers, which is the bidirectional and client-streaming shape.
-    A server stream's messages answer no send of their own: timed from the call
-    that opened it they climb with the index, and timed from each other they
-    are cadence. Those are two different numbers and neither belongs in the
-    same histogram as a round trip, so it wants its own verb naming which one
-    it is — 0075's fifth open question, still open.
+12. **Server streaming.** ~~`stream` matches each answer to the message it
+    answers, which is the bidirectional and client-streaming shape.~~
+    **Answered: two numbers, two verbs.** A server stream's messages answer no
+    send of their own: timed from the call that opened it they climb with the
+    index, and timed from each other they are cadence. Rather than choose,
+    `firstAnswer` reports the round trip and `cadence` the gaps, and `cadence`
+    before any `firstAnswer` is refused so the round trip cannot arrive in the
+    gap histogram. See "A server stream is two numbers" above; this also
+    answers 0075's fifth open question.
 8. **Where the trace-id generator lives.** It was `internal` to
     `kestrel-http`, which would have meant a second copy here and a third in
     the next protocol module — two of them disagreeing about the format is the

@@ -1479,9 +1479,39 @@ the message it answers — not one sample covering a hundred messages and the
 gaps between them. An answer arriving with nothing outstanding is counted as
 unsolicited and not timed: there is no departure to measure it from.
 
-Server-streaming calls are not covered by this. Their messages answer no send
-of their own, so a sample is either time-to-the-*k*th or cadence, and neither
-belongs in the same histogram as a round trip.
+### A server stream
+
+A server-streaming call sends one request and reads many answers, none of which
+answers a send of its own. There are two honest readings of that and they are
+not the same number, so there are two verbs:
+
+```kotlin
+val fills = orders.serverStream(OrdersGrpc.getWatchFillsMethod()) { request, answers ->
+    stub.watchFills(request, answers)
+}
+
+val watching = scenario("watching") {
+    open(fills, request = symbol)
+    firstAnswer(opened, within = 5.seconds)
+    cadence(ticks, count = 99, within = 60.seconds)
+}
+```
+
+`firstAnswer` is one sample, from the call being opened to the first message
+arriving — a round trip, comparable with a unary call's latency. `cadence` is
+one sample per message after that, each measured from the message before it:
+the rate the target actually delivered at. A hundred messages is `firstAnswer`
+plus `cadence(count = 99)`.
+
+They are kept apart on purpose. Timed from the call, the *k*th message climbs
+with *k* and the histogram fills with a number that describes the stream's
+length rather than the target's speed; put in with the round trip, the two
+average into a figure describing neither. So a `cadence` before any
+`firstAnswer` fails with `NoFirstAnswer` rather than handing the round trip out
+as the first gap — the one mistake nobody reading the report could catch.
+
+`send`, `awaiting` and `done` fail with `NotSending` here: the one request went
+out with the call.
 
 ## Kafka, and the answer on another topic
 

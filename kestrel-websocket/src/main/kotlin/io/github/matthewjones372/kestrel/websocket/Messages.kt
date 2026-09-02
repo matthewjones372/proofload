@@ -93,7 +93,7 @@ private fun StepScope.awaitOn(count: Long, within: Duration) {
     // Reported whether the wait succeeded or not: the answers that did arrive
     // were measured, and a step that timed out after ninety of a hundred has
     // ninety real latencies to show beside the failure.
-    open.inbound.takeAnswered().forEach { sample(it) }
+    open.inbound.takeAnswered(count).forEach { sample(it) }
     why?.let { reason ->
         // The failure is a sample of its own, timed from the last answer that
         // did arrive: how long the one that never came had been outstanding.
@@ -180,10 +180,17 @@ internal class Inbound : WebSocket.Listener {
     }
 
     /**
-     * The latencies of the answers that have arrived and not yet been
-     * reported, oldest first, taken out as they are read.
+     * The latencies of up to [atMost] answers that have arrived and not yet
+     * been reported, oldest first, taken out as they are read.
+     *
+     * Bounded rather than draining: a step that waited for one answer takes
+     * one, however many the target had already pushed behind it. Unbounded, a
+     * quick target's later answers would be reported under the step that
+     * happened to run while they landed, and the step that waited for them
+     * would report none.
      */
-    fun takeAnswered(): List<Duration> = generateSequence { answered.poll() }.toList()
+    fun takeAnswered(atMost: Long): List<Duration> =
+        generateSequence { answered.poll() }.take(atMost.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()).toList()
 
     /**
      * How long since the last answer arrived, or since the connection opened

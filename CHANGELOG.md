@@ -242,8 +242,13 @@ enough to list, and long enough to matter.
   and `deadline(...)` gives a call a budget where it set none of its own —
   a caller's `withDeadlineAfter` still wins. `open`/`send`/`awaiting`/`done`
   measure a bidirectional or client stream as one sample per answer, timed from
-  the message it answers. `grpc-api` and `grpc-stub` only: no transport, no
-  protobuf runtime, no coroutines, so the thread model stays the caller's.
+  the message it answers. A server stream is `serverStream`/`firstAnswer`/
+  `cadence`: its messages answer no send of their own, so the round trip to the
+  first one and the gaps between the rest are two numbers under two names
+  rather than one histogram holding both — and a `cadence` before any
+  `firstAnswer` is refused rather than reporting the round trip as a gap.
+  `grpc-api` and `grpc-stub` only: no transport, no protobuf runtime, no
+  coroutines, so the thread model stays the caller's.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

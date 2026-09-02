@@ -25,6 +25,8 @@ private val tick = step("tick")
 
 private val goodbye = step("goodbye")
 
+private val later = step("later")
+
 private const val ANSWERS = 100
 
 private val patience = 5.seconds
@@ -144,6 +146,32 @@ class AwaitingTest {
             result.shouldBeInstanceOf<StepResult.Failed>().reason shouldBe TimedOut
             withClue("the one that arrived was measured rather than thrown away with the failure") {
                 took.size shouldBe 2
+            }
+        }
+    }
+
+    @Test
+    fun `a step takes the answers it waited for, not every one that had arrived`() {
+        accepting(answering = true) { server ->
+            val ids = AtomicLong()
+            val under = mutableMapOf<String, Int>()
+            // Three sends and three answers, read by two steps. On a quick
+            // target all three land before the first step returns, so a step
+            // that drained the queue would report three under the first name
+            // and nothing under the second.
+            val watching = scenario("watching") {
+                open(connect, ws.at(server.url))
+                repeat(3) { send(publish, ws.text("more"), keyedBy = { ids.incrementAndGet() }) }
+                awaiting(tick, count = 1, within = patience)
+                awaiting(later, count = 2, within = patience)
+            }
+
+            watching.walkNaming { step, _ -> under[step] = under.getOrDefault(step, 0) + 1 }
+                .shouldBeInstanceOf<StepResult.Ok>()
+
+            withClue("each step reports what it waited for: $under") {
+                under["tick"] shouldBe 1
+                under["later"] shouldBe 2
             }
         }
     }

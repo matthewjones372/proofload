@@ -19,6 +19,7 @@ import io.grpc.stub.StreamObserver
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -50,7 +51,8 @@ val streaming: SessionKey<Stream<*, *>> = sessionKey("kestrel.grpc.stream")
  * underneath is still one pool.
  */
 class Stream<Q, A> internal constructor(
-    internal val requests: StreamObserver<Q>,
+    /** Null on a server stream, whose one request went out with the call. */
+    internal val requests: StreamObserver<Q>?,
     internal val answers: Answers<A>,
 ) {
 
@@ -85,6 +87,10 @@ fun <Q, A> Grpc.stream(
 ): GrpcStream<Q, A> {
     require(descriptor.type != MethodDescriptor.MethodType.UNARY) {
         "${descriptor.fullMethodName} is unary: `call` measures it as the one round trip it is"
+    }
+    require(descriptor.type != MethodDescriptor.MethodType.SERVER_STREAMING) {
+        "${descriptor.fullMethodName} answers no send of its own: `serverStream` opens it, and " +
+            "`firstAnswer` and `cadence` read it as the round trip and the gaps it is"
     }
     return GrpcStream(descriptor, this, open)
 }
@@ -132,12 +138,13 @@ fun <Q> ScenarioBuilder.send(name: StepName, message: Q) {
 @Suppress("UNCHECKED_CAST")
 private fun <Q> StepScope.sendOn(message: Q) {
     val open = this[streaming] as Stream<Q, *>? ?: return fail(NotStreaming)
+    val requests = open.requests ?: return fail(NotSending)
     // Registered before the write rather than after it: a quick target can
     // answer while the observer's own call is still returning, and an answer
     // that finds nothing outstanding is counted as a message nobody asked for.
     open.answers.departed()
     try {
-        open.requests.onNext(message)
+        requests.onNext(message)
     } catch (refused: StatusRuntimeException) {
         open.answers.aborted()
         fail(refused.status.asStreamReason())
@@ -171,6 +178,10 @@ fun ScenarioBuilder.awaiting(name: StepName, count: Int, within: Duration) {
 
 private fun StepScope.awaitOn(count: Long, within: Duration) {
     val open = this[streaming] ?: return fail(NotStreaming)
+    // Nothing to pair an answer with on a server stream: every message would
+    // be counted as one nobody sent for, and the step would time out holding a
+    // hundred answers it refused to look at.
+    if (open.requests == null) return fail(NotSending)
     // The wait is bounded and happens on the user's own virtual thread, which
     // unmounts while it blocks: a target that goes quiet costs a carrier
     // nothing, and is a failure rather than a user parked for the rest of the
@@ -179,7 +190,7 @@ private fun StepScope.awaitOn(count: Long, within: Duration) {
     // Reported whether the wait succeeded or not: the answers that did arrive
     // were measured, and a step that timed out after ninety of a hundred has
     // ninety real latencies to show beside the failure.
-    open.answers.takeAnswered().forEach { sample(it) }
+    open.answers.takeAnswered(count).forEach { sample(it) }
     why?.let { reason ->
         // The failure is a sample of its own, timed from the last answer that
         // did arrive: how long the one that never came had been outstanding.
@@ -199,7 +210,147 @@ fun ScenarioBuilder.done(name: StepName) {
 
 private fun StepScope.doneSending() {
     val open = this[streaming] ?: return fail(NotStreaming)
-    open.requests.onCompleted()
+    val requests = open.requests ?: return fail(NotSending)
+    requests.onCompleted()
+}
+
+/**
+ * A `send`, `awaiting` or `done` on a server stream. Its one request went with
+ * the call, and `awaiting` pairs answers to sends that do not exist.
+ */
+data object NotSending : Reason {
+    override val described: String get() = "not sending"
+}
+
+/**
+ * A `firstAnswer` or `cadence` on a two-way stream, whose answers are paired to
+ * the messages they answer: those are round trips, and reporting them under a
+ * name that says cadence would be a gap nobody left.
+ */
+data object NoCadence : Reason {
+    override val described: String get() = "no cadence"
+}
+
+/**
+ * A `cadence` before any `firstAnswer` took the round trip.
+ *
+ * The one mistake this split exists to prevent: the first message of a server
+ * stream is measured from the call that opened it, and handed out as a gap it
+ * would be a number no reader of the report could catch.
+ */
+data object NoFirstAnswer : Reason {
+    override val described: String get() = "no first answer"
+}
+
+/**
+ * Opens [descriptor] as a server stream: one request out with the call, many
+ * answers back, none of them answering a send of its own.
+ *
+ * [open] is the caller's own stub call, which is handed the request and the
+ * observer this module reads the answers on — the shape
+ * `ServerCalls.asyncServerStreamingCall` gives a generated stub, so generated
+ * code goes in unchanged.
+ *
+ * What comes back is read by [firstAnswer] and [cadence] rather than by
+ * `awaiting`, because a server stream is two numbers and they do not belong in
+ * one histogram: how long the call took to say anything is a round trip, and
+ * how long it left between the things it said is cadence.
+ */
+fun <Q, A> Grpc.serverStream(
+    descriptor: MethodDescriptor<Q, A>,
+    open: (Q, StreamObserver<A>) -> Unit,
+): GrpcServerStream<Q, A> {
+    require(descriptor.type == MethodDescriptor.MethodType.SERVER_STREAMING) {
+        "${descriptor.fullMethodName} is not server streaming: `call` measures a unary method and " +
+            "`stream` a method whose answers pair with the messages sent to it"
+    }
+    return GrpcServerStream(descriptor, this, open)
+}
+
+/** The action `open` runs for a server stream: starting the call is what is timed. */
+class GrpcServerStream<Q, A> internal constructor(
+    private val descriptor: MethodDescriptor<Q, A>,
+    private val origin: Grpc,
+    private val open: (Q, StreamObserver<A>) -> Unit,
+) {
+
+    val name: String get() = descriptor.fullMethodName
+
+    internal fun opening(request: Q): Action = Action { scope ->
+        if (scope.narrating) scope.note("${descriptor.type} ${descriptor.fullMethodName} to ${origin.target}")
+        // Not pairing: nothing here sends, so an answer has no message of its
+        // own to be measured from and is measured from the answer before it.
+        val answers = Answers<A>(pairing = false)
+        try {
+            tellingScope(scope) { open(request, answers) }
+        } catch (refused: StatusRuntimeException) {
+            return@Action scope.fail(refused.status.asStreamReason())
+        } catch (refused: StatusException) {
+            return@Action scope.fail(refused.status.asStreamReason())
+        }
+        scope.set(streaming, Stream<Q, A>(requests = null, answers = answers))
+    }
+}
+
+/** Names the step for the method, as a two-way stream's `open` does. */
+fun <Q> ScenarioBuilder.open(stream: GrpcServerStream<Q, *>, request: Q) {
+    exec(stream.name, stream.opening(request))
+}
+
+/**
+ * The first message of a server stream, as one sample measured from the call
+ * that opened it.
+ *
+ * A round trip, and named as one: it belongs beside a unary call's latency and
+ * can be compared with one. The gaps after it are [cadence]'s, and are a
+ * different number.
+ */
+fun ScenarioBuilder.firstAnswer(name: StepName, within: Duration) {
+    exec(name) { firstAnswerOn(within) }
+}
+
+private fun StepScope.firstAnswerOn(within: Duration) {
+    val open = this[streaming] ?: return fail(NotStreaming)
+    if (open.requests != null) return fail(NoCadence)
+    val why = open.answers.awaitMatched(1L, within)
+    open.answers.tookFirst()
+    open.answers.takeAnswered(1L).forEach { sample(it) }
+    why?.let { reason ->
+        // Timed from the call, there having been no answer before it: how long
+        // the stream had been open with nothing said on it. Without a sample
+        // of its own the failure would go unrecorded wherever an answer did
+        // arrive, the engine recording nothing for a body that sampled.
+        sample(open.answers.sinceLastAnswer(), reason = reason)
+        fail(reason)
+    }
+}
+
+/**
+ * [count] more messages of a server stream, each measured from the message
+ * before it.
+ *
+ * The cadence the target delivered at, which is what a server stream is for.
+ * `count` is answers, so a hundred-message stream is [firstAnswer] and
+ * `cadence(count = 99)`.
+ *
+ * Refused before any [firstAnswer], rather than quietly handing out the round
+ * trip as the first gap.
+ */
+fun ScenarioBuilder.cadence(name: StepName, count: Int, within: Duration) {
+    require(count > 0) { "a step cannot wait for $count answers" }
+    exec(name) { cadenceOn(count.toLong(), within) }
+}
+
+private fun StepScope.cadenceOn(count: Long, within: Duration) {
+    val open = this[streaming] ?: return fail(NotStreaming)
+    if (open.requests != null) return fail(NoCadence)
+    if (!open.answers.firstTaken) return fail(NoFirstAnswer)
+    val why = open.answers.awaitMatched(count, within)
+    open.answers.takeAnswered(count).forEach { sample(it) }
+    why?.let { reason ->
+        sample(open.answers.sinceLastAnswer(), reason = reason)
+        fail(reason)
+    }
 }
 
 /**
@@ -211,7 +362,17 @@ private fun StepScope.doneSending() {
  * drained on the user's own thread — because the recorder is sharded per user
  * rather than locked.
  */
-class Answers<A> internal constructor() : StreamObserver<A> {
+class Answers<A> internal constructor(
+    /**
+     * Whether an answer here answers a message this stream sent.
+     *
+     * True for a two-way or client stream, where an answer is timed from the
+     * message at the head of the queue. False for a server stream, where
+     * nothing was sent and an answer is timed from the answer before it — the
+     * first from the call itself, which is the round trip rather than a gap.
+     */
+    private val pairing: Boolean = true,
+) : StreamObserver<A> {
 
     private val origin = System.nanoTime()
 
@@ -240,11 +401,21 @@ class Answers<A> internal constructor() : StreamObserver<A> {
     // than both being satisfied by the first one's.
     private val awaited = AtomicLong()
 
+    // Whether a `firstAnswer` has taken the round trip off the front, so a
+    // `cadence` before one is refused rather than reporting it as a gap.
+    private val first = AtomicBoolean()
+
     private val gate = ReentrantLock()
 
     private val arrived = gate.newCondition()
 
     internal val matched: Long get() = paired.get()
+
+    internal val firstTaken: Boolean get() = first.get()
+
+    internal fun tookFirst() {
+        first.set(true)
+    }
 
     internal val unsolicited: Long get() = unasked.get()
 
@@ -263,7 +434,18 @@ class Answers<A> internal constructor() : StreamObserver<A> {
         waiting.poll()?.let { pending.observed(it, elapsed()) }
     }
 
-    internal fun takeAnswered(): List<Duration> = generateSequence { answered.poll() }.toList()
+    /**
+     * The latencies of up to [atMost] answers that have arrived and not yet
+     * been reported, oldest first, taken out as they are read.
+     *
+     * Bounded rather than draining: a step that waited for one answer takes
+     * one, however many the target had already pushed behind it. Unbounded,
+     * `firstAnswer` on a stream that arrived all at once would report the
+     * whole stream as its round trip, and the `cadence` after it would find
+     * nothing left to report.
+     */
+    internal fun takeAnswered(atMost: Long): List<Duration> =
+        generateSequence { answered.poll() }.take(atMost.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()).toList()
 
     /**
      * How long since the last answer arrived, or since the call opened when
@@ -296,6 +478,16 @@ class Answers<A> internal constructor() : StreamObserver<A> {
 
     override fun onNext(answer: A) {
         val at = elapsed()
+        if (!pairing) {
+            // From the answer before it, and from the call for the first —
+            // `lastAnswer` is zero until one arrives, and zero is when the
+            // call was opened.
+            answered.add(at - lastAnswer.get().nanoseconds)
+            lastAnswer.set(at.inWholeNanoseconds)
+            paired.incrementAndGet()
+            signal()
+            return
+        }
         val id = waiting.poll()
         if (id == null) {
             unasked.incrementAndGet()

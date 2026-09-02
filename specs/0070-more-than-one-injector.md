@@ -80,7 +80,7 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
 - [x] **`spec-0070-shard`** — `Shard`, `Simulation.sharded`, the per-arm filter.
       Done when: four shards depart exactly the departures one JVM departs, at
       the same offsets, each user sent by exactly one shard.
-- [ ] **`spec-0070-start`** — waiting for the instant on the injector's own
+- [x] **`spec-0070-start`** — waiting for the instant on the injector's own
       clock, after the host lock and before the run's clock.
       Done when: an injector handed a past instant writes nothing, two JVMs
       given one instant depart within 100 ms, an unsharded run is unchanged.

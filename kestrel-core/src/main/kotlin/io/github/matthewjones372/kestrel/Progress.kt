@@ -87,6 +87,17 @@ fun interface Progress {
      */
     fun waited(queued: Duration) {}
 
+    /**
+     * How long this injector will hold before the instant every injector in
+     * the run was given.
+     *
+     * Distinct from [waited], which is the machine being busy: this one is the
+     * run being early, and the hold is the whole point rather than a cost. A
+     * reader watching one of four hosts otherwise sees nothing for as long as
+     * the alignment window and assumes the tool has hung.
+     */
+    fun aligning(shard: Shard, until: Duration) {}
+
     companion object {
 
         /** For a caller whose output is somebody else's report — a test framework, a CI step that parses stdout. */
@@ -140,6 +151,10 @@ private class Lines(private val every: Duration) : Progress {
 
     override fun waited(queued: Duration) {
         println("kestrel: waited $queued for the machine")
+    }
+
+    override fun aligning(shard: Shard, until: Duration) {
+        println("kestrel: injector ${shard.index} of ${shard.of} — holding $until for ${shard.startingAt}")
     }
 
     override fun climbed(rung: Rung, number: Int, atMost: Duration) {

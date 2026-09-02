@@ -14,6 +14,7 @@ import io.github.matthewjones372.kestrel.SampleSink
 import io.github.matthewjones372.kestrel.Scenario
 import io.github.matthewjones372.kestrel.Search
 import io.github.matthewjones372.kestrel.Session
+import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -74,6 +76,12 @@ private fun Simulation.send(progress: Progress): RunResult {
     // and lateness cannot hold any of it: excluded means never recorded, not
     // recorded and filtered out afterwards.
     warmUp?.let { warming -> warmingUpRun(warming).departAll(unrecorded, Departures(), Departed(), null, null) }
+    // After the warm-up and after 0050's lock, and before the recorder: every
+    // injector should be warm when the clocks line up, and a run that waited
+    // for the machine inside the alignment window would start late by however
+    // long it waited. Nothing else is coordinated — a sample is two readings
+    // of this injector's own monotonic clock.
+    shard?.let { waitFor(it, progress) }
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     val room = watchForRoom()
@@ -181,6 +189,33 @@ private fun Simulation.departAll(
  */
 private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
     Simulation(arms.map { arm -> arm.copy(profile = hold(arm.profile.startRate, over = warmUp.over)) })
+
+/**
+ * Holds this injector until the instant every injector was given.
+ *
+ * The only thing shared between them, and only the start: what alignment buys
+ * is a timeline whose second thirty is the same second thirty everywhere,
+ * because a merge superimposes them. 0025 fixes the timeline's resolution at
+ * one second, so a hundred milliseconds of skew is a tenth of a bucket and
+ * NTP beats that comfortably — sub-second alignment buys the picture, not the
+ * honesty.
+ *
+ * An instant already past is refused rather than started late: a run that
+ * began after the others measured a different window, and pooling it with
+ * theirs would report a shape none of them saw.
+ */
+private fun waitFor(shard: Shard, progress: Progress) {
+    val until = shard.startingAt.toEpochMilli() - System.currentTimeMillis()
+    require(until > 0L) {
+        "injector ${shard.index} of ${shard.of} was told to start at ${shard.startingAt}, which was " +
+            "${-until}ms ago; give every injector an instant far enough ahead to reach"
+    }
+    progress.aligning(shard, until.milliseconds)
+    // A latch nothing counts down, rather than a sleep: this is a platform
+    // thread and the ban is against parking a carrier, but the intent here is
+    // "wait until" and a latch says so.
+    CountDownLatch(1).await(until, TimeUnit.MILLISECONDS)
+}
 
 /** Where a warm-up's samples go: nowhere. */
 private val unrecorded = StepSink { _, _, _, _, _, _, _, _ -> }

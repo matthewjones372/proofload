@@ -83,7 +83,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 - [x] **`spec-0073-hlog`** — the module, its dependency test, and the writer.
       Done when: HdrHistogram's `HistogramLogReader`, on the test classpath,
       reads a run back with every count equal and p99 `Timing.p99`.
-- [ ] **`spec-0073-openmetrics`** — `openMetrics()`, against a golden.
+- [x] **`spec-0073-openmetrics`** — `openMetrics()`, against a golden.
       Done when: the golden matches, buckets are cumulative and end in `+Inf`,
       two reasons are two series, and `behind` and `hiccups` are both there.
 - [ ] **`spec-0073-otel`** — `kestrel-otel`, carrying the SDK, and `sendOtlp`.
@@ -106,6 +106,13 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 1. **Strict OpenMetrics or Prometheus's looser text format?** As far as I can
     read its grammar, OpenMetrics has no free-form comment line, so every
     caveat lives in `# HELP`. Recommend strict: it is what stays valid.
+    **Built strict but for one thing, and the exception is deliberate**: there
+    is no `_sum`, which a strict reading wants on a histogram. Nothing here
+    adds latencies up, so the only way to emit one is to compute it from bucket
+    tops — a number nobody measured, printed with the same confidence as the
+    counts beside it. Prometheus's own parser takes the exposition as written.
+    Where strictness and "a number in a report is a measurement" disagreed,
+    this went with the second.
 2. **Does the hlog carry the timeline too?** It is what makes
     `HistogramLogAnalyzer` draw something, but those histograms are coarse, and
     one file of two precisions misleads. Recommend a separate call and file.

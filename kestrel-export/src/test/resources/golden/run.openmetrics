@@ -1,0 +1,48 @@
+# TYPE kestrel_latency_seconds histogram
+# UNIT kestrel_latency_seconds seconds
+# HELP kestrel_latency_seconds What the target took, and what it took counted from the departure the profile promised. The boundaries are the histogram's own: every sample is counted at the top of the bucket it fell in, so a percentile read off these is good to 0.78% and no better. histogram_quantile() interpolates inside a bucket, which these numbers do not support: read it as the bucket top it lands in.
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="service",le="0.000901119"} 1
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="service",le="0.001105919"} 2
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="service",le="0.020054015"} 3
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="service",le="0.021102591"} 4
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="service",le="+Inf"} 4
+kestrel_latency_seconds_count{run="the-run",step="pay",outcome="ok",clock="service"} 4
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="response",le="0.000950271"} 1
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="response",le="0.001155071"} 2
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="response",le="0.020185087"} 3
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="response",le="0.021102591"} 4
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="ok",clock="response",le="+Inf"} 4
+kestrel_latency_seconds_count{run="the-run",step="pay",outcome="ok",clock="response"} 4
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="service",le="0.301989887"} 1
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="service",le="0.310378495"} 2
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="service",le="0.901775359"} 3
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="service",le="+Inf"} 3
+kestrel_latency_seconds_count{run="the-run",step="pay",outcome="failed",clock="service"} 3
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="response",le="0.301989887"} 1
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="response",le="0.310378495"} 2
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="response",le="0.901775359"} 3
+kestrel_latency_seconds_bucket{run="the-run",step="pay",outcome="failed",clock="response",le="+Inf"} 3
+kestrel_latency_seconds_count{run="the-run",step="pay",outcome="failed",clock="response"} 3
+# TYPE kestrel_behind_seconds histogram
+# UNIT kestrel_behind_seconds seconds
+# HELP kestrel_behind_seconds How late this run's departures were against the schedule the profile promised. Read it before any latency here: where this is large the load named was never offered, and every other series is about a smaller experiment than the one asked for.
+kestrel_behind_seconds_bucket{run="the-run",le="0.000120319"} 3
+kestrel_behind_seconds_bucket{run="the-run",le="+Inf"} 3
+kestrel_behind_seconds_count{run="the-run"} 3
+# TYPE kestrel_hiccups_seconds histogram
+# UNIT kestrel_hiccups_seconds seconds
+# HELP kestrel_hiccups_seconds What the injector's own JVM stalled for while it measured, off the timed path. A tail smaller than this is the measuring process rather than the target.
+kestrel_hiccups_seconds_bucket{run="the-run",le="0.004014079"} 2
+kestrel_hiccups_seconds_bucket{run="the-run",le="+Inf"} 2
+kestrel_hiccups_seconds_count{run="the-run"} 2
+# TYPE kestrel_requests counter
+# HELP kestrel_requests Requests recorded under each step, successful and failed together.
+kestrel_requests_total{run="the-run",step="pay"} 7
+# TYPE kestrel_failures counter
+# HELP kestrel_failures Failures by the reason the module that made the request gave. The set is bounded per step by the recorder, so this cannot become a series per request.
+kestrel_failures_total{run="the-run",step="pay",reason="ConnectException"} 1
+kestrel_failures_total{run="the-run",step="pay",reason="status 503"} 2
+# TYPE kestrel_machine info
+# HELP kestrel_machine What measured the run. A series from one machine laid over a series from another is a comparison of two machines as much as of two builds.
+kestrel_machine_info{cores="4",jdk="21.0.2+13",os="Linux",arch="aarch64"} 1
+# EOF

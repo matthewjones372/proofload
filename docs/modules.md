@@ -12,6 +12,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
+| `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
@@ -84,6 +85,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |
 | `kestrel-otel` | [NoGrpcStackTest](../kestrel-otel/src/test/kotlin/io/github/matthewjones372/kestrel/otel/NoGrpcStackTest.kt) |
 | `kestrel-grpc` | [NoTransportTest](../kestrel-grpc/src/test/kotlin/io/github/matthewjones372/kestrel/grpc/NoTransportTest.kt) |
+| `kestrel-kafka` | [NoBrokerDependenciesTest](../kestrel-kafka/src/test/kotlin/io/github/matthewjones372/kestrel/kafka/NoBrokerDependenciesTest.kt) |
 
 Each one reads the module's own `runtimeClasspath`, handed to the test JVM as a
 system property by the module's build file, and fails on any entry outside a
@@ -100,7 +102,12 @@ and no Netty, because a load test's own process is the last place to put a
 second networking stack. `kestrel-grpc` makes the third version of the claim:
 `grpc-api` and no transport, so `grpc-netty-shaded` or `grpc-okhttp` stays the
 caller's choice — it is the thing that most decides what a gRPC run can drive,
-and picking one here would decide it for everybody silently.
+and picking one here would decide it for everybody silently. `kestrel-kafka`
+says what did *not* arrive: no broker, embedded or containerised, and no schema
+registry — `io.confluent:kafka-avro-serializer` is not on Maven Central, so
+depending on it would force a `packages.confluent.io` declaration on every
+consumer and break the smoke project below, which resolves from
+`mavenCentral()` on purpose.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module

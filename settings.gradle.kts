@@ -8,6 +8,7 @@ include(
     "kestrel-grpc",
     "kestrel-http",
     "kestrel-junit5",
+    "kestrel-kafka",
     "kestrel-kotest",
     "kestrel-otel",
     "kestrel-pelican",

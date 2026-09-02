@@ -66,6 +66,7 @@ val moduleDescriptions = mapOf(
     "kestrel-grpc" to "gRPC steps over a caller's own stubs and channel.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
     "kestrel-junit5" to "Load tests that are ordinary JUnit 5 tests.",
+    "kestrel-kafka" to "Kafka produce steps, and completions read off another topic.",
     "kestrel-kotest" to "Load tests that are ordinary Kotest specs.",
     "kestrel-otel" to "A run's measurements sent to an OpenTelemetry collector.",
     "kestrel-pelican" to "Load tests driven by Pelican endpoint descriptions.",

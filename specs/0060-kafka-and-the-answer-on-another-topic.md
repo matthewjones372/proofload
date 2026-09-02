@@ -86,7 +86,7 @@ tunes against them will ship a consumer that cannot keep up.
 
 ## Stack
 
-- [ ] **`spec-0060-produce`** — `kestrel-kafka`, `kafka.brokers`, `topic`,
+- [x] **`spec-0060-produce`** — `kestrel-kafka`, `kafka.brokers`, `topic`,
       `keyed`, `value`, and `emit` producing through it; a send that fails
       recorded with the broker's reason.
       Done when: a scenario produces through a `MockProducer` and every record
@@ -134,6 +134,13 @@ tunes against them will ship a consumer that cannot keep up.
     and needs no deserializer on the completion side, which is the only option
     that does not drag the registry back in. Recommend a header, with the key as
     a second option, and reading from the payload refused rather than supported.
+    Built as a header. The `Correlation` is stated once, at the `emit` call
+    site, and threaded to both the departure the run counts and the header the
+    record carries: naming it twice is how a run ends up matching on an id it
+    never sent.
+5. **What a produce step does when the scenario gave it no value.** Refused as
+    `NothingToSend` rather than produced empty: a record nobody meant to send
+    is a row in the report and a message on somebody's topic.
 4. **A blocking `send`.** When the accumulator fills, `send` blocks up to
     `max.block.ms` on the calling thread. That is real backpressure and 0040's
     intended-departure clock reports it honestly, but it will show up as

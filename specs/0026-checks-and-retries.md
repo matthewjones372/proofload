@@ -67,6 +67,15 @@ different checks is a report nobody can act on.
       cannot be a `Thread.sleep` in library code.
       Done when: a step retries only on the condition given, and the delay
       between attempts is on the scheduler.
+      **Blocked, established by trying.** The engine times the whole step body
+      (`Action.runOn`), so a retry built today would report a service time
+      covering every attempt *and* the backoff between them — which open
+      question 3 above says buries the retry, and is what this spec exists to
+      stop. Reporting the last attempt's service time needs the action to
+      carry a measurement out of itself, which is a channel that does not
+      exist and a third clock 0069 argues against; recording each attempt as
+      its own sample is `spec-0075-sample`. Either way `retrying` wants 0075
+      first. The `attempts` counter it needs is built.
 
 ## Acceptance
 

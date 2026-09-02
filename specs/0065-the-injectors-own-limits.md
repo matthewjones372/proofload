@@ -70,7 +70,7 @@ Values in core beside `Machine`, sampler in the engine beside `Hiccups.kt`, and
       `ranOutOfRoom()` in core, nothing measuring them yet.
       Done when: a default result reads false, a reading at 91% of its limit
       reads true and one at 40% false, and `TIGHT` is stated in one place.
-- [ ] **`spec-0065-sampler`** — the sampler in the engine, on the hiccup
+- [x] **`spec-0065-sampler`** — the sampler in the engine, on the hiccup
       thread's pattern, and the three sources.
       Done when: a Linux run's peak descriptor count is above zero and under
       that JVM's `ulimit -n`, a missing source reads `Absent` with a reason

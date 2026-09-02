@@ -70,6 +70,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     warmUp?.let { warming -> warmingUpRun(warming).departAll(unrecorded, Departures(), Departed(), null, null) }
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
+    val room = watchForRoom()
     // The recorder's origin rather than a second reading of the clock: a
     // transport that asks the recorder where it is in the run must land on the
     // same timeline as the steps the engine times itself.
@@ -94,7 +95,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     departAll(recorders, users, departed, arrivals, drain, runStart)
     drain?.close()
     watching.stop()
-    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop())
+    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop(), limits = room.stop())
 }
 
 /**

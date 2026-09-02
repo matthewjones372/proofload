@@ -86,7 +86,7 @@ and buckets, and nothing that names what was built.
 - [x] **`spec-0074-trend`** — `Trend`, `ends`, `steps`, `comparisons`.
       Done when: identical points name no step and `ends` contains 1.0, one
       injected step names that pair alone, and under three points is refused.
-- [ ] **`spec-0074-history`** — `readTrend`, one subdirectory per point.
+- [x] **`spec-0074-history`** — `readTrend`, one subdirectory per point.
       Done when: twenty subdirectories read back as twenty labelled points in
       measurement order, one whose runs disagree on plan or machine is refused
       naming it, and an empty one is named rather than skipped.

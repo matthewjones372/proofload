@@ -4,6 +4,7 @@ include(
     "kestrel-baseline",
     "kestrel-core",
     "kestrel-engine",
+    "kestrel-export",
     "kestrel-http",
     "kestrel-junit5",
     "kestrel-kotest",

@@ -14,6 +14,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
+| `kestrel-export` | a run's measurements in the formats other tools already read | core |
 | `kestrel-report-html` | one self-contained, interactive HTML page | core |
 | `kestrel-report-github` | markdown, a job summary and a Pages directory | core |
 | `kestrel-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core, `pelican-core` |
@@ -52,6 +53,7 @@ dependencies {
 
     // As you need them.
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-pelican:$kestrelVersion")
@@ -73,6 +75,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |
+| `kestrel-export` | [NoThirdPartyDependenciesTest](../kestrel-export/src/test/kotlin/io/github/matthewjones372/kestrel/export/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-html` | [NoThirdPartyDependenciesTest](../kestrel-report-html/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-github` | [NoThirdPartyDependenciesTest](../kestrel-report-github/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |
@@ -81,7 +84,11 @@ Each one reads the module's own `runtimeClasspath`, handed to the test JVM as a
 system property by the module's build file, and fails on any entry outside a
 short allow-list. A few say more than that: `kestrel-http` also asserts core is
 exported, `kestrel-kotest` that `kestrel-junit5` is absent, and
-`kestrel-pelican` that no part of Pekko reached the classpath.
+`kestrel-pelican` that no part of Pekko reached the classpath. `kestrel-export`
+is the pointed case: HdrHistogram owns the log format it writes and would write
+it in one call, and it sits on that module's *test* classpath instead — as the
+oracle that reads the output back, rather than on the classpath of everyone who
+wanted one file out of a run.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module

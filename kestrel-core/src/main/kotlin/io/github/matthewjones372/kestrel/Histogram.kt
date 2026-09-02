@@ -132,6 +132,25 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
         }
         .toList()
 
+    /**
+     * Which slot of the counter table [value] falls in, and how many slots
+     * there are before the overflow one.
+     *
+     * Public because a tool that writes another library's histogram format has
+     * to lay counts out in the order this one counts them in, and a second copy
+     * of this arithmetic somewhere else is a second thing that has to stay
+     * right. The layout is HdrHistogram's — [slotOf] is its `countsArrayIndex`
+     * and a bucket's `upperBound` its `highestEquivalentValue` — so a table
+     * exported from here needs no re-bucketing.
+     */
+    fun slotOf(value: Duration): Int = indexOf(minOf(value.inWholeNanoseconds, CEILING_NANOS))
+
+    /** How many slots the counter table has, the overflow slot excluded. */
+    val slots: Int get() = overflow
+
+    /** How many sub-buckets each power of two is divided into: two to [subBucketMagnitude]. */
+    val subBuckets: Int get() = subBucketCount
+
     private fun indexOf(nanos: Long): Int {
         val bucket = bucketOf(nanos)
         val subBucket = (nanos ushr bucket).toInt()
@@ -158,6 +177,20 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
 
         /** Thirty-two sub-buckets rather than two hundred and fifty-six: an eighth of the counters. */
         fun coarse(): Histogram = Histogram(COARSE_SUB_BUCKET_MAGNITUDE)
+
+        /**
+         * An empty table of the width [Timing.precision] reports, for a reader
+         * holding a frozen value and needing the layout it was counted in.
+         */
+        fun of(precision: Double): Histogram = when (precision) {
+            PRECISION -> Histogram()
+
+            COARSE_PRECISION -> Histogram.coarse()
+
+            else -> throw IllegalArgumentException(
+                "nothing here counts to $precision; this build has $PRECISION and $COARSE_PRECISION",
+            )
+        }
 
         val ceiling: Duration get() = CEILING_NANOS.nanoseconds
     }

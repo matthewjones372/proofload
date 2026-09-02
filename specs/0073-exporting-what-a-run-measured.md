@@ -80,7 +80,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 
 ## Stack
 
-- [ ] **`spec-0073-hlog`** — the module, its dependency test, and the writer.
+- [x] **`spec-0073-hlog`** — the module, its dependency test, and the writer.
       Done when: HdrHistogram's `HistogramLogReader`, on the test classpath,
       reads a run back with every count equal and p99 `Timing.p99`.
 - [ ] **`spec-0073-openmetrics`** — `openMetrics()`, against a golden.
@@ -111,7 +111,12 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
     one file of two precisions misleads. Recommend a separate call and file.
 3. **Should HdrHistogram be a real dependency of `kestrel-export`?** Recommend
     test-only — but that is the decision to reverse first if hand-encoding V2
-    runs past its share of the stack.
+    runs past its share of the stack. **Held when built**: the encoder came to
+    about 150 lines of `Deflater`, `Base64` and zig-zag, and the library on the
+    test classpath reading it back is a stronger check than sharing an
+    implementation would have been. `Histogram` gained `slotOf`, `slots` and
+    `subBuckets` so the layout is stated once rather than copied into the
+    exporter — that copy, not the encoding, was the part worth avoiding.
 4. **Delta or cumulative for OTLP?** Recommend delta: cumulative claims a
     process-lifetime counter with restart detection, and a run is one window
     with a start and an end `RunResult` already knows.

@@ -19,6 +19,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-core:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-engine:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-websocket:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-junit5:$kestrelVersion")

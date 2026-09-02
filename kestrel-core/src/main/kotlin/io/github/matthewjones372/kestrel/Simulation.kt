@@ -23,7 +23,20 @@ val Number.perMinute: Rate get() = Rate.ofPerSecond(toDouble() / SECONDS_PER_MIN
 data class Completing(val step: String, val from: Completions, val drainingFor: Duration)
 
 /** A scenario, the rate it is sent at and what its users start with: one journey of a run. */
-data class Arm(val scenario: Scenario, val profile: InjectionProfile, val feeder: Feeder = Feeder.empty)
+data class Arm(
+    val scenario: Scenario,
+    val profile: InjectionProfile,
+    val feeder: Feeder = Feeder.empty,
+    /**
+     * What this arm's drawn waits come from, where it draws any.
+     *
+     * Null is not a default seed: it means nothing here draws, and a scenario
+     * that does draw is refused without one. An unseeded random run is not one
+     * anybody can reproduce, which is the same rule `randomized` already holds
+     * arrivals to.
+     */
+    val thinkSeed: Long? = null,
+)
 
 /** The arms sent together, what they have to achieve and the sink they are drained into: a run, as one value. */
 data class Simulation(
@@ -118,6 +131,36 @@ fun Simulation.plan(): Plan = Plan(
  * keyword and would need backticks at every call site.
  */
 fun Simulation.warmingUp(over: Duration): Simulation = copy(warmUp = WarmUp(over))
+
+/**
+ * Refuses a run whose waits are drawn from nothing.
+ *
+ * Called by an engine before it departs anybody, rather than by the
+ * constructor: `at(...).thinkingFrom(seed)` builds the simulation before it
+ * carries the seed, so a constructor that refused would refuse the shape this
+ * is meant to be written in. A run that departs and only then finds it cannot
+ * reproduce itself has already spent the window it was measuring, which is why
+ * this is not left to the first pause either.
+ */
+fun Simulation.requireSeededThinking() {
+    val unseeded = arms.filter { it.scenario.drawsThinkTime && it.thinkSeed == null }
+    require(unseeded.isEmpty()) {
+        unseeded.joinToString(", ", postfix = ": add thinkingFrom(seed)") { arm ->
+            "\"${arm.scenario.name}\" draws its think time and has no seed"
+        }
+    }
+}
+
+/**
+ * The same run, with every arm's drawn waits coming from [seed].
+ *
+ * On the run beside `fedBy` rather than on each pause: a scenario with four
+ * drawn pauses would otherwise be reproducible in four places, and a reader
+ * would have to collect them to know what to write down. Each arm draws from
+ * this seed mixed with its own index, as a staged profile seeds its stages.
+ */
+fun Simulation.thinkingFrom(seed: Long): Simulation =
+    copy(arms = arms.mapIndexed { index, arm -> arm.copy(thinkSeed = seed + index) })
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })

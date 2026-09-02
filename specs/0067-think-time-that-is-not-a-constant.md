@@ -87,7 +87,7 @@ tail makes that longer.
       Done when: `pause(2.seconds)` builds a constant pause with every existing
       scenario unchanged, and one distribution drawn twice matches on one seed
       and differs on two.
-- [ ] **`spec-0067-seeded`** — `Arm.thinkSeed`, `Simulation.thinkingFrom`, the
+- [x] **`spec-0067-seeded`** — `Arm.thinkSeed`, `Simulation.thinkingFrom`, the
       refusal when a distribution has no seed, the engine drawing per user where
       the pause already parks.
       Done when: two runs at one seed park the same user for the same duration,

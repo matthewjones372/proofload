@@ -108,6 +108,11 @@ class RefreshingTest {
         withClue("the third fetch never ran, so one failure stopped the schedule") {
             recovered.await(GATE_SECONDS, TimeUnit.SECONDS) shouldBe true
         }
+        // The latch is counted down inside the fetch, which is before the
+        // value it returns has been stored: waiting for the store rather than
+        // for the call is what makes this a test of the result and not a race.
+        val until = System.nanoTime() + GATE_SECONDS * NANOS_PER_SECOND
+        while (token.current != "token-3" && System.nanoTime() < until) Thread.onSpinWait()
         token.current shouldBe "token-3"
         token.stop()
     }
@@ -141,3 +146,5 @@ class RefreshingTest {
 // Long enough that a loaded machine cannot fail these, since what each asserts
 // is the change and not how soon it arrived.
 private const val GATE_SECONDS = 10L
+
+private const val NANOS_PER_SECOND = 1_000_000_000L

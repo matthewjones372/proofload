@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.engine
 
 import io.github.matthewjones372.kestrel.Action
+import io.github.matthewjones372.kestrel.Arm
 import io.github.matthewjones372.kestrel.ArrivalRecorder
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Completing
@@ -21,6 +22,7 @@ import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.plan
+import io.github.matthewjones372.kestrel.requireSeededThinking
 import io.github.matthewjones372.kestrel.startRate
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -28,6 +30,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
@@ -63,6 +66,9 @@ fun Simulation.run(progress: Progress = Progress.lines()): RunResult = VirtualTh
  * [Progress.silent].
  */
 private fun Simulation.send(progress: Progress): RunResult {
+    // Before the warm-up and before the recorder: a run that cannot reproduce
+    // itself should not have spent the window first.
+    requireSeededThinking()
     progress.starting(plan())
     // Before the recorder exists, so the run's own startedAt, counts, timeline
     // and lateness cannot hold any of it: excluded means never recorded, not
@@ -148,6 +154,7 @@ private fun Simulation.departAll(
                             departure.arm.feeder.forUser(departure.user),
                             drain,
                             departed,
+                            departure.arm.thinkingFor(departure.user),
                         )
                     },
                     // Relative to now, but the offset is from the run's start
@@ -178,6 +185,17 @@ private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
 /** Where a warm-up's samples go: nowhere. */
 private val unrecorded = StepSink { _, _, _, _, _, _, _, _ -> }
 
+/**
+ * This user's own source of waits, seeded from the arm's seed and the user's
+ * own number, or null where this arm draws nothing.
+ *
+ * Mixed the way a staged profile mixes a stage's seed with a window's, so user
+ * 4,001 parks the same tomorrow whatever the target did today — the same thing
+ * `Feeder` already gives for what a user sends.
+ */
+private fun Arm.thinkingFor(user: Long): Random? =
+    thinkSeed?.let { Random(it * MIXED_WITH_USER + user) }
+
 private fun Scenario.depart(
     sink: StepSink,
     runStart: Long,
@@ -186,6 +204,7 @@ private fun Scenario.depart(
     session: Session,
     drain: Drain?,
     departed: Departed,
+    thinking: Random? = null,
 ) {
     // The scheduler counting itself, on the scheduler's own thread. What the
     // report calls lateness is still read below, where the user starts: one
@@ -199,7 +218,15 @@ private fun Scenario.depart(
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(sink, runStart, lateness(runStart, departure), departure, session, drain)
+            runOneUser(
+                sink,
+                runStart,
+                lateness(runStart, departure),
+                departure,
+                session,
+                drain,
+                thinking = thinking,
+            )
         } finally {
             users.finished()
         }
@@ -353,8 +380,9 @@ internal fun Scenario.runOneUser(
     started: Session,
     drain: Drain?,
     narrating: ((String, List<String>) -> Unit)? = null,
+    thinking: Random? = null,
 ) {
-    UserWalk(sink, runStart, schedulingDelay, departure, drain, narrating).walk(steps, started)
+    UserWalk(sink, runStart, schedulingDelay, departure, drain, narrating, thinking).walk(steps, started)
 }
 
 /**
@@ -369,8 +397,12 @@ internal fun Scenario.runOneUser(
  * `behind` — the generator is not late for a departure that was meant to wait.
  */
 @Suppress("ForbiddenMethodCall")
-private fun Step.Pause.thoughtAbout(session: Session): Session {
-    Thread.sleep(duration.toJavaDuration())
+private fun Step.Pause.thoughtAbout(session: Session, random: Random?): Session {
+    // A constant needs no draw and no seed, which is why an unseeded scenario
+    // of constants still runs. A distribution without a random here cannot
+    // happen: the simulation refuses one before anything departs.
+    val waiting = if (random == null) think.mean else think.drawnFrom(random)
+    Thread.sleep(waiting.toJavaDuration())
     return session
 }
 
@@ -385,10 +417,19 @@ private class UserWalk(
     private val schedulingDelay: Duration,
     private val departure: Duration,
     private val drain: Drain?,
+    // This user's own source of waits, or null where nothing here draws. One
+    // per user rather than one shared: a shared generator is contention on the
+    // path whose delay is reported as latency, and it would make what user
+    // 4,001 waited depend on how fast the target answered every user before it.
     // Null for a run and a list for a trace: what a step did is collected here
     // and handed to whoever asked, so a measuring run builds no lines and a
     // diagnostic gets them without a route of its own.
     private val narrating: ((String, List<String>) -> Unit)? = null,
+    // This user's own source of waits, or null where nothing here draws. One
+    // per user rather than one shared: a shared generator is contention on the
+    // path whose delay is reported as latency, and it would make what user
+    // 4,001 waited depend on how fast the target answered every user before it.
+    private val thinking: Random? = null,
 ) : SampleSink {
 
     // The one mutable thing a walk keeps, and one per user rather than per
@@ -452,7 +493,7 @@ private class UserWalk(
 
         is Step.When -> if (step.predicate(session)) walk(step.steps, session) else session
 
-        is Step.Pause -> step.thoughtAbout(session)
+        is Step.Pause -> step.thoughtAbout(session, thinking)
     }
 
     /**
@@ -543,3 +584,10 @@ private fun StepResult.reason(): Reason? = when (this) {
  * at another.
  */
 private val BOOKING_WINDOW: Duration = 5.seconds
+
+/**
+ * An odd multiplier, so one arm's seed and its neighbour's cannot land on the
+ * same stream by being one apart: seed 38 user 1 and seed 39 user 0 are two
+ * different users, and would otherwise wait the same.
+ */
+private const val MIXED_WITH_USER = -0x61C8864680B583EBL

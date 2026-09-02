@@ -67,6 +67,18 @@ it stops them using a tool that tells them the truth about it.
       population.
       Done when: fifty users produce fifty concurrent journeys, and the run
       reports the rate it actually achieved.
+      **Wants a revision before code, not a bigger effort.** This spec predates
+      most of what a run now reports about its own schedule, and every one of
+      those numbers assumes an open model: `behind` and `latePerSecond` measure
+      lateness against a departure the profile promised, and a closed user has
+      no promised departure after its first; `keptSchedule` and `lostGround`
+      judge a run against `plannedInterval`, which a fixed population does not
+      have; `offered` and `heldScheduleFor` (0076) compare what left against
+      what was asked. A closed run through today's code would put a lateness
+      figure and a schedule verdict on the page that mean nothing, which is a
+      worse failure than not having the feature. What each of those should say
+      under a closed model is a decision for this spec to make, and the
+      honesty entry below is not enough on its own.
 - [ ] **`spec-0024-honesty`** — the caveat on the page and in the docs.
       Done when: a closed run's report says the load was shaped by the target,
       and an open run's does not.

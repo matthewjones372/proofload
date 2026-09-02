@@ -11,6 +11,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-engine` | runs a simulation on virtual threads, departures on a schedule | core |
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
+| `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
@@ -82,6 +83,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-report-github` | [NoThirdPartyDependenciesTest](../kestrel-report-github/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |
 | `kestrel-otel` | [NoGrpcStackTest](../kestrel-otel/src/test/kotlin/io/github/matthewjones372/kestrel/otel/NoGrpcStackTest.kt) |
+| `kestrel-grpc` | [NoTransportTest](../kestrel-grpc/src/test/kotlin/io/github/matthewjones372/kestrel/grpc/NoTransportTest.kt) |
 
 Each one reads the module's own `runtimeClasspath`, handed to the test JVM as a
 system property by the module's build file, and fails on any entry outside a
@@ -95,7 +97,10 @@ wanted one file out of a run. `kestrel-otel` is the other side of the same
 argument: it carries the OpenTelemetry SDK because that is what it is for, and
 its test says *which* dependency arrived — OTLP over HTTP, so no gRPC runtime
 and no Netty, because a load test's own process is the last place to put a
-second networking stack.
+second networking stack. `kestrel-grpc` makes the third version of the claim:
+`grpc-api` and no transport, so `grpc-netty-shaded` or `grpc-okhttp` stays the
+caller's choice — it is the thing that most decides what a gRPC run can drive,
+and picking one here would decide it for everybody silently.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module

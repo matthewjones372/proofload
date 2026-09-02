@@ -75,7 +75,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 
 ## Stack
 
-- [ ] **`spec-0071-module`** — the module, its dependency test, `grpc.target`,
+- [x] **`spec-0071-module`** — the module, its dependency test, `grpc.target`,
       the shared channel, `call(descriptor) { }`.
       Done when: a unary call on an in-process server is one row named
       `orders.v1.Orders/PlaceOrder`, a streaming descriptor fails at build time,
@@ -115,6 +115,10 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 4. **Is `grpc-api` `api` or `compileOnly`?** Kotest is `compileOnly` in
     `kestrel-kotest` because a caller already has it, as one here has gRPC.
     Recommend `api`: the signatures are `MethodDescriptor` and `ManagedChannel`.
+    Built `api`. What arrives with it is guava and five annotation jars, which
+    `NoTransportTest` allows by name — they are `grpc-api`'s own and not a
+    choice this module made; a transport, a protobuf runtime and coroutines are
+    each refused separately, so the reason for each refusal survives.
 5. **Is "transport failures to `Threw`" right?** Mostly not: a refused
     connection arrives as `Status.UNAVAILABLE`, not a `ConnectException`.
     Recommend `Threw` only for what escapes the status model, a marshaller.

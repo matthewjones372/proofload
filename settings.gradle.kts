@@ -5,6 +5,7 @@ include(
     "kestrel-core",
     "kestrel-engine",
     "kestrel-export",
+    "kestrel-grpc",
     "kestrel-http",
     "kestrel-junit5",
     "kestrel-kotest",

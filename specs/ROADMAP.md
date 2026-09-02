@@ -74,6 +74,7 @@ built. Each row links the spec that argued for it.
 | [0068](0068-littles-law-on-every-run.md) | L = λW checked every run, and an in-flight count that stopped measuring the booking window |
 | [0067](0067-think-time-that-is-not-a-constant.md) | think time drawn from a distribution and a seed, so users stop clicking again in the same instant |
 | [0069](0069-a-transport-the-http-module-can-swap.md) | a Transport seam under the HTTP step, with the JDK client as the default and a contract test for any other |
+| [0072](0072-replaying-real-arrivals.md) | a captured hour replayed as the arrival process it was, scaled by time so its burstiness survives |
 
 ## Drafted, not built
 
@@ -84,7 +85,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | Spec | Why it is next |
 |---|---|
 | [0071](0071-grpc-steps.md) | the default JVM service protocol has no typed step |
-| [0072](0072-replaying-real-arrivals.md) | production is burstier than Poisson, and 0034 said no replay |
 | [0073](0073-exporting-what-a-run-measured.md) | a run's numbers cannot reach Grafana, an OTel backend or an hlog tool |
 | [0074](0074-trends-across-baselines.md) | a 2%-a-week creep is inside every pairwise interval until it is 30% |
 | [0070](0070-more-than-one-injector.md) | one JVM; 0004 said so, and it is the first wall a serious user hits |

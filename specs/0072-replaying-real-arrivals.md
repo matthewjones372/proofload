@@ -87,7 +87,7 @@ also why equality follows `CsvFile`: `Runs` prints a profile into its refusal an
       the capture rather than a rate line.
       Done when: a replayed run never prints "evenly spaced" and its two
       coefficients agree within a tolerance at ×1 and ×2.
-- [ ] **`spec-0072-baseline`** — the replay's line in the baseline format, and
+- [x] **`spec-0072-baseline`** — the replay's line in the baseline format, and
       the identity `Runs` compares on.
       Done when: a run read back carries a profile equal to the one that ran
       without the file holding a timestamp, and two captures are refused by name.

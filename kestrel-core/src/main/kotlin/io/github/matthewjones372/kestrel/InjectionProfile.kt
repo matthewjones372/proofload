@@ -73,14 +73,21 @@ sealed interface InjectionProfile {
         /** The capture's own offsets inside the window asked for, rebased to zero. */
         internal val taken: LongArray
             get() {
-                val begins = series.offsets.first() + from.inWholeNanoseconds
+                val sending = series.toSend()
+                val begins = sending.first() + from.inWholeNanoseconds
                 val ends = window?.let { begins + it.inWholeNanoseconds } ?: Long.MAX_VALUE
-                val inside = series.offsets.filter { it >= begins && it < ends }
+                val inside = sending.filter { it >= begins && it < ends }
                 return LongArray(inside.size) { inside[it] - begins }
             }
 
         override val over: Duration
-            get() = taken.lastOrNull()?.let { (it / scaled).toLong().nanoseconds } ?: Duration.ZERO
+            get() = if (series.isRecalled) {
+                // What it was asked to run for, from what the baseline kept.
+                val window = window ?: (series.span - from)
+                (window.inWholeNanoseconds / scaled).toLong().nanoseconds
+            } else {
+                taken.lastOrNull()?.let { (it / scaled).toLong().nanoseconds } ?: Duration.ZERO
+            }
     }
 }
 

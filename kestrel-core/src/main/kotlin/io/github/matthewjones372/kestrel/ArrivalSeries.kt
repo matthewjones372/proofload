@@ -18,23 +18,34 @@ import kotlin.time.Duration.Companion.nanoseconds
  * gives.
  */
 class ArrivalSeries internal constructor(
-    /** Offsets from the first arrival, ascending. */
+    /** Offsets from the first arrival, ascending. Empty for a capture read back from a baseline. */
     internal val offsets: LongArray,
     /** Where it came from, for a page to name and a baseline to compare on. */
     val source: String,
+    /**
+     * What a baseline recorded about a capture it did not keep: count, span
+     * and digest. Null for a capture read from arrivals, which computes them.
+     */
+    private val recalled: Recalled? = null,
 ) {
 
     init {
-        require(offsets.size >= 2) {
+        require(recalled != null || offsets.size >= 2) {
             "a capture needs at least two arrivals to have a gap between them, but $source had ${offsets.size}"
         }
     }
 
+    /** What was recorded about a capture whose arrivals are not here. */
+    internal data class Recalled(val count: Int, val span: Duration, val digest: Int)
+
+    /** Whether the arrivals themselves are here, or only what a baseline recorded about them. */
+    val isRecalled: Boolean get() = recalled != null
+
     /** How many arrivals it holds. */
-    val count: Int get() = offsets.size
+    val count: Int get() = recalled?.count ?: offsets.size
 
     /** First to last. */
-    val span: Duration get() = (offsets.last() - offsets.first()).nanoseconds
+    val span: Duration get() = recalled?.span ?: (offsets.last() - offsets.first()).nanoseconds
 
     /**
      * How uneven the gaps were: their standard deviation over their mean.
@@ -46,6 +57,7 @@ class ArrivalSeries internal constructor(
      */
     val cov: Double
         get() {
+            if (recalled != null) return 0.0
             val gaps = DoubleArray(offsets.size - 1) { (offsets[it + 1] - offsets[it]).toDouble() }
             val mean = gaps.average()
             if (mean <= 0.0) return 0.0
@@ -60,13 +72,41 @@ class ArrivalSeries internal constructor(
      * arrivals themselves would hold the data twice, and one that carried
      * nothing could not refuse a run replayed from a different capture.
      */
-    val identity: String get() = "$source/$count/${span.inWholeNanoseconds}/${offsets.contentHashCode()}"
+
+    /**
+     * A number standing for the arrivals themselves, so a baseline can record
+     * one capture and refuse another without keeping the timestamps.
+     */
+    val digest: Int get() = recalled?.digest ?: offsets.contentHashCode()
+
+    val identity: String get() = "$source/$count/${span.inWholeNanoseconds}/$digest"
+
+    /**
+     * The arrivals to send, or a refusal.
+     *
+     * A capture read back from a baseline knows what it was and not what it
+     * held: it is there to be compared against, and running it would send a
+     * shape nobody captured.
+     */
+    internal fun toSend(): LongArray {
+        require(recalled == null) {
+            "$source was read back from a baseline, which records what a capture was and not its arrivals; " +
+                "read the capture itself to replay it"
+        }
+        return offsets
+    }
 
     override fun equals(other: Any?): Boolean = other is ArrivalSeries && other.identity == identity
 
     override fun hashCode(): Int = identity.hashCode()
 
     override fun toString(): String = "ArrivalSeries(source=$source, count=$count, span=$span)"
+
+    companion object {
+        /** What a baseline recorded about a capture: enough to compare on, not enough to send. */
+        fun recalled(source: String, count: Int, span: Duration, digest: Int): ArrivalSeries =
+            ArrivalSeries(LongArray(0), source, Recalled(count, span, digest))
+    }
 }
 
 /**

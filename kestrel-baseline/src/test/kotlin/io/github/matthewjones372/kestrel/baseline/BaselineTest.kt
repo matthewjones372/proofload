@@ -13,10 +13,13 @@ import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.WarmUp
 import io.github.matthewjones372.kestrel.against
+import io.github.matthewjones372.kestrel.arrivalsFrom
 import io.github.matthewjones372.kestrel.constantRate
+import io.github.matthewjones372.kestrel.departures
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.rampRate
 import io.github.matthewjones372.kestrel.randomized
+import io.github.matthewjones372.kestrel.replaying
 import io.github.matthewjones372.kestrel.then
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.throwables.shouldThrow
@@ -194,6 +197,55 @@ class BaselineTest {
             .replaceFirst("kestrel-baseline\t5", "kestrel-baseline\t4")
 
         parseBaseline(older).plan.warmUp shouldBe null
+    }
+
+    @Test
+    fun `a replay travels as what it was, so a run compares against its own baseline`(@TempDir dir: Path) {
+        val capture = arrivalsFrom(
+            (0..99).map { Instant.parse("2026-08-26T12:00:00Z").plusMillis(it * 37L) },
+            source = "friday-peak.csv",
+        )
+        val plan = planOf(capture.replaying(scaled = 2.0))
+
+        val read = runOf(plan = plan).throughAFile(dir)
+
+        withClue("the file carries what the capture was, and no timestamps") {
+            read.plan.profile shouldBe plan.profile
+            runOf(plan = plan).against(read).shouldBeInstanceOf<Comparison.Compared>()
+        }
+    }
+
+    @Test
+    fun `a run replayed from another capture is refused rather than compared`(@TempDir dir: Path) {
+        val noon = Instant.parse("2026-08-26T12:00:00Z")
+        val friday = arrivalsFrom((0..99).map { noon.plusMillis(it * 37L) }, source = "friday.csv")
+        val monday = arrivalsFrom((0..99).map { noon.plusMillis(it * 51L) }, source = "monday.csv")
+
+        runOf(plan = planOf(friday.replaying())).writeBaseline(dir.resolve("b.kestrel"))
+
+        val why = runOf(plan = planOf(monday.replaying()))
+            .against(readBaseline(dir.resolve("b.kestrel")))
+            .shouldBeInstanceOf<Comparison.NotComparable>()
+            .why
+
+        withClue(why) { why shouldContain "monday.csv" }
+    }
+
+    @Test
+    fun `a capture read back from a baseline refuses to be replayed`(@TempDir dir: Path) {
+        val capture = arrivalsFrom(
+            (0..99).map { Instant.parse("2026-08-26T12:00:00Z").plusMillis(it * 37L) },
+            source = "friday-peak.csv",
+        )
+        val read = runOf(plan = planOf(capture.replaying())).throughAFile(dir)
+
+        val why = shouldThrow<IllegalArgumentException> {
+            (read.plan.profile as InjectionProfile.Replay).departures().toList()
+        }
+
+        withClue(why.message.orEmpty()) {
+            why.message.orEmpty() shouldContain "records what a capture was and not its arrivals"
+        }
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.baseline
 
+import io.github.matthewjones372.kestrel.ArrivalSeries
 import io.github.matthewjones372.kestrel.Bucket
 import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
@@ -87,7 +88,7 @@ private fun InjectionProfile?.postfix(): List<String> = when (this) {
     // enough to refuse two different captures by name.
     is InjectionProfile.Replay -> listOf(
         "replay\t${series.source.escaped()}\t${series.count}\t${series.span.inWholeNanoseconds}\t" +
-            "${series.identity.hashCode()}\t${from.inWholeNanoseconds}\t" +
+            "${series.digest}\t${from.inWholeNanoseconds}\t" +
             "${window?.inWholeNanoseconds ?: -1}\t$scaled",
     )
 }
@@ -197,6 +198,21 @@ private fun List<List<String>>.asProfile(): InjectionProfile? =
             }
 
             "random" -> stack.dropLast(1) + InjectionProfile.Randomized(stack.last(), fields[2].toLong())
+
+            // What the capture was, not what it held: enough to compare a run
+            // against its own baseline and to refuse one replayed from another
+            // capture, without the file carrying a million timestamps.
+            "replay" -> stack + InjectionProfile.Replay(
+                series = ArrivalSeries.recalled(
+                    source = fields[2].unescaped(),
+                    count = fields[3].toInt(),
+                    span = fields[4].toLong().nanoseconds,
+                    digest = fields[5].toInt(),
+                ),
+                from = fields[6].toLong().nanoseconds,
+                window = fields[7].toLong().takeIf { it >= 0 }?.nanoseconds,
+                scaled = fields[8].toDouble(),
+            )
 
             else -> throw IllegalArgumentException("not a rate line this version knows: ${fields.joinToString()}")
         }

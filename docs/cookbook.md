@@ -348,6 +348,33 @@ needs none. Each user's waits come from that seed and its own user number, so
 user 4,001 parks the same tomorrow whatever the target did today, and the report
 names the distribution and the seed beside the arrivals line.
 
+## Replay the arrivals you actually had
+
+Poisson is closer to production than a metronome and still not production: real
+traffic bunches, and the bunching is what fills a queue. If you have a log of
+when requests arrived, send that:
+
+```kotlin
+val friday = arrivalsFrom(csv(Path.of("friday-peak.csv")), column = "at")
+friday.count      // 1,204,663 — answered before anything is sent
+friday.span       // 1h
+friday.cov        // 2.71, how bursty that hour really was
+
+val peak = checkout.injecting(friday.replaying(from = 40.minutes, window = 10.minutes, scaled = 2.0))
+```
+
+`from` and `window` cut the capture in its own time, before the scaling, so ten
+captured minutes at twice the rate is five minutes of run.
+
+Scaling multiplies every gap by the same number, which leaves the coefficient of
+variation exactly where it was — that is what lets the report print the
+capture's burstiness beside the run's and mean something. Kestrel will not thin
+the arrivals to scale them: thinning drives a point process towards Poisson,
+which is the shape you replayed a capture to avoid.
+
+A replay cannot be `randomized`, and says so: a capture is already an arrival
+process, and drawing from it would put a model back where the measurement was.
+
 ## Loops and conditions
 
 A scenario is a tree, not a list, so a loop is a step holding steps rather than

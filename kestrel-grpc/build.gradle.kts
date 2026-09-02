@@ -22,11 +22,17 @@ dependencies {
     api(project(":kestrel-core"))
     api("io.grpc:grpc-api:1.78.0")
 
+    // `grpc-stub` too, and only for `StreamObserver`: a streaming seam has to
+    // speak the type a generated async stub is written against, and that type
+    // lives here rather than in `grpc-api`. It adds nothing a gRPC caller does
+    // not already have — generated code depends on it — and none of the
+    // refusals move: still no transport, no protobuf runtime, no coroutines.
+    api("io.grpc:grpc-stub:1.78.0")
+
     // A server this module's own tests can call, on the test classpath only.
     // Whether a cluster is sized right needs the caller's cluster; what an
     // in-process server proves is that a step is named, timed and recorded.
     testImplementation("io.grpc:grpc-inprocess:1.78.0")
-    testImplementation("io.grpc:grpc-stub:1.78.0")
 
     // A real transport, on the test classpath only, and for one test: that a
     // refused connection arrives as `UNAVAILABLE` rather than as a

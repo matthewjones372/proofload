@@ -41,6 +41,12 @@ internal object Orders {
         .setFullMethodName("orders.v1.Orders/WatchFills")
         .build()
 
+    /** Answers each message it is sent, one for one, until the caller is done. */
+    val chat: MethodDescriptor<String, String> = MethodDescriptor.newBuilder(strings, strings)
+        .setType(MethodDescriptor.MethodType.BIDI_STREAMING)
+        .setFullMethodName("orders.v1.Orders/Chat")
+        .build()
+
     /**
      * Answers [answer] of whatever it is sent, fails with [failing] where one
      * is given, or — where [silent] — never answers at all, which is what a
@@ -50,6 +56,8 @@ internal object Orders {
         answer: (String) -> String = { "filled $it" },
         failing: Status? = null,
         silent: Boolean = false,
+        /** How many messages of a [chat] call get answered; null is all of them. */
+        answersEach: Int? = null,
     ): ServerServiceDefinition =
         ServerServiceDefinition.builder("orders.v1.Orders")
             .addMethod(
@@ -62,6 +70,27 @@ internal object Orders {
                     } else {
                         observer.onNext(answer(request))
                         observer.onCompleted()
+                    }
+                },
+            )
+            .addMethod(
+                chat,
+                ServerCalls.asyncBidiStreamingCall { answers: StreamObserver<String> ->
+                    // Per call, so two users on one server do not share a
+                    // count and nothing here is a singleton a test left dirty.
+                    val answered = java.util.concurrent.atomic.AtomicInteger()
+                    object : StreamObserver<String> {
+                        override fun onNext(value: String) {
+                            // Stops after `answersEach`, so a stream that goes
+                            // quiet part-way is a thing a test can arrange.
+                            if (answersEach == null || answered.getAndIncrement() < answersEach) {
+                                answers.onNext("filled $value")
+                            }
+                        }
+
+                        override fun onError(error: Throwable) = Unit
+
+                        override fun onCompleted() = answers.onCompleted()
                     }
                 },
             )

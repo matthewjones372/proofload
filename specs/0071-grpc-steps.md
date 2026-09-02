@@ -89,7 +89,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 - [x] **`spec-0071-traced`** — `traceparent` and `baggage` on outgoing metadata.
       Done when: an in-process server reads a well-formed `traceparent` off
       every call, ids differ per call, and an untraced target sends neither.
-- [ ] **`spec-0071-streams`** — `stream`, `send` and `awaiting`, on `Pending`.
+- [x] **`spec-0071-streams`** — `stream`, `send` and `awaiting`, on `Pending`.
       Done when: a hundred answers to a hundred sends report a hundred matched
       and none outstanding, and a stream that stops early fails the wait.
 - [ ] **`spec-0071-docs`** — the `docs/modules.md` row and a cookbook page.
@@ -116,6 +116,33 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
     `CallOptions` have none, so a caller's own survives untouched rather than
     being lengthened or shortened by a default they never asked for; a run that
     declared no budget writes nothing at all.
+10. **A step that samples and then fails records no failure.** Found by
+    building this. The engine skips its own `sink.record` for a body that
+    reported samples — right about the latency, since one sample over the whole
+    body is a duration nobody experienced — but the *reason* rides that record,
+    so the failure is dropped with it. A stream that died after ninety of a
+    hundred answers reported ninety good samples and a clean step.
+    Worked around here: the failed wait reports one sample of its own, timed
+    from the last answer that did arrive — how long the one that never came had
+    been outstanding, which is 0075's first open question answered the way it
+    recommended. **`kestrel-websocket` has the same hole** and is not fixed
+    here: 0059's `awaiting` reports its samples and calls `fail` the same way,
+    so a socket that goes quiet part-way through a run reports no failure
+    either. Recommend fixing it in core rather than in each module — a reason
+    with no sample to ride needs a way to be counted — which is 0075's to
+    argue.
+11. **`grpc-stub` alongside `grpc-api`.** The spec said `grpc-api` and nothing
+    else of gRPC's; a streaming seam has to speak `StreamObserver`, which lives
+    in `grpc-stub` rather than in `grpc-api`. It adds nothing a gRPC caller
+    does not already have — generated code depends on it — and none of the
+    refusals move: still no transport, no protobuf runtime, no coroutines.
+12. **Server streaming is not built.** `stream` matches each answer to the
+    message it answers, which is the bidirectional and client-streaming shape.
+    A server stream's messages answer no send of their own: timed from the call
+    that opened it they climb with the index, and timed from each other they
+    are cadence. Those are two different numbers and neither belongs in the
+    same histogram as a round trip, so it wants its own verb naming which one
+    it is — 0075's fifth open question, still open.
 8. **Where the trace-id generator lives.** It was `internal` to
     `kestrel-http`, which would have meant a second copy here and a third in
     the next protocol module — two of them disagreeing about the format is the

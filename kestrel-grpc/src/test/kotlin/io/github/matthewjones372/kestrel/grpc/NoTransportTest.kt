@@ -53,15 +53,15 @@ class NoTransportTest {
     }
 
     @Test
-    fun `what is here is kestrel-core, grpc-api and what grpc-api itself brings`() {
+    fun `what is here is kestrel-core, grpc-api, grpc-stub and what they bring`() {
         val allowed = listOf(
             "kotlin-stdlib", "annotations-", "kestrel-core",
             // grpc-api's own, which arrive with it and are not a choice this
             // module made: the annotations and the guava/errorprone pair it
             // compiles against.
-            "grpc-api", "guava", "failureaccess", "jsr305", "error_prone_annotations",
+            "grpc-api", "grpc-stub", "guava", "failureaccess", "jsr305", "error_prone_annotations",
             "checker-qual", "j2objc-annotations", "listenablefuture", "grpc-context", "perfmark",
-            "jspecify",
+            "jspecify", "animal-sniffer-annotations",
         )
 
         val unexpected = entries.filterNot { entry -> allowed.any { entry.startsWith(it) } }

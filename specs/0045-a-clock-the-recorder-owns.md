@@ -53,7 +53,7 @@ unchanged because it still passes the offset it already computed.
 
 ## Stack
 
-- [ ] **`spec-0045-origin`** — the monotonic origin on `RunRecorder`, and
+- [x] **`spec-0045-origin`** — the monotonic origin on `RunRecorder`, and
       `kestrel-pelican` asking it instead of timing from construction.
       Done when: a transport constructed well before a run starts records its
       samples in the seconds they actually happened in, and the engine's

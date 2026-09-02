@@ -36,16 +36,17 @@ second it was lost is unrecoverable; and `plan` only knows what was asked.
 ```kotlin
 result.offered            // Offered(asked = 2_500/s, left = 1_910/s, over = 26.2s)
 result.heldScheduleFor    // 11s — the seconds before the first that lost ground
-result.timeline[12].behind.p99   // lateness of the departures that second
+result.latePerSecond[12].p99     // lateness of the departures that second
 ```
 
 - `Offered(asked: Rate, left: Rate, over: Duration)` — derived at read time from
   `plan.plannedUsers`, `plan.plannedWindow` and the timeline's count and span.
   Nothing new is stored: a number that can be derived is derived.
-- `Second.behind: Timing` — a third coarse table on the run's own seconds,
-  recorded from `schedulingDelay` beside the two clocks. `Timing.none` on a
-  step's second, which has no departures of its own.
-- `heldScheduleFor` — the span before the first second whose `behind.p99`
+- `RunResult.latePerSecond: List<Timing>` — one coarse table per second of the
+  run, recorded from `schedulingDelay` beside the seconds already kept. At run
+  level rather than on `Second`, which is also every *step's* timeline: a
+  departure is late once, for the user, not once per step that user makes.
+- `heldScheduleFor` — the span before the first second whose lateness p99
   exceeds `plan.plannedInterval`, which is `lostGround()`'s rule read second by
   second. The whole window when no second did.
 - The *Behind schedule* paragraph, on the page and in the job summary, says:
@@ -72,21 +73,21 @@ the timeline are already on the result and a stored copy could disagree.
 
 ## Stack
 
-- [ ] **`spec-0076-offered`** — `Offered` and `RunResult.offered` in core.
+- [x] **`spec-0076-offered`** — `Offered` and `RunResult.offered` in core.
       Done when: a result whose plan asks 2,500/s over 20 s and whose timeline
       counts 50,000 over 26 s reads `asked` 2,500, `left` 1,923, `over` 26 s,
       and a result with no plan or no timeline reads nothing rather than zero.
-- [ ] **`spec-0076-lateness`** — `Second.behind` recorded on the run's seconds,
+- [x] **`spec-0076-lateness`** — `Second.behind` recorded on the run's seconds,
       `heldScheduleFor`, both in the JSON.
       Done when: a recorder fed lateness only from second 11 on reads
       `heldScheduleFor` of 11 s, a step's second reads `Timing.none`, and
       `:benchmarks:ceiling` is unchanged.
-- [ ] **`spec-0076-page`** — the paragraph on both sinks, the lateness series
+- [x] **`spec-0076-page`** — the paragraph on both sinks, the lateness series
       on the timeline, the cookbook's "Did the generator keep up?" answered.
       Done when: the showcase report's behind paragraph names asked, left and
       held, the golden markdown carries the same line, and a run that kept
       schedule shows none of it.
-- [ ] **`spec-0076-rung`** — the void rung line and `CapacityPage` reading.
+- [x] **`spec-0076-rung`** — the void rung line and `CapacityPage` reading.
       Done when: a void rung names the rate that left and the service p99 at
       it, and a judged rung is unchanged.
 
@@ -99,9 +100,10 @@ the timeline are already on the result and a stored copy could disagree.
 
 ## Open questions
 
-1. **Where does per-second lateness live?** Recommend `Second.behind`, filled
-    only on the run's seconds, over a parallel `List<Timing>` on the result:
-    one type per second, and `steady` (0032) narrows it for free.
+1. **Where does per-second lateness live?** ~~Recommend `Second.behind`.~~
+    Settled the other way when built: a parallel `List<Timing>` on the result,
+    because `Second` is also every step's timeline and the field would mean
+    nothing in most instances of it. `steady` (0032) does not narrow it yet.
 2. **The rate held under a ramp.** `heldScheduleFor` is exact; the rate at
     that second needs the profile's rate at an offset, which nothing exposes.
     Recommend printing the time now and the rate when 0014's profile shapes

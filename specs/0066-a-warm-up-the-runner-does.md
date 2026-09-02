@@ -79,19 +79,19 @@ computes the window from it, so an excluded stage is a special case in each.
 
 ## Stack
 
-- [ ] **`spec-0066-value`** — `WarmUp`, `warmingUp`, `Plan.warmUp`,
+- [x] **`spec-0066-value`** — `WarmUp`, `warmingUp`, `Plan.warmUp`,
       `InjectionProfile.startRate`, and `Plan.unlike` comparing it.
       Done when: a plan says what it warms and for how long before a request
       leaves, and two plans differing only in it are not one population.
-- [ ] **`spec-0066-unrecorded`** — the engine running the warm-up into a sink
+- [x] **`spec-0066-unrecorded`** — the engine running the warm-up into a sink
       that records nothing, before the measured clock starts.
       Done when: a target that counts requests shows it was hit while warming,
       and `startedAt`, the counts, the timeline and `behind` hold nothing of it.
-- [ ] **`spec-0066-said`** — the warm-up on the page, in the markdown, and in
+- [x] **`spec-0066-said`** — the warm-up on the page, in the markdown, and in
       the lines 0064 prints.
       Done when: a warmed page says how long, at what rate, and that it was not
       counted; an unwarmed run says nothing at all.
-- [ ] **`spec-0066-rungs`** — `Search.warmingUp`, each rung warmed at its own
+- [x] **`spec-0066-rungs`** — `Search.warmingUp`, each rung warmed at its own
       rate, `worstCase` counting them, and the five hand-rolled throwaways gone.
       Done when: `worstCase` includes a warm-up per rung and per bisection, and
       `CapacitySearchTest` finds its rate with no throwaway of its own.

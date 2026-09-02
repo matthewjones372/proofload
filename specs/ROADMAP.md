@@ -66,6 +66,9 @@ built. Each row links the spec that argued for it.
 | [0062](0062-a-spread-measured-on-the-thing-compared.md) | `RegressionTest` judged over populations, and a page that says what a single-run interval does not bound |
 | [0063](0063-a-reason-with-a-type.md) | `Reason`: a failure is a value, and the module that made the request names it |
 | [0064](0064-how-long-this-will-take.md) | a run says its schedule and counts down; a search says its bound and narrows it |
+| [0045](0045-a-clock-the-recorder-owns.md) | one monotonic origin per run, owned by the recorder every path records through |
+| [0066](0066-a-warm-up-the-runner-does.md) | a warm-up declared on the run and on every rung, sent and recorded nowhere |
+| [0076](0076-a-run-that-fell-behind-is-still-a-measurement.md) | the load that left, the second the schedule went, and what a void rung still measured |
 
 ## Drafted, not built
 
@@ -76,8 +79,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | Spec | Why it is next |
 |---|---|
 | [0065](0065-the-injectors-own-limits.md) | the 10,000/s sweep blamed the target for 29,568 failures that were almost certainly the injector's own ports |
-| [0066](0066-a-warm-up-the-runner-does.md) | a cold JVM flipped `keptSchedule` from met to missed; the throwaway run is hand-written five times |
-| [0076](0076-a-run-that-fell-behind-is-still-a-measurement.md) | "behind schedule" is a diagnosis with no treatment; the service times are still the target at the load that left |
 | [0075](0075-a-step-that-records-more-than-one-sample.md) | a step is one sample, so a stream of a hundred messages is one number |
 | [0067](0067-think-time-that-is-not-a-constant.md) | a constant pause makes every user click again at the same instant |
 | [0068](0068-littles-law-on-every-run.md) | L = λW is the cheapest check there is, and the run holds all three numbers |
@@ -90,7 +91,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | [0060](0060-kafka-and-the-answer-on-another-topic.md) | the one asynchronous system everyone means, and a module that needs no broker to be right |
 | [0061](0061-what-the-kafka-path-costs.md) | what 0060's path costs, and what a socket proves that a mock does not |
 | [0044](0044-one-stylesheet-one-place-to-change-it.md) | a CSS change moves six page goldens |
-| [0045](0045-a-clock-the-recorder-owns.md) | `kestrel-pelican` times from construction, not from the run's start |
 | [0047](0047-a-precision-that-travels-with-the-number.md) | the report prints a precision it was handed, not one it read |
 
 Unbuilt tails of specs otherwise landed: `0022-failure`, `0023-exemplars` and

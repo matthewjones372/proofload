@@ -25,7 +25,7 @@ class GrpcStatusTest {
 
     private fun ranAgainst(status: Status): RunResult =
         InProcess(Orders.serving(failing = status)).use { server ->
-            val orders = grpc.target("orders").over(server.channel)
+            val orders = grpc.target("orders").over(server.managed)
             scenario("checkout") { exec(orders.call(Orders.placeOrder) { server.place("anvil") }) }
                 .at(10.perSecond, over = 200.milliseconds)
                 .run(Progress.silent)
@@ -93,7 +93,7 @@ class GrpcStatusTest {
     @Test
     fun `a marshaller that cannot serialise its own argument is the caller's bug, not the target's day`() {
         val result = InProcess().use { server ->
-            val orders = grpc.target("orders").over(server.channel)
+            val orders = grpc.target("orders").over(server.managed)
             scenario("checkout") {
                 exec(orders.call(Orders.placeOrder) { throw IllegalStateException("no marshaller") })
             }.at(10.perSecond, over = 200.milliseconds).run(Progress.silent)

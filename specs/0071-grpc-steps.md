@@ -83,7 +83,7 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 - [x] **`spec-0071-status`** — `GrpcStatus`, `DEADLINE_EXCEEDED` as `TimedOut`.
       Done when: `NOT_FOUND` reads back as `failedWith(GrpcStatus(NOT_FOUND))`,
       a refused connection as `GrpcStatus(UNAVAILABLE)`, a marshaller as `Threw`.
-- [ ] **`spec-0071-deadline`** — the interceptor's default deadline.
+- [x] **`spec-0071-deadline`** — the interceptor's default deadline.
       Done when: a call with no deadline of its own is cancelled at the
       channel's and recorded as `TimedOut`, and `withDeadlineAfter` survives.
 - [ ] **`spec-0071-traced`** — `traceparent` and `baggage` on outgoing metadata.
@@ -112,6 +112,14 @@ stub would put `kotlinx-coroutines-core-jvm` on every consumer's classpath.
 3. **Does a per-call deadline belong on the action?** `Context.withDeadlineAfter`
     would give `call(…).deadline(…)` but wants a `ScheduledExecutorService` this
     module would own. Recommend the channel default and `withDeadlineAfter`.
+    Built that way. The interceptor writes a deadline only where the
+    `CallOptions` have none, so a caller's own survives untouched rather than
+    being lengthened or shortened by a default they never asked for; a run that
+    declared no budget writes nothing at all.
+7. **What a caller builds a stub on.** `Grpc.channel` is the pool with this
+    module's interceptor around it, and `Grpc.managed` is the pool itself, for
+    shutting it down. A stub built on the raw pool gets no budget and no trace,
+    which is why the intercepted one is the one named `channel`.
 4. **Is `grpc-api` `api` or `compileOnly`?** Kotest is `compileOnly` in
     `kestrel-kotest` because a caller already has it, as one here has gRPC.
     Recommend `api`: the signatures are `MethodDescriptor` and `ManagedChannel`.

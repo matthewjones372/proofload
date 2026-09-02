@@ -26,7 +26,7 @@ class GrpcStepTest {
      */
     private fun ran(scenarioOf: (Grpc, InProcess) -> io.github.matthewjones372.kestrel.Scenario): RunResult =
         InProcess().use { server ->
-            val orders = grpc.target("orders.v1.Orders").over(server.channel)
+            val orders = grpc.target("orders.v1.Orders").over(server.managed)
             scenarioOf(orders, server).at(20.perSecond, over = 250.milliseconds).run(Progress.silent)
         }
 
@@ -45,7 +45,7 @@ class GrpcStepTest {
         val seen = java.util.concurrent.ConcurrentLinkedQueue<String>()
 
         InProcess().use { server ->
-            val orders = grpc.target("orders").over(server.channel)
+            val orders = grpc.target("orders").over(server.managed)
             val checkout = scenario("checkout") {
                 exec("place") { send(orders.call(Orders.placeOrder) { server.place("anvil") })?.let { seen += it } }
             }

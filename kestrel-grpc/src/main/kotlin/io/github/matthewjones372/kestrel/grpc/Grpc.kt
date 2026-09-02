@@ -1,6 +1,10 @@
 package io.github.matthewjones372.kestrel.grpc
 
+import io.grpc.CallOptions
 import io.grpc.Channel
+import io.grpc.ClientCall
+import io.grpc.ClientInterceptor
+import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.MethodDescriptor
@@ -37,7 +41,16 @@ class Grpc internal constructor(
      * Handed to the caller so their generated stub can be built on it: the
      * seam is under the stub, not around it.
      */
-    val channel: ManagedChannel by lazy { opened(this) }
+    val managed: ManagedChannel by lazy { opened(this) }
+
+    /**
+     * What a caller builds their generated stub on.
+     *
+     * The pool with this module's interceptor around it, so a call made
+     * through a stub gets the budget and the trace whether or not the caller
+     * remembered to ask. [managed] is the pool itself, for shutting it down.
+     */
+    val channel: Channel by lazy { ClientInterceptors.intercept(managed, Budget(deadline)) }
 
     /** Calls this service instead. */
     fun target(target: String): Grpc = Grpc(target, traced, deadline, opened)
@@ -102,5 +115,32 @@ private fun channelFor(grpc: Grpc): ManagedChannel {
 /** No target of its own: `grpc.target(...)` gives one, or `over(channel)` supplies a channel. */
 val grpc: Grpc = Grpc("")
 
-/** What a caller's stub is built on, for the many that take a plain [Channel]. */
-val Grpc.asChannel: Channel get() = channel
+/**
+ * Gives a call the run's deadline where it has none of its own.
+ *
+ * Only where there is none: gRPC keeps whichever deadline is on the
+ * `CallOptions`, so writing one over a caller's `withDeadlineAfter` would
+ * silently lengthen or shorten a budget they had stated. A call with no
+ * deadline at all waits as long as the target likes, which in a load test is a
+ * user who never departs again and a percentile that never arrives.
+ *
+ * An interceptor for this and not for the measuring: an interceptor that
+ * recorded would double-count the step it sits inside, and it runs on gRPC's
+ * own executor threads, where writing into a recorder sharded per user is a
+ * race the report reads as a missing request.
+ */
+private class Budget(private val within: Duration?) : ClientInterceptor {
+
+    override fun <Q, A> interceptCall(
+        method: io.grpc.MethodDescriptor<Q, A>,
+        options: CallOptions,
+        next: Channel,
+    ): ClientCall<Q, A> {
+        val budgeted = if (within == null || options.deadline != null) {
+            options
+        } else {
+            options.withDeadlineAfter(within.inWholeMilliseconds, java.util.concurrent.TimeUnit.MILLISECONDS)
+        }
+        return next.newCall(method, budgeted)
+    }
+}

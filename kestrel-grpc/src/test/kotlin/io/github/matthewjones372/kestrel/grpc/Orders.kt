@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel.grpc
 
+import io.grpc.CallOptions
+import io.grpc.Channel
 import io.grpc.ManagedChannel
 import io.grpc.MethodDescriptor
 import io.grpc.Server
@@ -38,13 +40,23 @@ internal object Orders {
         .setFullMethodName("orders.v1.Orders/WatchFills")
         .build()
 
-    /** Answers [answer] of whatever it is sent, or fails with [failing] where one is given. */
-    fun serving(answer: (String) -> String = { "filled $it" }, failing: Status? = null): ServerServiceDefinition =
+    /**
+     * Answers [answer] of whatever it is sent, fails with [failing] where one
+     * is given, or — where [silent] — never answers at all, which is what a
+     * deadline is for.
+     */
+    fun serving(
+        answer: (String) -> String = { "filled $it" },
+        failing: Status? = null,
+        silent: Boolean = false,
+    ): ServerServiceDefinition =
         ServerServiceDefinition.builder("orders.v1.Orders")
             .addMethod(
                 placeOrder,
                 ServerCalls.asyncUnaryCall { request: String, observer: StreamObserver<String> ->
-                    if (failing != null) {
+                    if (silent) {
+                        // Nothing: the call hangs until something cancels it.
+                    } else if (failing != null) {
                         observer.onError(StatusRuntimeException(failing))
                     } else {
                         observer.onNext(answer(request))
@@ -63,14 +75,23 @@ internal class InProcess(service: ServerServiceDefinition = Orders.serving()) : 
     private val server: Server =
         InProcessServerBuilder.forName(name).directExecutor().addService(service).build().start()
 
-    val channel: ManagedChannel = InProcessChannelBuilder.forName(name).directExecutor().build()
+    /** The pool. Tests build stubs on `Grpc.channel`, which is this with the interceptor around it. */
+    val managed: ManagedChannel = InProcessChannelBuilder.forName(name).directExecutor().build()
 
-    /** One unary call, as a caller's own generated blocking stub would make it. */
-    fun place(order: String): String =
-        ClientCalls.blockingUnaryCall(channel, Orders.placeOrder, io.grpc.CallOptions.DEFAULT, order)
+    /**
+     * One unary call, as a caller's own generated blocking stub would make it.
+     *
+     * [on] is what a stub is built on, which is the intercepted channel where
+     * one is given — the raw pool has no budget and no trace around it.
+     */
+    fun place(
+        order: String,
+        on: Channel = managed,
+        options: CallOptions = CallOptions.DEFAULT,
+    ): String = ClientCalls.blockingUnaryCall(on, Orders.placeOrder, options, order)
 
     override fun close() {
-        channel.shutdownNow()
+        managed.shutdownNow()
         server.shutdownNow()
     }
 }

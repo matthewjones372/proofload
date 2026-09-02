@@ -3,9 +3,11 @@ package io.github.matthewjones372.kestrel
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A run that ran out of descriptors was measuring itself. Saying so is the
@@ -68,5 +70,49 @@ class LimitsTest {
     fun `a set where nothing was sampled still says nothing was sampled`() {
         Runs.of(resultWith(Limits.none), resultWith(Limits.none)).merged.limits.openFiles
             .shouldBeInstanceOf<Headroom.Absent>()
+    }
+
+    @Test
+    fun `a rung whose injector ran out of room is void, not failed`() {
+        val ranOut = Rung(
+            rate = 100.perSecond,
+            result = resultWith(Limits(ports = Headroom.Measured(peak = 27_998, limit = 28_232))),
+        )
+
+        ranOut.outcome shouldBe Rung.Outcome.Void
+    }
+
+    @Test
+    fun `a rung with room to spare is judged on its goals as before`() {
+        val comfortable = Rung(
+            rate = 100.perSecond,
+            result = resultWith(Limits(ports = Headroom.Measured(peak = 100, limit = 28_232))),
+        )
+
+        comfortable.outcome shouldBe Rung.Outcome.Passed
+    }
+
+    @Test
+    fun `the rung line names which ceiling it hit, since the two are fixed differently`() {
+        val ranOut = Rung(
+            rate = 100.perSecond,
+            result = resultWith(Limits(openFiles = Headroom.Measured(peak = 61_120, limit = 65_536))),
+        )
+
+        val printed = printed { Progress.lines().climbed(ranOut, number = 1, atMost = 1.seconds) }
+
+        printed shouldContain "the injector ran out of open files"
+    }
+
+    private fun printed(block: () -> Unit): String {
+        val out = java.io.ByteArrayOutputStream()
+        val before = System.out
+        System.setOut(java.io.PrintStream(out))
+        try {
+            block()
+        } finally {
+            System.setOut(before)
+        }
+        return out.toString()
     }
 }

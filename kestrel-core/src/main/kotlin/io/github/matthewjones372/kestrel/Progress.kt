@@ -153,7 +153,7 @@ private class Lines(private val every: Duration) : Progress {
             // what the rung did measure: the load that left, and the target's
             // service time at it.
             Rung.Outcome.Void ->
-                "void — the generator lost ground, so this is about the machine: " +
+                "void — ${rung.whyVoid()}, so this is about the machine: " +
                     "${rung.offered.forReading()}/s left, service p99 ${rung.serviceAtThatLoad()}"
         }
         val left = if (rung.outcome == Rung.Outcome.Void) "" else ", at most $atMost left"
@@ -214,6 +214,20 @@ private fun Duration.clock(): String = "${inWholeMinutes.padded()}:${(inWholeSec
 private fun Long.padded(): String = toString().padStart(2, '0')
 
 /** A whole rate reads as one; a bisected one keeps the digit that makes it different from its neighbours. */
+
+/**
+ * Which of the two ways a rung learned nothing: the schedule was not kept, or
+ * this process ran out of its own room. Named because they are fixed
+ * differently — a lower rate against a bigger ulimit.
+ */
+private fun Rung.whyVoid(): String =
+    if (result.ranOutOfRoom()) {
+        val tight = result.limits.all
+            .firstOrNull { (_, headroom) -> headroom is Headroom.Measured && headroom.used >= TIGHT }
+        "the injector ran out of ${tight?.first ?: "room"}"
+    } else {
+        "the generator lost ground"
+    }
 
 /** What a void rung still measured: the target's service time at the load that left. */
 private fun Rung.serviceAtThatLoad(): Duration =

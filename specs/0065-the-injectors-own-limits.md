@@ -79,7 +79,7 @@ Values in core beside `Machine`, sampler in the engine beside `Hiccups.kt`, and
       and the markdown line.
       Done when: a result that ran out of room names which limit and what it
       reached, one that did not shows nothing, an unmeasured one says so.
-- [ ] **`spec-0065-void`** — a rung voided by the injector's own limits, and
+- [x] **`spec-0065-void`** — a rung voided by the injector's own limits, and
       the progress line saying which.
       Done when: a rung reporting `ranOutOfRoom()` is `Void`, the search stops
       there as for `lostGround()`, and the rung line names the limit.

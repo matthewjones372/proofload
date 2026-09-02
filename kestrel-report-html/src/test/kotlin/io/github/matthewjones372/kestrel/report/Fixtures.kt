@@ -3,17 +3,21 @@ package io.github.matthewjones372.kestrel.report
 import io.github.matthewjones372.kestrel.Capacity
 import io.github.matthewjones372.kestrel.Clock
 import io.github.matthewjones372.kestrel.Histogram
+import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.Rate
 import io.github.matthewjones372.kestrel.Reason
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Rung
+import io.github.matthewjones372.kestrel.Runs
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.Trend
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.failureRate
 import io.github.matthewjones372.kestrel.p99
@@ -307,6 +311,8 @@ internal object Fixtures {
 
     private const val SECONDS_HELD = 120.0
 
+    private const val POINT_SAMPLES = 500
+
     /** Every request at the same latency: a rung is judged on its percentiles, and a flat run has one. */
     private fun flatOutcome(samples: Long, took: Duration, reasons: Map<Reason, Long> = emptyMap()) =
         Outcome(flat(samples, took), flat(samples, took), reasons)
@@ -335,6 +341,62 @@ internal object Fixtures {
     private fun spread(samples: Int, low: Duration, middle: Duration, high: Duration): List<Duration> {
         val fifth = samples / FIFTHS
         return List(fifth * 2) { low } + List(fifth * 2) { middle } + List(samples - fifth * 4) { high }
+    }
+
+    /**
+     * Six points that crept, with the runner changing half way and one real
+     * jump at the end.
+     *
+     * A creep rather than a step, because that is the regression the pairwise
+     * comparison cannot see: at the spread these runs land at, four percent a
+     * point is inside every adjacent interval and the ends are well outside
+     * it. The jump is there so the page has one named step to show, and the
+     * machine change because a page that hid one would be claiming a series
+     * measured on two runners is one series.
+     */
+    val trend: Trend = Trend(
+        p99(pay),
+        listOf(
+            trendPoint("9f2c1ab", 100, cores = 4, day = 1),
+            trendPoint("41b7de0", 104, cores = 4, day = 2),
+            trendPoint("c30a95e", 109, cores = 4, day = 3),
+            trendPoint("7e2f118", 150, cores = 8, day = 4),
+            trendPoint("b8d4a06", 156, cores = 8, day = 5),
+            trendPoint("2a90ff3", 191, cores = 8, day = 6),
+        ),
+    )
+
+    private fun trendPoint(label: String, millis: Int, cores: Int, day: Int): Trend.Point {
+        val machine = Machine(cores = cores, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")
+        val started = Instant.parse("2026-08-26T09:00:00Z").plusSeconds(day * 86_400L)
+        return Trend.Point(
+            label,
+            Runs(
+                // Proportional, so a point at 190 ms scatters as widely as one
+                // at 100 ms does; a fixed few milliseconds either side would
+                // make every four-percent move resolvable and the page would
+                // be arguing against itself.
+                listOf(-8, -4, 0, 4, 8).mapIndexed { number, off ->
+                    val whole = timingOf(List(POINT_SAMPLES) { (millis + millis * off / 100).milliseconds })
+                    RunResult(
+                        startedAt = started.plusSeconds(number.toLong()),
+                        steps = mapOf(
+                            pay.name to StepStats(
+                                pay.name,
+                                Outcome(whole, whole),
+                                Outcome.none,
+                                whole,
+                                whole,
+                            ),
+                        ),
+                        behind = Timing.none,
+                        plan = Plan("paying", listOf(pay.name), constantRate(100.perSecond, over = 2.seconds)),
+                        machine = machine,
+                        probe = Probe(42.microseconds),
+                    )
+                },
+            ),
+        )
     }
 
     // `vararg Duration` is prohibited: `Duration` is a value class.

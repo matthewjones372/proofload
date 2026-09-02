@@ -284,6 +284,9 @@ internal val REPORT_CSS: String = """
     tr.rung.failed > td.outcome { color: var(--failed); }
     tr.rung.void > td.outcome { color: var(--muted); }
     td.goals { color: var(--muted); font-size: 0.85rem; }
+    .chart.series-over-points svg { height: 11rem; }
+    .band { stroke: var(--muted); stroke-width: 2; opacity: 0.5; }
+    tr.point.moved > th { font-weight: 700; }
     .empty { color: var(--muted); }
 """.trimIndent()
 

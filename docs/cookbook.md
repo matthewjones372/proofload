@@ -58,6 +58,7 @@ test that quietly asserts about a step nobody runs.
 [a baseline in GitHub Actions](#a-baseline-in-github-actions) ·
 [more than one run, and a verdict worth having](#more-than-one-run-and-a-verdict-worth-having) ·
 [more than one injector](#more-than-one-injector) ·
+[what a statistic has been doing](#what-a-statistic-has-been-doing) ·
 [publish the reports to GitHub Pages](#publish-the-reports-to-github-pages) ·
 [do not gate a merge on latency](#do-not-gate-a-merge-on-latency) ·
 [what the comparison will refuse to say](#what-the-comparison-will-refuse-to-say) ·
@@ -1339,6 +1340,46 @@ Shards.readAll(Path.of("run")).merged[pay].responseTime.p99
 The launcher is a shell loop and ssh; the refusals, the worst injector's
 lateness and what one host can and cannot stand in for are in
 [more-than-one-injector.md](more-than-one-injector.md).
+
+## What a statistic has been doing
+
+A comparison is pairwise, and pairwise is blind to a creep by construction. A
+p99 drifting two percent a point sits inside every interval — a runner's own
+run-to-run spread is about that — so `against` answers "cannot tell" forty
+times while the number moves a third.
+
+A trend is a directory of directories: one subdirectory per point, holding that
+point's runs. The subdirectory name is the label, because the baseline file
+carries nothing that says what it was a measurement *of*:
+
+```bash
+for i in $(seq 1 5); do ./gradlew :examples:soak; done   # into history/$GITHUB_SHA/
+```
+
+```kotlin
+import io.github.matthewjones372.kestrel.baseline.readTrend
+import io.github.matthewjones372.kestrel.report.writeHtmlReport
+
+val trend = readTrend(Path.of("history"), p99(pay), acceptable = 5.percent)
+
+trend.ends          // oldest point against newest — the one comparison a creep shows in
+trend.steps         // the adjacent pairs whose own runs support a move
+trend.comparisons   // how many were made, so the page can say so
+
+trend.writeHtmlReport(Path.of("build/reports/trend.html"))
+```
+
+Nothing is fitted, so there is no slope to quote, and nothing is drawn between
+points nobody ran. A change of machine is a break rather than a smoothed
+segment: `Runs` refuses to merge unlike machines for the same reason, and a
+pair that straddles one moved by an amount nothing here can separate from the
+runner.
+
+Read the count beside the steps. Thirty-nine adjacent comparisons at 95% expect
+about two named steps in a series that never moved, so a named step is a place
+to look rather than a finding. Widening every interval by the comparison count
+was the alternative, and it would make 95% here mean something other than 95%
+on the run report.
 
 ## Publish the reports to GitHub Pages
 

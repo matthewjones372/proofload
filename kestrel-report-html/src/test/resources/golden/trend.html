@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kestrel capacity — checkout</title>
+<title>Kestrel trend — pay p99</title>
 <style>
 :root {
   color-scheme: light dark;
@@ -288,119 +288,124 @@ tr.point.moved > th { font-weight: 700; }
   <header class="run">
     <div class="run-name">
       <span class="wordmark">Kestrel</span>
-      <h1>The rate it sustains</h1>
+      <h1>What this has been doing</h1>
     </div>
     <div class="run-meta">
-      <p class="when">checkout — 6 rungs, started <time datetime="2026-08-26T09:00:00Z">2026-08-26T09:00:00Z</time></p>
+      <p class="when">pay p99 over 6 points, 9f2c1ab to 2a90ff3</p>
       <button type="button" id="theme-toggle" class="theme-toggle" hidden aria-label="Switch theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="m17.7 17.7 1.4 1.4"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.3 17.7-1.4 1.4"></path><path d="m19.1 4.9-1.4 1.4"></path></svg></button>
     </div>
   </header>
-  <section class="operating" aria-label="The operating point">
-    <p class="operating-rate"><strong>3,500/s</strong> sustained</p>
-    <p class="operating-limit">Limited by <strong>pay p99 under 200ms</strong>, first missed at 4,000/s.</p>
+  <section class="operating" aria-label="Oldest against newest">
+    <p class="operating-rate"><strong>91.26% slower</strong> end to end (77.67% to 106.28%)</p>
+    <p class="caveat" role="status">measured on 8 cores, JDK 21.0.2+13, Linux aarch64 and the baseline on 4 cores, JDK 21.0.2+13, Linux aarch64, so this may be the runner</p>
   </section>
-  <figure class="chart curve">
-    <figcaption>response time p99 at each rate — up to 1.21 s at 5,000/s</figcaption>
-    <svg viewBox="0 0 640.0 140" role="img" aria-label="the rate curve">
-      <polyline class="curve-line" points="128.0,116.3 256.0,114.4 384.0,109.8 448.0,103.3 512.0,36.4 640.0,8.0"></polyline>
-      <circle class="dot passed" cx="128.0" cy="116.3" r="3.5">
-        <title>1,000/s — 40.1 ms, passed</title>
+  <figure class="chart series-over-points">
+    <figcaption>pay p99 at each point, with what each point's own runs support</figcaption>
+    <svg viewBox="0 0 640.0 140" role="img" aria-label="the series">
+      <polyline class="curve-line" points="0.0,61.4 128.0,59.2 256.0,56.3"></polyline>
+      <polyline class="curve-line" points="384.0,31.9 512.0,28.5 640.0,8.0"></polyline>
+      <line class="band" x1="0.0" y1="61.4" x2="0.0" y2="65.7"></line>
+      <circle class="dot" cx="0.0" cy="61.4" r="3.5">
+        <title>9f2c1ab — 108 ms</title>
       </circle>
-      <circle class="dot passed" cx="256.0" cy="114.4" r="3.5">
-        <title>2,000/s — 60.0 ms, passed</title>
+      <line class="band" x1="128.0" y1="59.2" x2="128.0" y2="63.4"></line>
+      <circle class="dot" cx="128.0" cy="59.2" r="3.5">
+        <title>41b7de0 — 112 ms</title>
       </circle>
-      <circle class="dot passed" cx="384.0" cy="109.8" r="3.5">
-        <title>3,000/s — 110 ms, passed</title>
+      <line class="band" x1="256.0" y1="56.3" x2="256.0" y2="60.9"></line>
+      <circle class="dot" cx="256.0" cy="56.3" r="3.5">
+        <title>c30a95e — 117 ms</title>
       </circle>
-      <circle class="dot passed" cx="448.0" cy="103.3" r="3.5">
-        <title>3,500/s — 180 ms, passed</title>
+      <line class="band" x1="384.0" y1="31.9" x2="384.0" y2="38.1"></line>
+      <circle class="dot" cx="384.0" cy="31.9" r="3.5">
+        <title>7e2f118 — 163 ms</title>
       </circle>
-      <circle class="dot failed" cx="512.0" cy="36.4" r="3.5">
-        <title>4,000/s — 902 ms, failed</title>
+      <line class="band" x1="512.0" y1="28.5" x2="512.0" y2="35.3"></line>
+      <circle class="dot" cx="512.0" cy="28.5" r="3.5">
+        <title>b8d4a06 — 169 ms</title>
       </circle>
-      <circle class="dot failed" cx="640.0" cy="8.0" r="3.5">
-        <title>5,000/s — 1.21 s, failed</title>
+      <line class="band" x1="640.0" y1="8.0" x2="640.0" y2="16.0"></line>
+      <circle class="dot" cx="640.0" cy="8.0" r="3.5">
+        <title>2a90ff3 — 207 ms</title>
       </circle>
-      <line class="chosen-mark" x1="448.0" y1="0" x2="448.0" y2="120.0"></line>
-      <text class="chosen-label" x="452.0" y="12">sustains 3,500/s</text>
-      <text class="tick-label curve-start" x="0" y="140">0</text>
-      <text class="tick-label curve-end" x="640.0" y="140">5,000/s</text>
+      <text class="tick-label series-start" x="0" y="140">9f2c1ab</text>
+      <text class="tick-label series-end" x="640.0" y="140">2a90ff3</text>
     </svg>
   </figure>
-  <section class="steps" aria-label="Every rung">
+  <section class="steps" aria-label="Every point">
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th scope="col">Rate</th>
-            <th scope="col" class="num">Offered</th>
-            <th scope="col">Verdict</th>
-            <th scope="col" class="num">Requests</th>
-            <th scope="col" class="num">Failed</th>
-            <th scope="col" class="num">p99</th>
-            <th scope="col">Goals</th>
+            <th scope="col">Point</th>
+            <th scope="col" class="num">Reading</th>
+            <th scope="col" class="num">What its runs support</th>
+            <th scope="col" class="num">Runs</th>
+            <th scope="col">Machine</th>
+            <th scope="col" class="num">Probe</th>
+            <th scope="col">Against the point before</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="rung passed" data-rate="1000.0">
-            <th scope="row">1,000/s</th>
-            <td class="num">999.999/s</td>
-            <td class="outcome">passed</td>
-            <td class="num">120,000</td>
-            <td class="num failed">0</td>
-            <td class="num">40.1 ms</td>
-            <td class="goals">every goal met</td>
+          <tr class="point" data-point="9f2c1ab">
+            <th scope="row">9f2c1ab</th>
+            <td class="num">108 ms</td>
+            <td class="num">100 ms to 108 ms</td>
+            <td class="num">5</td>
+            <td>4 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals"></td>
           </tr>
-          <tr class="rung passed" data-rate="2000.0">
-            <th scope="row">2,000/s</th>
-            <td class="num">2,000/s</td>
-            <td class="outcome">passed</td>
-            <td class="num">240,000</td>
-            <td class="num failed">0</td>
-            <td class="num">60.0 ms</td>
-            <td class="goals">every goal met</td>
+          <tr class="point" data-point="41b7de0">
+            <th scope="row">41b7de0</th>
+            <td class="num">112 ms</td>
+            <td class="num">104 ms to 112 ms</td>
+            <td class="num">5</td>
+            <td>4 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals">3.88% slower, which these runs cannot tell from no move</td>
           </tr>
-          <tr class="rung passed" data-rate="3000.0">
-            <th scope="row">3,000/s</th>
-            <td class="num">3,000/s</td>
-            <td class="outcome">passed</td>
-            <td class="num">360,000</td>
-            <td class="num failed">0</td>
-            <td class="num">110 ms</td>
-            <td class="goals">every goal met</td>
+          <tr class="point" data-point="c30a95e">
+            <th scope="row">c30a95e</th>
+            <td class="num">117 ms</td>
+            <td class="num">109 ms to 117 ms</td>
+            <td class="num">5</td>
+            <td>4 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals">4.67% slower, which these runs cannot tell from no move</td>
           </tr>
-          <tr class="rung passed chosen" data-rate="3500.0">
-            <th scope="row">3,500/s</th>
-            <td class="num">3,500/s</td>
-            <td class="outcome">passed <span class="chosen-tag">the operating point</span></td>
-            <td class="num">420,000</td>
-            <td class="num failed">0</td>
-            <td class="num">180 ms</td>
-            <td class="goals">every goal met</td>
+          <tr class="point" data-point="7e2f118">
+            <th scope="row">7e2f118</th>
+            <td class="num">163 ms</td>
+            <td class="num">151 ms to 163 ms</td>
+            <td class="num">5</td>
+            <td>8 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals">the runner changed here, so this pair is a break rather than a comparison</td>
           </tr>
-          <tr class="rung failed" data-rate="4000.0">
-            <th scope="row">4,000/s</th>
-            <td class="num">4,000/s</td>
-            <td class="outcome">failed</td>
-            <td class="num">480,000</td>
-            <td class="num failed">240</td>
-            <td class="num">902 ms</td>
-            <td class="goals">pay p99 under 200ms</td>
+          <tr class="point" data-point="b8d4a06">
+            <th scope="row">b8d4a06</th>
+            <td class="num">169 ms</td>
+            <td class="num">156 ms to 169 ms</td>
+            <td class="num">5</td>
+            <td>8 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals">3.87% slower, which these runs cannot tell from no move</td>
           </tr>
-          <tr class="rung failed" data-rate="5000.0">
-            <th scope="row">5,000/s</th>
-            <td class="num">5,000/s</td>
-            <td class="outcome">failed</td>
-            <td class="num">600,000</td>
-            <td class="num failed">9,000</td>
-            <td class="num">1.21 s</td>
-            <td class="goals">pay p99 under 200ms; the run failing under 1.0%</td>
+          <tr class="point moved" data-point="2a90ff3">
+            <th scope="row">2a90ff3</th>
+            <td class="num">207 ms</td>
+            <td class="num">192 ms to 207 ms</td>
+            <td class="num">5</td>
+            <td>8 cores, JDK 21.0.2+13, Linux aarch64</td>
+            <td class="num">42.0 µs</td>
+            <td class="goals"><strong>22.36% slower</strong> than b8d4a06</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
-  <p class="note">Each rung held its rate for the whole window and was judged on all of it. A search that declared a warm-up warmed every rung at that rung's own rate first, and none of the warming was recorded. Response time counts from the departure the profile promised, so it carries any backlog of the generator's own. A rung is void rather than failed when the injector's own lateness passed one whole departure interval at p99 — a departure behind at the tail — because the load it asked for was never offered, so nothing there is the target's. Void rungs are still drawn: the rate the generator itself ran out at is worth seeing. Offered is what left, against the rate the rung asked for.</p>
+  <p class="note">Each point is a set of runs, and its band is ten thousand resamples of those runs — what that point on its own can claim, not the range the next one will land in. The headline is the oldest point against the newest, which is the one comparison a slow creep shows in at all: a drift small enough to sit inside every adjacent interval still moves the ends. <strong>4</strong> adjacent comparisons were made at 95%, so a series that never moved would be expected to name about <strong>0.2</strong> of them anyway; the 1 named here is a place to look, not findings. No line is drawn between points nobody ran, and none across a change of machine: a series that changed runners is broken there rather than smoothed over. Nothing is fitted, so there is no slope here to quote.</p>
 </main>
 <script>
 (function () {

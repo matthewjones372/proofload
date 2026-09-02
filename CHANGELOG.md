@@ -193,6 +193,16 @@ enough to list, and long enough to matter.
   than one sample for the batch; a body that reports none is recorded exactly
   as before. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **Trends across baselines.** `readTrend(history, statistic)` reads a
+  directory of directories — one subdirectory per point, holding that point's
+  runs, the subdirectory name being the only label a baseline file can carry —
+  and `Trend` holds the comparisons themselves rather than a line through them:
+  `ends` is oldest against newest, `steps` the adjacent pairs whose own runs
+  support a move, `comparisons` how many were made. `Runs.band(statistic)` is a
+  point's own reading resampled, in that statistic's units. `Trend.writeHtmlReport`
+  draws the series, with the note saying how many comparisons were made at 95%
+  and how many a series that never moved would name anyway. Nothing is fitted,
+  nothing is smoothed, and a change of machine is a break rather than a segment.
 - **More than one injector.** `simulation.sharded(index, of, startingAt)`
   splits a run across JVMs: injector *k* of *N* sends the users whose number is
   `k` modulo `N`, so the set of them offers exactly the departures one JVM

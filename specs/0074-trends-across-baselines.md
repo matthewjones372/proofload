@@ -90,7 +90,7 @@ and buckets, and nothing that names what was built.
       Done when: twenty subdirectories read back as twenty labelled points in
       measurement order, one whose runs disagree on plan or machine is refused
       naming it, and an empty one is named rather than skipped.
-- [ ] **`spec-0074-page`** — the page and what it may claim.
+- [x] **`spec-0074-page`** — the page and what it may claim.
       Done when: the golden holds a band and a runs-machine-probe row per point,
       no segment or named step crosses a machine change, and the note quotes how
       many comparisons at 95% and how many are expected to be the machine.

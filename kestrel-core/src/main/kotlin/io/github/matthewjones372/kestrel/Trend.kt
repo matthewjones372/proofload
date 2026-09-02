@@ -87,6 +87,22 @@ data class Trend(
     /** How many comparisons were made — the adjacent pairs, less the machine changes. */
     val comparisons: Int get() = pairs.size
 
+    /**
+     * Consecutive points one machine measured, oldest first.
+     *
+     * What a line may be drawn through. A series that changed runners is broken
+     * here rather than smoothed across: `Runs` refuses to merge unlike machines
+     * for the same reason, and a page per machine would hide that the series
+     * changed runners at all.
+     */
+    val segments: List<List<Point>> by lazy {
+        points.fold(mutableListOf<MutableList<Point>>()) { built, point ->
+            val open = built.lastOrNull()
+            if (open != null && open.last().machine == point.machine) open += point else built += mutableListOf(point)
+            built
+        }
+    }
+
     /** The pairs whose own runs support a move, which is where to go and look. */
     val steps: List<Step> by lazy { pairs.filter { it.difference.verdict !is Tell.CannotTell } }
 

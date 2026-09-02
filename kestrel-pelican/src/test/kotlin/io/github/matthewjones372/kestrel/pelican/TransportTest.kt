@@ -4,13 +4,16 @@ import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.pelican.ClientRequest
 import io.github.matthewjones372.pelican.Method
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 class TransportTest {
 
@@ -106,5 +109,22 @@ class TransportTest {
 
         thrown.isFailure shouldBe true
         recorder.freeze()["GET /orders"].failed.count shouldBe 1L
+    }
+
+    @Test
+    fun `a transport built long before the run records in the second the request happened`() {
+        // The bug this closes: a transport that timed from its own construction
+        // put every sample in second 0 of a run that started a minute later.
+        val recorder = RunRecorder(started, origin = System.nanoTime() - 60.seconds.inWholeNanoseconds)
+        val transport = kestrelTransport(recorder = recorder, templates = listOf("/orders/{id}"))
+
+        transport.send(ClientRequest(Method.GET, url("/orders/1"))).toCompletableFuture().join()
+
+        val timeline = recorder.freeze().timeline
+        withClue("a request made 60s into the run belongs in second 60, not second 0") {
+            timeline.size shouldBeGreaterThanOrEqualTo 61
+            timeline[0].count shouldBe 0L
+            timeline.last().count shouldBe 1L
+        }
     }
 }

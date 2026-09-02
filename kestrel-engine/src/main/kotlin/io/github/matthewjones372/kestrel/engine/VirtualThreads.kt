@@ -61,7 +61,10 @@ private fun Simulation.send(progress: Progress): RunResult {
     progress.starting(plan())
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
-    val runStart = System.nanoTime()
+    // The recorder's origin rather than a second reading of the clock: a
+    // transport that asks the recorder where it is in the run must land on the
+    // same timeline as the steps the engine times itself.
+    val runStart = System.nanoTime() - recorders.sinceStart().inWholeNanoseconds
     val users = Departures()
     val departed = Departed()
     val watching = watchProgress(progress, runStart) { ended ->

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val started = Instant.parse("2026-08-26T09:00:00Z")
 
@@ -151,4 +152,36 @@ class RunRecorderTest {
                 repeat(bucket.count.toInt()) { record(bucket.upperBound) }
             }
         }.timing()
+
+    @Test
+    fun `a recorder answers offsets from its own origin`() {
+        // A run that began two seconds ago, stated rather than waited for.
+        val recorder = RunRecorder(started, origin = System.nanoTime() - 2.seconds.inWholeNanoseconds)
+
+        recorder.sinceStart() shouldBeGreaterThanOrEqualTo 2.seconds
+    }
+
+    @Test
+    fun `a shard measures from the origin of the recorder that spawned it`() {
+        val root = RunRecorder(started, origin = 0L)
+
+        // A shard made later must not start its own clock: two zero points
+        // would pool two timelines that disagree about when second 0 was.
+        val shard = root.shard()
+
+        (shard.sinceStart() - root.sinceStart()).absoluteValue shouldBeLessThan 50.milliseconds
+    }
+
+    @Test
+    fun `a shard records into the same seconds as the recorder it came from`() {
+        val root = RunRecorder(started, origin = 0L)
+        val shard = root.shard()
+        root.pay(at = 1_500L)
+        shard.pay(at = 1_500L)
+
+        root.merge(shard)
+
+        // Both landed in second 1, so the merged timeline has two there.
+        root.freeze().timeline[1].count shouldBe 2L
+    }
 }

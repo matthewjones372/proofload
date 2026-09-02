@@ -43,15 +43,23 @@ internal fun interface StepSink {
  * the claim is uncontended in the common case, and it stays correct rather than
  * merely lucky if one ever does.
  */
-internal class Recorders(private val startedAt: Instant, shards: Int = defaultShards) : StepSink {
+internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : StepSink {
+
+    // One origin for the run, spawned rather than read again per shard: shards
+    // are merged into one timeline at the end, and three recorders that each
+    // read the clock are three zero points that pool into a smear.
+    private val first = RunRecorder(startedAt)
 
     // The mutable accumulator this whole class is about: the alternative is an
     // allocation per request on the path the report calls the target's latency.
     private val slots: AtomicReferenceArray<RunRecorder?> =
         AtomicReferenceArray<RunRecorder?>(shards)
-            .also { array -> repeat(shards) { index -> array.set(index, RunRecorder(startedAt)) } }
+            .also { array -> repeat(shards) { index -> array.set(index, first.shard()) } }
 
-    private val completions = RunRecorder(startedAt)
+    private val completions = first.shard()
+
+    /** How long the run has been going, for a caller that was told no offset. */
+    fun sinceStart(): Duration = first.sinceStart()
 
     override fun record(
         step: String,
@@ -77,7 +85,7 @@ internal class Recorders(private val startedAt: Instant, shards: Int = defaultSh
     fun outstanding(step: String, outstanding: Outstanding) = completions.outstanding(step, outstanding)
 
     fun freeze(plan: Plan, arrivals: Arrivals): RunResult {
-        val merged = RunRecorder(startedAt)
+        val merged = first.shard()
         repeat(slots.length()) { index ->
             merged.merge(checkNotNull(slots.get(index)) { "a shard was still in use when the run ended" })
         }

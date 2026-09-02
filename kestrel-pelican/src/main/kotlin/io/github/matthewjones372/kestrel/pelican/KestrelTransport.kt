@@ -41,11 +41,6 @@ private class KestrelTransport(
     private val timeout: Duration,
 ) : ClientTransport {
 
-    // A transport is built for a run, so this is the run's start: the second an
-    // exchange is counted in is measured from here. Read once rather than per
-    // request, and monotonic, so no wall clock lands on the timed path.
-    private val runStart = System.nanoTime()
-
     // One client for the run. A client per user measures TLS handshakes and
     // connection setup, which is a different experiment from the one anyone
     // means to run.
@@ -56,10 +51,14 @@ private class KestrelTransport(
     override fun send(request: ClientRequest): CompletionStage<ClientResponse> {
         val step = "${request.method} ${nameOf(request.url)}"
         val startedAt = System.nanoTime()
+        // Asked of the recorder rather than kept here: a transport does not
+        // know when the run began, and one built before it would otherwise
+        // count every second from its own construction.
+        val at = recorder?.sinceStart() ?: kotlin.time.Duration.ZERO
 
         return client.sendAsync(request.asHttpRequest(timeout), HttpResponse.BodyHandlers.ofByteArray())
             .handle { response, failure ->
-                record(step, startedAt, failure?.let(::reasonFor) ?: statusFailure(response.statusCode()))
+                record(step, startedAt, at, failure?.let(::reasonFor) ?: statusFailure(response.statusCode()))
                 // The exchange's own outcome is Pelican's to interpret: an
                 // endpoint may well declare the 404 this recorded as a failure.
                 if (failure != null) throw failure
@@ -67,7 +66,7 @@ private class KestrelTransport(
             }
     }
 
-    private fun record(step: String, startedAt: Long, failure: Reason?) {
+    private fun record(step: String, startedAt: Long, at: kotlin.time.Duration, failure: Reason?) {
         // No departure to be late against here: this transport is called from
         // inside a step the engine already timed, so the backlog is that step's
         // to report and zero is the honest number rather than a guess.
@@ -76,7 +75,7 @@ private class KestrelTransport(
             failure = failure,
             serviceTime = (System.nanoTime() - startedAt).nanoseconds,
             schedulingDelay = kotlin.time.Duration.ZERO,
-            at = (startedAt - runStart).nanoseconds,
+            at = at,
         )
     }
 

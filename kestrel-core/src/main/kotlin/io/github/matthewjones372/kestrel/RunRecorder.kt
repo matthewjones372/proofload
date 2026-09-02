@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel
 
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Where an engine writes what it saw. Deliberately not thread-safe: each
@@ -9,10 +10,39 @@ import kotlin.time.Duration
  * shared structure puts a lock on the path being timed and the tool starts
  * measuring itself.
  */
-class RunRecorder(private val startedAt: Instant) {
+class RunRecorder(private val startedAt: Instant, private val origin: Long) {
+
+    /**
+     * A recorder for a run beginning now. The origin is read here rather than
+     * asked of a caller, because the object that holds a run's measurements is
+     * the one place a run's zero point can live without being agreed.
+     */
+    constructor(startedAt: Instant) : this(startedAt, System.nanoTime())
 
     private val steps = LinkedHashMap<String, StepRecorder>()
     private val behind = Histogram()
+
+    /**
+     * How long this run has been going, on the monotonic clock this recorder
+     * was made with.
+     *
+     * For a caller that records without having been told the offset — a
+     * transport called from inside a step, which knows when its own request
+     * left and nothing about when the run did. A caller that already computed
+     * the offset passes it instead, and the engine does.
+     */
+    fun sinceStart(): Duration = (System.nanoTime() - origin).nanoseconds
+
+    /**
+     * Another recorder for this same run: same start, same origin, its own
+     * histograms.
+     *
+     * Shards are merged at the end, so they have to agree about when second
+     * zero was. Spawned from the recorder rather than each reading the clock,
+     * the agreement is by construction rather than by how close together they
+     * happened to be built.
+     */
+    fun shard(): RunRecorder = RunRecorder(startedAt, origin)
 
     /**
      * @param schedulingDelay how late the request left against the departure the

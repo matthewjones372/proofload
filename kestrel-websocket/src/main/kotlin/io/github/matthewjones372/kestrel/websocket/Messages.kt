@@ -63,11 +63,15 @@ data object Disconnected : Reason {
 /**
  * [count] answers to sends this connection has already made.
  *
- * The sample is the wait alone: it starts when the step is reached — every send
- * it waits for left in a step of its own before that — and ends when the
- * [count]-th answer arrives. It is not a message's own latency, which is
- * measured from the send that provoked it and which one sample cannot carry
- * [count] of.
+ * One sample per answer, each measured from the send it answers rather than
+ * from the step: `awaiting(count = 100)` is a hundred samples under this name,
+ * so the distribution of the messages is what the report draws. The users that
+ * reached the step are still counted once.
+ *
+ * The samples are placed on the timeline at the moment the wait finished
+ * rather than at each message's own second — the client's reader thread counts
+ * from its own connection, not from the run — so a long wait reports its
+ * durations exactly and their placement coarsely.
  *
  * An answer is paired with the send at the head of the queue, which on one
  * socket is the order they left in. A message arriving with nothing outstanding
@@ -85,7 +89,12 @@ private fun StepScope.awaitOn(count: Long, within: Duration) {
     // unmounts while it blocks: a target that goes quiet costs a carrier
     // nothing, and is a failure rather than a user parked for the rest of the
     // run.
-    open.inbound.awaitMatched(count, within)?.let { fail(it) }
+    val why = open.inbound.awaitMatched(count, within)
+    // Reported whether the wait succeeded or not: the answers that did arrive
+    // were measured, and a step that timed out after ninety of a hundred has
+    // ninety real latencies to show beside the failure.
+    open.inbound.takeAnswered().forEach { sample(it) }
+    why?.let { fail(it) }
 }
 
 /** The JDK's two writes, chosen by which frame this is. */
@@ -119,6 +128,12 @@ internal class Inbound : WebSocket.Listener {
 
     private val paired = AtomicLong()
 
+    // Each answer's own latency, measured from the send it answers, kept until
+    // the waiting step reports it. Computed here already — `received` had been
+    // throwing the result away — and drained on the user's own thread, so the
+    // client's reader thread never touches a recorder.
+    private val answered = ConcurrentLinkedQueue<Duration>()
+
     // What a step has already waited for, touched by that user's thread alone:
     // two `awaiting` steps in one scenario wait for their own answers rather
     // than both being satisfied by the first one's.
@@ -149,6 +164,12 @@ internal class Inbound : WebSocket.Listener {
         waiting.remove(id)
         pending.observed(id, elapsed())
     }
+
+    /**
+     * The latencies of the answers that have arrived and not yet been
+     * reported, oldest first, taken out as they are read.
+     */
+    fun takeAnswered(): List<Duration> = generateSequence { answered.poll() }.toList()
 
     fun outstanding(window: Duration): Outstanding = pending.close(elapsed(), window)
 
@@ -201,7 +222,7 @@ internal class Inbound : WebSocket.Listener {
             unasked.incrementAndGet()
             return
         }
-        pending.observed(id, at)
+        pending.observed(id, at)?.let(answered::add)
         paired.incrementAndGet()
         signal()
     }

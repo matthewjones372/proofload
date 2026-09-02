@@ -676,9 +676,11 @@ val streaming = scenario("streaming") {
 ```
 
 `send` is timed for the write alone and waits for nothing — the sample ends when
-the client reports the frame written. `awaiting` is timed for the wait alone,
-from the step being reached to the last of `count` answers arriving. Keeping
-them apart is what stops a slow target being reported as a slow write.
+the client reports the frame written. `awaiting` records **one sample per
+answer**, each measured from the send it answers, so `awaiting(count = 100)` is
+a hundred samples under one name and the report draws the messages' own
+distribution. Keeping the two steps apart is what stops a slow target being
+reported as a slow write.
 
 Answers pair with sends in the order the sends left, which is the order one
 socket delivers them in. A message that arrives with nothing outstanding is
@@ -694,9 +696,11 @@ The wait is bounded and is signalled by the close as well as by an arrival, so a
 far end that hangs up fails the step at once instead of parking a user for the
 rest of the run.
 
-One caveat worth knowing: `awaiting` records **one** sample for the whole batch
-rather than one per message, because a step can produce only one sample today.
-For a per-message distribution, wait for one at a time.
+One caveat worth knowing: the samples are placed on the timeline at the moment
+the wait finished rather than each at the second its message arrived — the
+client's reader thread counts from its own connection, not from the run. The
+durations are each message's own; only where they sit along the run is coarse.
+A wait that times out reports the answers that did arrive, and then fails.
 
 One socket per user, which is the opposite of the shared HTTP client and for the
 opposite reason: a stream test is about how many connections a target holds, so

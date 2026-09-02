@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val connect = step("connect")
@@ -101,5 +102,48 @@ class AwaitingTest {
         }
 
         watching.stepNames shouldBe listOf("connect", "tick")
+    }
+
+    @Test
+    fun `a hundred answers are a hundred samples, each its own message's latency`() {
+        accepting(answering = true) { server ->
+            val ids = AtomicLong()
+            val took = mutableListOf<Duration>()
+            val watching = scenario("watching") {
+                open(connect, ws.at(server.url))
+                repeat(ANSWERS) { send(publish, ws.text("more"), keyedBy = { ids.incrementAndGet() }) }
+                awaiting(tick, count = ANSWERS, within = patience)
+                close(goodbye)
+            }
+
+            watching.walk(samples = { each, _, _ -> took += each }).shouldBeInstanceOf<StepResult.Ok>()
+
+            withClue("one per answer, not one for the batch") { took.size shouldBe ANSWERS }
+            withClue("each measured from the send it answers, so none is the whole wait") {
+                took.all { it < patience } shouldBe true
+            }
+        }
+    }
+
+    @Test
+    fun `a wait that times out reports the answers that did arrive, and the failure`() {
+        accepting(answering = true) { server ->
+            val ids = AtomicLong()
+            val took = mutableListOf<Duration>()
+            // One send and one answer, but the step waits for two: the wait
+            // times out with one real latency already measured.
+            val watching = scenario("watching") {
+                open(connect, ws.at(server.url))
+                send(publish, ws.text("more"), keyedBy = { ids.incrementAndGet() })
+                awaiting(tick, count = 2, within = 1.seconds)
+            }
+
+            val result = watching.walk(samples = { each, _, _ -> took += each })
+
+            result.shouldBeInstanceOf<StepResult.Failed>().reason shouldBe TimedOut
+            withClue("the one that arrived was measured rather than thrown away with the failure") {
+                took.size shouldBe 1
+            }
+        }
     }
 }

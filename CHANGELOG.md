@@ -186,6 +186,13 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A step body can record more than one sample.** `Action.run` takes the
+  `StepScope` the engine builds rather than a `Session`, and `StepScope.sample`
+  reports an answer as the body observes it. A WebSocket `awaiting(count)` is
+  now one sample per message, each measured from the send it answers, rather
+  than one sample for the batch; a body that reports none is recorded exactly
+  as before. Anything implementing `Action` by hand changes shape, and
+  `run(session)` stays for callers that have a session and want the outcome.
 - **The baseline format is version 5.** It carries the warm-up a run
   declared, because a comparison refuses to pool a warmed run with a cold one
   and a file that did not carry it would refuse every warmed run against every
@@ -223,10 +230,6 @@ commit this section was written on, not planned or assumed.
 - **No closed model.** Every profile states departure times up front. There is
   no "hold 50 concurrent users", which is the shape a queueing model wants and
   the shape some teams' targets are specified in.
-- **A WebSocket wait is one sample, not one per message.** `awaiting(count)`
-  records a single sample for the whole batch, because a step can produce only
-  one sample today. A per-message distribution is `specs/0075`, and the same
-  seam blocks retries and a trace that prints the exchange.
 - **No Kafka, and no queue or database steps.** HTTP, WebSocket handshakes and
   Pelican endpoints are the protocols. `emit` is the seam for anything else, and
   the caller writes the client.

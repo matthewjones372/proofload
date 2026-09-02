@@ -82,7 +82,7 @@ stream. The cell (`:314`) and the arm's users off its most-reached step
 - [x] **`spec-0075-sample`** — `sample` through the sink as the body observes
       it, `reached` on the first, the implicit sample only when none was. Done
       when: three samples are one row of count 3, reached 1, each in its second.
-- [ ] **`spec-0075-awaiting`** — `awaiting` reporting a sample per message from
+- [x] **`spec-0075-awaiting`** — `awaiting` reporting a sample per message from
       the send it answers, the caveat gone from its KDoc and the cookbook. Done
       when: `awaiting(count = 100)` is 100 samples under one name and a
       disconnect part-way reports what arrived plus one failure.

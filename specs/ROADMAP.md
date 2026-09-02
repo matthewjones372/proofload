@@ -44,9 +44,9 @@ built. Each row links the spec that argued for it.
 | [0043](0043-void-is-not-the-same-question-as-behind.md) | a rung judged on the schedule it kept, not on the target's slowness |
 | [0039](0039-what-this-machine-can-resolve.md) | hiccups, the floor, and a comparison that consults it |
 | [0022](0022-a-token-that-stays-fresh.md) | `refreshing`, a credential fetched off the measured path |
-| [0023](0023-a-number-you-can-follow.md) | `traced()`: a `traceparent` and a synthetic-traffic `baggage` entry on every request |
+| [0023](0023-a-number-you-can-follow.md) | `traced()`: a `traceparent` on every request, and an exemplar beside the percentile |
 | [0024](0024-think-time-and-closed-model.md) | `pause`, a step that records nothing and is not latency |
-| [0026](0026-checks-and-retries.md) | `checking`, a body check that fails the step under its own name |
+| [0026](0026-checks-and-retries.md) | `checking`, a body check that fails under its own name, and `retrying` whose latency is the last attempt |
 | [0027](0027-the-docs-a-newcomer-needs.md) | `docs/modules.md` with a test behind every row, and the cookbook |
 | [0028](0028-a-run-that-does-not-book-a-million-tasks.md) | a booking window, so a run books departures a window at a time |
 | [0029](0029-cutting-0-1-0.md) | `publishToMavenLocal` plus a smoke project that resolves the published coordinates, and the changelog |
@@ -61,14 +61,15 @@ built. Each row links the spec that argued for it.
 | [0055](0055-a-session-that-survives-a-redirect.md) | a per-user cookie jar, and `following(max)` walked in the step |
 | [0056](0056-a-ceiling-measured-over-a-socket.md) | the HTTP ceiling measured over a loopback socket, on the page as a lower bound |
 | [0057](0057-a-run-you-can-watch.md) | `Progress`: a line every five seconds, silent under a test framework, a countdown and a bound |
-| [0058](0058-what-was-actually-sent.md) | `trace`, one user walked with what each step did printed |
-| [0059](0059-an-answer-that-streams.md) | `kestrel-websocket`: `open`, `send`, `awaiting`, `close`, a connection per user |
+| [0058](0058-what-was-actually-sent.md) | `trace`, one user walked with the URL, headers, body, status and captures printed |
+| [0059](0059-an-answer-that-streams.md) | `kestrel-websocket`: `open`, `send`, `awaiting` a sample per message, `close`, a connection per user |
 | [0062](0062-a-spread-measured-on-the-thing-compared.md) | `RegressionTest` judged over populations, and a page that says what a single-run interval does not bound |
 | [0063](0063-a-reason-with-a-type.md) | `Reason`: a failure is a value, and the module that made the request names it |
 | [0064](0064-how-long-this-will-take.md) | a run says its schedule and counts down; a search says its bound and narrows it |
 | [0045](0045-a-clock-the-recorder-owns.md) | one monotonic origin per run, owned by the recorder every path records through |
 | [0066](0066-a-warm-up-the-runner-does.md) | a warm-up declared on the run and on every rung, sent and recorded nowhere |
 | [0076](0076-a-run-that-fell-behind-is-still-a-measurement.md) | the load that left, the second the schedule went, and what a void rung still measured |
+| [0075](0075-a-step-that-records-more-than-one-sample.md) | the engine builds the scope a step reports through, and a body can record every answer it saw |
 
 ## Drafted, not built
 
@@ -79,7 +80,6 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | Spec | Why it is next |
 |---|---|
 | [0065](0065-the-injectors-own-limits.md) | the 10,000/s sweep blamed the target for 29,568 failures that were almost certainly the injector's own ports |
-| [0075](0075-a-step-that-records-more-than-one-sample.md) | a step is one sample, so a stream of a hundred messages is one number |
 | [0067](0067-think-time-that-is-not-a-constant.md) | a constant pause makes every user click again at the same instant |
 | [0068](0068-littles-law-on-every-run.md) | L = λW is the cheapest check there is, and the run holds all three numbers |
 | [0069](0069-a-transport-the-http-module-can-swap.md) | 2,500 a second on four cores is the JDK client's ceiling, not the tool's |
@@ -93,10 +93,11 @@ tool still lacks here; their interleaving is a proposal, not a decision.
 | [0044](0044-one-stylesheet-one-place-to-change-it.md) | a CSS change moves six page goldens |
 | [0047](0047-a-precision-that-travels-with-the-number.md) | the report prints a precision it was handed, not one it read |
 
-Unbuilt tails of specs otherwise landed: `0022-failure`, `0023-exemplars` and
-`-report`, `0024-closed`, `0026-attempts` and `-retrying`, `0029-tag`,
-`0055`'s attempts count (blocked on 0026), `0057-counts`, `0058-exchange`,
-`0059-report`.
+Unbuilt tails of specs otherwise landed: `0024-closed`, which wants a revision
+before code — every schedule number a run now reports assumes an open model —
+`0029-tag`, which is the release itself, and `0075`'s page entry, which cannot
+be built as written because a looped step and a streaming one read alike in a
+frozen result.
 
 ## Known and unwritten
 

@@ -16,7 +16,10 @@ import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepResult
 import io.github.matthewjones372.kestrel.Threw
+import io.github.matthewjones372.kestrel.WarmUp
+import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.plan
+import io.github.matthewjones372.kestrel.startRate
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -59,6 +62,10 @@ fun Simulation.run(progress: Progress = Progress.lines()): RunResult = VirtualTh
  */
 private fun Simulation.send(progress: Progress): RunResult {
     progress.starting(plan())
+    // Before the recorder exists, so the run's own startedAt, counts, timeline
+    // and lateness cannot hold any of it: excluded means never recorded, not
+    // recorded and filtered out afterwards.
+    warmUp?.let { warming -> warmingUpRun(warming).departAll(unrecorded, Departures(), Departed(), null, null) }
     val recorders = Recorders(Instant.now())
     val watch = watchForHiccups()
     // The recorder's origin rather than a second reading of the clock: a
@@ -81,6 +88,30 @@ private fun Simulation.send(progress: Progress): RunResult {
     val arrivals = ArrivalRecorder()
     val drain = completing?.let { Drain(it, recorders, runStart, closesAt = over + it.drainingFor) }
     drain?.start()
+    departAll(recorders, users, departed, arrivals, drain, runStart)
+    drain?.close()
+    watching.stop()
+    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop())
+}
+
+/**
+ * Books every arm's departures and waits for the users they start.
+ *
+ * Shared by the measured run and the warm-up before it, so the load a warm-up
+ * offers is the load a run offers and not a second implementation of it. What
+ * differs is where the samples go: a warm-up hands in a sink that drops them.
+ *
+ * [runStart] defaults to now, which is what a warm-up wants — it is its own
+ * clock's zero — while the measured run passes the origin its recorder owns.
+ */
+private fun Simulation.departAll(
+    sink: StepSink,
+    users: Departures,
+    departed: Departed,
+    arrivals: ArrivalRecorder?,
+    drain: Drain?,
+    runStart: Long = System.nanoTime(),
+) {
     // One platform thread. Its only job is to start virtual threads at the
     // offsets the profile named; a step never runs on it, so a slow target
     // cannot push a departure back.
@@ -96,7 +127,7 @@ private fun Simulation.send(progress: Progress): RunResult {
                 runStart,
                 allBooked = users::allScheduled,
             ) { departure ->
-                arrivals.record(departure.offset)
+                arrivals?.record(departure.offset)
                 users.starting()
                 scheduler.schedule(
                     {
@@ -104,7 +135,7 @@ private fun Simulation.send(progress: Progress): RunResult {
                         // an arm's data is then reproducible whatever rate the
                         // arms beside it are being sent at.
                         departure.arm.scenario.depart(
-                            recorders,
+                            sink,
                             runStart,
                             departure.offset,
                             users,
@@ -126,13 +157,23 @@ private fun Simulation.send(progress: Progress): RunResult {
     } finally {
         scheduler.shutdownNow()
     }
-    drain?.close()
-    watching.stop()
-    return recorders.freeze(plan(), arrivals.freeze()).copy(hiccups = watch.stop())
 }
 
+/**
+ * The run a warm-up sends: the same arms and the same data, each held at the
+ * rate its own shape opens at for the length the caller declared.
+ *
+ * Goals and a drained sink are dropped, because nothing judges a warm-up and
+ * nothing may be recorded from one.
+ */
+private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
+    Simulation(arms.map { arm -> arm.copy(profile = hold(arm.profile.startRate, over = warmUp.over)) })
+
+/** Where a warm-up's samples go: nowhere. */
+private val unrecorded = StepSink { _, _, _, _, _, _ -> }
+
 private fun Scenario.depart(
-    recorders: Recorders,
+    sink: StepSink,
     runStart: Long,
     departure: Duration,
     users: Departures,
@@ -149,7 +190,7 @@ private fun Scenario.depart(
             // Read here rather than on the scheduler: what the report calls
             // lateness is how late the user's first request left, and until the
             // virtual thread is mounted nothing has left.
-            runOneUser(recorders, runStart, lateness(runStart, departure), departure, session, drain)
+            runOneUser(sink, runStart, lateness(runStart, departure), departure, session, drain)
         } finally {
             users.finished()
         }

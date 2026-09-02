@@ -66,7 +66,7 @@ Values in core beside `Machine`, sampler in the engine beside `Hiccups.kt`, and
 
 ## Stack
 
-- [ ] **`spec-0065-headroom`** — `Headroom`, `Limits`, `RunResult.limits` and
+- [x] **`spec-0065-headroom`** — `Headroom`, `Limits`, `RunResult.limits` and
       `ranOutOfRoom()` in core, nothing measuring them yet.
       Done when: a default result reads false, a reading at 91% of its limit
       reads true and one at 40% false, and `TIGHT` is stated in one place.

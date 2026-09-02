@@ -64,6 +64,14 @@ data class Runs(val each: List<RunResult>) {
             // every run is second n here, so the lateness of second n is every
             // run's lateness in that second pooled.
             latePerSecond = each.map { it.latePerSecond }.superimposedLateness(),
+            // The worst each run came to its own ceiling. A mean would say a
+            // set was comfortable because most of its runs were, when the
+            // question is whether any of them was measuring this process.
+            limits = Limits(
+                openFiles = each.map { it.limits.openFiles }.worst(),
+                ports = each.map { it.limits.ports }.worst(),
+                cpu = each.map { it.limits.cpu }.worst(),
+            ),
         )
     }
 
@@ -127,6 +135,19 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
  * asked for the same length; what is left is jitter in where the last response
  * landed, which the plan check has already seen.
  */
+
+/**
+ * The highest peak any run reached, against the limit they shared.
+ *
+ * Absent where no run measured it, carrying the first reason given rather than
+ * inventing one. `Runs` already refuses to merge unlike machines, so the limit
+ * is the same ceiling in every run that has one.
+ */
+private fun List<Headroom>.worst(): Headroom {
+    val measured = filterIsInstance<Headroom.Measured>()
+    val absent = filterIsInstance<Headroom.Absent>().firstOrNull()
+    return measured.maxByOrNull { it.peak } ?: absent ?: Headroom.Absent(Limits.NOT_SAMPLED)
+}
 
 /** Second *n* of every run's lateness as second *n* of one, on [superimposed]'s reasoning. */
 private fun List<List<Timing>>.superimposedLateness(): List<Timing> {

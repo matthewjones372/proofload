@@ -382,6 +382,16 @@ data class RunResult(
     val latePerSecond: List<Timing> = emptyList(),
 
     /**
+     * What the injector itself ran up against while it measured: descriptors,
+     * ephemeral ports, its share of the cores.
+     *
+     * Beside [hiccups] because it answers the same kind of question — was this
+     * number the target's, or this process's — and absent for a result built
+     * from samples, which sampled nothing.
+     */
+    val limits: Limits = Limits.none,
+
+    /**
      * What a fixed, target-free measurement took on this machine, where one was
      * taken. It travels into a baseline so a later run can ask whether it is on
      * a slower machine before it blames a step for the difference.

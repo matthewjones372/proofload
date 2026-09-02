@@ -12,6 +12,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.junit.jupiter.api.Test
 import java.util.Properties
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Whether a broker built out of `kafka-clients`' own protocol classes can
@@ -57,7 +58,7 @@ class FakeBrokerTest {
                 ByteArraySerializer(),
                 ByteArraySerializer(),
             ).use { producer ->
-                (0 until 10).forEach { number ->
+                (0 until PRODUCED).forEach { number ->
                     producer.send(ProducerRecord(FakeBroker.TOPIC, null, "trade $number".toByteArray()))
                 }
                 producer.flush()
@@ -77,17 +78,25 @@ class FakeBrokerTest {
                 val partition = TopicPartition(FakeBroker.TOPIC, 0)
                 consumer.assign(listOf(partition))
                 consumer.seekToBeginning(listOf(partition))
-                generateSequence { consumer.poll(java.time.Duration.ofMillis(500)) }
-                    .take(POLLS)
-                    .flatMap { records -> records.map { it.value().decodeToString() } }
-                    .toList()
+                // Until they arrive or the clock runs out, rather than a fixed
+                // number of polls: the first few are spent on metadata and
+                // offsets, and how many that takes is the machine's business.
+                val seen = mutableListOf<String>()
+                val giveUp = System.nanoTime() + PATIENCE.inWholeNanoseconds
+                while (seen.size < PRODUCED && System.nanoTime() < giveUp) {
+                    consumer.poll(java.time.Duration.ofMillis(200))
+                        .forEach { seen += it.value().decodeToString() }
+                }
+                seen
             }
 
-            withClue("$read") { read.take(10) shouldBe (0 until 10).map { "trade $it" } }
+            withClue("$read") { read.take(PRODUCED) shouldBe (0 until PRODUCED).map { "trade $it" } }
         }
     }
 
     private companion object {
-        const val POLLS = 5
+        const val PRODUCED = 10
+
+        val PATIENCE = 30.seconds
     }
 }

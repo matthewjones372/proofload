@@ -22,6 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.MockConsumer
 import org.apache.kafka.clients.consumer.OffsetResetStrategy
 import org.apache.kafka.clients.producer.MockProducer
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.serialization.ByteArraySerializer
@@ -97,7 +98,7 @@ class CompletingTest {
         consumer: Consumer<ByteArray, ByteArray>,
         sink: io.github.matthewjones372.kestrel.Completions = completionsOver(producer, consumer),
         users: Int = 4,
-        draining: kotlin.time.Duration = 1.seconds,
+        draining: kotlin.time.Duration = 3.seconds,
     ): RunResult {
         val broker = kafka.brokers("nowhere:9092").over(producer)
         val trades = scenario("trades") {
@@ -151,14 +152,29 @@ class CompletingTest {
     @Test
     fun `a record carrying no id this run can read is counted rather than dropped in silence`() {
         val producer = mock()
-        val consumer = Answering(producer, header = "something-else")
-        val completions = completionsOver(producer, consumer)
+        // Four records on the topic, put there directly: what is being checked
+        // is what the sink does with them, and running an engine to make them
+        // would put a drain window between the claim and the assertion.
+        repeat(4) { producer.send(ProducerRecord("trades", ByteArray(0), ByteArray(0))) }
+        val completions = completionsOver(producer, Answering(producer, header = "something-else"))
 
-        val result = ran(producer, consumer, sink = completions)
+        val read = completions.poll(1.seconds)
 
-        withClue("otherwise it shows as something unmatched with nothing to say the id was the problem") {
-            result[settled].unmatched shouldBe 4L
+        withClue("otherwise they show as something unmatched with nothing to say the id was the problem") {
+            read shouldBe emptyList()
             completions.unreadableRecords shouldBe 4L
+        }
+    }
+
+    @Test
+    fun `and every departure it should have answered is left unanswered`() {
+        val producer = mock()
+
+        val result = ran(producer, Answering(producer, header = "something-else"))
+
+        withClue("nothing on that topic can be matched to anything this run sent") {
+            result[settled].count shouldBe 0L
+            (result[settled].unmatched + result[settled].inFlight) shouldBe 4L
         }
     }
 

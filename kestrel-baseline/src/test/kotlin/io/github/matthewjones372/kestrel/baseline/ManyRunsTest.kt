@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Runs
+import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.perSecond
@@ -72,6 +73,31 @@ class ManyRunsTest {
         Files.writeString(directory.resolve("notes.txt"), "what we changed between runs")
 
         Runs.readAll(directory).size shouldBe 1
+    }
+
+    @Test
+    fun `four injectors aligned to one instant write four files, not one`(@TempDir directory: Path) {
+        val together = Instant.parse("2026-08-26T09:00:00Z")
+        val shared = runOf(together)
+
+        (0 until 4).forEach { index ->
+            shared.copy(shard = Shard(index = index, of = 4, startingAt = together)).writeInto(directory)
+        }
+
+        withClue("aligned injectors start in the same millisecond, and may share a pid across hosts") {
+            Files.list(directory).use { it.count() } shouldBe 4L
+        }
+    }
+
+    @Test
+    fun `an injector's file says whose it is, so a directory of them reads without opening one`(
+        @TempDir directory: Path,
+    ) {
+        val together = Instant.parse("2026-08-26T09:00:00Z")
+
+        val written = runOf(together).copy(shard = Shard(index = 2, of = 4, startingAt = together)).writeInto(directory)
+
+        written.fileName.toString() shouldContain "2of4"
     }
 
     @Test

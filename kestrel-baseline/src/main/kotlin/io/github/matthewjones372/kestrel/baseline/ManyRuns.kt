@@ -7,14 +7,24 @@ import java.nio.file.Path
 
 /**
  * Writes this run into [directory] under a name no other invocation will take:
- * when it started, and which process measured it.
+ * when it started, which injector it was where a run was split, and which
+ * process measured it.
  *
- * Both halves are needed. Two runs of one JVM start at different times, and two
+ * All three are needed. Two runs of one JVM start at different times, and two
  * JVMs started together do not, so a loop that forks and a loop that does not
- * each end with one file per run rather than one file written many times.
+ * each end with one file per run rather than one file written many times. Four
+ * injectors given one instant start in the same millisecond by design, and on
+ * four hosts they may hold the same pid, so the shard is in the name too — and
+ * it is legible there, which is what someone looking at a directory of them
+ * over ssh has to work with.
  */
-fun RunResult.writeInto(directory: Path): Path =
-    writeBaseline(directory.resolve("run-${startedAt.toEpochMilli()}-${ProcessHandle.current().pid()}$EXTENSION"))
+fun RunResult.writeInto(directory: Path): Path {
+    val named = "run-${startedAt.toEpochMilli()}-$injector${ProcessHandle.current().pid()}$EXTENSION"
+    return writeBaseline(directory.resolve(named))
+}
+
+private val RunResult.injector: String
+    get() = shard?.let { "${it.index}of${it.of}-" }.orEmpty()
 
 /**
  * Every run [writeInto] left in [directory], as one set, oldest first.

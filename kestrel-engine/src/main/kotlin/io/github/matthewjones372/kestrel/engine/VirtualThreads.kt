@@ -111,7 +111,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     watching.stop()
     val sampled = watching.usersInFlight()
     return recorders.freeze(plan(), arrivals.freeze())
-        .copy(hiccups = watch.stop(), limits = room.stop(), usersInFlight = sampled)
+        .copy(hiccups = watch.stop(), limits = room.stop(), usersInFlight = sampled, shard = shard)
 }
 
 /**

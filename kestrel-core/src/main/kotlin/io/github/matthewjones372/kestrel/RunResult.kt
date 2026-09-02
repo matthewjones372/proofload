@@ -448,6 +448,16 @@ data class RunResult(
      * a slower machine before it blames a step for the difference.
      */
     val probe: Probe? = null,
+
+    /**
+     * Which injector of how many measured this, where a run was split across
+     * more than one.
+     *
+     * Absent rather than injector zero of one: a run nobody sharded is not a
+     * distributed run with one member, and a file claiming otherwise would
+     * merge with three others as though four had been asked for.
+     */
+    val shard: Shard? = null,
 ) {
     val count: Long get() = steps.values.sumOf { it.count }
 

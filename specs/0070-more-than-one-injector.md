@@ -84,10 +84,13 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
       clock, after the host lock and before the run's clock.
       Done when: an injector handed a past instant writes nothing, two JVMs
       given one instant depart within 100 ms, an unsharded run is unchanged.
-- [ ] **`spec-0070-file`** — version 5: `behind` and `hiccups` as buckets, the
+- [x] **`spec-0070-file`** — version 5: `behind` and `hiccups` as buckets, the
       shard line, the shard in the filename.
       Done when: a run round-trips its `behind.p99`, a version 4 file still
       reads, and two shards aligned to one millisecond do not collide.
+      **Built as version 6.** 0066 took 5 for the warm-up line and 0072 wrote
+      the replay line into it, both after this spec was drafted; the number is
+      the format's, not this spec's, and 3, 4 and 5 all still read.
 - [ ] **`spec-0070-shards`** — `Shards`: the merge, the derived share, the worst
       injector's lateness, the refusals.
       Done when: four shards merge to summed counts with a p99 off them; three

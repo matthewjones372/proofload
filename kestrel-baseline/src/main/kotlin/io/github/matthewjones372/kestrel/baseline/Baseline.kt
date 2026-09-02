@@ -2,7 +2,6 @@ package io.github.matthewjones372.kestrel.baseline
 
 import io.github.matthewjones372.kestrel.ArrivalSeries
 import io.github.matthewjones372.kestrel.Bucket
-import io.github.matthewjones372.kestrel.Histogram
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Machine
 import io.github.matthewjones372.kestrel.Outcome
@@ -10,10 +9,10 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.WarmUp
-import io.github.matthewjones372.kestrel.timing
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -44,7 +43,10 @@ internal fun RunResult.asBaseline(): String =
         listOf("$MARKER\t$VERSION", "run\t$startedAt") +
             machine.lines() +
             probe.lines() +
+            shard.lines() +
             plan.lines() +
+            behind.lines("behind") +
+            hiccups.lines("stalls") +
             steps.values.flatMap { it.lines() }
         ).joinToString(separator = "\n", postfix = "\n")
 
@@ -56,6 +58,16 @@ private fun Machine.lines(): List<String> =
 // a later comparison would divide by.
 private fun Probe?.lines(): List<String> =
     if (this == null) emptyList() else listOf("probe\t${took.inWholeNanoseconds}")
+
+/**
+ * Which injector wrote this, absent where nobody sharded the run.
+ *
+ * The instant is written too: it is what every injector in the set was given,
+ * so a merge can say how far apart they actually started without asking each
+ * file to agree about a clock none of them shared.
+ */
+private fun Shard?.lines(): List<String> =
+    if (this == null) emptyList() else listOf("shard\t$index\t$of\t${startingAt.toEpochMilli()}")
 
 private fun Plan.lines(): List<String> =
     listOf("plan\t${scenario.escaped()}") +
@@ -102,6 +114,16 @@ private fun StepStats.lines(): List<String> =
 private fun Outcome.lines(side: String, step: String): List<String> =
     serviceTime.lines("$side-service", step) + responseTime.lines("$side-response", step)
 
+/**
+ * A run-level table: the same buckets, with no step to name them under.
+ *
+ * Written as buckets rather than as percentiles for the reason the steps are:
+ * a merge adds counts and reads the percentile off the sum, and four
+ * percentiles averaged are nobody's measurement.
+ */
+private fun Timing.lines(kind: String): List<String> =
+    distribution.map { bucket -> "$kind\t${bucket.upperBound.inWholeNanoseconds}\t${bucket.count}" }
+
 private fun Timing.lines(clock: String, step: String): List<String> =
     distribution.map { bucket -> "$clock\t${step.escaped()}\t${bucket.upperBound.inWholeNanoseconds}\t${bucket.count}" }
 
@@ -143,12 +165,29 @@ internal fun parseBaseline(text: String): RunResult {
     return RunResult(
         startedAt = Instant.parse(startedAt),
         steps = steps,
-        behind = Histogram().timing(),
+        behind = lines.runLevel("behind"),
+        hiccups = lines.runLevel("stalls"),
         plan = lines.asPlan(),
         machine = lines.asMachine(),
         probe = lines.asProbe(),
+        shard = lines.asShard(),
     )
 }
+
+/** Empty in a version 5 file, which wrote neither table, and in a result built from samples. */
+private fun List<String>.runLevel(kind: String): Timing =
+    filter { it.startsWith("$kind$SEPARATOR") }
+        .map { it.split(SEPARATOR) }
+        .map { (_, bound, seen) -> Bucket(bound.toLong().nanoseconds, seen.toLong()) }
+        .frozen()
+
+/** Absent in a version 5 file, and in any run nobody split across injectors. */
+private fun List<String>.asShard(): Shard? =
+    firstOrNull { it.startsWith("shard$SEPARATOR") }
+        ?.split(SEPARATOR)
+        ?.let { (_, index, of, startingAt) ->
+            Shard(index = index.toInt(), of = of.toInt(), startingAt = Instant.ofEpochMilli(startingAt.toLong()))
+        }
 
 /** Absent in a version 3 file, and in any run whose machine was never calibrated. */
 private fun List<String>.asProbe(): Probe? =
@@ -264,11 +303,13 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "5"
+private const val VERSION = "6"
 
-// 3 is 4 without the probe line, so a file written before there was one still
-// answers every question a comparison asks of it except that one.
-private val READABLE = listOf("3", "4", VERSION)
+// Each older version is this one missing a line, so a file written before
+// there was one still answers every question a comparison asks of it except
+// the one that line carries: 3 has no probe, 4 no warm-up, 5 no lateness,
+// stalls or shard.
+private val READABLE = listOf("3", "4", "5", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

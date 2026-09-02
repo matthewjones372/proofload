@@ -82,7 +82,7 @@ tail makes that longer.
 
 ## Stack
 
-- [ ] **`spec-0067-distribution`** — `ThinkTime`, its constructors and draw,
+- [x] **`spec-0067-distribution`** — `ThinkTime`, its constructors and draw,
       `Step.Pause` carrying it, `Scenario.thinkTimes`.
       Done when: `pause(2.seconds)` builds a constant pause with every existing
       scenario unchanged, and one distribution drawn twice matches on one seed

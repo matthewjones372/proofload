@@ -71,11 +71,15 @@ sealed interface Step {
      * target for — diluting the tail with time it did not cause, or, read as
      * latency, inventing seconds of slowness out of a user reading a page.
      */
-    data class Pause(val duration: Duration) : Step {
+    data class Pause(val think: ThinkTime) : Step {
 
-        init {
-            require(duration >= Duration.ZERO) { "a pause cannot run backwards, but was $duration" }
-        }
+        constructor(duration: Duration) : this(ThinkTime.Constant(duration))
+
+        /**
+         * What this pause waits, on average. A constant waits it every time,
+         * and a distribution waits it in the long run.
+         */
+        val duration: Duration get() = think.mean
     }
 }
 
@@ -103,6 +107,25 @@ data class Scenario(val name: String, val steps: List<Step>)
  * can answer about itself before anything runs.
  */
 val Scenario.pauses: Boolean get() = steps.any { it.parks() }
+
+/**
+ * Every wait this scenario declares, in the order a user meets them.
+ *
+ * What the plan prints and what decides whether a seed is owed: a scenario of
+ * constants needs none, and one that draws cannot be reproduced without one.
+ */
+val Scenario.thinkTimes: List<ThinkTime> get() = steps.flatMap { it.waits() }
+
+private fun Step.waits(): List<ThinkTime> = when (this) {
+    is Step.Pause -> listOf(think)
+    is Step.Repeat -> steps.flatMap { it.waits() }
+    is Step.During -> steps.flatMap { it.waits() }
+    is Step.When -> steps.flatMap { it.waits() }
+    is Step.Exec, is Step.Emit -> emptyList()
+}
+
+/** Whether any wait here is drawn rather than fixed, which is what needs a seed. */
+val Scenario.drawsThinkTime: Boolean get() = thinkTimes.any { it !is ThinkTime.Constant }
 
 private fun Step.parks(): Boolean = when (this) {
     is Step.Pause -> true
@@ -141,6 +164,11 @@ class ScenarioBuilder internal constructor(private val name: String) {
 
     fun exec(name: StepName, block: StepScope.() -> Unit) {
         steps += Step.Exec(name.name, action(block))
+    }
+
+    /** A wait drawn from [think] each time a user reaches it. */
+    fun pause(think: ThinkTime) {
+        steps += Step.Pause(think)
     }
 
     fun pause(duration: Duration) {

@@ -40,6 +40,48 @@ sealed interface InjectionProfile {
     data class Randomized(val of: InjectionProfile, val seed: Long) : InjectionProfile {
         override val over: Duration get() = of.over
     }
+
+    /**
+     * A window of a real capture, sent at [scaled] times the rate it arrived.
+     *
+     * A variant rather than a bare sequence of offsets, because every consumer
+     * of a profile asks it something: how many users, over how long, drawn
+     * from what, described how, written into a baseline as what. A sequence
+     * would answer none of those, and each of those `when`s would grow a
+     * branch that could not.
+     *
+     * Scaling is scaling *time*: every gap is divided by [scaled], so twice
+     * the rate is the same shape in half the window and the coefficient of
+     * variation is exactly unchanged. Thinning the arrivals instead would
+     * drive the process towards Poisson — the very shape a replay exists to
+     * avoid — and would make the capture's burstiness and the run's
+     * incomparable.
+     */
+    data class Replay(
+        val series: ArrivalSeries,
+        val from: Duration = Duration.ZERO,
+        val window: Duration? = null,
+        val scaled: Double = 1.0,
+    ) : InjectionProfile {
+
+        init {
+            require(scaled > 0.0) { "a replay is sent at a rate above zero, but scaled was $scaled" }
+            require(from >= Duration.ZERO) { "a replay starts at or after the capture's own start, not $from" }
+            require(window == null || window > Duration.ZERO) { "a replay window is longer than nothing" }
+        }
+
+        /** The capture's own offsets inside the window asked for, rebased to zero. */
+        internal val taken: LongArray
+            get() {
+                val begins = series.offsets.first() + from.inWholeNanoseconds
+                val ends = window?.let { begins + it.inWholeNanoseconds } ?: Long.MAX_VALUE
+                val inside = series.offsets.filter { it >= begins && it < ends }
+                return LongArray(inside.size) { inside[it] - begins }
+            }
+
+        override val over: Duration
+            get() = taken.lastOrNull()?.let { (it / scaled).toLong().nanoseconds } ?: Duration.ZERO
+    }
 }
 
 /**
@@ -56,6 +98,10 @@ sealed interface InjectionProfile {
 fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when (this) {
     is InjectionProfile.Randomized -> InjectionProfile.Randomized(of, seed)
 
+    // A capture is an arrival process already; drawing from it would replace
+    // the thing being replayed with a model of it.
+    is InjectionProfile.Replay -> throw IllegalArgumentException(alreadyAnArrivalProcess(series.source))
+
     is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Stages ->
         InjectionProfile.Randomized(this, seed)
 }
@@ -69,8 +115,11 @@ fun InjectionProfile.randomized(seed: Long): InjectionProfile.Randomized = when 
  */
 val InjectionProfile.seeds: List<Long>
     get() = when (this) {
-        is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> emptyList()
+        // A replay is drawn from nothing: its arrivals are what happened.
+        is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Replay -> emptyList()
+
         is InjectionProfile.Stages -> stages.flatMap { it.seeds }
+
         is InjectionProfile.Randomized -> listOf(seed)
     }
 
@@ -88,7 +137,11 @@ private fun InjectionProfile.asStages(): List<InjectionProfile> = when (this) {
 
     // Not opened up: the stages of a randomised shape are randomised by it, and
     // lifting them out would leave them spaced on the interval again.
-    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate, is InjectionProfile.Randomized -> listOf(this)
+    is InjectionProfile.ConstantRate,
+    is InjectionProfile.RampRate,
+    is InjectionProfile.Randomized,
+    is InjectionProfile.Replay,
+    -> listOf(this)
 }
 
 /** [constantRate], under the name it reads as in a chain. */
@@ -114,9 +167,16 @@ fun InjectionProfile.thenRampTo(rate: Rate, over: Duration): InjectionProfile =
 val InjectionProfile.startRate: Rate
     get() = when (this) {
         is InjectionProfile.ConstantRate -> perSecond.perSecond
+
         is InjectionProfile.RampRate -> from.perSecond
+
         is InjectionProfile.Stages -> stages.firstOrNull()?.startRate ?: 0.perSecond
+
         is InjectionProfile.Randomized -> of.startRate
+
+        // The mean over the window, which is the honest single number for a
+        // shape that has no one rate.
+        is InjectionProfile.Replay -> meanRate()
     }
 
 /** What this shape is running at when it finishes. */
@@ -126,7 +186,12 @@ val InjectionProfile.endRate: Rate
         is InjectionProfile.RampRate -> to.perSecond
         is InjectionProfile.Stages -> stages.lastOrNull()?.endRate ?: 0.perSecond
         is InjectionProfile.Randomized -> of.endRate
+        is InjectionProfile.Replay -> meanRate()
     }
+
+/** A replay's users over its window: no single rate describes it, and this is the mean. */
+private fun InjectionProfile.Replay.meanRate(): Rate =
+    if (over <= Duration.ZERO) 0.perSecond else (userCount() / over.seconds()).perSecond
 
 fun constantRate(rate: Rate, over: Duration): InjectionProfile.ConstantRate {
     requireRate(rate.perSecond, "rate")
@@ -147,6 +212,7 @@ fun InjectionProfile.userCount(): Long = when (this) {
     is InjectionProfile.RampRate -> usersBy(over)
     is InjectionProfile.Stages -> stages.sumOf { it.userCount() }
     is InjectionProfile.Randomized -> of.userCount()
+    is InjectionProfile.Replay -> taken.size.toLong()
 }
 
 /**
@@ -180,6 +246,10 @@ fun InjectionProfile.departures(): Sequence<Duration> = when (this) {
     }
 
     is InjectionProfile.Randomized -> of.drawnWith(seed)
+
+    // Divided rather than resampled: at one the departures are the capture's
+    // gaps nanosecond for nanosecond.
+    is InjectionProfile.Replay -> taken.asSequence().map { (it / scaled).toLong().nanoseconds }
 }
 
 /**
@@ -198,6 +268,10 @@ private fun InjectionProfile.drawnWith(seed: Long): Sequence<Duration> = when (t
     is InjectionProfile.RampRate -> drawnAcross(over, seed) { at -> usersBy(at) }
 
     is InjectionProfile.Randomized -> of.drawnWith(seed)
+
+    // A capture is already an arrival process. Drawing one from it would
+    // replace the thing being replayed with a model of it.
+    is InjectionProfile.Replay -> throw IllegalArgumentException(alreadyAnArrivalProcess(series.source))
 }
 
 /**
@@ -274,3 +348,19 @@ internal val ARRIVAL_WINDOW: Duration = 1.seconds
 // Stage seeds step by one and window seeds step by this, so no window of one
 // stage can be handed the seed of a window of another.
 private const val WINDOW_STRIDE = 2_654_435_761L
+
+/**
+ * The capture, or a window of it, sent at [scaled] times the rate it arrived.
+ *
+ * [from] and [window] cut the capture before the scaling, so they are read in
+ * the capture's own time: forty minutes into an hour, ten minutes long, at
+ * twice the rate, is five minutes of run.
+ */
+fun ArrivalSeries.replaying(
+    from: Duration = Duration.ZERO,
+    window: Duration? = null,
+    scaled: Double = 1.0,
+): InjectionProfile.Replay = InjectionProfile.Replay(this, from, window, scaled)
+
+private fun alreadyAnArrivalProcess(source: String): String =
+    "a replay of $source is already an arrival process; drawing from it would replace what happened with a model"

@@ -146,10 +146,33 @@ private fun Long.shareOf(whole: Long): String =
  * whose consequence — a p99 that is optimistic against the same mean rate in
  * production — is invisible unless the page names which was asked for.
  */
-private fun Plan.arrivalProcess(): String =
-    arms.mapNotNull { it.profile }.flatMap { it.seeds }.takeIf { it.isNotEmpty() }
+private fun Plan.arrivalProcess(): String {
+    // Asked before the seeds, because a replay has none and would otherwise
+    // read as evenly spaced — which is the one thing a capture is not, and a
+    // sentence the page would be wrong about on exactly the runs that went to
+    // most trouble to be right.
+    val replayed = arms.mapNotNull { it.profile }.flatMap { it.replays() }
+    if (replayed.isNotEmpty()) {
+        return replayed.joinToString(" ") { replay ->
+            val scaling = if (replay.scaled == 1.0) "" else " at ${String.format(Locale.ROOT, "%.2f", replay.scaled)}x"
+            val window = replay.window?.let { " ${it.forPlan()} from ${replay.from.forPlan()} in," }.orEmpty()
+            "Arrivals were replayed from ${replay.series.source.escapedForHtml()}$scaling," +
+                "$window whose own coefficient of variation was " +
+                "${String.format(Locale.ROOT, "%.2f", replay.series.cov)}."
+        }
+    }
+    return arms.mapNotNull { it.profile }.flatMap { it.seeds }.takeIf { it.isNotEmpty() }
         ?.let { drawn -> "Arrivals were drawn from ${"seed".plural(drawn.size)} ${drawn.joinToString(", ")}." }
         ?: "Arrivals were evenly spaced, which understates queueing against the same mean rate in production."
+}
+
+/** Every capture this shape replays, so a mix or a staged shape names each of them. */
+private fun InjectionProfile.replays(): List<InjectionProfile.Replay> = when (this) {
+    is InjectionProfile.Replay -> listOf(this)
+    is InjectionProfile.Stages -> stages.flatMap { it.replays() }
+    is InjectionProfile.Randomized -> of.replays()
+    is InjectionProfile.ConstantRate, is InjectionProfile.RampRate -> emptyList()
+}
 
 /** Measured from the departures that went out, so the claim above it has a number under it. */
 private fun Arrivals.achieved(): String =
@@ -160,9 +183,17 @@ private fun Arrivals.achieved(): String =
 /** The shape in words, one clause per stage, in the order they run. */
 private fun InjectionProfile.described(): String = when (this) {
     is InjectionProfile.ConstantRate -> "${perSecond.asRate()} held for ${over.forPlan()}"
+
     is InjectionProfile.RampRate -> "${from.asRate()} to ${to.asRate()} over ${over.forPlan()}"
+
     is InjectionProfile.Stages -> stages.joinToString(separator = ", then ") { it.described() }
+
     is InjectionProfile.Randomized -> of.described()
+
+    is InjectionProfile.Replay -> {
+        val scaling = if (scaled == 1.0) "" else " at ${String.format(Locale.ROOT, "%.2f", scaled)}x"
+        "arrivals replayed from ${series.source.escapedForHtml()}$scaling over ${over.forPlan()}"
+    }
 }
 
 /** One chart for one arm, and one apiece for a mix: two arms share a window and nothing else. */
@@ -178,7 +209,10 @@ private fun Plan.shapeCharts(): List<String> =
  * something a reader sees rather than works out.
  */
 private fun InjectionProfile.shapeChart(arm: String? = null): List<String> {
-    val points = corners()
+    // A capture names no corners: it is arrivals rather than a rate line, and
+    // a flat line at its mean would draw a shape it never had. The arrivals
+    // sentence says what happened instead.
+    val points = corners().ifEmpty { return emptyList() }
     val peak = points.maxOf { it.second }.takeIf { it > 0.0 } ?: return emptyList()
     val total = over.inWholeNanoseconds.toDouble().takeIf { it > 0.0 } ?: return emptyList()
 
@@ -209,6 +243,11 @@ private fun InjectionProfile.shapeChart(arm: String? = null): List<String> {
 /** Where the rate line changes direction: the start and end of every stage. */
 private fun InjectionProfile.corners(from: Duration = Duration.ZERO): List<Pair<Duration, Double>> = when (this) {
     is InjectionProfile.ConstantRate -> listOf(from to perSecond, (from + over) to perSecond)
+
+    // A capture has no rate line to draw corners of: what it has is arrivals,
+    // and drawing a flat line at its mean would claim a shape it never had.
+    // The chart is skipped and the arrivals line says what happened instead.
+    is InjectionProfile.Replay -> emptyList()
 
     is InjectionProfile.RampRate -> listOf(from to this.from, (from + over) to to)
 

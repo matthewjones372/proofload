@@ -55,8 +55,12 @@ class ArrivalSeries internal constructor(
     /**
      * Enough to tell two captures apart without carrying a million timestamps
      * into a baseline or a failure message.
+     *
+     * Public because `kestrel-baseline` writes it: a file that carried the
+     * arrivals themselves would hold the data twice, and one that carried
+     * nothing could not refuse a run replayed from a different capture.
      */
-    internal val identity: String get() = "$source/$count/${span.inWholeNanoseconds}/${offsets.contentHashCode()}"
+    val identity: String get() = "$source/$count/${span.inWholeNanoseconds}/${offsets.contentHashCode()}"
 
     override fun equals(other: Any?): Boolean = other is ArrivalSeries && other.identity == identity
 

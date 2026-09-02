@@ -77,12 +77,12 @@ also why equality follows `CsvFile`: `Runs` prints a profile into its refusal an
       Done when: ISO-8601 instants read back as a series whose figures are
       values before anything departs, an unordered column is sorted rather than
       refused, and fewer than two instants is refused by name.
-- [ ] **`spec-0072-replay`** — `InjectionProfile.Replay`, `replaying(from,
+- [x] **`spec-0072-replay`** — `InjectionProfile.Replay`, `replaying(from,
       window, scaled)`, and the ten `when`s that now answer for it.
       Done when: at ×1 departures match the capture's gaps nanosecond for
       nanosecond, at ×2 every gap and `over` halve, `userCount()` answers first,
       a replay `then` a hold is one shape, and `randomized` fails by name.
-- [ ] **`spec-0072-page`** — the arrivals line naming source, scale and window,
+- [x] **`spec-0072-page`** — the arrivals line naming source, scale and window,
       both coefficients of variation, and a shape chart drawn per second from
       the capture rather than a rate line.
       Done when: a replayed run never prints "evenly spaced" and its two

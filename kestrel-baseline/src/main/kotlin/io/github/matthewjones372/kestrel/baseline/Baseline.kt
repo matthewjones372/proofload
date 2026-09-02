@@ -72,10 +72,24 @@ private fun Plan.lines(): List<String> =
  */
 private fun InjectionProfile?.postfix(): List<String> = when (this) {
     null -> emptyList()
+
     is InjectionProfile.ConstantRate -> listOf("constant\t$perSecond\t${over.inWholeNanoseconds}")
+
     is InjectionProfile.RampRate -> listOf("ramp\t$from\t$to\t${over.inWholeNanoseconds}")
+
     is InjectionProfile.Stages -> stages.flatMap { it.postfix() } + "stages\t${stages.size}"
+
     is InjectionProfile.Randomized -> of.postfix() + "random\t$seed"
+
+    // The capture's identity rather than the capture: a baseline exists to be
+    // compared against, and a million timestamps in a file nobody reads is a
+    // format that carries the data twice. Source, count, span and digest are
+    // enough to refuse two different captures by name.
+    is InjectionProfile.Replay -> listOf(
+        "replay\t${series.source.escaped()}\t${series.count}\t${series.span.inWholeNanoseconds}\t" +
+            "${series.identity.hashCode()}\t${from.inWholeNanoseconds}\t" +
+            "${window?.inWholeNanoseconds ?: -1}\t$scaled",
+    )
 }
 
 // The whole-step timings are not written: they are the merge of the two sides,

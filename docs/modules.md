@@ -15,6 +15,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
 | `kestrel-export` | a run's measurements in the formats other tools already read | core |
+| `kestrel-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
 | `kestrel-report-html` | one self-contained, interactive HTML page | core |
 | `kestrel-report-github` | markdown, a job summary and a Pages directory | core |
 | `kestrel-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core, `pelican-core` |
@@ -54,6 +55,7 @@ dependencies {
     // As you need them.
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-otel:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-pelican:$kestrelVersion")
@@ -79,6 +81,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-report-html` | [NoThirdPartyDependenciesTest](../kestrel-report-html/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-github` | [NoThirdPartyDependenciesTest](../kestrel-report-github/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |
+| `kestrel-otel` | [NoGrpcStackTest](../kestrel-otel/src/test/kotlin/io/github/matthewjones372/kestrel/otel/NoGrpcStackTest.kt) |
 
 Each one reads the module's own `runtimeClasspath`, handed to the test JVM as a
 system property by the module's build file, and fails on any entry outside a
@@ -88,7 +91,11 @@ exported, `kestrel-kotest` that `kestrel-junit5` is absent, and
 is the pointed case: HdrHistogram owns the log format it writes and would write
 it in one call, and it sits on that module's *test* classpath instead — as the
 oracle that reads the output back, rather than on the classpath of everyone who
-wanted one file out of a run.
+wanted one file out of a run. `kestrel-otel` is the other side of the same
+argument: it carries the OpenTelemetry SDK because that is what it is for, and
+its test says *which* dependency arrived — OTLP over HTTP, so no gRPC runtime
+and no Netty, because a load test's own process is the last place to put a
+second networking stack.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module

@@ -8,6 +8,7 @@ include(
     "kestrel-http",
     "kestrel-junit5",
     "kestrel-kotest",
+    "kestrel-otel",
     "kestrel-pelican",
     "kestrel-report-github",
     "kestrel-report-html",

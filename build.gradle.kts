@@ -66,6 +66,7 @@ val moduleDescriptions = mapOf(
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
     "kestrel-junit5" to "Load tests that are ordinary JUnit 5 tests.",
     "kestrel-kotest" to "Load tests that are ordinary Kotest specs.",
+    "kestrel-otel" to "A run's measurements sent to an OpenTelemetry collector.",
     "kestrel-pelican" to "Load tests driven by Pelican endpoint descriptions.",
     "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",

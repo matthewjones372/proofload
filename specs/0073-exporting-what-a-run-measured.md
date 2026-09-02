@@ -86,7 +86,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 - [x] **`spec-0073-openmetrics`** — `openMetrics()`, against a golden.
       Done when: the golden matches, buckets are cumulative and end in `+Inf`,
       two reasons are two series, and `behind` and `hiccups` are both there.
-- [ ] **`spec-0073-otel`** — `kestrel-otel`, carrying the SDK, and `sendOtlp`.
+- [x] **`spec-0073-otel`** — `kestrel-otel`, carrying the SDK, and `sendOtlp`.
       Done when: a run sent at a collector that is not there returns a refusal
       naming it rather than throwing, and against a recording collector the
       boundaries and counts equal the exposition's.
@@ -126,7 +126,30 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
     exporter — that copy, not the encoding, was the part worth avoiding.
 4. **Delta or cumulative for OTLP?** Recommend delta: cumulative claims a
     process-lifetime counter with restart detection, and a run is one window
-    with a start and an end `RunResult` already knows.
+    with a start and an end `RunResult` already knows. Built delta, asserted.
+6. **OTel's model insists on a sum, and nothing here measures one.** Found when
+    building: `HistogramPointData` takes a mandatory sum, so the `_sum` this
+    spec refused in the exposition cannot be refused here. It is sent as the
+    sum every sample would have made had each sat at the top of the bucket it
+    was counted in — an upper bound, within the histogram's own 0.78%, and the
+    description says which it is. The alternative was replaying every sample
+    into an SDK instrument so the SDK computed the same number itself, which
+    manufactures it further from where a reader can see it.
+7. **The exporter brought a second HTTP client.** `opentelemetry-exporter-otlp`
+    ships with OkHttp behind it, and a load test's own process is the last
+    place to put a second HTTP client — the first one is the thing being
+    measured. Swapped for `opentelemetry-exporter-sender-jdk`, the SDK's
+    `java.net.http` sender, which is the client the rest of this tool already
+    sends on; `NoGrpcStackTest` fails if either OkHttp or a gRPC runtime comes
+    back. Found by writing that test, which was originally pointed at gRPC
+    alone.
+8. **The wire payload is not decoded.** The test stands up a collector, and
+    asserts what reached it is protobuf of non-zero length rather than
+    unpacking it: that needs `opentelemetry-proto`, an alpha artifact pulling
+    protobuf-java onto the test classpath. What the collector is *handed* is
+    asserted directly off `metricData`, boundary for boundary, and against the
+    OpenMetrics exposition's own `le` values — so the two exports are proven to
+    agree even though the bytes are not read back.
 5. **Does anything carry the run's identity?** Ten runs on one dashboard have to
     be told apart and `startedAt` is all that separates them. Recommend a `run`
     label defaulting to it, not a generated id nothing else here has.

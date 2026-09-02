@@ -1,72 +1,127 @@
 package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.withClue
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+private val began = Instant.parse("2026-08-26T09:00:00Z")
+
+/**
+ * A run that ramped and then held reports one p99 over a population that was
+ * never offered at one rate: part of it is the easy start and part the hard
+ * end, weighted by how long each lasted. Lengthen the ramp and the number
+ * improves without the target changing.
+ */
 class StagesTest {
 
-    @Test
-    fun `a stage departs where the one before it finished, not where it started`() {
-        val shape = hold(4.perSecond, over = 1.seconds).then(hold(2.perSecond, over = 1.seconds))
-
-        shape.departures().toList() shouldBe listOf(
-            0.milliseconds, 250.milliseconds, 500.milliseconds, 750.milliseconds,
-            1000.milliseconds, 1500.milliseconds,
+    /** A second's worth of requests at [service] ms, landing in the second [at] begins. */
+    private fun RunRecorder.second(at: Long, service: Long) =
+        record(
+            step = "pay",
+            failure = null,
+            serviceTime = service.milliseconds,
+            schedulingDelay = Duration.ZERO,
+            at = at.seconds,
         )
+
+    private fun ran(profile: InjectionProfile, seconds: Int, service: (Int) -> Long): RunResult {
+        val recorder = RunRecorder(began)
+        repeat(seconds) { at -> recorder.second(at.toLong(), service(at)) }
+        return recorder.freeze().copy(plan = Plan("paying", listOf("pay"), profile))
     }
 
     @Test
-    fun `a shape sends what its stages send between them`() {
-        val shape = hold(50.perSecond, over = 1.minutes).then(hold(10.perSecond, over = 1.minutes))
+    fun `three stages split the timeline into three windows whose seconds add up`() {
+        val result = ran(
+            hold(100.perSecond, over = 2.seconds)
+                .then(hold(200.perSecond, over = 2.seconds))
+                .then(hold(300.perSecond, over = 2.seconds)),
+            seconds = 6,
+        ) { 10L }
 
-        shape.userCount() shouldBe 3600L
-    }
+        val stages = result.stages
 
-    @Test
-    fun `a shape lasts as long as its stages together`() {
-        hold(1.perSecond, over = 30.seconds).then(hold(1.perSecond, over = 90.seconds)).over shouldBe 2.minutes
-    }
-
-    @Test
-    fun `chaining flattens, so two ways of writing one shape are one shape`() {
-        val left = hold(1.perSecond, over = 1.seconds)
-        val middle = hold(2.perSecond, over = 1.seconds)
-        val right = hold(3.perSecond, over = 1.seconds)
-
-        left.then(middle).then(right) shouldBe left.then(middle.then(right))
-    }
-
-    @Test
-    fun `a ramp picks up from the rate the stage before it was running at`() {
-        val shape = hold(20.perSecond, over = 1.seconds).thenRampTo(0.perSecond, over = 1.seconds)
-
-        val ramp = (shape as InjectionProfile.Stages).stages.last()
-
-        ramp shouldBe rampRate(from = 20.perSecond, to = 0.perSecond, over = 1.seconds)
-    }
-
-    @Test
-    fun `a soak is a value that answers before anything is sent`() {
-        val soak = rampRate(from = 0.perSecond, to = 200.perSecond, over = 1.minutes)
-            .then(hold(200.perSecond, over = 10.minutes))
-            .thenRampTo(0.perSecond, over = 1.minutes)
-
-        soak.over shouldBe 12.minutes
-        soak.userCount() shouldBe 6000L + 120_000L + 6000L
-        withClue("departures must not go backwards") {
-            soak.departures().zipWithNext().all { (earlier, later) -> later >= earlier } shouldBe true
+        stages.size shouldBe 3
+        stages.map { it.index to it.of } shouldBe listOf(0 to 3, 1 to 3, 2 to 3)
+        stages.map { it.from } shouldBe listOf(0.seconds, 2.seconds, 4.seconds)
+        stages.map { it.until } shouldBe listOf(2.seconds, 4.seconds, 6.seconds)
+        withClue("every second of the run is in exactly one stage") {
+            stages.sumOf { it.ok + it.failed } shouldBe result.count
         }
     }
 
     @Test
-    fun `a stage that lasts no time is kept, because somebody meant it`() {
-        val shape = hold(1.perSecond, over = 1.seconds).then(hold(9.perSecond, over = 0.seconds))
+    fun `each stage carries its own percentiles, which differ from the aggregate`() {
+        // The hold is ten times slower than the ramp before it. One p99 over
+        // both is a number about neither.
+        val result = ran(
+            hold(100.perSecond, over = 3.seconds).then(hold(200.perSecond, over = 3.seconds)),
+            seconds = 6,
+        ) { at -> if (at < 3) 10L else 100L }
 
-        (shape as InjectionProfile.Stages).stages.size shouldBe 2
-        shape.userCount() shouldBe 1L
+        val stages = result.stages
+
+        withClue("the slow half is slower than the fast half, which the aggregate hides") {
+            stages[1].serviceTime.p99 shouldBeGreaterThan stages[0].serviceTime.p99
+        }
+        withClue("and the aggregate sits between them rather than describing either") {
+            result["pay"].serviceTime.p99 shouldBeGreaterThan stages[0].serviceTime.p99
+        }
+    }
+
+    @Test
+    fun `a boundary inside a second lands in the earlier stage, and says so`() {
+        val result = ran(
+            hold(100.perSecond, over = 2500.milliseconds)
+                .then(hold(200.perSecond, over = 2500.milliseconds)),
+            seconds = 5,
+        ) { 10L }
+
+        val stages = result.stages
+
+        withClue("second 2 begins at 2.0s, which is inside the first stage's 2.5s") {
+            stages[0].from shouldBe 0.seconds
+            stages[0].until shouldBe 3.seconds
+        }
+        withClue("so the seconds summed are not the window asked for, and both are reported") {
+            stages[0].planned shouldBe 2500.milliseconds
+            (stages[0].until - stages[0].from) shouldBe 3.seconds
+        }
+    }
+
+    @Test
+    fun `a stage measured at the timeline's width says so rather than a step's`() {
+        val result = ran(
+            hold(100.perSecond, over = 2.seconds).then(hold(200.perSecond, over = 2.seconds)),
+            seconds = 4,
+        ) { 10L }
+
+        withClue("a stage is the timeline merged, so it is good to what the timeline is good to") {
+            result.stages.first().serviceTime.precision shouldBe result.timeline.first().serviceTime.precision
+        }
+    }
+
+    @Test
+    fun `a run nobody staged has no stages rather than one covering everything`() {
+        val result = ran(hold(100.perSecond, over = 4.seconds), seconds = 4) { 10L }
+
+        withClue("one stage would be a table repeating the totals above it") {
+            result.stages shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `a run with no timeline has no stages to read them off`() {
+        val result = ran(
+            hold(100.perSecond, over = 2.seconds).then(hold(200.perSecond, over = 2.seconds)),
+            seconds = 4,
+        ) { 10L }.copy(timeline = emptyList())
+
+        result.stages shouldBe emptyList()
     }
 }

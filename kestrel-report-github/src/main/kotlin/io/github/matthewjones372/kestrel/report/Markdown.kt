@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Change
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Concurrency
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Histogram
@@ -11,6 +12,7 @@ import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
+import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.offered
@@ -37,7 +39,14 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
     if (steps.isEmpty()) {
         listOf("No steps ran.", "Started $startedAt.")
     } else {
-        listOfNotNull(lostWarning(), cutShortWarning(), floor?.line(), behindWarning(), roomWarning()) +
+        listOfNotNull(
+            lostWarning(),
+            cutShortWarning(),
+            floor?.line(),
+            behindWarning(),
+            roomWarning(),
+            concurrencyLine(),
+        ) +
             comparison.blocks(floor) + mixBlocks() +
             stepTable() + listOfNotNull(hiccupLine()) + failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + MEASUREMENT_NOTE
@@ -129,6 +138,8 @@ private fun Floor.line(): String =
             "the machine."
     }
 
+private fun Double.round(): String = String.format(Locale.ROOT, "%.2f", this)
+
 private fun Double.asPercent(): String = String.format(Locale.ROOT, "%.2f%%", this * PERCENT)
 
 /** A rate as a reader writes it: 45 rather than 45.000000. */
@@ -201,6 +212,26 @@ private fun RunResult.cutShortWarning(): String? {
  * ceiling as readily as the target's refusal, and a summary that does not say
  * so hands a reader the wrong end of the wire.
  */
+
+/**
+ * Little's law on this run, as a note where it holds and a warning where it
+ * does not — naming this tool rather than the target, because the identity is
+ * arithmetic and a gap is a measurement that does not add up.
+ */
+private fun RunResult.concurrencyLine(): String? {
+    val law = concurrency as? Concurrency.Measured ?: return null
+
+    val sides = "${law.observed.round()} users were running; throughput times mean service time says " +
+        "${law.fromServiceTime.round()}"
+    return if (law.agrees) {
+        "> **Little's law holds:** $sides, a ratio of ${law.ratio.round()}."
+    } else {
+        "> **These numbers do not add up:** $sides — a ratio of ${law.ratio.round()}. Little's law is " +
+            "arithmetic over a settled window, so this is a fault in the measurement rather than in the " +
+            "target."
+    }
+}
+
 private fun RunResult.roomWarning(): String? {
     if (!ranOutOfRoom()) return null
 

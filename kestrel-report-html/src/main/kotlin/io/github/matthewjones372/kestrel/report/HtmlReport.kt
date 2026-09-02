@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.report
 
 import io.github.matthewjones372.kestrel.Comparison
+import io.github.matthewjones372.kestrel.Concurrency
 import io.github.matthewjones372.kestrel.Difference
 import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Headroom
@@ -10,6 +11,7 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.inFlight
@@ -19,6 +21,7 @@ import io.github.matthewjones372.kestrel.unanswered
 import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -80,6 +83,7 @@ private fun RunResult.documentLines(
         floor.resolutionLines(),
         hiccupLines(),
         roomLines(),
+        concurrencyLines(),
         attemptLines(),
         readingLines(),
         failedLines(),
@@ -278,6 +282,47 @@ private fun RunResult.hiccupTile(): List<String> =
  * nothing was sampled — a page saying a limit was not measured on every
  * platform that cannot measure it is a line nobody reads.
  */
+
+/**
+ * The users this run had in flight, beside what its own throughput and latency
+ * say it should have had.
+ *
+ * A note where the two agree and a warning where they do not, and the warning
+ * names *this tool* rather than the target: L = λW is arithmetic over a window
+ * that starts and ends empty, so a gap is a measurement that does not add up
+ * and every number on the page is suspect until it is explained. A page that
+ * blamed the target for it would be the misreading this check exists to catch.
+ *
+ * Silent where the run cannot be asked — a scenario that parks its users, a
+ * run nobody sampled — because a reason nobody needed is a line nobody reads.
+ */
+private fun RunResult.concurrencyLines(): List<String> {
+    val law = concurrency as? Concurrency.Measured ?: return emptyList()
+
+    val sides = "${law.observed.round()} users were running; throughput times mean service time says " +
+        "${law.fromServiceTime.round()}"
+    val queue = if (law.backlog <= 0.0) {
+        ""
+    } else {
+        " The generator was holding ${law.backlog.round()} requests of queue of its own."
+    }
+    return if (law.agrees) {
+        listOf(
+            """  <p class="note" id="kestrel-concurrency">Little's law holds on this run: $sides, """ +
+                "a ratio of ${law.ratio.round()} across ${law.samples} " +
+                "${if (law.samples == 1) "sample" else "samples"}.$queue</p>",
+        )
+    } else {
+        listOf(
+            """  <p class="behind" id="kestrel-concurrency" role="status">""",
+            "    <strong>These numbers do not add up.</strong> $sides — a ratio of ${law.ratio.round()}. " +
+                "Little's law is arithmetic over a settled window, so this is a fault in the measurement " +
+                "rather than in the target, and every figure below it is suspect until it is explained.$queue",
+            "  </p>",
+        )
+    }
+}
+
 private fun RunResult.roomLines(): List<String> {
     if (!ranOutOfRoom()) return emptyList()
 
@@ -510,3 +555,6 @@ private const val SHORTFALL = 0.1
 
 /** The percentile the table's p99 column reports, so the exemplar names a request from that bucket. */
 private const val NINETY_NINTH = 99.0
+
+/** One place a share or a ratio is rounded for reading. */
+private fun Double.round(): String = String.format(Locale.ROOT, "%.2f", this)

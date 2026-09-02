@@ -491,6 +491,24 @@ class MarkdownTest {
         result.markdown() shouldNotContain "ran out of room"
     }
 
+    @Test
+    fun `the summary says whether the run's own numbers add up`() {
+        val recorder = RunRecorder(startedAt)
+        repeat(12 * 100) { request ->
+            recorder.record("browse", null, 50.milliseconds, Duration.ZERO, at = (request / 100).seconds)
+        }
+        val agreeing = recorder.freeze().copy(
+            plan = Plan("checkout", listOf("browse"), hold(100.perSecond, over = 12.seconds)),
+            usersInFlight = List(12) { 5L },
+        )
+
+        agreeing.markdown() shouldContain "**Little's law holds:**"
+
+        val disagreeing = agreeing.copy(usersInFlight = List(12) { 20L })
+        disagreeing.markdown() shouldContain "These numbers do not add up:"
+        disagreeing.markdown() shouldContain "a fault in the measurement rather than in the target"
+    }
+
     private fun second() = Second(
         okServiceTime = timingOf(List(10) { 20.milliseconds }),
         failedServiceTime = Timing.none,

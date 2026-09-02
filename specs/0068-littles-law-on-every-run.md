@@ -87,10 +87,14 @@ invent a meaning for two runs' concurrency added. This overrides 0057's question
       Done when: agreeing quantities report `agrees`, a doubled latency reports the
       ratio and not `agrees`, a `Step.Pause` reports `Absent` with the reason, and
       a run that never settled says so rather than judging the whole run.
-- [ ] **`spec-0068-page`** — the pair, the ratio and the backlog on the page and
+- [x] **`spec-0068-page`** — the pair, the ratio and the backlog on the page and
       in the job summary.
       Done when: an agreeing page carries the note and its precision, a
       disagreeing one a warning naming the tool, and both goldens moved.
+      The goldens did not move, and should not have: their fixtures sampled no
+      users, so the law cannot be asked of them and the page correctly says
+      nothing. Both cases are covered by tests that build a result the law can
+      be asked of, which is a stricter check than a shared golden.
 
 ## Acceptance
 

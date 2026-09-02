@@ -56,11 +56,11 @@ different checks is a report nobody can act on.
 
 ## Stack
 
-- [ ] **`spec-0026-checks`** — `checking`, its failure reason, and the
+- [x] **`spec-0026-checks`** — `checking`, its failure reason, and the
       response body being available to it.
       Done when: a 200 that fails a check fails the step under the check's
       name, and the body is read once.
-- [ ] **`spec-0026-attempts`** — attempts recorded separately from requests,
+- [x] **`spec-0026-attempts`** — attempts recorded separately from requests,
       on `StepStats` and on the page.
       Done when: a step retried once reports two attempts and one request.
 - [ ] **`spec-0026-retrying`** — `retrying(times, on)`, with a backoff that

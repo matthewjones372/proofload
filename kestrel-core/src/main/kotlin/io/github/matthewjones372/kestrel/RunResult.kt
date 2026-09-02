@@ -241,6 +241,18 @@ data class StepStats(
      * rather than as nobody.
      */
     val reached: Long = 0L,
+
+    /**
+     * The round trips behind [count]: one per request, and more where a step
+     * followed a redirect or retried.
+     *
+     * Beside [count] rather than folded into it, because a retry folded into
+     * one measurement reports the target as slower than it is and hides that
+     * it answered wrongly first. Zero where whatever recorded the run did not
+     * count them, which the report prints as unmeasured rather than as none.
+     */
+    val attempts: Long = 0L,
+
     /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */

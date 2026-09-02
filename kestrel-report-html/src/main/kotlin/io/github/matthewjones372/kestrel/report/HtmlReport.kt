@@ -76,6 +76,7 @@ private fun RunResult.documentLines(
         goodputLines(),
         floor.resolutionLines(),
         hiccupLines(),
+        attemptLines(),
         readingLines(),
         failedLines(),
         stepsLines(),
@@ -253,6 +254,29 @@ private fun RunResult.lostTiles(): List<String> =
  */
 private fun RunResult.hiccupTile(): List<String> =
     if (hiccups.count == 0L) emptyList() else tile("Injector stalled, p99", hiccups.p99.forReport(), "")
+
+/**
+ * Where a step went to the target more often than it was counted — a redirect
+ * followed, or a retry — the trips behind the requests.
+ *
+ * Absent where every step went once, which is most runs: a line saying 480
+ * requests took 480 attempts is one nobody needs. It is a note rather than a
+ * column because it is true of some runs and no steps of most.
+ */
+private fun RunResult.attemptLines(): List<String> {
+    val retried = steps.values.filter { it.attempts > it.count }
+    if (retried.isEmpty()) return emptyList()
+
+    val named = retried.joinToString(separator = ", ") {
+        "${it.name.escapedForHtml()} ${it.count.grouped()} requests, " +
+            "${it.attempts.grouped()} attempts"
+    }
+    return listOf(
+        """  <p class="note" id="kestrel-attempts">Some steps went to the target more than once per """ +
+            "request — a redirect followed, or a retry: $named. The service time is the request's, and " +
+            "the attempts are the trips behind it.</p>",
+    )
+}
 
 private fun RunResult.hiccupLines(): List<String> =
     if (hiccups.count == 0L) emptyList()

@@ -70,12 +70,13 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean = false,
+        attempts: Int = 1,
     ) {
         require(at >= Duration.ZERO) { "a request cannot have left before the run began, but left at $at" }
         behind.record(schedulingDelay)
         lateness.record(at, schedulingDelay)
         steps.getOrPut(step) { StepRecorder() }
-            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached)
+            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, attempts)
     }
 
     /**
@@ -149,10 +150,22 @@ private class StepRecorder {
     // under this step, which is the only moment anything knows it is the first.
     private var reached = 0L
 
+    // And the round trips behind those requests: one each unless a step
+    // followed a redirect or retried.
+    private var attempts = 0L
+
     val seconds = Seconds()
 
-    fun record(failure: Reason?, service: Duration, response: Duration, at: Duration, reached: Boolean = false) {
+    fun record(
+        failure: Reason?,
+        service: Duration,
+        response: Duration,
+        at: Duration,
+        reached: Boolean = false,
+        attempts: Int = 1,
+    ) {
         if (reached) this.reached++
+        this.attempts += attempts
         if (failure == null) {
             ok.record(service, response)
         } else {
@@ -174,6 +187,7 @@ private class StepRecorder {
         failed.merge(other.failed)
         seconds.merge(other.seconds)
         reached += other.reached
+        attempts += other.attempts
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
         leftOver(other.outstanding)
     }
@@ -185,6 +199,7 @@ private class StepRecorder {
         serviceTime = ok.serviceTime.and(failed.serviceTime).timing(),
         responseTime = ok.responseTime.and(failed.responseTime).timing(),
         reached = reached,
+        attempts = attempts,
         unmatched = outstanding.unmatched,
         inFlight = outstanding.inFlight,
         timeline = seconds.freeze(),

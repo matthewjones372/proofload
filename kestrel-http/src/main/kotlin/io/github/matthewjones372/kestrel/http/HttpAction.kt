@@ -112,6 +112,10 @@ class HttpAction internal constructor(
             scope.fail(TooManyRedirects(following))
             return null
         }
+        // The hop is another round trip to the target under this step's name.
+        // One request with one service time, and the hops counted beside it, so
+        // a sign-in that costs a 302 and a 200 does not read as one request.
+        scope.attempted()
         return follow(next, hopsLeft - 1, scope)
     }
 

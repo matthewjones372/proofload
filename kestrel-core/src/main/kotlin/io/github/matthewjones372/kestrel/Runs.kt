@@ -101,6 +101,9 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
     failed = map { it.failed }.mergedOutcome(),
     serviceTime = map { it.serviceTime }.merged(),
     responseTime = map { it.responseTime }.merged(),
+    // Summed like the requests they sit behind: two runs' round trips are the
+    // round trips of both.
+    attempts = sumOf { it.attempts },
     unmatched = sumOf { it.unmatched },
     inFlight = sumOf { it.inFlight },
     timeline = map { it.timeline }.superimposed(),

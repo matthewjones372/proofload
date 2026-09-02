@@ -74,14 +74,14 @@ choose.
       Done when: a step that receives `set-cookie` sends it on the next step,
       two users never see each other's cookies, and a run without
       `withCookies()` sends no cookie header at all.
-- [ ] **`spec-0055-following`** — `following(max)`, hops as attempts, and the
+- [x] **`spec-0055-following`** — `following(max)`, hops as attempts, and the
       failure when the chain runs long.
       Done when: a one-hop redirect reports one request and two attempts, and a
       chain past `max` fails under a name that says so.
       Half landed: `following(max)` walks the chain in the step, cookies
       carry across hops and a chain past `max` fails under `TooManyRedirects`.
-      Hops are not counted as attempts — there is no attempts channel to
-      record them on, which is 0026's `spec-0026-attempts` and has not landed.
+      Hops are counted as attempts: `spec-0026-attempts` landed, so a one-hop
+      redirect reports one request and two attempts.
       Note also that `expecting()` judges the response the chain lands on,
       not the redirect, so the `.expecting(302).following()` in the Shape
       above does not hold: the alternative lets a 500 at the end of a chain

@@ -22,7 +22,7 @@ class HttpRedirectTest {
 
             val result = api.post("/login").following().run(Session.empty)
 
-            result shouldBe StepResult.Ok(Session.empty)
+            result shouldBe StepResult.Ok(Session.empty, attempts = 2)
             server.received.map { it.path } shouldBe listOf("/login", "/account")
         }
     }
@@ -52,7 +52,7 @@ class HttpRedirectTest {
 
             val result = api.get("/a").following().run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, TooManyRedirects(1))
+            result shouldBe StepResult.Failed(Session.empty, TooManyRedirects(1), attempts = 2)
         }
     }
 
@@ -67,7 +67,7 @@ class HttpRedirectTest {
 
             val result = api.get("/a").following(max = 2).run(Session.empty)
 
-            result shouldBe StepResult.Ok(Session.empty)
+            result shouldBe StepResult.Ok(Session.empty, attempts = 3)
             server.received.map { it.path } shouldBe listOf("/a", "/b", "/c")
         }
     }
@@ -79,7 +79,7 @@ class HttpRedirectTest {
 
             val result = api.post("/login").run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, HttpStatus(302))
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(302), attempts = 1)
             server.received.map { it.path } shouldBe listOf("/login")
         }
     }
@@ -94,7 +94,7 @@ class HttpRedirectTest {
 
             val result = api.post("/login").following().run(Session.empty)
 
-            result shouldBe StepResult.Failed(Session.empty, HttpStatus(500))
+            result shouldBe StepResult.Failed(Session.empty, HttpStatus(500), attempts = 2)
         }
     }
 
@@ -148,7 +148,7 @@ class HttpRedirectTest {
             serving("/login" to redirectTo("${destination.baseUrl}/account")) { origin ->
                 val result = http.baseUrl(origin.baseUrl).get("/login").following().run(Session.empty)
 
-                result shouldBe StepResult.Ok(Session.empty)
+                result shouldBe StepResult.Ok(Session.empty, attempts = 2)
                 destination.received.map { it.path } shouldBe listOf("/account")
             }
         }
@@ -167,7 +167,7 @@ class HttpRedirectTest {
                 .checking("landed on the account page") { it.body == "welcome" }
                 .run(Session.empty)
 
-            result shouldBe StepResult.Ok(Session.empty)
+            result shouldBe StepResult.Ok(Session.empty, attempts = 2)
         }
     }
 }

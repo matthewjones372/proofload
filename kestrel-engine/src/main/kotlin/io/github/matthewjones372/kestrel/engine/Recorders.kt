@@ -23,6 +23,7 @@ internal fun interface StepSink {
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        attempts: Int,
     )
 }
 
@@ -68,11 +69,12 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        attempts: Int,
     ) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
-        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached)
+        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, attempts)
     }
 
     /**
@@ -93,6 +95,10 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 
+    // One parameter past the limit, and deliberately: the alternative is a
+    // value holding the seven, which is an allocation per request on the very
+    // path this class exists to keep allocation off.
+    @Suppress("LongParameterList")
     private tailrec fun recordFrom(
         index: Int,
         step: String,
@@ -101,18 +107,19 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         schedulingDelay: Duration,
         at: Duration,
         reached: Boolean,
+        attempts: Int,
     ) {
         val recorder = slots.getAndSet(index, null)
         if (recorder != null) {
             try {
-                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached)
+                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, attempts)
             } finally {
                 slots.set(index, recorder)
             }
             return
         }
         Thread.onSpinWait()
-        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at, reached)
+        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at, reached, attempts)
     }
 
     companion object {

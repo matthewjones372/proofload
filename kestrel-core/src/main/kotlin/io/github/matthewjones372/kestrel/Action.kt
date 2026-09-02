@@ -17,9 +17,22 @@ sealed interface StepResult {
 
     val session: Session
 
-    data class Ok(override val session: Session) : StepResult
+    /**
+     * How many times this step went to the target to produce one measurement:
+     * one for an ordinary request, more where it followed a redirect or
+     * retried. One request is still one sample; this counts the round trips
+     * behind it, so a report can say 480 requests and 512 attempts rather than
+     * quietly reporting the target as slower than it is.
+     */
+    val attempts: Int
 
-    data class Failed(override val session: Session, val reason: Reason) : StepResult
+    data class Ok(override val session: Session, override val attempts: Int = 1) : StepResult
+
+    data class Failed(
+        override val session: Session,
+        val reason: Reason,
+        override val attempts: Int = 1,
+    ) : StepResult
 }
 
 /**
@@ -28,6 +41,10 @@ sealed interface StepResult {
  * body returns.
  */
 class StepScope internal constructor(private var session: Session) {
+
+    // The builder case again: a body that goes to the target more than once
+    // counts here, and the count is frozen into the StepResult with the rest.
+    private var attempts = 1
 
     // The builder case AGENTS.md allows: a step body is written as statements,
     // so the session and the reason accumulate across them and are frozen into
@@ -58,8 +75,18 @@ class StepScope internal constructor(private var session: Session) {
      */
     fun fail(reason: String) = fail(Said(reason))
 
+    /**
+     * Says this body went to the target once more.
+     *
+     * For a hop or a retry: the step is still one request with one service
+     * time, and this is the count of round trips underneath it.
+     */
+    fun attempted() {
+        attempts++
+    }
+
     internal fun result(): StepResult =
-        reason?.let { StepResult.Failed(session, it) } ?: StepResult.Ok(session)
+        reason?.let { StepResult.Failed(session, it, attempts) } ?: StepResult.Ok(session, attempts)
 }
 
 /** A step body as a value, so one action can be shared by several scenarios. */

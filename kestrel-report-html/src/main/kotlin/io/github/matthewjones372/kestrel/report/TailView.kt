@@ -36,7 +36,20 @@ private fun StepStats.tailLine(): String {
         is Tail.Measured -> """<span class="tail-value">${tail.duration.forReport()}${spread()}</span>"""
         is Tail.Absent -> """<span class="tail-value none">Not measured — ${tail.because.escapedForHtml()}.</span>"""
     }
-    return """      <li><span class="tail-step">${name.escapedForHtml()}</span>$shown</li>"""
+    return """      <li><span class="tail-step">${name.escapedForHtml()}</span>$shown${exemplar()}</li>"""
+}
+
+/**
+ * A trace id belonging to a request that landed here, where the run was traced.
+ *
+ * The question a tail provokes is not how slow it was but show me one, and an
+ * id is the whole answer: a reader pastes it into whatever holds their traces.
+ * Absent where nothing was traced rather than said to be missing — a line about
+ * a feature the run did not use is noise on every run that did not use it.
+ */
+private fun StepStats.exemplar(): String {
+    val trace = responseTime.exemplar(TAIL) ?: return ""
+    return """ <span class="tail-trace">trace <code>${trace.escapedForHtml()}</code></span>"""
 }
 
 private fun StepStats.spread(): String {

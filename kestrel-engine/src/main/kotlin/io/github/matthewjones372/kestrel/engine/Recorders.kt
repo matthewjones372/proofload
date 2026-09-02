@@ -17,6 +17,11 @@ import kotlin.time.Duration
  * without a branch on the path a request is timed on.
  */
 internal fun interface StepSink {
+
+    // Past detekt's limit, and deliberately, for the reason recordFrom below
+    // gives: a value holding these is an allocation per request on the path
+    // whose delay this tool would otherwise report as the target's latency.
+    @Suppress("LongParameterList")
     fun record(
         step: String,
         failure: Reason?,
@@ -25,6 +30,7 @@ internal fun interface StepSink {
         at: Duration,
         reached: Boolean,
         attempts: Int,
+        trace: String?,
     )
 }
 
@@ -84,6 +90,7 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
     /** How long the run has been going, for a caller that was told no offset. */
     fun sinceStart(): Duration = first.sinceStart()
 
+    @Suppress("LongParameterList")
     override fun record(
         step: String,
         failure: Reason?,
@@ -92,11 +99,12 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         at: Duration,
         reached: Boolean,
         attempts: Int,
+        trace: String?,
     ) {
         // The thread id spreads consecutive users across slots; it is a
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
-        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, attempts)
+        recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, attempts, trace)
     }
 
     /**
@@ -130,11 +138,12 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
         at: Duration,
         reached: Boolean,
         attempts: Int,
+        trace: String?,
     ) {
         val recorder = slots.getAndSet(index, null)
         if (recorder != null) {
             try {
-                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, attempts)
+                recorder.record(step, failure, serviceTime, schedulingDelay, at, reached, attempts, trace)
                 // Lazy: this thread owns the slot, so nothing else writes these
                 // two, and a ticker reading a count one store stale is what a
                 // watcher is for. An ordered store would cost a fence per
@@ -147,7 +156,17 @@ internal class Recorders(startedAt: Instant, shards: Int = defaultShards) : Step
             return
         }
         Thread.onSpinWait()
-        recordFrom((index + 1) % slots.length(), step, failure, serviceTime, schedulingDelay, at, reached, attempts)
+        recordFrom(
+            (index + 1) % slots.length(),
+            step,
+            failure,
+            serviceTime,
+            schedulingDelay,
+            at,
+            reached,
+            attempts,
+            trace,
+        )
     }
 
     companion object {

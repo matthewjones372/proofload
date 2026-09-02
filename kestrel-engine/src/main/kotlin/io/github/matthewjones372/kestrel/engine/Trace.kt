@@ -32,7 +32,7 @@ fun Scenario.trace(feeder: Feeder = Feeder.empty) {
 // Names are padded to the widest the scenario declares, so what happened reads
 // down a column. No time is printed: one request from a cold JVM is not a
 // measurement, and a number here would be quoted as though it were.
-private fun printedTo(width: Int): StepSink = StepSink { step, failure, _, _, _, _, _ ->
+private fun printedTo(width: Int): StepSink = StepSink { step, failure, _, _, _, _, _, _ ->
     println("kestrel:   ${step.padEnd(width)}  ${failure.outcome()}")
 }
 

@@ -56,14 +56,14 @@ triggers autoscaling gets banned by whoever owns the target.
 
 ## Stack
 
-- [ ] **`spec-0023-traceparent`** — generating and sending `traceparent` and
+- [x] **`spec-0023-traceparent`** — generating and sending `traceparent` and
       the load-marking `baggage` entry.
       Done when: every request carries a well-formed header, ids are unique per
       request, and an untraced client sends neither.
-- [ ] **`spec-0023-exemplars`** — one trace id per bucket, carried on `Timing`.
+- [x] **`spec-0023-exemplars`** — one trace id per bucket, carried on `Timing`.
       Done when: a histogram of a thousand samples keeps tens of ids, and the
       id reported beside p99 belongs to a request in that bucket.
-- [ ] **`spec-0023-report`** — the exemplar beside the percentile on the page.
+- [x] **`spec-0023-report`** — the exemplar beside the percentile on the page.
       Done when: the page shows an id for p99 where one was recorded, and says
       nothing where tracing was off.
 

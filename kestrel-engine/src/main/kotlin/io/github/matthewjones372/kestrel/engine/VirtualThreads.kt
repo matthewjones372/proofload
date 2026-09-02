@@ -171,7 +171,7 @@ private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
     Simulation(arms.map { arm -> arm.copy(profile = hold(arm.profile.startRate, over = warmUp.over)) })
 
 /** Where a warm-up's samples go: nowhere. */
-private val unrecorded = StepSink { _, _, _, _, _, _, _ -> }
+private val unrecorded = StepSink { _, _, _, _, _, _, _, _ -> }
 
 private fun Scenario.depart(
     sink: StepSink,
@@ -438,6 +438,7 @@ private fun Action.runOn(
         (startedAt - runStart).nanoseconds,
         reached,
         result.attempts,
+        result.trace,
     )
     return if (reason == null) result.session else null
 }

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.http
 
+import io.github.matthewjones372.kestrel.StepScope
 import java.net.http.HttpRequest
 import java.util.concurrent.ThreadLocalRandom
 
@@ -30,6 +31,9 @@ private const val PARENT_AT = 36
 /** Half a trace id, and the whole of a parent id. */
 private const val HEX_DIGITS = 16
 
+/** A whole trace id: two halves of hex. */
+private const val TRACE_DIGITS = 32
+
 private const val BITS_PER_DIGIT = 4
 
 private const val NIBBLE = 0xFL
@@ -50,8 +54,18 @@ private const val SHIFT_C = 31
  * Applied before the request's own headers, so a scenario that sets either name
  * itself is the one a reader sees first on the wire.
  */
-internal fun HttpRequest.Builder.tracing(traced: Boolean): HttpRequest.Builder =
-    if (traced) header(TRACEPARENT, nextTraceparent()).header(BAGGAGE, SYNTHETIC) else this
+internal fun HttpRequest.Builder.tracing(traced: Boolean, scope: StepScope): HttpRequest.Builder {
+    if (!traced) return this
+    val traceparent = nextTraceparent()
+    // Told to the scope as well as sent: a percentile with no id beside it
+    // leaves a reader to search a tracing backend by timestamp, which is the
+    // search this exists to replace.
+    scope.traced(traceparent.traceId())
+    return header(TRACEPARENT, traceparent).header(BAGGAGE, SYNTHETIC)
+}
+
+/** The trace id out of a `traceparent`: the middle field, which is what a backend is searched by. */
+private fun String.traceId(): String = substring(TRACE_AT, TRACE_AT + TRACE_DIGITS)
 
 /**
  * One thread's ids, seeded from `ThreadLocalRandom` rather than `SecureRandom`:

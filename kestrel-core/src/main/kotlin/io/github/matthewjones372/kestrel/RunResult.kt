@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
  * The bound is where a percentile falling in this bucket would be reported, so
  * a chart drawn from these and a number printed beside it cannot disagree.
  */
-data class Bucket(val upperBound: Duration, val count: Long)
+data class Bucket(val upperBound: Duration, val count: Long, val trace: String? = null)
 
 /** A percentile a run may not have the samples for: absent carries the reason, so no reader has to invent one. */
 sealed interface Tail {
@@ -69,6 +69,23 @@ data class Timing(
         if (count == 0L || distribution.isEmpty()) return Duration.ZERO
 
         return valueAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong()))
+    }
+
+    /**
+     * A trace id belonging to a request that landed at [percentile], where the
+     * run was traced and one was kept.
+     *
+     * The exemplar answers the question a percentile provokes: not "how slow
+     * was the tail" but "show me one". Null where nothing was traced, and null
+     * rather than a nearby bucket's id — an exemplar that is not from the
+     * bucket asked about points a reader at the wrong request, which is worse
+     * than pointing them nowhere.
+     */
+    fun exemplar(percentile: Double): String? {
+        require(percentile in 0.0..HUNDRED) { "percentile must be in 0..100, but was $percentile" }
+        if (count == 0L || distribution.isEmpty()) return null
+
+        return distribution.bucketAtRank(maxOf(1L, ceil(percentile / HUNDRED * count).toLong())).trace
     }
 
     /**
@@ -138,9 +155,12 @@ private fun List<Bucket>.at(count: Long, percentile: Double): Duration =
 /** The bucket the nth-smallest sample fell in. */
 internal fun Timing.valueAtRank(rank: Long): Duration = distribution.valueAtRank(rank)
 
-private fun List<Bucket>.valueAtRank(rank: Long): Duration =
+private fun List<Bucket>.valueAtRank(rank: Long): Duration = bucketAtRank(rank).upperBound
+
+/** The bucket the nth-smallest sample fell in, rather than only its top. */
+private fun List<Bucket>.bucketAtRank(rank: Long): Bucket =
     asSequence()
-        .runningFold(0L to first().upperBound) { (seen, _), bucket -> (seen + bucket.count) to bucket.upperBound }
+        .runningFold(0L to first()) { (seen, _), bucket -> (seen + bucket.count) to bucket }
         .first { (seen, _) -> seen >= rank }
         .second
 

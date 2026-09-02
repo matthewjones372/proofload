@@ -71,12 +71,13 @@ class RunRecorder(private val startedAt: Instant, private val origin: Long) {
         at: Duration,
         reached: Boolean = false,
         attempts: Int = 1,
+        trace: String? = null,
     ) {
         require(at >= Duration.ZERO) { "a request cannot have left before the run began, but left at $at" }
         behind.record(schedulingDelay)
         lateness.record(at, schedulingDelay)
         steps.getOrPut(step) { StepRecorder() }
-            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, attempts)
+            .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, attempts, trace)
     }
 
     /**
@@ -163,13 +164,14 @@ private class StepRecorder {
         at: Duration,
         reached: Boolean = false,
         attempts: Int = 1,
+        trace: String? = null,
     ) {
         if (reached) this.reached++
         this.attempts += attempts
         if (failure == null) {
-            ok.record(service, response)
+            ok.record(service, response, trace)
         } else {
-            failed.record(service, response)
+            failed.record(service, response, trace)
             countFailure(failure, 1L)
         }
         seconds.record(at, failure, service, response)
@@ -325,9 +327,9 @@ private class OutcomeRecorder {
     val serviceTime = Histogram()
     val responseTime = Histogram()
 
-    fun record(service: Duration, response: Duration) {
-        serviceTime.record(service)
-        responseTime.record(response)
+    fun record(service: Duration, response: Duration, trace: String? = null) {
+        serviceTime.record(service, trace)
+        responseTime.record(response, trace)
     }
 
     fun merge(other: OutcomeRecorder) {

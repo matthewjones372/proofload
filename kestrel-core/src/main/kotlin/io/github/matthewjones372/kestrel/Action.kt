@@ -26,12 +26,24 @@ sealed interface StepResult {
      */
     val attempts: Int
 
-    data class Ok(override val session: Session, override val attempts: Int = 1) : StepResult
+    /**
+     * A trace id this step sent, where it traced: what the report points at
+     * when a reader asks to see a request that landed at p99. Null where the
+     * step traced nothing, which is every untraced run.
+     */
+    val trace: String?
+
+    data class Ok(
+        override val session: Session,
+        override val attempts: Int = 1,
+        override val trace: String? = null,
+    ) : StepResult
 
     data class Failed(
         override val session: Session,
         val reason: Reason,
         override val attempts: Int = 1,
+        override val trace: String? = null,
     ) : StepResult
 }
 
@@ -45,6 +57,8 @@ class StepScope internal constructor(private var session: Session) {
     // The builder case again: a body that goes to the target more than once
     // counts here, and the count is frozen into the StepResult with the rest.
     private var attempts = 1
+
+    private var trace: String? = null
 
     // The builder case AGENTS.md allows: a step body is written as statements,
     // so the session and the reason accumulate across them and are frozen into
@@ -85,8 +99,20 @@ class StepScope internal constructor(private var session: Session) {
         attempts++
     }
 
+    /**
+     * Says this step sent [id] as its trace, so a percentile can point at one
+     * of the requests behind it.
+     *
+     * The last one wins where a step made several trips: a redirect chain's
+     * last hop is the one whose latency the step reports.
+     */
+    fun traced(id: String) {
+        trace = id
+    }
+
     internal fun result(): StepResult =
-        reason?.let { StepResult.Failed(session, it, attempts) } ?: StepResult.Ok(session, attempts)
+        reason?.let { StepResult.Failed(session, it, attempts, trace) }
+            ?: StepResult.Ok(session, attempts, trace)
 }
 
 /** A step body as a value, so one action can be shared by several scenarios. */

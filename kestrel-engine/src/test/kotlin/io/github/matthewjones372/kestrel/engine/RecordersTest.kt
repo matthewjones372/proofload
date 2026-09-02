@@ -30,7 +30,7 @@ class RecordersTest {
                 repeat(EACH) { at ->
                     recorders.record(
                         "browse", null, 1.milliseconds, Duration.ZERO, (at % SECONDS).seconds,
-                        reached = at == 0, attempts = 1,
+                        reached = at == 0, attempts = 1, trace = null,
                     )
                 }
             }
@@ -58,7 +58,7 @@ class RecordersTest {
                     if (index ==
                         0
                     ) Said("503") else null,
-                    1.milliseconds, Duration.ZERO, Duration.ZERO, reached = true, attempts = 1,
+                    1.milliseconds, Duration.ZERO, Duration.ZERO, reached = true, attempts = 1, trace = null,
                 )
             }
         }.forEach { it.join() }

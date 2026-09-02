@@ -137,7 +137,7 @@ class HttpAction internal constructor(
             HttpRequest.newBuilder(hop.uri)
                 .timeout(timeout)
                 .method(hop.method, publisher(hop.body))
-                .tracing(traced),
+                .tracing(traced, scope),
         ) { builder, (name, value) -> builder.header(name, value) }
         .build()
 

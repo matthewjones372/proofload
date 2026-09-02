@@ -361,7 +361,7 @@ private fun StepStats.rowLines(arm: String?, columns: Int): List<String> =
         """            <td class="num failed">${failed.count.grouped()}</td>""",
         timeCell(serviceTime.p50, responseTime.p50),
         timeCell(serviceTime.p95, responseTime.p95),
-        timeCell(serviceTime.p99, responseTime.p99),
+        timeCell(serviceTime.p99, responseTime.p99, responseTime.exemplar(NINETY_NINTH)),
         timeCell(serviceTime.max, responseTime.max),
         "          </tr>",
     ) + reasonLines(columns)
@@ -376,14 +376,18 @@ private fun armCell(arm: String?): List<String> =
  * formatted rather than reformatting nanoseconds in the browser, so there is
  * one implementation of "three significant figures" and it is the tested one.
  */
-private fun timeCell(service: Duration, response: Duration): String {
+private fun timeCell(service: Duration, response: Duration, trace: String? = null): String {
     val attributes = listOf(
         """class="num time"""",
         """data-service="${service.forReport()}"""",
         """data-response="${response.forReport()}"""",
         """data-service-ns="${service.inWholeNanoseconds}"""",
         """data-response-ns="${response.inWholeNanoseconds}"""",
-    ).joinToString(separator = " ")
+        // On the cell rather than in it: a trace id is thirty-two characters
+        // and would be wider than the column it sits in, so it travels as an
+        // attribute a reader can copy and a tooltip they can see.
+        trace?.let { """data-trace="${it.escapedForHtml()}" title="trace ${it.escapedForHtml()}"""" },
+    ).filterNotNull().joinToString(separator = " ")
     return "            <td $attributes>${service.forReport()}</td>"
 }
 
@@ -467,3 +471,6 @@ internal const val NOTHING_MEASURED: String = "—"
 
 /** Under this share of the window, a shortfall is the timeline's own whole seconds rather than a run that stopped. */
 private const val SHORTFALL = 0.1
+
+/** The percentile the table's p99 column reports, so the exemplar names a request from that bucket. */
+private const val NINETY_NINTH = 99.0

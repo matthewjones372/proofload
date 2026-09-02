@@ -36,6 +36,17 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
     // array.
     private val counts = LongArray(overflow + 1)
 
+    // One trace id per bucket, and only where a run traced: a table of nulls
+    // for every untraced run would double what a histogram costs to answer a
+    // question nobody asked. Allocated on the first traced sample, so an
+    // untraced run never sees it and a traced one pays for it once per step.
+    //
+    // Last writer wins, which needs no read and no compare: any request that
+    // landed in the bucket answers "show me one at this latency", and the
+    // newest is the one whose trace is least likely to have been dropped by a
+    // backend's retention.
+    private var traces: Array<String?>? = null
+
     /** Worst relative error of any percentile this one reports. */
     val precision: Double get() = 1.0 / subBucketHalf
 
@@ -47,12 +58,27 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
     /** Samples that arrived past the ceiling, counted at it rather than dropped. */
     val overflowed: Long get() = counts[overflow]
 
-    fun record(value: Duration) {
+    fun record(value: Duration) = record(value, trace = null)
+
+    /**
+     * The same, remembering [trace] as this bucket's exemplar where one is
+     * given.
+     *
+     * One id per bucket rather than per request: per request is a memory
+     * profile, and per bucket lands a reader on a real request at the latency
+     * they asked about, which is the whole question.
+     */
+    fun record(value: Duration, trace: String?) {
         val nanos = value.inWholeNanoseconds
         require(nanos >= 0) { "a latency cannot be negative, but was $value" }
         if (nanos > CEILING_NANOS) counts[overflow]++
-        counts[indexOf(minOf(nanos, CEILING_NANOS))]++
+        val index = indexOf(minOf(nanos, CEILING_NANOS))
+        counts[index]++
+        if (trace != null) tracing()[index] = trace
     }
+
+    private fun tracing(): Array<String?> =
+        traces ?: arrayOfNulls<String>(overflow + 1).also { traces = it }
 
     /**
      * Refused across precisions: the two tables index differently, so adding
@@ -63,6 +89,12 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
             "a histogram good to $precision cannot take one good to ${other.precision}"
         }
         for (index in counts.indices) counts[index] += other.counts[index]
+        // Theirs win where they have one: a merge is shards of one run, so
+        // either id names a request that really landed in that bucket.
+        other.traces?.let { theirs ->
+            val mine = tracing()
+            for (index in theirs.indices) theirs[index]?.let { mine[index] = it }
+        }
     }
 
     val max: Duration get() = percentile(MAX_PERCENTILE)
@@ -96,7 +128,7 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
      */
     fun distribution(): List<Bucket> = counts.asSequence().take(overflow)
         .mapIndexedNotNull { index, seen ->
-            if (seen == 0L) null else Bucket(highestEquivalentOf(index).nanoseconds, seen)
+            if (seen == 0L) null else Bucket(highestEquivalentOf(index).nanoseconds, seen, traces?.get(index))
         }
         .toList()
 

@@ -7,6 +7,24 @@ import io.github.matthewjones372.kestrel.StepScope
 import java.net.URI
 import java.net.http.HttpRequest
 import java.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+
+/** What a retry is: how many more sends, on what, and the first wait between them. */
+internal data class Retries(
+    val times: Int,
+    val on: (Response) -> Boolean,
+    val backingOff: kotlin.time.Duration,
+)
+
+/**
+ * The first wait between attempts, doubling after that.
+ *
+ * A hundred milliseconds because a target that answered 503 is usually
+ * shedding load, and sending again immediately is the behaviour that keeps it
+ * shedding.
+ */
+internal val firstBackoff: kotlin.time.Duration = 100.milliseconds
 
 private const val OK = 200
 private const val COOKIE = "cookie"
@@ -28,6 +46,7 @@ class HttpAction internal constructor(
     private val captures: List<Capture<*>> = emptyList(),
     private val traced: Boolean = false,
     private val following: Int = 0,
+    private val retries: Retries? = null,
 ) : Action {
 
     /**
@@ -55,6 +74,33 @@ class HttpAction internal constructor(
     fun following(max: Int = 1): HttpAction = copy(following = max)
 
     /**
+     * Sends again, up to [times] more, while [on] holds of the response.
+     *
+     * Each attempt is a trip counted in `attempts`, and the step's service
+     * time is the **last** attempt's — not the sum, and not the sum plus the
+     * waits between them. A retry folded into one measurement reports the
+     * target as slower than it is and hides that it answered wrongly first,
+     * and a p99 that includes a backoff is a number describing this tool's
+     * patience rather than the target.
+     *
+     * The wait doubles from [backingOff] and is not measured: it is time the
+     * user spends waiting, which lengthens the journey and belongs to no
+     * request.
+     *
+     * Asked for rather than default. A retry changes what is being measured —
+     * a target that fails one request in ten looks perfect behind two retries
+     * — so nothing here retries unless a caller said to.
+     */
+    fun retrying(
+        times: Int,
+        on: (Response) -> Boolean,
+        backingOff: kotlin.time.Duration = firstBackoff,
+    ): HttpAction {
+        require(times > 0) { "a retry sends again at least once, but times was $times" }
+        return copy(retries = Retries(times, on, backingOff))
+    }
+
+    /**
      * Asks [holds] of the response, failing the step under [name] when it does
      * not. The whole response body is held in memory to be read, so a request
      * that streams something large cannot also be checked.
@@ -72,7 +118,7 @@ class HttpAction internal constructor(
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {
         val url = path.fill(scope) ?: return null
-        val response = follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope) ?: return null
+        val response = attempts(url, scope) ?: return null
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
@@ -89,6 +135,44 @@ class HttpAction internal constructor(
         }
         captures.forEach { it.applyTo(scope, response) }
         return response
+    }
+
+    /**
+     * The request, sent as many times as [retries] asks for while its condition
+     * holds, timing each attempt on its own.
+     *
+     * The last attempt's duration is reported as the step's sample, so the
+     * earlier attempts and the waits between them are counted in `attempts`
+     * and are not in the latency. Without a retry this is one send and the
+     * engine times it, exactly as before.
+     */
+    // The ban is against a parked *carrier*, and this runs on the user's own
+    // virtual thread, where sleep unmounts rather than holding one — the same
+    // exemption the engine's `pause` takes, for the same reason. Scheduling
+    // the next attempt instead would hand the rest of the journey to another
+    // thread and lose the session the step is holding.
+    @Suppress("ForbiddenMethodCall")
+    private fun attempts(url: String, scope: StepScope): Response? {
+        val retries = retries ?: return follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope)
+
+        var waitFor = retries.backingOff
+        var left = retries.times
+        while (true) {
+            val startedAt = System.nanoTime()
+            val response = follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope)
+            val took = (System.nanoTime() - startedAt).nanoseconds
+            if (response == null || left == 0 || !retries.on(response)) {
+                // The last attempt is the measurement, whether it worked or
+                // not: a transport failure has already failed the step, and
+                // the sample says how long the try that decided it took.
+                if (response != null) scope.sample(took)
+                return response
+            }
+            left--
+            scope.attempted()
+            Thread.sleep(waitFor.inWholeMilliseconds)
+            waitFor *= 2
+        }
     }
 
     /**
@@ -126,8 +210,22 @@ class HttpAction internal constructor(
         checks: List<Check> = this.checks,
         captures: List<Capture<*>> = this.captures,
         following: Int = this.following,
+        retries: Retries? = this.retries,
     ): HttpAction =
-        HttpAction(method, origin, path, headers, body, expected, timeout, checks, captures, traced, following)
+        HttpAction(
+            method,
+            origin,
+            path,
+            headers,
+            body,
+            expected,
+            timeout,
+            checks,
+            captures,
+            traced,
+            following,
+            retries,
+        )
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
     // every call, so the loop that a builder invites is an expression instead.

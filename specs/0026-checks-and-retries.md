@@ -63,19 +63,19 @@ different checks is a report nobody can act on.
 - [x] **`spec-0026-attempts`** — attempts recorded separately from requests,
       on `StepStats` and on the page.
       Done when: a step retried once reports two attempts and one request.
-- [ ] **`spec-0026-retrying`** — `retrying(times, on)`, with a backoff that
+- [x] **`spec-0026-retrying`** — `retrying(times, on)`, with a backoff that
       cannot be a `Thread.sleep` in library code.
       Done when: a step retries only on the condition given, and the delay
       between attempts is on the scheduler.
-      **Blocked, established by trying.** The engine times the whole step body
-      (`Action.runOn`), so a retry built today would report a service time
-      covering every attempt *and* the backoff between them — which open
-      question 3 above says buries the retry, and is what this spec exists to
-      stop. Reporting the last attempt's service time needs the action to
-      carry a measurement out of itself, which is a channel that does not
-      exist and a third clock 0069 argues against; recording each attempt as
-      its own sample is `spec-0075-sample`. Either way `retrying` wants 0075
-      first. The `attempts` counter it needs is built.
+      Unblocked by `spec-0075-seam`: the action now reports through the scope,
+      so it times each attempt itself and samples the last one — the earlier
+      attempts and the waits between them are counted in `attempts` and are
+      not in the latency, which is what open question 3 asks for.
+      The backoff is a `Thread.sleep` on the user's own virtual thread, taking
+      the exemption the engine's `pause` takes and for its reason: the ban is
+      against a parked *carrier*, and sleep unmounts a virtual thread.
+      Scheduling the next attempt instead would hand the rest of the journey
+      to another thread and lose the session the step is holding.
 
 ## Acceptance
 
@@ -94,3 +94,7 @@ Answered by the architect:
     failing target is a denial-of-service written by accident.
 3. **A retried step's service time is the last attempt's**, with the total
     across attempts reported separately. Anything else buries the retry.
+    Half done: the last attempt is what the sample carries, and the attempts
+    are counted. The **total across attempts** has no home — `StepStats` has a
+    count and a distribution, and a second duration per step is a field
+    nothing else needs. Left unbuilt rather than guessed at.

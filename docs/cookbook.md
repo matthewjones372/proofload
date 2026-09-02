@@ -555,6 +555,34 @@ exec(
 A failed check is a failed step with the check's name as its reason, so the
 report says `has an order id` rather than `assertion failed`.
 
+## Retry, without burying the retry
+
+Real clients retry a 503. Kestrel will too, if you ask — and asking is the
+point, because a target that fails one request in ten looks perfect behind two
+retries:
+
+```kotlin
+exec(
+    placeOrder,
+    api.post("/orders")
+        .expecting(201)
+        .retrying(times = 2, on = { it.status == 503 }, backingOff = 100.milliseconds),
+)
+```
+
+The step's latency is the **last** attempt's, and the earlier attempts and the
+waits between them are counted rather than added to it:
+
+```kotlin
+result[placeOrder].count      // 480 requests
+result[placeOrder].attempts   // 512 trips to the target
+```
+
+That split is the whole reason this is a feature rather than a loop you write
+yourself. A retry written inside a step body is timed as one long request, so a
+p99 climbs by the backoff you chose and describes this tool's patience rather
+than the target.
+
 ## Sign in once and carry the cookie
 
 ```kotlin

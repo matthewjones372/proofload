@@ -63,25 +63,67 @@ it stops them using a tool that tells them the truth about it.
       recorded separately from service time.
       Done when: a scenario with a two-second pause takes two seconds longer
       per user and reports no latency for it.
+- [ ] **`spec-0024-shape`** — what a closed run reports about its own
+      schedule, decided before any of it is built. See *A run with no
+      schedule* below.
+      Done when: every figure in that section either has a value a closed run
+      can honestly produce, or is absent, or is refused where it is written.
 - [ ] **`spec-0024-closed`** — `ClosedUsers`, and the engine running a fixed
       population.
-      Done when: fifty users produce fifty concurrent journeys, and the run
-      reports the rate it actually achieved.
-      **Wants a revision before code, not a bigger effort.** This spec predates
-      most of what a run now reports about its own schedule, and every one of
-      those numbers assumes an open model: `behind` and `latePerSecond` measure
-      lateness against a departure the profile promised, and a closed user has
-      no promised departure after its first; `keptSchedule` and `lostGround`
-      judge a run against `plannedInterval`, which a fixed population does not
-      have; `offered` and `heldScheduleFor` (0076) compare what left against
-      what was asked. A closed run through today's code would put a lateness
-      figure and a schedule verdict on the page that mean nothing, which is a
-      worse failure than not having the feature. What each of those should say
-      under a closed model is a decision for this spec to make, and the
-      honesty entry below is not enough on its own.
+      Done when: fifty users produce fifty concurrent journeys, the run reports
+      the rate it actually achieved, and nothing in *A run with no schedule*
+      prints a number the run did not measure.
 - [ ] **`spec-0024-honesty`** — the caveat on the page and in the docs.
       Done when: a closed run's report says the load was shaped by the target,
       and an open run's does not.
+
+## A run with no schedule
+
+Added after the rest of the tool was built, and the reason `spec-0024-closed`
+sat unbuilt: almost every number a run now reports about its own schedule
+assumes an open model, and a closed run through today's code would print a
+lateness figure and a schedule verdict that mean nothing. That is a worse
+failure than not having the feature. Each of them, decided:
+
+**The two clocks collapse, and that is the finding.** 0003's service time is
+measured from the departure that happened and response time from the one the
+profile promised. A closed user's second journey has no promised departure —
+the target decides when it starts — so the two are the same number. A closed
+run reports one clock and says so. This is not a gap in the implementation; it
+is coordinated omission, stated where a reader meets it rather than in a
+footnote.
+
+**Absent, not zero.** `behind` and `latePerSecond` are `Timing.none` and empty.
+A generator is not late for a departure nobody promised, and zero would read as
+perfect punctuality rather than as a question that does not apply.
+`heldScheduleFor` and `offered` follow from them and are null, which is what
+they already answer for a result with no plan.
+
+**Refused where it is written**, rather than answered meaninglessly:
+
+- a `keptSchedule` goal on a closed simulation, because there is no
+  `plannedInterval` to judge against;
+- `sustainable` (0031) on a closed profile, because a capacity search climbs a
+  rate ladder and a closed model has no rate to climb — its ladder is a
+  population, which is a different search and a different spec;
+- `ClosedUsers` inside `then`, `randomized` or `replaying`, because each of
+  those shapes departures and a closed model has none to shape.
+
+**Kept, and better here than in an open run.** Little's law (0068) needs no
+promised departure: L = λW over what actually happened, and a fixed population
+is the case where the L it predicts is a number the caller chose. It becomes
+the headline check rather than a footnote. `SteadyState` (0032) is unchanged —
+it reads response time second by second and that still exists.
+
+**Kept, relabelled.** `arrivals` (0034) reports the spacing the run produced
+and its coefficient of variation. Under a closed model that spacing is the
+target's cadence rather than the profile's shape, and the page must say which
+it is looking at.
+
+**Refused across the two.** `Plan.unlike` must separate a closed plan from an
+open one, so `Runs` and `Shards` cannot pool them: they are not one population
+and a merged percentile over both is a number about neither.
+
 
 ## Acceptance
 
@@ -101,3 +143,15 @@ Answered by the architect:
     no requested rate — the target sets it. The page says so.
 3. **Pauses are excluded from `behind`.** The generator is not late for a
     departure that was meant to wait.
+
+Left open by this revision:
+
+4. **What a closed run's `plannedUsers` means.** `ClosedUsers(50, over)` names
+    a population, and `plannedUsers` today counts departures. Recommend the
+    population, `plannedRequests` absent — it cannot be known before the run —
+    and `plannedInterval` zero, which is what makes `lostGround` and `offered`
+    fall away by construction rather than by a special case in each.
+5. **Does a closed run get a profile shape on the page?** 0019 draws the rate
+    line a run asked for. There is none. Recommend drawing the achieved rate
+    over time instead, labelled as measured rather than asked for, so the panel
+    keeps its place and changes its claim.

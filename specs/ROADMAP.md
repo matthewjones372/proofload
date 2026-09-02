@@ -88,8 +88,9 @@ built. Each row links the spec that argued for it.
 
 Nothing. Every drafted spec is built, bar the tails listed below.
 
-Unbuilt tails of specs otherwise landed: `0024-closed`, which wants a revision
-before code — every schedule number a run now reports assumes an open model —
+Unbuilt tails of specs otherwise landed: `0024-closed`, whose revision is
+written — 0024 now decides what each schedule figure says when there is no
+schedule — and which is ready to build,
 `0029-tag`, which is the release itself, `0075`'s page entry, which cannot be
 built as written because a looped step and a streaming one read alike in a
 frozen result, `0071`'s server-streaming half, whose samples are either

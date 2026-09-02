@@ -83,7 +83,7 @@ and buckets, and nothing that names what was built.
 - [x] **`spec-0074-band`** — `Band`, from the existing resampler.
       Done when: a band contains its point's merged reading, runs that landed
       further apart give a wider one, and a point under five runs has none.
-- [ ] **`spec-0074-trend`** — `Trend`, `ends`, `steps`, `comparisons`.
+- [x] **`spec-0074-trend`** — `Trend`, `ends`, `steps`, `comparisons`.
       Done when: identical points name no step and `ends` contains 1.0, one
       injected step names that pair alone, and under three points is refused.
 - [ ] **`spec-0074-history`** — `readTrend`, one subdirectory per point.

@@ -112,7 +112,7 @@ internal val REPORT_CSS: String = """
     }
     .tile.ok .tile-value { color: var(--ok); }
     .tile.failed .tile-value { color: var(--failed); }
-    .steps { margin-top: 3rem; }
+    .steps, .stages { margin-top: 3rem; }
     .steps-head {
       display: flex;
       align-items: baseline;

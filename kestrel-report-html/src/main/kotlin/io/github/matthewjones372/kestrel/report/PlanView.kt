@@ -181,7 +181,7 @@ private fun Arrivals.achieved(): String =
         "${String.format(Locale.ROOT, "%.2f", cov)}."
 
 /** The shape in words, one clause per stage, in the order they run. */
-private fun InjectionProfile.described(): String = when (this) {
+internal fun InjectionProfile.described(): String = when (this) {
     // Users rather than a rate, because a closed run asked for no rate: what
     // it asked for is this many users, and the target decided the rest.
     is InjectionProfile.ClosedUsers ->
@@ -283,3 +283,12 @@ private const val WIDTH = 640.0
 private const val PLOT = 60.0
 private const val HEADROOM = 8.0
 private const val HEIGHT = 78
+
+/**
+ * A stage's own rate line, for the row naming it.
+ *
+ * The same words the plan above uses, so a reader matching a row to the shape
+ * it came from is matching the same string rather than two spellings of one
+ * thing.
+ */
+internal fun InjectionProfile.stageName(): String = described()

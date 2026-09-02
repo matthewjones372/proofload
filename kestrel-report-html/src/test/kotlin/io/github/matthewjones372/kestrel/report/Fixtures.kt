@@ -20,10 +20,12 @@ import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.Trend
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.failureRate
+import io.github.matthewjones372.kestrel.hold
 import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.kestrel.then
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.matchers.shouldBe
 import java.nio.file.Files
@@ -158,6 +160,20 @@ internal object Fixtures {
 
     /** The same load at the same latency throughout, so the shape is the only difference on the page. */
     val steadyThroughout: RunResult = recorded(degrading = false)
+
+    /**
+     * The same four seconds, told they were two stages.
+     *
+     * The halves differ by design, so one p99 over both is the mixture this
+     * table exists to correct.
+     */
+    val staged: RunResult = degradedHalfway.copy(
+        plan = Plan(
+            "paying",
+            listOf("pay"),
+            hold(100.perSecond, over = 2.seconds).then(hold(200.perSecond, over = 2.seconds)),
+        ),
+    )
 
     private fun recorded(degrading: Boolean): RunResult {
         val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"))

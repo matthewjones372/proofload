@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.Interval
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Stage
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.ThinkTime
@@ -20,6 +21,7 @@ import io.github.matthewjones372.kestrel.offered
 import io.github.matthewjones372.kestrel.precision
 import io.github.matthewjones372.kestrel.ranOutOfRoom
 import io.github.matthewjones372.kestrel.seeds
+import io.github.matthewjones372.kestrel.stages
 import io.github.matthewjones372.kestrel.startRate
 import io.github.matthewjones372.kestrel.unanswered
 import java.util.Locale
@@ -50,7 +52,8 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
             concurrencyLine(),
         ) +
             comparison.blocks(floor) + mixBlocks() +
-            stepTable() + listOfNotNull(streamLine(), hiccupLine()) + failureBlocks() + totals() +
+            stepTable() + listOfNotNull(streamLine(), stageTable(), hiccupLine()) +
+            failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + measurementNote()
     }
 
@@ -379,6 +382,73 @@ private fun RunResult.streamLine(): String? {
         "loop: $named. Requests counts the answers there, each its own sample, so the percentiles are " +
         "about the messages rather than about the batch."
 }
+
+/**
+ * What each stage of a staged run measured, or null where nothing staged it.
+ *
+ * Under the step table rather than above it: the totals there are what a
+ * reader looks at first, and this says what they are a mixture of. One stage
+ * would be a table repeating them.
+ */
+private fun RunResult.stageTable(): String? {
+    val staged = stages
+    if (staged.isEmpty()) return null
+
+    val rows = table(
+        columns = listOf(
+            Column("Stage", Align.LEFT),
+            Column("Window", Align.LEFT),
+            Column("Requests", Align.RIGHT),
+            Column("OK", Align.RIGHT),
+            Column("Failed", Align.RIGHT),
+            Column("p50", Align.RIGHT),
+            Column("p95", Align.RIGHT),
+            Column("p99", Align.RIGHT),
+            Column("Max", Align.RIGHT),
+        ),
+        rows = staged.map { it.row() },
+    )
+    val width = staged.first().serviceTime.precision?.let { " and so good to ${it.asPercent()}" }.orEmpty()
+    return rows + "\n\nEach stage is the seconds of the timeline inside it, read off rather than " +
+        "recorded$width — wider than the percentiles above, which are a step's own. " +
+        "The table above covers the whole run: on a staged run it is a mixture of these rows and " +
+        "describes none of them.${staged.misalignment()}"
+}
+
+/**
+ * What to say where a stage boundary fell inside a second.
+ *
+ * A second is the finest thing the timeline holds, so it is counted whole in
+ * the stage its own start falls in, rather than left for a reader to notice
+ * that a window is not the length the plan asked for.
+ */
+private fun List<Stage>.misalignment(): String {
+    val ragged = filterNot { it.alignedToSeconds }
+    if (ragged.isEmpty()) return ""
+    val named = ragged.joinToString(separator = ", ") {
+        "stage ${it.index + 1} asked for ${it.planned.report()} and holds ${(it.until - it.from).report()}"
+    }
+    return " A boundary fell inside a second, and a second is counted whole in the stage it " +
+        "begins in: $named."
+}
+
+/** A stage window's edge, zero rendered as a second rather than as a nanosecond precision. */
+private fun Duration.edge(): String = if (this == Duration.ZERO) "0s" else report()
+
+private fun Stage.row(): List<String> = listOf(
+    // The ordinal rather than the rate line: this summary is a PR comment and
+    // stays terse, the shape it names is on the page, and a ramp printed as
+    // its start rate would name the stage after the load it left behind.
+    "${index + 1} of $of",
+    "${from.edge()}–${until.edge()}",
+    count.toString(),
+    ok.toString(),
+    failed.toString(),
+    serviceTime.p50.report(),
+    serviceTime.p95.report(),
+    serviceTime.p99.report(),
+    serviceTime.max.report(),
+)
 
 private fun RunResult.stepTable(): String = table(
     columns = listOf(

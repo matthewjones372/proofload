@@ -7,6 +7,7 @@ import io.github.matthewjones372.kestrel.Floor
 import io.github.matthewjones372.kestrel.Headroom
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Stage
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.Timing
@@ -17,6 +18,7 @@ import io.github.matthewjones372.kestrel.inFlight
 import io.github.matthewjones372.kestrel.offered
 import io.github.matthewjones372.kestrel.precision
 import io.github.matthewjones372.kestrel.ranOutOfRoom
+import io.github.matthewjones372.kestrel.stages
 import io.github.matthewjones372.kestrel.unanswered
 import io.github.matthewjones372.kestrel.unmatched
 import java.nio.file.Files
@@ -90,6 +92,7 @@ private fun RunResult.documentLines(
         readingLines(),
         failedLines(),
         stepsLines(),
+        stageLines(),
         timelineLines(),
         tailLines(),
         listOf("</main>"),
@@ -448,6 +451,89 @@ private fun RunResult.stepsLines(): List<String> =
             " and rounds away from the target rather than towards it.</p>",
         "  </section>",
     )
+
+/**
+ * What each stage of a staged run measured, beside the totals that mix them.
+ *
+ * Only for a run whose profile named stages: one stage would be a table
+ * repeating the totals above it. The aggregate stays where it is rather than
+ * being removed — people compare it between builds — and this is the
+ * correction beside it.
+ */
+private fun RunResult.stageLines(): List<String> {
+    val staged = stages
+    if (staged.isEmpty()) return emptyList()
+
+    return listOf(
+        """  <section class="stages">""",
+        "    <h2>Stages</h2>",
+        """    <div class="table-scroll">""",
+        "      <table>",
+        "        <thead>",
+        "          <tr>",
+        """            <th scope="col">Stage</th>""",
+        """            <th scope="col">Window</th>""",
+        """            <th scope="col" class="num">Count</th>""",
+        """            <th scope="col" class="num">OK</th>""",
+        """            <th scope="col" class="num">Failed</th>""",
+        """            <th scope="col" class="num">p50</th>""",
+        """            <th scope="col" class="num">p95</th>""",
+        """            <th scope="col" class="num">p99</th>""",
+        """            <th scope="col" class="num">Max</th>""",
+        "          </tr>",
+        "        </thead>",
+        "        <tbody>",
+    ) + staged.flatMap { it.rowLines() } + listOf(
+        "        </tbody>",
+        "      </table>",
+        "    </div>",
+        """    <p class="note">Each stage is the seconds of the timeline inside it, """ +
+            "read off rather than recorded" +
+            staged.first().serviceTime.precision?.let { " and so good to ${it.asPercent()}" }.orEmpty() +
+            " — wider than the percentiles above, which are a step's own. The totals above cover " +
+            "the whole run: on a staged run they are a mixture of the rows here and describe none " +
+            "of them.${staged.misalignment()}</p>",
+        "  </section>",
+    )
+}
+
+/**
+ * What to say where a stage boundary fell inside a second.
+ *
+ * A second is the finest thing the timeline holds, so it is counted whole in
+ * the stage its own start falls in. Said rather than left for a reader to
+ * notice that a window is not the length the plan asked for.
+ */
+private fun List<Stage>.misalignment(): String {
+    val ragged = filterNot { it.alignedToSeconds }
+    if (ragged.isEmpty()) return ""
+    val named = ragged.joinToString(separator = ", ") {
+        "stage ${it.index + 1} asked for ${it.planned.forPlan()} and holds " +
+            "${(it.until - it.from).forPlan()}"
+    }
+    return " A boundary fell inside a second, and a second is counted whole in the stage it " +
+        "begins in: $named."
+}
+
+/**
+ * A stage window's edge. Whole seconds by construction, and zero rendered as a
+ * second rather than as "0 ns", which reads as a precision nothing here has.
+ */
+private fun Duration.edge(): String = if (this == Duration.ZERO) "0 s" else forPlan()
+
+private fun Stage.rowLines(): List<String> = listOf(
+    "          <tr>",
+    """            <th scope="row">${profile.stageName().escapedForHtml()}</th>""",
+    """            <td>${from.edge()}–${until.edge()}</td>""",
+    """            <td class="num">${count.grouped()}</td>""",
+    """            <td class="num ok">${ok.grouped()}</td>""",
+    """            <td class="num failed">${failed.grouped()}</td>""",
+    """            <td class="num">${serviceTime.p50.forReport()}</td>""",
+    """            <td class="num">${serviceTime.p95.forReport()}</td>""",
+    """            <td class="num">${serviceTime.p99.forReport()}</td>""",
+    """            <td class="num">${serviceTime.max.forReport()}</td>""",
+    "          </tr>",
+)
 
 private fun RunResult.chartLines(): List<String> =
     steps.values.flatMap { step -> step.serviceTime.distributionChart(step.name) }

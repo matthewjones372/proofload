@@ -203,6 +203,15 @@ enough to list, and long enough to matter.
   baseline written before this existed counts no visits, which reads as
   unmeasured rather than as no stream. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **What each stage measured.** `RunResult.stages` splits a staged run at the
+  boundaries its own profile named, so a ramp and the hold after it are two
+  answers rather than one number over both. The aggregate on a staged run is a
+  mixture weighted by how long each stage lasted — lengthen the ramp and it
+  improves without the target changing — and both reports now carry a row per
+  stage beside it. Read off the timeline rather than recorded, so the figures
+  are the timeline's coarse width and say so; a boundary falling inside a
+  second is named rather than interpolated, the second counted whole in the
+  stage it begins in. Empty for a run nobody staged.
 - **The closed model.** `users(50, over = 10.minutes)` holds a fixed population,
   each user restarting the scenario when it finishes — "fifty users, looping",
   which is how most people describe load. Supported and labelled: a closed run

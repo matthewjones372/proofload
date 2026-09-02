@@ -89,11 +89,20 @@ legitimate thing to write.
       whose seconds add up to the run's, a boundary inside a second lands in
       the earlier stage with `planned` differing from `until - from`, and an
       unstaged run answers an empty list.
-- [ ] **`spec-0077-page`** — the stage table in both reports, and the note that
+- [x] **`spec-0077-page`** — the stage table in both reports, and the note that
       names the precision it is at.
       Done when: a staged run's page carries a row per stage with its rate line
       and both clocks, an unstaged run's page is unchanged, and the goldens move
       once with the diff read rather than regenerated.
+      **Service time only, and the summary names an ordinal.** Two deviations,
+      both to keep the table narrow. The rows carry service time: response time
+      would double every column, and a stage's own backlog is what `behind`
+      already answers for the run. And the GitHub summary names a stage `1 of
+      2` rather than by its rate line — that summary is a PR comment and stays
+      terse, the shape it names is on the page, and a ramp printed as its start
+      rate would name the stage after the load it left behind. The page itself
+      carries the rate line, which is where a reader matching a row to a shape
+      is looking.
 
 ## Acceptance
 

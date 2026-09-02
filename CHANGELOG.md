@@ -144,7 +144,62 @@ enough to list, and long enough to matter.
 - **`kestrel-pelican`** — Pelican's `ClientTransport` over the JDK client, so a
   generated typed client runs inside a load test with no Pekko.
 
+- **A warm-up the runner does.** `warmingUp(over)` on a run and on a search
+  sends load before the measurement and records none of it: no histogram,
+  second or lateness sample from a warm-up reaches the result, because it runs
+  before the recorder exists. Each arm holds at the rate its own shape opens
+  at, and a search warms every rung at that rung's rate — one warm-up at the
+  start would leave the first rung, whose verdict decides whether the ladder
+  climbs, measuring a cold JVM. The plan carries it, so the page says what was
+  warmed and a comparison refuses to pool a warmed run with a cold one. There
+  is no default: a tool that warms unless told otherwise changes what every
+  run already written measures.
+- **What a run that fell behind still measured.** `RunResult.offered` names the
+  load asked for, the load that left and the window it took;
+  `latePerSecond` and `heldScheduleFor` say *when* the schedule went rather
+  than only that it did. The page, the job summary and a void rung now say the
+  service times are the target at the load that left — service time is
+  measured from the departure that happened, so a run the generator could not
+  drive is a smaller experiment rather than a wasted one. Kestrel still will
+  not throttle itself mid-run: a run that lowers its own rate measures a load
+  it then does not report.
+- **An exemplar beside a percentile.** A traced run keeps one trace id per
+  histogram bucket — tens per step, not one per request — and
+  `Timing.exemplar(percentile)` returns an id belonging to a request that
+  landed in that bucket, never a neighbour's. The page prints it beside p99.9
+  and carries it on the p99 cell. The id table is allocated on the first traced
+  sample, so an untraced run pays nothing.
+- **Attempts beside requests.** `StepStats.attempts` counts the round trips
+  behind the requests, so a redirect followed is one request and two attempts
+  rather than one request that quietly took two. A retry folded into one
+  measurement would report the target as slower than it is and hide that it
+  answered wrongly first.
+- **A run you can watch counts what it recorded.** The progress line reports
+  requests and failures as they land, from a volatile count per shard read
+  approximately — it went in only because `:benchmarks:ceiling` reported the
+  same ceiling with it as without.
+- **One clock per run, owned by the recorder.** `RunRecorder` holds the run's
+  monotonic origin and answers `sinceStart()`; `shard()` spawns recorders that
+  share it. Every recording path asks the recorder rather than keeping an
+  origin of its own, so a transport built before the run can no longer count
+  seconds from its own construction.
+
 ### Changed
+
+- **The baseline format is version 5.** It carries the warm-up a run
+  declared, because a comparison refuses to pool a warmed run with a cold one
+  and a file that did not carry it would refuse every warmed run against every
+  baseline ever written. Version 4 and version 3 files still read, and claim no
+  warm-up.
+- **A failed credential refresh no longer stops refreshing.** A fetch that
+  threw out of `refreshing`'s scheduled task cancelled its own schedule, so one
+  failure left every later refresh unscheduled and a soak reading a credential
+  that expired an hour ago — arriving as the target answering 401. The failure
+  is now caught, counted on `Refreshing.failures` and named in `lastFailure`,
+  and the last good value stays in force.
+- **`StepResult` carries what a step did as well as what it was.** `Ok` and
+  `Failed` gained `attempts` and `trace`, both defaulted, and `StepScope`
+  gained `attempted()` and `traced(id)` for a step body to report them.
 
 - **A failure reason is a value, not a string.** `StepScope.fail` takes a
   `Reason` — `Said`, `Threw`, `TimedOut`, `Other`, or one a caller writes — and
@@ -170,7 +225,8 @@ commit this section was written on, not planned or assumed.
   the shape some teams' targets are specified in.
 - **A WebSocket wait is one sample, not one per message.** `awaiting(count)`
   records a single sample for the whole batch, because a step can produce only
-  one sample today. A per-message distribution needs waiting for one at a time.
+  one sample today. A per-message distribution is `specs/0075`, and the same
+  seam blocks retries and a trace that prints the exchange.
 - **No Kafka, and no queue or database steps.** HTTP, WebSocket handshakes and
   Pelican endpoints are the protocols. `emit` is the seam for anything else, and
   the caller writes the client.

@@ -10,6 +10,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpTimeoutException
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.toJavaDuration
 
 /** How long a request is given before it is a failure rather than a slow success. */
@@ -45,7 +46,7 @@ class JdkHttpClient(private val client: HttpClient = sharedClient) : Transport {
 
     override fun exchange(request: Request): Exchange =
         try {
-            Exchange.Answered(Response.of(client.send(request.asJdk(), HttpResponse.BodyHandlers.ofString())))
+            Exchange.Answered(if (request.discardingBody) counted(request) else held(request))
         } catch (failure: IOException) {
             Exchange.Failed(failure.reason())
         } catch (interrupted: InterruptedException) {
@@ -54,6 +55,26 @@ class JdkHttpClient(private val client: HttpClient = sharedClient) : Transport {
             Thread.currentThread().interrupt()
             Exchange.Failed(interrupted.className())
         }
+
+    private fun held(request: Request): Response =
+        Response.of(client.send(request.asJdk(), HttpResponse.BodyHandlers.ofString()))
+
+    /**
+     * Every buffer counted and let go, so a 200 MB export is measured in a heap
+     * that could not hold one of them.
+     *
+     * The counter is atomic rather than a plain `var` because the handler's
+     * consumer runs on the client's own thread and this one reads it after
+     * `send` returns; one allocation per request, on a path that has just made
+     * a round trip.
+     */
+    private fun counted(request: Request): Response {
+        val bytes = AtomicLong()
+        val handler = HttpResponse.BodyHandlers.ofByteArrayConsumer { chunk ->
+            chunk.ifPresent { bytes.addAndGet(it.size.toLong()) }
+        }
+        return Response.counting(client.send(request.asJdk(), handler), bytes.get())
+    }
 }
 
 private fun publisher(body: Body?): HttpRequest.BodyPublisher = when (body) {

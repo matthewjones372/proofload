@@ -81,16 +81,20 @@ implements it.
 
 ## Stack
 
-- [ ] **`spec-0082-discard`** — `discardingBody`, the counting handler, and
+- [x] **`spec-0082-discard`** — `discardingBody`, the counting handler, and
       `Response.bytes`.
       Done when: a 200 MB response is measured with a heap too small to hold
       it, `bytes` is the length the target sent, and `body` is empty.
-- [ ] **`spec-0082-refuse`** — a check or capture on a discarding step refused
+      The heap is the gate rather than a claim about one: `kestrel-http`'s test
+      JVM is capped at 96 MB in its own build file and the test reads 192 MB, so
+      a step that held that body fails here instead of in somebody's download
+      test.
+- [x] **`spec-0082-refuse`** — a check or capture on a discarding step refused
       where it is written.
       Done when: `discardingBody().check(...)` and `.capture(...)` both throw
       at build time naming which, and the message says to drop one or the
       other.
-- [ ] **`spec-0082-docs`** — the cookbook recipe and the limitation removed
+- [x] **`spec-0082-docs`** — the cookbook recipe and the limitation removed
       from the CHANGELOG.
       Done when: the page says what is not available on a discarded response.
 

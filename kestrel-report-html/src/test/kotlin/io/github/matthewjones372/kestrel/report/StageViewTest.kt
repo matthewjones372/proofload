@@ -30,4 +30,29 @@ class StageViewTest {
     fun `a run nobody staged has no stage table`() {
         Fixtures.fellBehind.toHtmlReport() shouldNotContain "<h2>Stages</h2>"
     }
+
+    @Test
+    fun `a goal asked of every stage lands on the row it is about`() {
+        val page = Fixtures.stagedAgainstGoals.toHtmlReport()
+
+        page shouldContain """<th scope="col">Goals</th>"""
+        page shouldContain """<td class="verdict met">"""
+        page shouldContain """<td class="verdict missed">"""
+    }
+
+    @Test
+    fun `the verdict list names the stage each verdict is about`() {
+        val page = Fixtures.stagedAgainstGoals.toHtmlReport()
+
+        page shouldContain """<span class="stage">stage 1 of 2</span>"""
+        page shouldContain """<span class="stage">stage 2 of 2</span>"""
+    }
+
+    @Test
+    fun `a staged run nobody asked a per-stage goal of keeps the table it had`() {
+        val page = Fixtures.staged.toHtmlReport()
+
+        page shouldContain "<h2>Stages</h2>"
+        page shouldNotContain """<th scope="col">Goals</th>"""
+    }
 }

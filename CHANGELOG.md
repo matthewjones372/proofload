@@ -367,6 +367,20 @@ enough to list, and long enough to matter.
   collector that refuses is one line on stderr rather than a two-hour run that
   died at minute one.
 
+- **A download nobody reads is measured without being held.**
+  `discardingBody()` drains the response through a counting handler:
+  `Response.bytes` is what came back and `Response.body` is empty, so a 200 MB
+  export is measured in a heap that could not hold one of them. A check or a
+  capture on such a step is refused where it is written rather than passing
+  against an empty string. `Response.bytes` is on every response.
+- **A goal can be judged per stage.** `goal.inEveryStage` answers one `Verdict`
+  per stage of a staged run, each carrying the `Stage` it is about, and the run
+  meets it only where every stage does — so a run can no longer meet a goal by
+  lengthening its ramp. `Verdict` gained `stage` and `refused`: a stage verdict
+  missed by less than the width of the timeline's own buckets reports as
+  cannot-tell rather than as a red tick nobody can chase. Both reports put the
+  verdict on the stage row it belongs to.
+
 ### Limitations
 
 What this does not do yet. Each of these is checked against the tree at the
@@ -388,10 +402,11 @@ commit this section was written on, not planned or assumed.
 - **No database steps, and no queue beyond Kafka.** HTTP, server-sent events,
   WebSocket handshakes, gRPC, Kafka and Pelican endpoints are the protocols.
   `emit` is the seam for anything else, and the caller writes the client.
-- **A response body is held whole.** `BodyHandlers.ofString` reads the answer
-  into memory to be checked and captured, so a step that downloads something
-  large holds it once per user. The request half is streamed (`bodyFrom`); the
-  response half is not, and a check or a capture is why.
+- **A response body is held whole unless a step says otherwise.**
+  `BodyHandlers.ofString` reads the answer into memory to be checked and
+  captured, which is what a check and a capture need. `discardingBody()` counts
+  the bytes and lets them go for the step that reads neither, and refuses a
+  check or a capture where one is written.
 - **Nothing but counts leaves during a run.** `otlpEvery` pushes what the
   scheduler keeps — departed, in flight, requests, failures and the newest
   lateness — to a collector while a run is going, and `and` puts it beside the

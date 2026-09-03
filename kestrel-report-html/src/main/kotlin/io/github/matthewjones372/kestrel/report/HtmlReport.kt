@@ -11,6 +11,7 @@ import io.github.matthewjones372.kestrel.Stage
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.Verdict
 import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
@@ -464,6 +465,11 @@ private fun RunResult.stageLines(): List<String> {
     val staged = stages
     if (staged.isEmpty()) return emptyList()
 
+    // Only where a goal was asked per stage. A column of blanks on every other
+    // staged run would be a page saying nothing in a wider table.
+    val judged = verdicts.filter { it.stage != null }.groupBy { it.stage?.index }
+    val goalColumn = if (judged.isEmpty()) emptyList() else listOf("""            <th scope="col">Goals</th>""")
+
     return listOf(
         """  <section class="stages">""",
         "    <h2>Stages</h2>",
@@ -480,10 +486,11 @@ private fun RunResult.stageLines(): List<String> {
         """            <th scope="col" class="num">p95</th>""",
         """            <th scope="col" class="num">p99</th>""",
         """            <th scope="col" class="num">Max</th>""",
+    ) + goalColumn + listOf(
         "          </tr>",
         "        </thead>",
         "        <tbody>",
-    ) + staged.flatMap { it.rowLines() } + listOf(
+    ) + staged.flatMap { it.rowLines(judged[it.index].orEmpty()) } + listOf(
         "        </tbody>",
         "      </table>",
         "    </div>",
@@ -521,7 +528,7 @@ private fun List<Stage>.misalignment(): String {
  */
 private fun Duration.edge(): String = if (this == Duration.ZERO) "0 s" else forPlan()
 
-private fun Stage.rowLines(): List<String> = listOf(
+private fun Stage.rowLines(judged: List<Verdict>): List<String> = listOf(
     "          <tr>",
     """            <th scope="row">${profile.stageName().escapedForHtml()}</th>""",
     """            <td>${from.edge()}–${until.edge()}</td>""",
@@ -532,8 +539,23 @@ private fun Stage.rowLines(): List<String> = listOf(
     """            <td class="num">${serviceTime.p95.forReport()}</td>""",
     """            <td class="num">${serviceTime.p99.forReport()}</td>""",
     """            <td class="num">${serviceTime.max.forReport()}</td>""",
+) + judged.map { it.cell() } + listOf(
     "          </tr>",
 )
+
+/**
+ * A stage's verdicts on the row they are about, rather than in a list that
+ * repeats the goal's name once per stage.
+ */
+private fun Verdict.cell(): String {
+    val mark = when {
+        refused != null -> "unresolved"
+        met -> "met"
+        else -> "missed"
+    }
+    val said = refused?.let { "cannot tell" } ?: if (met) "met" else "missed"
+    return """            <td class="verdict $mark">${goal.described.escapedForHtml()}: $said</td>"""
+}
 
 private fun RunResult.chartLines(): List<String> =
     steps.values.flatMap { step -> step.serviceTime.distributionChart(step.name) }

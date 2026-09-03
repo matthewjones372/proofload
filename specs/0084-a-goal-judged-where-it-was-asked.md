@@ -82,19 +82,19 @@ this cannot be judged at this resolution — not a red tick somebody chases.
 
 ## Stack
 
-- [ ] **`spec-0084-verdict`** — `Verdict.stage`, and a goal that can answer more
+- [x] **`spec-0084-verdict`** — `Verdict.stage`, and a goal that can answer more
       than one verdict.
       Done when: an unstaged run's verdicts are byte-identical to today and a
       verdict about the run has a null stage.
-- [ ] **`spec-0084-stage`** — `inEveryStage`, judged off 0077's stages.
+- [x] **`spec-0084-stage`** — `inEveryStage`, judged off 0077's stages.
       Done when: a run whose hold missed and whose ramp met reports one met and
       one missed verdict, `metEveryGoal` is false, and the same goal without
       the wrapper still meets it off the aggregate.
-- [ ] **`spec-0084-resolution`** — a stage verdict missed by less than the
+- [x] **`spec-0084-resolution`** — a stage verdict missed by less than the
       timeline's width reports as unresolvable.
       Done when: a goal missed by one bucket says so rather than failing, and
       one missed by ten buckets fails.
-- [ ] **`spec-0084-page`** — the verdict on the stage row it belongs to, in both
+- [x] **`spec-0084-page`** — the verdict on the stage row it belongs to, in both
       reports.
       Done when: a staged run's stage table carries its verdicts and an
       unstaged run's page is unchanged.
@@ -120,3 +120,8 @@ which stage.
 3. **Should the aggregate verdict stay beside the per-stage ones?** Both would
     print. Recommend keeping it and labelling it, as 0077 kept the aggregate
     percentiles: it is the number people compare between builds.
+    **Settled the other way**, by this spec's own acceptance: `spec-0084-stage`
+    asks a two-stage run for exactly one met and one missed verdict, so
+    `inEveryStage` answers per stage and nothing else. The aggregate is had by
+    declaring the plain goal beside the wrapped one, which is one line and says
+    plainly that two questions were asked. The cookbook shows it.

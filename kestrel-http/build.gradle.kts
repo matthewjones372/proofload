@@ -21,6 +21,12 @@ dependencies {
 }
 
 tasks.test {
+    // Smaller than the response `DiscardingBodyTest` measures, so "the bytes
+    // are counted rather than held" is a gate rather than a claim: a step that
+    // held that body runs out of heap here instead of in somebody's download
+    // test. Every other test in this module is far inside it.
+    maxHeapSize = "96m"
+
     // Hand the *main* runtime classpath to the test JVM. The test classpath
     // necessarily carries JUnit; only the main one is meant to be bare.
     val mainRuntime = configurations.runtimeClasspath

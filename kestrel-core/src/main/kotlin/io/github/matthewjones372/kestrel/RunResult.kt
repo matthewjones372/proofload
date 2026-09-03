@@ -572,10 +572,14 @@ data class RunResult(
      * [steady] where the timeline measured what the goal reads, and over the
      * whole run otherwise, which is what a run that never settled gets for all
      * of them.
+     *
+     * A goal is usually one verdict. `inEveryStage` is one per stage, each
+     * naming the stage it is about, so a run meets it only where every stage
+     * did.
      */
     val verdicts: List<Verdict> get() {
         val settled = steady
-        return plan.goals.map { it.judge(if (it.overSteadySegment) settled else this) }
+        return plan.goals.flatMap { it.judgeAll(if (it.overSteadySegment) settled else this) }
     }
 
     /** True when every goal was met, and when there were none to miss. */

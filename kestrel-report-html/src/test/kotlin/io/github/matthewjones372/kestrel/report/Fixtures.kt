@@ -21,6 +21,7 @@ import io.github.matthewjones372.kestrel.Trend
 import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.failureRate
 import io.github.matthewjones372.kestrel.hold
+import io.github.matthewjones372.kestrel.inEveryStage
 import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.percent
@@ -173,6 +174,14 @@ internal object Fixtures {
             listOf("pay"),
             hold(100.perSecond, over = 2.seconds).then(hold(200.perSecond, over = 2.seconds)),
         ),
+    )
+
+    /**
+     * The same run with a goal asked of each stage: the easy half meets it and
+     * the degraded half does not, which the aggregate hides.
+     */
+    val stagedAgainstGoals: RunResult = staged.copy(
+        plan = staged.plan.copy(goals = listOf((p99(step("pay")) under 100.milliseconds).inEveryStage)),
     )
 
     private fun recorded(degrading: Boolean): RunResult {

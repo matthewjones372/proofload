@@ -100,3 +100,59 @@ private fun InjectionProfile.staged(): List<InjectionProfile>? = when (this) {
     is InjectionProfile.ClosedUsers,
     -> null
 }
+
+/**
+ * This run over one stage's own seconds, so a goal can be asked of the stage it
+ * was asked about.
+ *
+ * Narrowed the way `RunResult.steady` narrows: the counts, which are exact, and
+ * both clocks at the timeline's own precision. What a second does not keep is
+ * absent rather than carried over from the whole run — there is no reason a
+ * request failed here, and no arrivals.
+ *
+ * The lateness is the exception, and the reason this is not `steady`'s
+ * function: `latePerSecond` holds it second by second, so a stage keeps its own
+ * backlog and `KeptSchedule` can be asked of a ramp separately from the hold
+ * before it. A run that held its schedule flat and lost it climbing is a run
+ * whose ramp found the ceiling, and the aggregate answer hides exactly that.
+ */
+internal fun RunResult.during(stage: Stage): RunResult {
+    val from = stage.from.inWholeSeconds.toInt()
+    val until = stage.until.inWholeSeconds.toInt()
+    return RunResult(
+        startedAt = startedAt.plusSeconds(stage.from.inWholeSeconds),
+        steps = steps.mapValues { (_, step) -> step.during(from, until) },
+        behind = latePerSecond.window(from, until).merged(),
+        plan = plan,
+        arrivals = Arrivals.none,
+        machine = machine,
+        hiccups = Timing.none,
+        timeline = timeline.window(from, until),
+        latePerSecond = latePerSecond.window(from, until),
+        usersInFlight = usersInFlight.window(from, until),
+    )
+}
+
+private fun StepStats.during(from: Int, until: Int): StepStats {
+    val seconds = timeline.window(from, until)
+    val worked = seconds.map { it.okServiceTime }.merged()
+    val failed = seconds.map { it.failedServiceTime }.merged()
+    val workedResponse = seconds.map { it.okResponseTime }.merged()
+    val failedResponse = seconds.map { it.failedResponseTime }.merged()
+    return StepStats(
+        name = name,
+        // No reasons and no reaches, for the reason a steady segment drops
+        // them: a second counts what failed and not what the target said about
+        // it, and a user reached this step once, in a second this window may
+        // not hold.
+        ok = Outcome(serviceTime = worked, responseTime = workedResponse),
+        failed = Outcome(serviceTime = failed, responseTime = failedResponse),
+        serviceTime = listOf(worked, failed).merged(),
+        responseTime = listOf(workedResponse, failedResponse).merged(),
+        timeline = seconds,
+    )
+}
+
+/** A step's own seconds can run out before the run's, which is that step having stopped rather than a gap. */
+private fun <T> List<T>.window(from: Int, until: Int): List<T> =
+    if (from >= size) emptyList() else subList(from, minOf(until, size)).toList()

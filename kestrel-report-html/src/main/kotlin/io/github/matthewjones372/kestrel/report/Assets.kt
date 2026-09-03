@@ -193,8 +193,13 @@ internal val REPORT_CSS: String = """
       text-transform: uppercase; color: var(--ok);
     }
     .verdict-list li.missed::before { content: "missed"; color: var(--failed); }
+    .verdict-list li.unresolved::before { content: "cannot tell"; color: var(--muted); }
     .verdict-list .goal { flex: 1; margin-left: -3.9rem; padding-left: 4.3rem; font-size: 1rem; }
+    .verdict-list .stage { color: var(--muted); font-size: 0.8125rem; white-space: nowrap; }
     .verdict-list .measured { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    td.verdict.met { color: var(--ok); }
+    td.verdict.missed { color: var(--failed); }
+    td.verdict.unresolved { color: var(--muted); }
     .changes { margin: 0 0 1.5rem; }
     .caveat { border: 1px solid var(--muted); border-radius: 0.5rem; padding: 0.6rem 0.8rem; margin: 0 0 0.6rem; }
     .change-headline { margin: 0 0 0.5rem; }

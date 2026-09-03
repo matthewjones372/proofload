@@ -115,7 +115,7 @@ fun Simulation.expecting(vararg goals: Goal): Simulation {
     // run promises no departures, so there is no interval for one to be late
     // against and no schedule for it to have kept — and a verdict printed
     // against a schedule that never existed is worse than no verdict.
-    require(!closed || goals.none { it is Goal.KeptSchedule }) {
+    require(!closed || goals.none { it.asked is Goal.KeptSchedule }) {
         "a closed run keeps no schedule: its users depart when the target lets them, so there is no promised " +
             "interval for `keptSchedule` to judge. Read Little's law and the achieved rate instead"
     }

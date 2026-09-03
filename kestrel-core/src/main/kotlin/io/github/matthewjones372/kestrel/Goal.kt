@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel
 
+import kotlin.math.abs
+import kotlin.math.round
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -48,6 +50,22 @@ sealed interface Goal {
     val overSteadySegment: Boolean
 
     fun judge(result: RunResult): Verdict
+
+    /**
+     * The goal underneath any wrapper, so a caller asking what was declared —
+     * a closed run refusing [KeptSchedule], say — does not have to know which
+     * wrappers exist.
+     */
+    val asked: Goal get() = this
+
+    /**
+     * Every verdict this goal answers. One for an ordinary goal; one per stage
+     * for [InEveryStage], each naming its own.
+     *
+     * Beside [judge] rather than instead of it, so a caller that wants one
+     * answer about the run still has one.
+     */
+    fun judgeAll(result: RunResult): List<Verdict> = listOf(judge(result))
 
     data class PercentileUnder(
         val step: StepName,
@@ -137,7 +155,60 @@ sealed interface Goal {
             if (result.fellBehind()) Verdict.missed(this, Measurement.Took(result.behind.p99))
             else Verdict.met(this, Measurement.Took(result.behind.p99))
     }
+
+    /**
+     * The same goal, asked of each stage rather than of the run.
+     *
+     * A wrapper rather than a flag on each goal type: `p99(step) under 300ms`
+     * is a value, and this is a function over it. The run meets it only where
+     * every stage does, which is what makes the verdict that failed name the
+     * stage that failed.
+     */
+    data class InEveryStage(val of: Goal) : Goal {
+
+        override val described: String get() = "${of.described}, in every stage"
+
+        /**
+         * False: this narrows to the stages of the whole run, and a steady
+         * segment narrowed again by a stage boundary would be a window nobody
+         * asked for.
+         */
+        override val overSteadySegment: Boolean get() = false
+
+        override val asked: Goal get() = of.asked
+
+        /** Met only where every stage met it; the first miss is the one worth showing. */
+        override fun judge(result: RunResult): Verdict {
+            val each = judgeAll(result)
+            return each.firstOrNull { !it.met }
+                ?: each.firstOrNull()?.copy(goal = this, stage = null)
+                ?: Verdict.missed(this, Measurement.Absent("the run had no stages"))
+        }
+
+        /**
+         * One verdict per stage, each judged over that stage's own seconds.
+         *
+         * A run nobody staged answers once, about itself: one stage is the run,
+         * and a second verdict saying the same thing is noise.
+         */
+        override fun judgeAll(result: RunResult): List<Verdict> {
+            val staged = result.stages
+            if (staged.isEmpty()) return listOf(of.judge(result))
+            return staged.map { stage -> of.judge(result.during(stage)).about(stage) }
+        }
+    }
 }
+
+/**
+ * The same goal, asked of each stage rather than of the run.
+ *
+ * Opt in. A goal that silently became four would change the verdict count of
+ * every existing staged run and the meaning of `metEveryGoal`; asking for it is
+ * asking a sharper question deliberately. Declare the plain goal beside it
+ * where the aggregate is also wanted — that is the number people compare
+ * between builds, and it is a different question.
+ */
+val Goal.inEveryStage: Goal get() = if (this is Goal.InEveryStage) this else Goal.InEveryStage(this)
 
 /**
  * Whether a goal was met, and by what margin.
@@ -169,7 +240,47 @@ sealed interface Measurement {
 }
 
 /** What became of a goal, and by how much. */
-data class Verdict(val goal: Goal, val met: Boolean, val measured: Measurement, val overBy: Double?) {
+data class Verdict(
+    val goal: Goal,
+    /**
+     * Whether the goal was met — and true, too, where it could not be judged
+     * at the resolution available. [refused] is what a report prints there,
+     * instead of a tick nobody earned or a cross nobody can chase.
+     */
+    val met: Boolean,
+    val measured: Measurement,
+    val overBy: Double?,
+    /** Which stage this is about, or null where it is about the run. */
+    val stage: Stage? = null,
+    /** Why this could not be judged at the width the numbers were read at, where it could not. */
+    val refused: Tell.CannotTell? = null,
+) {
+
+    /**
+     * The same verdict, said to be about [stage] — and downgraded to "cannot
+     * tell" where it missed by less than the width of the buckets it was read
+     * off.
+     *
+     * A stage's numbers are the timeline's coarse buckets, so a goal missed by
+     * less than one of them is inside the measurement rather than outside the
+     * limit. Reported as unresolvable rather than as a red tick somebody
+     * chases, which is 0062's rule read one level down.
+     */
+    internal fun about(stage: Stage): Verdict {
+        val about = copy(stage = stage)
+        val width = stage.serviceTime.precision ?: return about
+        val missedBy = overBy?.let { abs(it) / HUNDRED } ?: return about
+        if (met || missedBy > width) return about
+        return about.copy(
+            met = true,
+            refused = Tell.CannotTell(
+                why = "stage ${stage.index + 1} missed it by ${missedBy.asShare()}, and a stage's numbers " +
+                    "are the timeline's own buckets, which are good to ${width.asShare()}",
+                wouldChangeIt = "a limit further from what was measured than one of those buckets, or the " +
+                    "same goal judged over the whole run, whose percentiles are a step's own and narrower",
+            ),
+        )
+    }
 
     companion object {
         internal fun met(goal: Goal, measured: Measurement): Verdict = Verdict(goal, true, measured, null)
@@ -294,7 +405,12 @@ internal fun Timing.at(percentile: String): Tail = when (percentile) {
     else -> error("no percentile named '$percentile'")
 }
 
+/** To the two figures a width is quoted in; a third would be a digit nobody measured. */
+private fun Double.asShare(): String = Share(round(this * HUNDRED * FIGURES) / FIGURES).described
+
 private const val HUNDRED = 100.0
+
+private const val FIGURES = 100.0
 
 // Written as it reads on a report rather than as the builder is spelled: a
 // verdict prints this, and "p999" is a name for a function, not for a number.

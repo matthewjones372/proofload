@@ -19,6 +19,15 @@ data class Request(
     val headers: Map<String, String> = emptyMap(),
     val body: Body? = null,
     val timeout: Duration,
+    /**
+     * Whether the answer's bytes are to be counted rather than kept, because
+     * the step said nothing would read them.
+     *
+     * A transport may ignore it and answer with the body it read: the step then
+     * takes the count off what it was handed and nothing lies, and the memory
+     * saved is whichever transport implements it.
+     */
+    val discardingBody: Boolean = false,
 )
 
 /**

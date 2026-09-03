@@ -48,6 +48,7 @@ class HttpAction internal constructor(
     private val traced: Boolean = false,
     private val following: Int = 0,
     private val retries: Retries? = null,
+    private val discarding: Boolean = false,
 ) : Action {
 
     /**
@@ -87,6 +88,24 @@ class HttpAction internal constructor(
      */
     fun bodyFrom(bytes: Long? = null, open: () -> InputStream): HttpAction =
         copy(body = Body.Streamed(bytes, open))
+
+    /**
+     * Counts the answer's bytes and lets them go, so the measurement is how
+     * long they took to arrive rather than a `String` per user.
+     *
+     * `Response.bytes` is what came back and `Response.body` is empty. For the
+     * download a target streams: a 200 MB export is otherwise held once per
+     * user, and fifty users need ten gigabytes to measure something the target
+     * never held.
+     *
+     * Asked for rather than default, because defaulting to it would turn every
+     * existing check into one that passes against an empty body.
+     */
+    fun discardingBody(): HttpAction {
+        require(checks.isEmpty()) { discardingConflict("check") }
+        require(captures.isEmpty()) { discardingConflict("capture") }
+        return copy(discarding = true)
+    }
 
     /** The status that counts as a success. Anything else fails the step. */
     fun expecting(status: Int): HttpAction = copy(expected = status)
@@ -134,11 +153,16 @@ class HttpAction internal constructor(
      * not. The whole response body is held in memory to be read, so a request
      * that streams something large cannot also be checked.
      */
-    fun checking(name: String, holds: (Response) -> Boolean): HttpAction = copy(checks = checks + Check(name, holds))
+    fun checking(name: String, holds: (Response) -> Boolean): HttpAction {
+        require(!discarding) { discardingConflict("check") }
+        return copy(checks = checks + Check(name, holds))
+    }
 
     /** Takes a value out of the response and puts it in the session under [key]. */
-    fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction =
-        copy(captures = captures + Capture(key, extract))
+    fun <T : Any> capture(key: SessionKey<T>, extract: (Response) -> T?): HttpAction {
+        require(!discarding) { discardingConflict("capture") }
+        return copy(captures = captures + Capture(key, extract))
+    }
 
     override fun run(scope: StepScope) {
         sendTo(scope)
@@ -166,6 +190,12 @@ class HttpAction internal constructor(
     private fun narrate(response: Response, scope: StepScope) {
         if (!scope.narrating) return
         scope.note("< ${response.status}")
+        // A discarded body has nothing to print, and a trace that said nothing
+        // would read as a target that answered with nothing.
+        if (discarding) {
+            scope.note("< ${response.bytes} bytes, discarded")
+            return
+        }
         response.body.takeIf { it.isNotBlank() }?.let { scope.note("< $it") }
     }
 
@@ -277,6 +307,7 @@ class HttpAction internal constructor(
         captures: List<Capture<*>> = this.captures,
         following: Int = this.following,
         retries: Retries? = this.retries,
+        discarding: Boolean = this.discarding,
     ): HttpAction =
         HttpAction(
             method,
@@ -291,6 +322,7 @@ class HttpAction internal constructor(
             traced,
             following,
             retries,
+            discarding,
         )
 
     // Folded rather than accumulated: `HttpRequest.Builder` returns itself from
@@ -304,6 +336,7 @@ class HttpAction internal constructor(
         headers = tracing(traced, scope) + headersFor(scope),
         body = hop.body,
         timeout = timeout.toKotlinDuration(),
+        discardingBody = discarding,
     )
 
     // `HttpRequest.Builder.header` appends, so a jar and a hand-written cookie
@@ -331,3 +364,12 @@ fun ScenarioBuilder.exec(request: HttpAction) {
  * many that do not.
  */
 fun StepScope.send(request: HttpAction): Response? = request.sendTo(this)
+
+/**
+ * Refused where it is written rather than at run time: a step that checks an
+ * empty string is a green test about nothing, and one that captures out of one
+ * puts an empty value in the session for a later step to fail on.
+ */
+private fun discardingConflict(what: String): String =
+    "a $what reads a response body that discardingBody() does not keep — drop the $what, or drop " +
+        "discardingBody()"

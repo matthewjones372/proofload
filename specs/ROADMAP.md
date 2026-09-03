@@ -87,15 +87,15 @@ built. Each row links the spec that argued for it.
 | [0078](0078-server-sent-events.md) | an SSE feed opened once and read as two numbers: the round trip to the first event, and the cadence of the rest |
 | [0079](0079-a-body-the-user-brings.md) | a request body filled from the session per user, so a run is not ten thousand copies of one order |
 | [0081](0081-what-a-run-says-while-it-is-running.md) | reporters composed and throttled, and the live snapshot pushed at a collector while the run is still going |
+| [0082](0082-a-response-nobody-has-to-hold.md) | `discardingBody()`: the bytes counted and let go, and a check or a capture on one refused where it is written |
+| [0084](0084-a-goal-judged-where-it-was-asked.md) | `inEveryStage`: a goal asked of each stage, so a run cannot meet one by lengthening its ramp |
 
 ## Drafted, not built
 
 | Spec | What it is |
 |---|---|
 | [0080](0080-a-scenario-from-traffic-you-already-have.md) | a HAR read into Kotlin source: the captures a hand-written scenario gets wrong, and no credential in the output |
-| [0082](0082-a-response-nobody-has-to-hold.md) | a response drained and counted rather than held, for the download the request half can already stream |
 | [0083](0083-database-steps.md) | JDBC steps, with the connection checkout timed beside the query rather than inside it |
-| [0084](0084-a-goal-judged-where-it-was-asked.md) | a goal judged per stage, so a run cannot meet one by lengthening its ramp |
 | [0085](0085-an-api-that-is-written-down.md) | a checked-in API dump, so a break is a diff a reviewer sees rather than a thing somebody remembered |
 | [0086](0086-more-than-one-injector-started-together.md) | the clock a merged run cannot currently see is wrong — and the argument against the orchestrator around it |
 

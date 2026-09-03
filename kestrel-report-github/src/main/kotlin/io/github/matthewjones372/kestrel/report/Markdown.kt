@@ -14,6 +14,7 @@ import io.github.matthewjones372.kestrel.Stage
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.TIGHT
 import io.github.matthewjones372.kestrel.ThinkTime
+import io.github.matthewjones372.kestrel.Verdict
 import io.github.matthewjones372.kestrel.concurrency
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.heldScheduleFor
@@ -394,6 +395,11 @@ private fun RunResult.stageTable(): String? {
     val staged = stages
     if (staged.isEmpty()) return null
 
+    // Only where a goal was asked per stage: a column of blanks on every other
+    // staged run is a wider table saying nothing.
+    val judged = verdicts.filter { it.stage != null }.groupBy { it.stage?.index }
+    val goalColumn = if (judged.isEmpty()) emptyList() else listOf(Column("Goals", Align.LEFT))
+
     val rows = table(
         columns = listOf(
             Column("Stage", Align.LEFT),
@@ -405,8 +411,8 @@ private fun RunResult.stageTable(): String? {
             Column("p95", Align.RIGHT),
             Column("p99", Align.RIGHT),
             Column("Max", Align.RIGHT),
-        ),
-        rows = staged.map { it.row() },
+        ) + goalColumn,
+        rows = staged.map { it.row() + judged[it.index].orEmpty().joinedVerdicts(goalColumn.isNotEmpty()) },
     )
     val width = staged.first().serviceTime.precision?.let { " and so good to ${it.asPercent()}" }.orEmpty()
     return rows + "\n\nEach stage is the seconds of the timeline inside it, read off rather than " +
@@ -434,6 +440,22 @@ private fun List<Stage>.misalignment(): String {
 
 /** A stage window's edge, zero rendered as a second rather than as a nanosecond precision. */
 private fun Duration.edge(): String = if (this == Duration.ZERO) "0s" else report()
+
+/**
+ * A stage's verdicts as one cell, or no cell at all where the table has no such
+ * column. Empty rather than absent where a stage was judged and another was not:
+ * a row short of a cell is a broken table.
+ */
+private fun List<Verdict>.joinedVerdicts(wanted: Boolean): List<String> {
+    if (!wanted) return emptyList()
+    return listOf(joinToString(separator = "; ") { "${it.goal.described}: ${it.said()}" })
+}
+
+private fun Verdict.said(): String = when {
+    refused != null -> "cannot tell"
+    met -> "met"
+    else -> "missed"
+}
 
 private fun Stage.row(): List<String> = listOf(
     // The ordinal rather than the rate line: this summary is a PR comment and

@@ -745,6 +745,36 @@ exec(
 A failed check is a failed step with the check's name as its reason, so the
 report says `has an order id` rather than `assertion failed`.
 
+## Measure a download without holding it
+
+A response is read into a `String` so a check can read it and a capture can take
+values out of it. For the export nobody reads, that is 200 MB per user:
+
+```kotlin
+import io.github.matthewjones372.kestrel.http.http
+
+val api = http.baseUrl("https://api.example.com")
+
+exec(download, api.get("/exports/{id}").discardingBody())
+```
+
+The bytes are counted as they arrive and let go. `Response.bytes` is what came
+back and `Response.body` is empty — which is the finding worth having, because a
+download that returned 4 KB instead of 200 MB took no time at all and otherwise
+reads as a very fast target.
+
+`Response.bytes` is on every response, not only a discarded one. Where the body
+was kept it is what that body encodes to as UTF-8 rather than a count taken off
+the wire, which is the same number for a target that did not name another
+charset.
+
+**A check or a capture on a discarding step is refused where it is written**,
+not at run time: both read a body that will not exist, and a step that silently
+checks an empty string is a green test about nothing. Drop one or the other.
+
+A redirect is still followed — a hop reads `Location` from the headers, not from
+the body — and so is a retry.
+
 ## Retry, without burying the retry
 
 Real clients retry a 503. Kestrel will too, if you ask — and asking is the
@@ -1095,6 +1125,45 @@ by failing does not pass it.
 `keptSchedule` is the one that guards the rest. It asks whether the *generator*
 kept to its own schedule; where it did not, every latency underneath includes a
 queue this tool made, and the numbers are describing the injector.
+
+## Judge a goal where it was asked
+
+A staged run's aggregate is a mixture. A goal judged against it can be met
+because the ramp was long enough and easy enough to pull the total under the
+line, which is a green test somebody earned by editing the profile:
+
+```kotlin
+import io.github.matthewjones372.kestrel.inEveryStage
+import io.github.matthewjones372.kestrel.p99
+import kotlin.time.Duration.Companion.milliseconds
+
+checkout.at(hold(100.perSecond, over = 2.minutes) then rampTo(1000.perSecond, over = 5.minutes))
+    .expecting(p99(placeOrder) under 300.milliseconds inEveryStage)
+```
+
+One `Verdict` per stage, each naming the stage it is about, and the run meets it
+only where every stage does. The report puts each on the stage row it belongs
+to rather than in a list repeating the goal's name once per stage.
+
+Declare the plain goal beside it where you also want the aggregate — it is the
+number people compare between builds, and it is a different question:
+
+```kotlin
+.expecting(
+    p99(placeOrder) under 300.milliseconds inEveryStage,
+    p99(placeOrder) under 300.milliseconds,
+)
+```
+
+`keptSchedule inEveryStage` is the one that pays for itself twice: a run that
+held its schedule through the flat two minutes and lost it climbing is a run
+whose ramp found the ceiling, and the aggregate answer hides exactly that.
+
+**A stage verdict can say it cannot tell.** A stage's numbers are the
+timeline's own buckets rather than a step's, so they are one significant digit;
+a goal missed by less than that width is inside the measurement rather than
+outside the limit, and it reports as unresolvable instead of as a red tick
+somebody chases. The run still meets it, and the page says why.
 
 ## Ask what actually failed
 

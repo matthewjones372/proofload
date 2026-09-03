@@ -4,7 +4,10 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.hold
+import io.github.matthewjones372.kestrel.inEveryStage
+import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.step
 import io.github.matthewjones372.kestrel.then
 import io.kotest.assertions.withClue
 import io.kotest.matchers.string.shouldContain
@@ -55,5 +58,28 @@ class StageSummaryTest {
     @Test
     fun `a run nobody staged has no stage table`() {
         ran(staged = false).markdown() shouldNotContain "| Stage "
+    }
+
+    @Test
+    fun `a goal asked of every stage lands on the row it is about`() {
+        val judged = ran(staged = true).let { run ->
+            run.copy(plan = run.plan.copy(goals = listOf((p99(step("pay")) under 50.milliseconds).inEveryStage)))
+        }
+
+        val summary = judged.markdown()
+
+        summary shouldContain "| Goals "
+        withClue("the easy half met it and the slow half did not, which the mixture above hides") {
+            summary shouldContain "pay p99 under 50ms: met"
+            summary shouldContain "pay p99 under 50ms: missed"
+        }
+    }
+
+    @Test
+    fun `a staged run nobody asked a per-stage goal of keeps the table it had`() {
+        val summary = ran(staged = true).markdown()
+
+        summary shouldContain "| Stage "
+        summary shouldNotContain "| Goals "
     }
 }

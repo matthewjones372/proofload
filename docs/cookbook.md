@@ -539,6 +539,19 @@ braces are content and arrive as written. A `{name}` the session has nothing
 under fails the step with `no name captured` rather than sending the braces to
 the target, which would file somebody else's answer under this step.
 
+A body too large to hold is opened instead of written:
+
+```kotlin
+exec(upload, api.put("/uploads/{id}").bodyFrom(bytes = size) { Files.newInputStream(archive) })
+```
+
+The lambda is called once per attempt, so a retry and a redirect each get their
+own stream — a stream is read once, and a body that could only be sent once
+would arrive empty on every attempt after the first. Give `bytes` where you know
+the length and it is sent as `content-length`; leave it out and the request is
+chunked. Nothing fills `{name}` in a streamed body: the substitution reads a
+string, and a stream is not one.
+
 ## A fixed list
 
 ```kotlin

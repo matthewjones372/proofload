@@ -56,8 +56,20 @@ class JdkHttpClient(private val client: HttpClient = sharedClient) : Transport {
         }
 }
 
-private fun publisher(body: String?): HttpRequest.BodyPublisher =
-    body?.let(HttpRequest.BodyPublishers::ofString) ?: HttpRequest.BodyPublishers.noBody()
+private fun publisher(body: Body?): HttpRequest.BodyPublisher = when (body) {
+    null -> HttpRequest.BodyPublishers.noBody()
+
+    is Body.Text -> HttpRequest.BodyPublishers.ofString(body.text)
+
+    // The two-argument form where a length is known, so the request carries a
+    // `content-length`; the one-argument form otherwise, which is chunked. The
+    // supplier is called by the JDK per subscription, which is what makes a
+    // retry send the body again rather than nothing.
+    is Body.Streamed ->
+        body.bytes
+            ?.let { HttpRequest.BodyPublishers.fromPublisher(HttpRequest.BodyPublishers.ofInputStream(body.open), it) }
+            ?: HttpRequest.BodyPublishers.ofInputStream(body.open)
+}
 
 private fun Request.asJdk(): HttpRequest = headers.entries
     .fold(

@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.SessionKey
 import io.github.matthewjones372.kestrel.StepScope
+import java.io.InputStream
 import java.net.URI
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,7 +40,7 @@ class HttpAction internal constructor(
     private val origin: Http,
     private val path: String,
     private val headers: Map<String, String> = emptyMap(),
-    private val body: String? = null,
+    private val body: Body? = null,
     private val expected: Int = OK,
     private val timeout: Duration = requestTimeout,
     private val checks: List<Check> = emptyList(),
@@ -66,7 +67,26 @@ class HttpAction internal constructor(
      * A body with no `{` costs nothing and arrives exactly as written, which
      * is every JSON body full of braces that are not placeholders.
      */
-    fun body(body: String): HttpAction = copy(body = body)
+    fun body(body: String): HttpAction = copy(body = Body.Text(body))
+
+    /**
+     * A body opened when it is sent rather than held as a string.
+     *
+     * For anything too large to be one: the whole request body is otherwise a
+     * `String` per user, so a test that uploads a gigabyte cannot run and one
+     * that uploads something larger than the heap cannot be written.
+     *
+     * [open] is called once per attempt, so a retry and a redirect each get
+     * their own stream — a stream is read once, and a body that could only be
+     * sent once would arrive empty on every attempt after the first.
+     *
+     * [bytes] is the length where the caller knows it and null where they do
+     * not, in which case the request is chunked. Nothing here fills `{name}`
+     * from the session: the substitution reads a string, and a stream is not
+     * one.
+     */
+    fun bodyFrom(bytes: Long? = null, open: () -> InputStream): HttpAction =
+        copy(body = Body.Streamed(bytes, open))
 
     /** The status that counts as a success. Anything else fails the step. */
     fun expecting(status: Int): HttpAction = copy(expected = status)
@@ -125,13 +145,21 @@ class HttpAction internal constructor(
     }
 
     /** What left, for a trace. Nothing at all where no trace is listening. */
-    private fun narrate(url: String, sending: String?, scope: StepScope) {
+    private fun narrate(url: String, sending: Body?, scope: StepScope) {
         if (!scope.narrating) return
         scope.note("$method ${origin.baseUrl}$url")
         headers.forEach { (name, value) -> scope.note("> $name: $value") }
-        // The filled body rather than the template: a trace exists to show
-        // what left, not what was written.
-        sending?.let { scope.note("> $it") }
+        when (sending) {
+            null -> Unit
+
+            // The filled body rather than the template: a trace exists to show
+            // what left, not what was written.
+            is Body.Text -> scope.note("> ${sending.text}")
+
+            // Its length, not its content: reading it here to print it would
+            // consume the stream the request is about to send.
+            is Body.Streamed -> scope.note("> ${sending.bytes?.let { "$it bytes" } ?: "a stream of unknown length"}")
+        }
     }
 
     /** And what came back. */
@@ -146,8 +174,13 @@ class HttpAction internal constructor(
         val url = path.fill(scope) ?: return null
         // Filled by the same rule the path uses, and before anything is sent: a
         // body with a hole in it is not a request to make, and a target given
-        // one would answer for a mistake in this scenario.
-        val sending = body?.let { it.fillBody(scope) ?: return null }
+        // one would answer for a mistake in this scenario. A streamed body is
+        // passed through: the substitution reads a string, and a stream is not
+        // one.
+        val sending = when (body) {
+            null, is Body.Streamed -> body
+            is Body.Text -> Body.Text(body.text.fillBody(scope) ?: return null)
+        }
         narrate(url, sending, scope)
         val response = attempts(url, sending, scope) ?: return null
         narrate(response, scope)
@@ -184,7 +217,7 @@ class HttpAction internal constructor(
     // the next attempt instead would hand the rest of the journey to another
     // thread and lose the session the step is holding.
     @Suppress("ForbiddenMethodCall")
-    private fun attempts(url: String, sending: String?, scope: StepScope): Response? {
+    private fun attempts(url: String, sending: Body?, scope: StepScope): Response? {
         val retries = retries
             ?: return follow(Hop(URI.create(origin.baseUrl + url), method, sending), following, scope)
 
@@ -237,7 +270,7 @@ class HttpAction internal constructor(
 
     private fun copy(
         headers: Map<String, String> = this.headers,
-        body: String? = this.body,
+        body: Body? = this.body,
         expected: Int = this.expected,
         timeout: Duration = this.timeout,
         checks: List<Check> = this.checks,

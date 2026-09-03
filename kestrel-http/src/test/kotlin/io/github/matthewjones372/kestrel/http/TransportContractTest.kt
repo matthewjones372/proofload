@@ -99,7 +99,7 @@ class TransportContractTest {
     fun `the headers and body it was given are what the target receives`() {
         val posted = to("/ok", method = "POST").copy(
             headers = mapOf("x-asked" to "yes"),
-            body = """{"a":1}""",
+            body = Body.Text("""{"a":1}"""),
         )
 
         val answered = transport.exchange(posted).shouldBeInstanceOf<Exchange.Answered>()

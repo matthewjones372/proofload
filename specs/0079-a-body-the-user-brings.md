@@ -95,7 +95,7 @@ Recorded in the CHANGELOG, which is what pre-1.0 means here.
       `\{([A-Za-z_][A-Za-z0-9_]*)}`, which is what a session key is called and
       what no JSON document opens with. The looser rule stays on paths, where
       narrowing it would be a break for nobody's benefit.
-- [ ] **`spec-0079-streamed`** — `bodyFrom`, the sealed `Body`, and the
+- [x] **`spec-0079-streamed`** — `bodyFrom`, the sealed `Body`, and the
       transport that sends either.
       Done when: a body of a megabyte arrives whole without being held as a
       `String`, a retry sends the whole body a second time rather than an empty

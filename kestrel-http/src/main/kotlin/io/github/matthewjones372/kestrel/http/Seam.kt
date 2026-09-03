@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.http
 
 import io.github.matthewjones372.kestrel.Reason
+import java.io.InputStream
 import java.net.URI
 import kotlin.time.Duration
 
@@ -16,9 +17,36 @@ data class Request(
     val method: String,
     val uri: URI,
     val headers: Map<String, String> = emptyMap(),
-    val body: String? = null,
+    val body: Body? = null,
     val timeout: Duration,
 )
+
+/**
+ * What a request carries, where it carries anything.
+ *
+ * A value rather than a `String?`, because a nullable string cannot say "a
+ * stream this long": a body too large to hold cannot be one, and a transport
+ * has to know which it was handed to send it at all.
+ */
+sealed interface Body {
+
+    /** Held in memory, which is every body small enough to be. */
+    data class Text(val text: String) : Body
+
+    /**
+     * Opened when it is sent, and opened again for every attempt.
+     *
+     * A supplier rather than a stream: a stream is read once, and this module
+     * retries and follows redirects by sending the same request again. A body
+     * that could only be sent once would arrive empty on every attempt after
+     * the first, and the target would answer for it.
+     *
+     * [bytes] is the length where the caller knows it, sent as
+     * `content-length`; null is chunked, because a length nobody knows is not
+     * one to guess.
+     */
+    class Streamed(val bytes: Long?, val open: () -> InputStream) : Body
+}
 
 /**
  * What came back, or why nothing did.

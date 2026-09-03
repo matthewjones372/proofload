@@ -212,6 +212,15 @@ enough to list, and long enough to matter.
   JSON document arrives exactly as written unless it carries `{aName}`. **A
   break for a body that meant one literally:** it now fails as a key the
   session has nothing under.
+- **A body too large to hold.** `bodyFrom(bytes) { stream }` sends without
+  materialising, so a test that uploads a gigabyte can run and one that uploads
+  more than the heap can be written. A supplier rather than a stream: a stream
+  is read once and this module retries and follows redirects by sending again,
+  so each attempt opens its own. A length given is sent as `content-length` and
+  none is chunked, a length nobody knows not being one to guess. **A break for
+  a custom `Transport`:** `Request.body` is a sealed `Body` — `Text` or
+  `Streamed` — rather than a `String?`, because a nullable string cannot say
+  "a stream this long".
 - **Server-sent events.** `sse.baseUrl(...).at(path)` opens a feed in
   `kestrel-http` — no new module, no new dependency — and it is read with the
   split 0071 settled for gRPC: `open` ends when the target agrees to stream,

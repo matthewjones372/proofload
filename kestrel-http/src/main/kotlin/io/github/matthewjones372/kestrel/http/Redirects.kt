@@ -23,7 +23,7 @@ private val redirects = setOf(MOVED_PERMANENTLY, FOUND, SEE_OTHER, TEMPORARY_RED
 private val methodKept = setOf(TEMPORARY_REDIRECT, PERMANENT_REDIRECT)
 
 /** One request in a chain: where it goes and what it is sent as. */
-internal data class Hop(val uri: URI, val method: String, val body: String?)
+internal data class Hop(val uri: URI, val method: String, val body: Body?)
 
 /**
  * The hop this response asks for, or null when it asks for none.

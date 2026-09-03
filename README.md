@@ -75,10 +75,10 @@ checking a step that no longer exists.
 
 ## Point it at anything
 
-HTTP and WebSockets come in the box, and
+HTTP, server-sent events, WebSockets, gRPC and Kafka come in the box, and
 [Pelican](https://github.com/matthewjones372/pelican) typed endpoints are steps too.
 
-Anything else — gRPC, a database, a queue — is just a step body. Whatever you call
+Anything else — a database, another queue — is just a step body. Whatever you call
 inside it is timed and recorded like any other step, so you use the client you
 already have:
 
@@ -137,7 +137,7 @@ a note on why it is those lines and not the obvious alternative:
 |---|---|
 | **Shaping load** | flat, ramped and staged profiles; Poisson arrivals; think time; a mix of journeys in one run |
 | **Per-user data** | feeders as a function of the user number; CSV; a token refreshed off the measured path |
-| **The requests** | captures, body checks, cookies across redirects, W3C trace ids, WebSocket streams, work that finishes on another topic |
+| **The requests** | captures, body checks, bodies filled per user or streamed from disk, cookies across redirects, W3C trace ids, WebSocket and SSE streams, gRPC, Kafka, work that finishes on another topic |
 | **Asking the question** | goals and goodput; steady state; capacity search; comparing runs against a baseline |
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 

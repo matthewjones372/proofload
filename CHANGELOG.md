@@ -378,9 +378,18 @@ commit this section was written on, not planned or assumed.
   rather than answered off numbers that were never taken. The rate such a run
   reaches is the target's speed, not a rate anybody asked for, and the report
   says so.
-- **No database steps, and no queue beyond Kafka.** HTTP, WebSocket handshakes,
-  gRPC, Kafka and Pelican endpoints are the protocols. `emit` is the seam for
-  anything else, and the caller writes the client.
+- **No database steps, and no queue beyond Kafka.** HTTP, server-sent events,
+  WebSocket handshakes, gRPC, Kafka and Pelican endpoints are the protocols.
+  `emit` is the seam for anything else, and the caller writes the client.
+- **A response body is held whole.** `BodyHandlers.ofString` reads the answer
+  into memory to be checked and captured, so a step that downloads something
+  large holds it once per user. The request half is streamed (`bodyFrom`); the
+  response half is not, and a check or a capture is why.
+- **Nothing leaves during a run.** `sendOtlp` and every report are functions of
+  a finished `RunResult`, so a two-hour soak says nothing until it ends beyond
+  the progress line. `Progress.tick` carries a live `Snapshot` — departed, in
+  flight, behind, requests, failed — and is the seam a live exporter would use,
+  but none ships.
 - **Read `behind` before any percentile.** Coordinated omission is handled
   rather than avoided: `ResponseTime` measures from the departure the profile
   promised, so a generator that fell behind reports it. But if `behind` is

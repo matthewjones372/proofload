@@ -60,6 +60,9 @@ private fun DraftStep.lines(): List<String> = buildList {
         add("// The recorded gap before this was $after — one person's think time, not a rate line.")
     }
     if (stoodFor > 1) add("// Stood for $stoodFor requests differing only by a segment.")
+    if (unanswered) {
+        add("// The recording got no answer to this one, so 200 is a guess rather than what was seen.")
+    }
     dropped.forEach { add("// The recording's $it header was dropped; the TODO below says where it went.") }
     maybe.distinct().forEach {
         add("// \"$it\" was also in an earlier answer. It may want a capture; it is too short to be sure.")

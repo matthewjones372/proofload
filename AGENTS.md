@@ -217,12 +217,21 @@ Gates that sit beyond the tests:
 |---|---|---|
 | detekt | any finding | a suppression with no reason |
 | Kover | aggregate line coverage under the floor | lowering the floor |
+| `apiCheck` | a published module's surface moved and its `.api` file did not | deleting the dump |
 | `NoThirdPartyDependenciesTest` | core grew a dependency | adding it to the allowlist |
 | wall-clock isolation | a `timing` task is in the same task graph as another test task | dropping the tag |
+
+Each fires from `check`, so `./gradlew build` is the whole gate and there is
+nothing else to remember to run.
 
 Before saying it is done:
 
 - The failing test came first, and fails without the change.
 - `./gradlew build` is green, gates included.
 - If a caller-visible behaviour changed, the documentation changed with it.
+- **If the public API changed, `./gradlew apiDump` ran in the same commit.** The
+  diff to the `.api` file is the point: `+ public final fun getVisits ()J` shows
+  up beside the change that added it, so the CHANGELOG entry gets written while
+  the author is looking at the reason for it rather than a week later. A line
+  *removed* from a `.api` file is a pull request that breaks somebody.
 - No new dependency in `kestrel-core`.

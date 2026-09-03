@@ -24,7 +24,7 @@ data class SqlState(val code: String) : Reason {
     override val described: String get() = "SQLSTATE $code${named()?.let { " — $it" }.orEmpty()}"
 
     /** The classes worth naming: the ones a reader acts on differently. */
-    private fun named(): String? = when (code.take(CLASS)) {
+    private fun named(): String? = when (code.take(SQLSTATE_CLASS)) {
         "08" -> "connection"
         "22" -> "data"
         "23" -> "integrity constraint"
@@ -34,11 +34,16 @@ data class SqlState(val code: String) : Reason {
         "57" -> "operator intervention"
         else -> null
     }
-
-    private companion object {
-        const val CLASS = 2
-    }
 }
+
+/**
+ * The first two digits of a SQLSTATE, which are its class.
+ *
+ * A file-private constant rather than one in a companion: a `const val` in even
+ * a private companion is a public static field on the class, and this is not
+ * something a caller has any business reading.
+ */
+private const val SQLSTATE_CLASS = 2
 
 /**
  * The database's own code where it gave one, a timeout where the driver named

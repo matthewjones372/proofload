@@ -75,16 +75,18 @@ checking a step that no longer exists.
 
 ## Point it at anything
 
-HTTP, server-sent events, WebSockets, gRPC and Kafka come in the box, and
+HTTP, server-sent events, WebSockets, gRPC, Kafka and JDBC come in the box, and
 [Pelican](https://github.com/matthewjones372/pelican) typed endpoints are steps too.
+Database steps time the connection checkout apart from the query, because a pool
+your users queued for is not the database being slow.
 
-Anything else — a database, another queue — is just a step body. Whatever you call
+Anything else — another queue, a cache — is just a step body. Whatever you call
 inside it is timed and recorded like any other step, so you use the client you
 already have:
 
 ```kotlin
 exec(settle) {
-    val outcome = ledger.settle(order)   // your own client — gRPC, JDBC, a producer
+    val outcome = ledger.settle(order)   // your own client, whatever it is
     if (!outcome.ok) fail(outcome.reason)
 }
 ```

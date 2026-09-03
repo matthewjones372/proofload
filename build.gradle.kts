@@ -16,6 +16,12 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0" apply false
     // Renders the KDoc into the javadoc jar the published modules ship.
     id("org.jetbrains.dokka") version "2.1.0" apply false
+    // Writes each published module's public surface to `api/<module>.api` and
+    // fails `check` where the surface moved and the file did not. It records
+    // the API rather than freezing it: until 1.0 a break is allowed, and the
+    // point is that it arrives as a line removed from a file a reviewer is
+    // already looking at.
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
 }
 
 scmVersion {
@@ -136,6 +142,14 @@ gradle.taskGraph.whenReady {
 
 /** Every module is published unless it is listed here. */
 val publishedModules = subprojects.map { it.name } - "examples" - "benchmarks"
+
+// Derived from the published list rather than kept beside it: a second list is
+// a thing to forget, and forgetting this one means a new module ships with no
+// record of what it promised. `examples` and `benchmarks` are not libraries and
+// their surface is nobody's business.
+apiValidation {
+    ignoredProjects.addAll(subprojects.map { it.name } - publishedModules.toSet())
+}
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")

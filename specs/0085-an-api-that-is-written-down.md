@@ -84,17 +84,21 @@ remembering.
 
 ## Stack
 
-- [ ] **`spec-0085-validator`** — the plugin, applied to `publishedModules`,
+- [x] **`spec-0085-validator`** — the plugin, applied to `publishedModules`,
       wired into `check`.
       Done when: `./gradlew apiDump` writes one file per published module,
       `./gradlew build` passes on the tree as it stands, and `examples` and
       `benchmarks` have no dump.
-- [ ] **`spec-0085-proof`** — a test that the check actually catches a break.
+- [x] **`spec-0085-proof`** — a test that the check actually catches a break.
       Done when: removing a public function and running `apiCheck` fails
       naming it, and the proof is written down rather than claimed — a script
       or a documented transcript, since a test that breaks its own module's API
       cannot live in that module.
-- [ ] **`spec-0085-changelog`** — the limitation removed, and the process
+      Both: `config/api/proves-the-gate.sh` makes the break, runs the gate,
+      fails loudly if the gate did not notice, and puts the function back;
+      `config/api/README.md` carries the transcript of it running, and reads a
+      dump line for anyone who has not seen one.
+- [x] **`spec-0085-changelog`** — the limitation removed, and the process
       written where a contributor reads it.
       Done when: `AGENTS.md` says a public change means `apiDump` in the same
       commit, and the CHANGELOG's Limitations section no longer claims nothing
@@ -113,13 +117,21 @@ Then delete a public function and watch `./gradlew build` fail naming it.
 1. **Does the dump go in `api/` or beside the source?** The plugin defaults to
     `<module>/api/<module>.api`. Recommend the default: a contributor who has
     seen it in another Kotlin project finds it where they expect.
+    **The default.**
 2. **What happens to the fourteen dumps on the first release?** They will be
     large and nobody will read them once. Recommend landing them in a commit of
     their own that changes nothing else, so the diff of the next change is
     readable.
+    **Sixteen of them, and they landed in a commit of their own.** Three
+    thousand lines, of which `kestrel-core` is two thousand.
 3. **Should Kover's coverage gate and this share a task?** No, but both are
     gates that fire from `check`. Recommend leaving them separate and saying so
     in `AGENTS.md`, which lists what the gate runs.
+    **Separate, and said so**: `apiCheck` is a row in the gates table, and the
+    line under it says every gate fires from `check` so `./gradlew build` is
+    still the whole of it.
 4. **Does this want to arrive before or after `0029-tag`?** Before: the surface
     a release freezes should be recorded in the commit the release is cut from,
     not reconstructed after.
+    **Before**, and by some way: `0029-tag` is still the only unbuilt entry of a
+    spec that otherwise landed.

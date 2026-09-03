@@ -1,0 +1,17 @@
+public final class io/github/matthewjones372/kestrel/pelican/KestrelTransportKt {
+	public static final fun kestrelTransport (Lio/github/matthewjones372/kestrel/RunRecorder;Ljava/util/List;Ljava/time/Duration;)Lio/github/matthewjones372/pelican/ClientTransport;
+	public static synthetic fun kestrelTransport$default (Lio/github/matthewjones372/kestrel/RunRecorder;Ljava/util/List;Ljava/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/pelican/ClientTransport;
+}
+
+public final class io/github/matthewjones372/kestrel/pelican/Status : io/github/matthewjones372/kestrel/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/kestrel/pelican/Status;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/pelican/Status;IILjava/lang/Object;)Lio/github/matthewjones372/kestrel/pelican/Status;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

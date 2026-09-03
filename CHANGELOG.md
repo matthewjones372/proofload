@@ -413,6 +413,15 @@ enough to list, and long enough to matter.
   run is one nobody edits. It carries a JSON parser, which is why it is a module
   of its own and on nobody else's classpath.
 
+- **The public API is recorded, and a break is a diff.**
+  `binary-compatibility-validator` is applied to every published module and
+  wired into `check`, so `./gradlew build` fails on an unrecorded break exactly
+  as it fails on a detekt finding. `./gradlew apiDump` rewrites the dumps after
+  a deliberate change; `config/api/proves-the-gate.sh` makes a break, watches
+  the gate catch it and puts it back, and `config/api/README.md` carries the
+  transcript. A test cannot make that claim, because breaking a module's API
+  from inside that module breaks the module the test lives in.
+
 ### Limitations
 
 What this does not do yet. Each of these is checked against the tree at the
@@ -453,10 +462,12 @@ commit this section was written on, not planned or assumed.
   promised, so a generator that fell behind reports it. But if `behind` is
   large, the injector did not offer the rate the run claims and every percentile
   in that report is about a smaller experiment than the one asked for.
-- **The API is not frozen, and nothing records it.** The build has no binary
-  compatibility check and the tree has no `.api` dump, so a break between 0.1.0
-  and 0.2.0 is caught by this file and by nothing else. Until 1.0 a break comes
-  without a major bump.
+- **The API is not frozen, but it is written down.** Every published module
+  carries an `api/<module>.api` dump, and `apiCheck` fails the build where the
+  surface moved and the dump did not. Until 1.0 a break still comes without a
+  major bump — what changed is that it is now a line removed from a file a
+  reviewer is already looking at, rather than something somebody remembered to
+  write here.
 - **CI is not running.** GitHub Actions is blocked at the account level, so the
   `build` workflow has not run on this commit and nothing here is backed by a
   green tick. `./gradlew build` on a developer machine is what these modules

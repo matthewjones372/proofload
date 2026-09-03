@@ -92,14 +92,11 @@ built. Each row links the spec that argued for it.
 | [0083](0083-database-steps.md) | `kestrel-jdbc`: statements over a caller's own `DataSource`, with the connection checkout counted apart from the query |
 | [0086](0086-more-than-one-injector-started-together.md) | the hold each injector computed against the instant it was given, and a merge that refuses clocks which disagree — the coordinator argued against and not built |
 | [0080](0080-a-scenario-from-traffic-you-already-have.md) | `kestrel-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
+| [0085](0085-an-api-that-is-written-down.md) | a checked-in `.api` dump per published module, and `apiCheck` from `check`, so a break is a diff rather than a memory |
 
 ## Drafted, not built
 
-| Spec | What it is |
-|---|---|
-| [0085](0085-an-api-that-is-written-down.md) | a checked-in API dump, so a break is a diff a reviewer sees rather than a thing somebody remembered |
-
-Every other drafted spec is built, bar the tails listed below.
+Nothing. Every drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed:
 `0029-tag`, which is the release itself; `0061-containers`, which the fake

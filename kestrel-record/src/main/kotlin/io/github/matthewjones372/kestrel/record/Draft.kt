@@ -29,6 +29,8 @@ data class DraftStep(
     val after: Duration,
     /** Values that might be a correlation and are not certain enough to be one. */
     val maybe: List<String>,
+    /** Whether the recording got no answer to this request, so nothing said what to expect. */
+    val unanswered: Boolean,
 )
 
 /**
@@ -82,8 +84,8 @@ fun draft(
  * The step this stood for, with its credentials dropped.
  *
  * Redaction is last on purpose: nothing downstream of here can put a credential
- * back, and what is left is a list of names the output turns into a `TODO` the
- * compiler will not let anybody ignore.
+ * back, and what is left is a list of names the output turns into a `TODO` that
+ * stops the generated file running until somebody has decided what goes there.
  */
 private fun Collapsed.asStep(base: String?): DraftStep {
     val (kept, dropped) = recorded.headers.partition { !it.isCredential() }
@@ -95,13 +97,19 @@ private fun Collapsed.asStep(base: String?): DraftStep {
         headers = kept.filterNot { it.name.lowercase() in uninteresting },
         dropped = dropped.map { it.name }.distinct(),
         body = body,
-        expecting = recorded.answer?.status ?: 0,
+        // A request that got no answer said nothing about what to expect, so the
+        // step asks for the default and the output says the recording did not
+        // know. `expecting(0)` would be a step that can only fail.
+        expecting = recorded.answer?.status ?: DEFAULT_EXPECTED,
+        unanswered = recorded.answer == null,
         captures = captures,
         stoodFor = stoodFor,
         after = after,
         maybe = maybe,
     )
 }
+
+private const val DEFAULT_EXPECTED = 200
 
 /**
  * Headers a client sets for itself.

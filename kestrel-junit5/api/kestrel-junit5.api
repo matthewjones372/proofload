@@ -1,0 +1,23 @@
+public final class io/github/matthewjones372/kestrel/junit5/DifferencesKt {
+	public static final fun assertNotWorseThan-tz0I1MY (Lio/github/matthewjones372/kestrel/Difference;DZ)V
+	public static synthetic fun assertNotWorseThan-tz0I1MY$default (Lio/github/matthewjones372/kestrel/Difference;DZILjava/lang/Object;)V
+}
+
+public final class io/github/matthewjones372/kestrel/junit5/KestrelExtension : org/junit/jupiter/api/extension/ParameterResolver, org/junit/jupiter/api/extension/TestExecutionExceptionHandler {
+	public fun <init> ()V
+	public fun handleTestExecutionException (Lorg/junit/jupiter/api/extension/ExtensionContext;Ljava/lang/Throwable;)V
+	public fun resolveParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Lio/github/matthewjones372/kestrel/engine/Kestrel;
+	public synthetic fun resolveParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Ljava/lang/Object;
+	public fun supportsParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Z
+}
+
+public final class io/github/matthewjones372/kestrel/junit5/LoadRunSummary : java/lang/RuntimeException {
+}
+
+public abstract interface annotation class io/github/matthewjones372/kestrel/junit5/LoadTest : java/lang/annotation/Annotation {
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/junit5/RunsOn {
+	public abstract fun getEngine ()Lio/github/matthewjones372/kestrel/Engine;
+}
+

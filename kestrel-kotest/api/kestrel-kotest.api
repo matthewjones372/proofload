@@ -1,0 +1,21 @@
+public final class io/github/matthewjones372/kestrel/kotest/KestrelKt {
+	public static final fun kestrel (Lio/github/matthewjones372/kestrel/Engine;)Lio/github/matthewjones372/kestrel/engine/Kestrel;
+	public static final fun kestrel (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/matthewjones372/kestrel/kotest/NotWorseThan : io/kotest/matchers/Matcher {
+	public synthetic fun <init> (DZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (DZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-_V-WK_A ()D
+	public final fun component2 ()Z
+	public final fun copy-iEJy7Q4 (DZ)Lio/github/matthewjones372/kestrel/kotest/NotWorseThan;
+	public static synthetic fun copy-iEJy7Q4$default (Lio/github/matthewjones372/kestrel/kotest/NotWorseThan;DZILjava/lang/Object;)Lio/github/matthewjones372/kestrel/kotest/NotWorseThan;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAcceptable-_V-WK_A ()D
+	public final fun getOrCannotTell ()Z
+	public fun hashCode ()I
+	public fun test (Lio/github/matthewjones372/kestrel/Difference;)Lio/kotest/matchers/MatcherResult;
+	public synthetic fun test (Ljava/lang/Object;)Lio/kotest/matchers/MatcherResult;
+	public fun toString ()Ljava/lang/String;
+}
+

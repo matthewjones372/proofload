@@ -99,6 +99,9 @@ daemon.
 ## Known and unwritten
 
 Real, small, and not worth a spec each until someone wants them: OpenAPI import
-for the Pelican module, and streaming request bodies. Per-stage results left
-this list and became [0077](0077-what-each-stage-measured.md); server-sent
-events became [0078](0078-server-sent-events.md).
+for the Pelican module, which is the only one left — it wants a YAML parser,
+and this repository has refused heavier dependencies for less. Per-stage
+results became [0077](0077-what-each-stage-measured.md), server-sent events
+[0078](0078-server-sent-events.md), and streaming request bodies
+[0079](0079-a-body-the-user-brings.md), which also closed a gap nobody had
+written down: a request body was one string every user sent unchanged.

@@ -83,7 +83,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     // for the machine inside the alignment window would start late by however
     // long it waited. Nothing else is coordinated — a sample is two readings
     // of this injector's own monotonic clock.
-    shard?.let { waitFor(it, progress) }
+    val held = shard?.let { waitFor(it, progress) }
     val recorders = Recorders(Instant.now(), keepingSchedule = !closed)
     val watch = watchForHiccups()
     val room = watchForRoom()
@@ -113,7 +113,14 @@ private fun Simulation.send(progress: Progress): RunResult {
     watching.stop()
     val sampled = watching.usersInFlight()
     return recorders.freeze(plan(), arrivals.freeze())
-        .copy(hiccups = watch.stop(), limits = room.stop(), usersInFlight = sampled, shard = shard)
+        .copy(
+            hiccups = watch.stop(),
+            limits = room.stop(),
+            usersInFlight = sampled,
+            // The shard the caller declared, plus the hold this host actually
+            // computed: the only thing a merge can read a disagreeing clock off.
+            shard = shard?.copy(heldFor = held),
+        )
 }
 
 /**
@@ -306,7 +313,7 @@ private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
  * began after the others measured a different window, and pooling it with
  * theirs would report a shape none of them saw.
  */
-private fun waitFor(shard: Shard, progress: Progress) {
+private fun waitFor(shard: Shard, progress: Progress): Duration {
     val until = shard.startingAt.toEpochMilli() - System.currentTimeMillis()
     require(until > 0L) {
         "injector ${shard.index} of ${shard.of} was told to start at ${shard.startingAt}, which was " +
@@ -317,6 +324,10 @@ private fun waitFor(shard: Shard, progress: Progress) {
     // thread and the ban is against parking a carrier, but the intent here is
     // "wait until" and a latch says so.
     CountDownLatch(1).await(until, TimeUnit.MILLISECONDS)
+    // Returned rather than thrown away: this is what the host's own clock said
+    // about the instant every injector was given, and a merge has nothing else
+    // to read a disagreement off.
+    return until.milliseconds
 }
 
 /** Where a warm-up's samples go: nowhere. */

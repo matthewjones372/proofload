@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import java.time.Instant
+import kotlin.time.Duration
 
 /**
  * Which slice of a run this process is sending.
@@ -29,6 +30,23 @@ data class Shard(
      * the same second thirty everywhere, since a merge superimposes them.
      */
     val startingAt: Instant,
+
+    /**
+     * How long this injector actually held before [startingAt], read off its
+     * own wall clock.
+     *
+     * Measured rather than declared: the value a caller builds carries none,
+     * and the one on a result carries what the injector saw. It is the only
+     * thing in a set of shards that can see a clock that disagrees — every
+     * injector waits until *its own* clock says [startingAt], so a host running
+     * three seconds fast starts three seconds early and writes the same instant
+     * as everybody else. What it cannot write the same is the hold: told to go
+     * at the same moment, it computes three seconds less of one.
+     *
+     * Null where nothing recorded it, which is a run nobody sharded and every
+     * baseline written before version 8.
+     */
+    val heldFor: Duration? = null,
 ) {
 
     init {

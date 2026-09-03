@@ -65,10 +65,18 @@ private fun Probe?.lines(): List<String> =
  *
  * The instant is written too: it is what every injector in the set was given,
  * so a merge can say how far apart they actually started without asking each
- * file to agree about a clock none of them shared.
+ * file to agree about a clock none of them shared — and, since version 8, the
+ * hold each one computed against it, which is the one place a clock that
+ * disagrees shows up at all.
+ *
+ * The hold is left off where nothing measured one rather than written as a
+ * zero, so a version 7 file and a run nobody held read the same: absent.
  */
-private fun Shard?.lines(): List<String> =
-    if (this == null) emptyList() else listOf("shard\t$index\t$of\t${startingAt.toEpochMilli()}")
+private fun Shard?.lines(): List<String> {
+    if (this == null) return emptyList()
+    val held = heldFor?.let { "\t${it.inWholeNanoseconds}" }.orEmpty()
+    return listOf("shard\t$index\t$of\t${startingAt.toEpochMilli()}$held")
+}
 
 private fun Plan.lines(): List<String> =
     listOf("plan\t${scenario.escaped()}") +
@@ -190,9 +198,21 @@ private fun List<String>.runLevel(kind: String): Timing =
 private fun List<String>.asShard(): Shard? =
     firstOrNull { it.startsWith("shard$SEPARATOR") }
         ?.split(SEPARATOR)
-        ?.let { (_, index, of, startingAt) ->
-            Shard(index = index.toInt(), of = of.toInt(), startingAt = Instant.ofEpochMilli(startingAt.toLong()))
+        ?.let { fields ->
+            Shard(
+                index = fields[INDEX].toInt(),
+                of = fields[OF].toInt(),
+                startingAt = Instant.ofEpochMilli(fields[STARTING_AT].toLong()),
+                // Absent in a version 7 file, which had no field for it.
+                heldFor = fields.getOrNull(HELD_FOR)?.toLong()?.nanoseconds,
+            )
         }
+
+// The shard line's fields, after the word `shard` that names it.
+private const val INDEX = 1
+private const val OF = 2
+private const val STARTING_AT = 3
+private const val HELD_FOR = 4
 
 /** Absent in a version 3 file, and in any run whose machine was never calibrated. */
 private fun List<String>.asProbe(): Probe? =
@@ -325,14 +345,15 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "7"
+private const val VERSION = "8"
 
 // Each older version is this one missing a line, so a file written before
 // there was one still answers every question a comparison asks of it except
 // the one that line carries: 3 has no probe, 4 no warm-up, 5 no lateness,
 // stalls or shard, 6 no closed population — which nothing could write, since
-// there was no closed model to write one from.
-private val READABLE = listOf("3", "4", "5", "6", VERSION)
+// there was no closed model to write one from — and 7 no hold on its shard
+// line, so a merge of files that old cannot see a clock that disagreed.
+private val READABLE = listOf("3", "4", "5", "6", "7", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

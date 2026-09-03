@@ -18,7 +18,18 @@ import kotlin.time.Duration.Companion.milliseconds
  * instant. A merge of three quarters is a smaller experiment than the one
  * somebody asked for, and nothing in the numbers says so.
  */
-data class Shards(val each: List<RunResult>) {
+data class Shards(
+    val each: List<RunResult>,
+    /**
+     * How far two injectors' clocks may disagree and still be one run.
+     *
+     * The timeline is whole seconds, so a tenth of one is well inside what a
+     * merge can carry and well outside what NTP leaves. Configurable because a
+     * set of hosts nobody synchronises is a set somebody may still want an
+     * answer from, and a bound they have to state is a decision they made.
+     */
+    val tolerating: Duration = TOLERABLE_SKEW,
+) {
 
     init {
         require(each.isNotEmpty()) { "there are no injectors here to merge" }
@@ -51,6 +62,23 @@ data class Shards(val each: List<RunResult>) {
         val differences = each.drop(1).flatMapIndexed { at, run -> run.unlikeInjector(each.first(), sent[at + 1]) }
         require(differences.isEmpty()) {
             "these injectors did not measure one run: ${differences.joinToString()}"
+        }
+
+        // Every injector waits until its own clock reads the instant, so a
+        // host running fast starts early and still writes the instant it was
+        // given: the holds are the only place the disagreement shows. Asked
+        // only where every shard measured one — a set with an older file in it
+        // has nothing to compare, and refusing on that would refuse a merge
+        // for want of a number rather than because of one.
+        val holds = shards.mapNotNull { shard -> shard.heldFor?.let { shard.index to it } }
+        if (holds.size == shards.size && holds.isNotEmpty()) {
+            val apart = holds.maxOf { it.second } - holds.minOf { it.second }
+            require(apart <= tolerating) {
+                "these injectors' clocks disagree by $apart, more than the $tolerating this run can carry: " +
+                    holds.joinToString { (index, held) -> "injector $index held $held" } +
+                    ". Told to start at one instant, each waits until its own clock reads it, so a host " +
+                    "whose clock is fast starts early and merges into a run whose zero points are apart"
+            }
         }
     }
 
@@ -116,7 +144,17 @@ data class Shards(val each: List<RunResult>) {
         )
     }
 
-    companion object
+    companion object {
+
+        /**
+         * A tenth of the timeline's own resolution, which is where skew stops
+         * smearing the picture and starts moving it.
+         *
+         * 0070 already says a hundred milliseconds is a tenth of a bucket and
+         * that NTP beats it comfortably. This is that sentence as a refusal.
+         */
+        val TOLERABLE_SKEW: Duration = 100.milliseconds
+    }
 }
 
 /** Where two injectors disagree about what they were measuring, in [Runs]'s vocabulary. */

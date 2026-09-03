@@ -164,7 +164,7 @@ class BaselineTest {
     fun `a baseline written by the version before this one reads, and claims no probe`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t6", "kestrel-baseline\t3")
+            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t3")
 
         parseBaseline(older).probe shouldBe null
     }
@@ -226,6 +226,40 @@ class BaselineTest {
     }
 
     @Test
+    fun `a shard carries the hold its own clock computed, which is the only place a wrong clock shows`(
+        @TempDir dir: Path,
+    ) {
+        val shard = Shard(
+            index = 2,
+            of = 4,
+            startingAt = Instant.parse("2026-08-26T09:00:00Z"),
+            heldFor = 29_500.milliseconds,
+        )
+
+        val read = runOf().copy(shard = shard).throughAFile(dir)
+
+        read.shard shouldBe shard
+    }
+
+    @Test
+    fun `a version 7 baseline reads, and its shard claims no hold`() {
+        // What a version 7 writer produced: this file's shard line without the
+        // field it did not have.
+        val shard = Shard(index = 2, of = 4, startingAt = Instant.parse("2026-08-26T09:00:00Z"), heldFor = 1.seconds)
+        val older = runOf().copy(shard = shard).asBaseline()
+            .lineSequence()
+            .map { if (it.startsWith("shard\t")) it.split("\t").take(4).joinToString("\t") else it }
+            .joinToString(separator = "\n")
+            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t7")
+
+        val read = parseBaseline(older)
+
+        withClue("a merge of files that old cannot see a clock that disagreed, and must not invent one") {
+            read.shard shouldBe shard.copy(heldFor = null)
+        }
+    }
+
+    @Test
     fun `a run nobody sharded writes no shard line, rather than injector zero of one`(@TempDir dir: Path) {
         val read = runOf().throughAFile(dir)
 
@@ -244,7 +278,7 @@ class BaselineTest {
             .lineSequence()
             .filterNot { it.split("\t").first() in setOf("behind", "stalls", "shard") }
             .joinToString(separator = "\n")
-            .replaceFirst("kestrel-baseline\t6", "kestrel-baseline\t5")
+            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t5")
 
         val read = parseBaseline(older)
 
@@ -259,7 +293,7 @@ class BaselineTest {
     fun `a version 4 baseline reads, and claims no warm-up`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t6", "kestrel-baseline\t4")
+            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t4")
 
         parseBaseline(older).plan.warmUp shouldBe null
     }
@@ -291,7 +325,7 @@ class BaselineTest {
     fun `a version 6 baseline reads, since nothing could have written a closed population into one`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t7", "kestrel-baseline\t6")
+            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t6")
 
         parseBaseline(older).plan.profile shouldBe constantRate(100.perSecond, over = 2.seconds)
     }

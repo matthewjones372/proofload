@@ -98,6 +98,17 @@ the load that left.
   instant. Three quarters of a run is a smaller experiment than the one you
   asked for, and nothing in the numbers says so. The refusal names which
   injector wrote nothing, so you know which host to go and look at.
+- **A clock that disagrees.** Every injector waits until *its own* clock reads
+  the instant, so a host running three seconds fast starts three seconds early
+  and writes the same instant as everybody else — the file says nothing is
+  wrong. What it cannot write the same is the hold it computed against that
+  instant, which is recorded on its shard and refused where two of them differ
+  by more than `Shards.TOLERABLE_SKEW` (a hundred milliseconds, which is a
+  tenth of a timeline bucket). The refusal says by how much and which injector
+  held what. Pass `Shards(each, tolerating = ...)` where a set of hosts nobody
+  synchronises is still worth an answer from — a bound you state is a decision
+  you made. A set with a version 7 baseline in it has no hold to compare and is
+  not refused for want of a number.
 - **Unlike machines**, as `Runs` refuses them: a merged result has one machine,
   one probe and one resolution.
 - **`Runs.readAll` on a directory of injectors.** Handed four of them it would

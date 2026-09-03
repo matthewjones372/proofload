@@ -90,21 +90,24 @@ built. Each row links the spec that argued for it.
 | [0082](0082-a-response-nobody-has-to-hold.md) | `discardingBody()`: the bytes counted and let go, and a check or a capture on one refused where it is written |
 | [0084](0084-a-goal-judged-where-it-was-asked.md) | `inEveryStage`: a goal asked of each stage, so a run cannot meet one by lengthening its ramp |
 | [0083](0083-database-steps.md) | `kestrel-jdbc`: statements over a caller's own `DataSource`, with the connection checkout counted apart from the query |
+| [0086](0086-more-than-one-injector-started-together.md) | the hold each injector computed against the instant it was given, and a merge that refuses clocks which disagree — the coordinator argued against and not built |
+| [0080](0080-a-scenario-from-traffic-you-already-have.md) | `kestrel-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
 
 ## Drafted, not built
 
 | Spec | What it is |
 |---|---|
-| [0080](0080-a-scenario-from-traffic-you-already-have.md) | a HAR read into Kotlin source: the captures a hand-written scenario gets wrong, and no credential in the output |
 | [0085](0085-an-api-that-is-written-down.md) | a checked-in API dump, so a break is a diff a reviewer sees rather than a thing somebody remembered |
-| [0086](0086-more-than-one-injector-started-together.md) | the clock a merged run cannot currently see is wrong — and the argument against the orchestrator around it |
 
 Every other drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed:
-`0029-tag`, which is the release itself, and `0061-containers`, which the fake
+`0029-tag`, which is the release itself; `0061-containers`, which the fake
 broker made largely redundant and which cannot be verified without a Docker
-daemon.
+daemon; and `0086-coordinator`, the SSH orchestrator its own spec recommends
+against — with a missing shard refused by name and a wrong clock refused too,
+what is left is tedium, and tedium is the shell loop in
+`docs/more-than-one-injector.md` rather than a subsystem.
 
 ## Known and unwritten
 

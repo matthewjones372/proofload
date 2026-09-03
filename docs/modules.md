@@ -19,6 +19,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
 | `kestrel-export` | a run's measurements in the formats other tools already read | core |
 | `kestrel-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
+| `kestrel-record` | a HAR recording read into a Kotlin scenario you edit and commit | core, `kotlinx-serialization-json` |
 | `kestrel-report-html` | one self-contained, interactive HTML page | core |
 | `kestrel-report-github` | markdown, a job summary and a Pages directory | core |
 | `kestrel-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core, `pelican-core` |
@@ -78,6 +79,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-engine` | [NoThirdPartyDependenciesTest](../kestrel-engine/src/test/kotlin/io/github/matthewjones372/kestrel/engine/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-http` | [NoThirdPartyDependenciesTest](../kestrel-http/src/test/kotlin/io/github/matthewjones372/kestrel/http/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-jdbc` | [NoThirdPartyDependenciesTest](../kestrel-jdbc/src/test/kotlin/io/github/matthewjones372/kestrel/jdbc/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-record` | [NoThirdPartyDependenciesTest](../kestrel-record/src/test/kotlin/io/github/matthewjones372/kestrel/record/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |

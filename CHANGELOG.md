@@ -14,7 +14,7 @@ one.
 
 ## [0.1.0] — unreleased
 
-The first release. Fourteen modules, published together and versioned together.
+The first release. Sixteen modules, published together and versioned together.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
@@ -335,13 +335,15 @@ enough to list, and long enough to matter.
   injector rather than the pool, and an incomplete or unlike set refused by
   name. `Runs` refuses injectors outright. See
   [docs/more-than-one-injector.md](docs/more-than-one-injector.md).
-- **The baseline format is version 6.** It carries the warm-up a run declared,
+- **The baseline format is version 8.** It carries the warm-up a run declared,
   because a comparison refuses to pool a warmed run with a cold one and a file
   that did not carry it would refuse every warmed run against every baseline
-  ever written; and, since version 6, the run's lateness and the injector's own
+  ever written; since version 6, the run's lateness and the injector's own
   stalls as buckets plus the shard that wrote it, without which a merged
-  distributed run could not say which injector lost ground. Versions 5, 4 and 3
-  still read, each claiming nothing about the lines it did not have.
+  distributed run could not say which injector lost ground; and since version 8
+  the hold that shard computed against the instant it was given, which is the
+  only place a clock that disagreed can be seen. Versions 7, 6, 5, 4 and 3 still
+  read, each claiming nothing about the lines it did not have.
 - **A failed credential refresh no longer stops refreshing.** A fetch that
   threw out of `refreshing`'s scheduled task cancelled its own schedule, so one
   failure left every later refresh unscheduled and a soak reading a credential
@@ -391,6 +393,25 @@ enough to list, and long enough to matter.
   `StepStats` gained `queued` and `produced` for it, and `StepScope` the two
   methods that report them; `StepSink` gained an `aside` with a default, so a
   sink written as a lambda stays one.
+
+- **A clock that disagrees is refused rather than merged.** Every injector
+  waits until its own wall clock reads the instant it was given, so a host
+  running fast starts early and writes the same instant as everybody else: the
+  hold each one computed is the only place the disagreement shows. It is
+  recorded on the shard, and `Shards` refuses a set whose holds differ by more
+  than a bound the caller can state, naming which injector held what. **The
+  baseline format is version 8**, which is version 7 plus that one field;
+  version 7 files still read, and claim no hold.
+
+- **A scenario from traffic you already have.** `kestrel-record` reads a HAR —
+  the file every browser and proxy exports — and writes Kotlin source you edit
+  and commit: one `exec` per request, a `capture` and a `{name}` where one
+  answer's value turns up in a later request, one step where forty differ only
+  by a segment, and static assets left out. Every credential is dropped and
+  named where it was, with no flag to keep one. Source rather than a runtime
+  `Scenario`, because a recording is a first draft and a file re-read on every
+  run is one nobody edits. It carries a JSON parser, which is why it is a module
+  of its own and on nobody else's classpath.
 
 ### Limitations
 

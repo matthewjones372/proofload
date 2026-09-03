@@ -14,6 +14,7 @@ import io.github.matthewjones372.kestrel.sessionKey
 import io.github.matthewjones372.kestrel.step
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.apache.kafka.clients.producer.MockProducer
 import org.apache.kafka.common.errors.RecordTooLargeException
@@ -83,14 +84,20 @@ class ProduceTest {
         val sent = producer.history()
         result[submitted].count shouldBe 5L
         sent.size shouldBe result[submitted].count.toInt()
-        withClue("the key decides ordering and which broker takes the write") {
-            sent.map { it.key().decodeToString() } shouldContainExactly (0 until sent.size).map { "$it" }
+        withClue("the key decides which broker takes the write, and every user is keyed by its own number") {
+            sent.map { it.key().decodeToString() }
+                .shouldContainExactlyInAnyOrder((0 until sent.size).map { "$it" })
         }
-        sent.forEachIndexed { user, record ->
+        // Each record against its own key rather than against its position:
+        // every user runs on a thread of its own, so which of five reaches the
+        // producer first is the scheduler's business and not a claim this test
+        // has any reason to make.
+        sent.forEach { record ->
+            val user = record.key().decodeToString()
             withClue("record $user") {
                 record.topic() shouldBe "trades"
                 record.value().decodeToString() shouldBe "trade for $user"
-                record.headers().lastHeader("trade-id").value().decodeToString() shouldBe "$user"
+                record.headers().lastHeader("trade-id").value().decodeToString() shouldBe user
             }
         }
     }
@@ -103,7 +110,7 @@ class ProduceTest {
 
         withClue("stated once at the call site and threaded to both, so a run cannot match on an id it never sent") {
             producer.history().map { it.headers().lastHeader("trade-id").value().decodeToString().toLong() }
-                .shouldContainExactly((0L until producer.history().size).toList())
+                .shouldContainExactlyInAnyOrder((0L until producer.history().size).toList())
         }
     }
 

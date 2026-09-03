@@ -29,6 +29,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-kotest:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-otel:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-pelican:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-record:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
 

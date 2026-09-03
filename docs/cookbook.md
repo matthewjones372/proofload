@@ -704,6 +704,61 @@ cannot land inside whichever virtual user reads it first. Every later fetch runs
 on a daemon thread no departure is submitted to. `current` is a volatile read of
 a value already in hand and allocates nothing.
 
+## Start from traffic you already have
+
+Every scenario in this book was typed by hand, and that is the main cost of
+adopting any load tool. If you already have the flow in a browser or a proxy,
+export a HAR and read it in:
+
+```bash
+./gradlew :kestrel-record:run --args="checkout.har --package com.acme.load --out src/test/kotlin"
+```
+
+```
+kestrel: 2 steps from 3 recorded requests, at src/test/kotlin/com/acme/load/Checkout.kt
+kestrel: captured orderId
+kestrel: 1 credential header(s) dropped, each left as a TODO
+```
+
+The output is Kotlin source you edit and commit, not a `Scenario` read at run
+time. A recording is a first draft — most of it wants deleting — and a draft
+re-read on every run is one nobody edits, so the forty CDN requests and the
+expired token stay in it forever.
+
+What it does with the recording:
+
+- **One `exec` per request**, named `METHOD /path`, in the order they were made.
+- **A value one answer produced and a later request used becomes a `capture`
+  and a `{name}`.** That chain is what a hand-written scenario gets wrong: the
+  transcription hard-codes the id, nothing fails, and the run measures a
+  lighter experiment than the one you meant. The nearer answer wins, so a value
+  seen twice is credited to the response that actually put it there. A value
+  too short to be sure of gets a comment instead of a capture.
+- **Runs of one path differing by a segment become one step**, with a comment
+  saying how many it stood for. Forty `GET /products/17` are one endpoint under
+  load and forty rows nobody reads.
+- **Static assets are excluded**, whatever else you pass: a page load is forty
+  requests to a CDN and one to the API, and including them measures somebody
+  else's cache. `--include` and `--exclude` take a regex over the path.
+- **Every credential is dropped.** `authorization`, `cookie`, `set-cookie`,
+  `x-api-key` and anything whose value parses as a JWT are replaced by a `TODO`
+  naming the header. There is no flag to turn this off — a switch somebody sets
+  once and forgets is a token in a public repository. Put a real credential
+  there, or fetch one off the measured path with `refreshing` (above).
+- **Think time is a comment.** The gaps between recorded requests are one
+  person's, not a rate line; they are printed and commented out, and the profile
+  is yours to state.
+
+What it does not do: record traffic. That is a solved problem with several tools
+that already do it, and a proxy means a CA certificate, a browser configuration
+and a man-in-the-middle on somebody's laptop. Chrome, Firefox, Charles,
+mitmproxy and every API client already export HAR; this reads the file.
+
+`docs/examples/checkout.har` is the recording behind this book's own checkout,
+and `kestrel-record/src/test/.../generated/Checkout.kt` is what it generates —
+checked in, compiled and formatted by the same build as everything else, which
+is what keeps "the output compiles" from being a claim.
+
 ## Chain two steps with a capture
 
 ```kotlin

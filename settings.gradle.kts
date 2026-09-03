@@ -13,6 +13,7 @@ include(
     "kestrel-kotest",
     "kestrel-otel",
     "kestrel-pelican",
+    "kestrel-record",
     "kestrel-report-github",
     "kestrel-report-html",
     "kestrel-websocket",

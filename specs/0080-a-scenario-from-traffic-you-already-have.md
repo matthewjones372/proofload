@@ -96,26 +96,33 @@ generated source names what was dropped and where to put it back.
 
 ## Stack
 
-- [ ] **`spec-0080-module`** — `kestrel-record`, its parser, and a HAR read into
+- [x] **`spec-0080-module`** — `kestrel-record`, its parser, and a HAR read into
       a list of recorded requests.
       Done when: a HAR exported by Chrome and one by mitmproxy both read to the
       same shape, an entry with no response reads as a request that got none,
       and the module is not on any other module's classpath.
-- [ ] **`spec-0080-emit`** — recorded requests to Kotlin source: one `exec` per
+- [x] **`spec-0080-emit`** — recorded requests to Kotlin source: one `exec` per
       request, headers, bodies, expected statuses.
       Done when: the generated file compiles, `./gradlew spotlessCheck` passes
       on it unmodified, and a recording of the cookbook's own checkout produces
       a scenario whose `stepNames` match the hand-written one.
-- [ ] **`spec-0080-redact`** — credentials dropped, and named where they were.
+      The first two are gates rather than claims: the generated file is checked
+      in under `kestrel-record/src/test`, so this build compiles it, detekt
+      reads it and spotless formats it, and a generator whose output was
+      unformatted would move that file and fail the test that compares it. The
+      names are read out of the source rather than off the generated value,
+      because the value carries a `TODO` where its credential was — which is
+      exactly what stops it running until somebody has decided what goes there.
+- [x] **`spec-0080-redact`** — credentials dropped, and named where they were.
       Done when: `authorization`, `cookie`, `set-cookie`, `x-api-key` and any
       header whose value parses as a JWT are absent from the output, each
       leaving a `TODO` naming the header.
-- [ ] **`spec-0080-correlate`** — a value in one response that reappears in a
+- [x] **`spec-0080-correlate`** — a value in one response that reappears in a
       later request becomes a `capture` and a `{name}`.
       Done when: a recording that creates an order and then fetches it by id
       generates the capture and the templated path, and a value that appears in
       two responses before it is used is not correlated to the wrong one.
-- [ ] **`spec-0080-collapse`** — runs of one path differing by a segment become
+- [x] **`spec-0080-collapse`** — runs of one path differing by a segment become
       one step.
       Done when: forty `GET /products/{n}` become one step named
       `GET /products/{id}` with a comment saying it stood for forty.
@@ -134,16 +141,29 @@ The generated file compiles, carries no credential, and runs.
 1. **Where does the base URL come from?** A recording holds absolute URLs
     against one host. Recommend the most common origin as `http.baseUrl(...)`
     and everything else absolute, with a comment where more than one appeared.
+    **Built that way.**
 2. **How is a correlation proved rather than guessed?** A value seen in a
     response and a later request may be a coincidence — a status, a count, a
     date. Recommend a length floor and a shape test (opaque-looking, not a word
     in the request already), and generating a comment rather than a capture
     where it is uncertain.
+    **Built that way**: eight characters, made of what an identifier is made of,
+    carrying a digit, and not already in the request credited with producing it.
+    Anything shorter is a comment. The producer is the *nearest* preceding
+    answer carrying the value, which is what stops a value seen twice being
+    credited to the wrong one.
 3. **Should the recording keep think time?** The gaps are one person's, so no
     rate line should come from them. Recommend emitting them as a commented-out
     `pause` per step, which says what was seen without pretending it is a
     profile.
+    **Built as a comment naming the gap** rather than as a commented-out
+    `pause`: a commented-out call is a line somebody uncomments without reading,
+    and what is worth keeping is the number and the sentence saying it is one
+    person's.
 4. **Is a `main` in a published module the right shape?** It makes
     `kestrel-record` the only module with an entry point. Recommend it, and
     excluding it from `publishedModules` if that reads wrong — a tool nobody
     depends on is not a library.
+    **Published, with the entry point.** A second set of coordinates for one
+    `main` is worse than one module that has one, and the module is on nobody
+    else's classpath — which is a test, not a claim.

@@ -103,7 +103,7 @@ recommendation.
       entry was written for a gap that was not there. Left ticked and recorded
       rather than deleted: the spec is worth less if it does not say what was
       checked.
-- [ ] **`spec-0086-clocks`** — each shard records the offset between its own
+- [x] **`spec-0086-clocks`** — each shard records the offset between its own
       clock and the instant it was told to start on; the merge refuses where
       they disagree by more than the run can tolerate.
       Done when: two shards written by clocks a second apart refuse to merge
@@ -129,11 +129,23 @@ machine, which is the argument.
     and the timeline is whole seconds, so a second is already visible.
     Recommend refusing above a configurable bound defaulting to something well
     under a second, and recording the observed offset either way.
+    **Built that way.** `Shards.TOLERABLE_SKEW` is a hundred milliseconds — a
+    tenth of a timeline bucket, which is the number 0070 already quotes — and
+    `Shards(each, tolerating = ...)` states another. The hold is recorded
+    whether or not it refuses.
 2. **Where does the observed offset go?** The baseline's `shard` line already
     carries `index`, `of` and the instant (0070's format version 6), so a
     fourth field is the smallest change — but it is a format version, and
     version 8 for one number wants saying out loud.
+    **Said out loud, and version 8 it is.** The field is left off where nothing
+    measured a hold, so a version 7 file and a version 8 file written by a run
+    that held nothing are the same bytes. Version 7 reads, and claims no hold —
+    which means a merge of files that old cannot see a clock that disagreed,
+    and is not refused for want of a number.
 3. **Is there a smaller coordinator that is worth it?** A script in `docs/`
     that copies and starts, shipped as an example rather than as code with a
     test. Recommend that as the answer if somebody asks for this: it is
     documentation of a thing they will edit anyway.
+    **Already shipped**, under "The launcher" in
+    `docs/more-than-one-injector.md`: a shell loop, ssh and scp, with
+    `OneInjector.kt` as the program it runs.

@@ -57,6 +57,15 @@ class HttpAction internal constructor(
 
     fun header(name: String, value: String): HttpAction = copy(headers = headers + (name to value))
 
+    /**
+     * The request body, filled per user from the session where it carries
+     * `{name}` — the rule a path template already uses, and the same
+     * `UnfilledPath` failure naming the key when the session has nothing under
+     * it.
+     *
+     * A body with no `{` costs nothing and arrives exactly as written, which
+     * is every JSON body full of braces that are not placeholders.
+     */
     fun body(body: String): HttpAction = copy(body = body)
 
     /** The status that counts as a success. Anything else fails the step. */
@@ -115,20 +124,33 @@ class HttpAction internal constructor(
         sendTo(scope)
     }
 
+    /** What left, for a trace. Nothing at all where no trace is listening. */
+    private fun narrate(url: String, sending: String?, scope: StepScope) {
+        if (!scope.narrating) return
+        scope.note("$method ${origin.baseUrl}$url")
+        headers.forEach { (name, value) -> scope.note("> $name: $value") }
+        // The filled body rather than the template: a trace exists to show
+        // what left, not what was written.
+        sending?.let { scope.note("> $it") }
+    }
+
+    /** And what came back. */
+    private fun narrate(response: Response, scope: StepScope) {
+        if (!scope.narrating) return
+        scope.note("< ${response.status}")
+        response.body.takeIf { it.isNotBlank() }?.let { scope.note("< $it") }
+    }
+
     /** Sends, and records what happened on [scope]. Reached through [send]. */
     internal fun sendTo(scope: StepScope): Response? {
         val url = path.fill(scope) ?: return null
-        // Only where something is listening: a run builds none of these.
-        if (scope.narrating) {
-            scope.note("$method ${origin.baseUrl}$url")
-            headers.forEach { (name, value) -> scope.note("> $name: $value") }
-            body?.let { scope.note("> $it") }
-        }
-        val response = attempts(url, scope) ?: return null
-        if (scope.narrating) {
-            scope.note("< ${response.status}")
-            response.body.takeIf { it.isNotBlank() }?.let { scope.note("< $it") }
-        }
+        // Filled by the same rule the path uses, and before anything is sent: a
+        // body with a hole in it is not a request to make, and a target given
+        // one would answer for a mistake in this scenario.
+        val sending = body?.let { it.fillBody(scope) ?: return null }
+        narrate(url, sending, scope)
+        val response = attempts(url, sending, scope) ?: return null
+        narrate(response, scope)
         if (response.status != expected) {
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
@@ -162,14 +184,15 @@ class HttpAction internal constructor(
     // the next attempt instead would hand the rest of the journey to another
     // thread and lose the session the step is holding.
     @Suppress("ForbiddenMethodCall")
-    private fun attempts(url: String, scope: StepScope): Response? {
-        val retries = retries ?: return follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope)
+    private fun attempts(url: String, sending: String?, scope: StepScope): Response? {
+        val retries = retries
+            ?: return follow(Hop(URI.create(origin.baseUrl + url), method, sending), following, scope)
 
         var waitFor = retries.backingOff
         var left = retries.times
         while (true) {
             val startedAt = System.nanoTime()
-            val response = follow(Hop(URI.create(origin.baseUrl + url), method, body), following, scope)
+            val response = follow(Hop(URI.create(origin.baseUrl + url), method, sending), following, scope)
             val took = (System.nanoTime() - startedAt).nanoseconds
             if (response == null || left == 0 || !retries.on(response)) {
                 // The last attempt is the measurement, whether it worked or

@@ -85,6 +85,7 @@ built. Each row links the spec that argued for it.
 | [0061](0061-what-the-kafka-path-costs.md) | what the Kafka adapter costs, and a fake broker that satisfies the real client over a socket |
 | [0077](0077-what-each-stage-measured.md) | a staged run split at its own boundaries, so a ramp and the hold after it are two answers rather than a mixture |
 | [0078](0078-server-sent-events.md) | an SSE feed opened once and read as two numbers: the round trip to the first event, and the cadence of the rest |
+| [0079](0079-a-body-the-user-brings.md) | a request body filled from the session per user, so a run is not ten thousand copies of one order |
 
 ## Drafted, not built
 

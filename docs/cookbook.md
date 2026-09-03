@@ -522,6 +522,23 @@ A feeder is a function of the user's number rather than a cursor over a source,
 so there is nothing to lock on the path every request takes, nothing to run out
 of, and user 4,001 gets the same data tomorrow as it did today.
 
+A request body reads the session the same way, so the thing being posted varies
+per user too:
+
+```kotlin
+exec(placeOrder, api.post("/orders").body("""{"customer":"{customer}","cart":"1 anvil"}"""))
+```
+
+Ten thousand users sending one identical order measure whatever the target does
+with a duplicate — dedupes it, serves it from cache, collides on a unique index,
+takes the idempotency key at its word — and the page reports that as the latency
+of placing an order.
+
+Only an identifier between braces is a placeholder, so a JSON document's own
+braces are content and arrive as written. A `{name}` the session has nothing
+under fails the step with `no name captured` rather than sending the braces to
+the target, which would file somebody else's answer under this step.
+
 ## A fixed list
 
 ```kotlin

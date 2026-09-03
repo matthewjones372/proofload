@@ -203,6 +203,15 @@ enough to list, and long enough to matter.
   baseline written before this existed counts no visits, which reads as
   unmeasured rather than as no stream. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **A body the user brings.** `body("...")` fills `{name}` from the session,
+  the rule `/orders/{id}` already uses, so ten thousand users no longer send
+  one identical order and the page no longer calls whatever the target does
+  with a duplicate the latency of placing one. A missing key fails the step
+  with `UnfilledPath` naming it rather than sending the braces on. Only an
+  identifier is a placeholder — a body is full of braces that are not — so a
+  JSON document arrives exactly as written unless it carries `{aName}`. **A
+  break for a body that meant one literally:** it now fails as a key the
+  session has nothing under.
 - **Server-sent events.** `sse.baseUrl(...).at(path)` opens a feed in
   `kestrel-http` — no new module, no new dependency — and it is read with the
   split 0071 settled for gRPC: `open` ends when the target agrees to stream,

@@ -29,6 +29,20 @@ internal class Capture<T : Any>(
 private val placeholder = Regex("""\{([^{}]+)}""")
 
 /**
+ * The same idea, tightened to identifiers, for a body.
+ *
+ * A path rarely contains a brace and a body almost always does: `{"cart":"1
+ * anvil"}` is one match under the rule above, named `"cart":"1 anvil"`, and
+ * every JSON body would fail as a placeholder the session had nothing under.
+ * A name here is what a session key is called — a letter or underscore and
+ * then letters, digits or underscores — which no JSON document opens with.
+ *
+ * The looser rule is left alone where it is: a path template has never needed
+ * this and narrowing it would be a break for nobody.
+ */
+private val named = Regex("""\{([A-Za-z_][A-Za-z0-9_]*)}""")
+
+/**
  * Fills `{name}` from the session key of that name, failing [scope] and
  * returning null when the session has nothing under it.
  *
@@ -36,11 +50,23 @@ private val placeholder = Regex("""\{([^{}]+)}""")
  * A key of the same name holding another type is the mistake `Session` already
  * throws on, and it stays a throw here — nobody declared it.
  */
-internal fun String.fill(scope: StepScope): String? {
+internal fun String.fill(scope: StepScope): String? = filledBy(placeholder, scope)
+
+/**
+ * The same, for a request body: `{name}` from the session key of that name,
+ * and every other brace left where it is.
+ *
+ * A missing key fails the step rather than sending the placeholder on. A body
+ * that quietly carries `{cart}` to the target is a request nobody wrote,
+ * answered for by a service that had no part in the mistake.
+ */
+internal fun String.fillBody(scope: StepScope): String? = filledBy(named, scope)
+
+private fun String.filledBy(pattern: Regex, scope: StepScope): String? {
     // Most paths are not templates, and this runs once per request per user.
     if ('{' !in this) return this
 
-    val holes = placeholder.findAll(this).map { it.groupValues[1] }.toList()
+    val holes = pattern.findAll(this).map { it.groupValues[1] }.toList()
     val found = holes.mapNotNull { name -> scope[sessionKey<String>(name)]?.let { name to it } }.toMap()
 
     val missing = holes.firstOrNull { it !in found }
@@ -48,5 +74,5 @@ internal fun String.fill(scope: StepScope): String? {
         scope.fail(UnfilledPath(missing))
         return null
     }
-    return placeholder.replace(this) { match -> found.getValue(match.groupValues[1]) }
+    return pattern.replace(this) { match -> found.getValue(match.groupValues[1]) }
 }

@@ -116,6 +116,89 @@ fun interface Progress {
 }
 
 /**
+ * Both reporters, told everything.
+ *
+ * Composed rather than collected into a list on the runner, because a list is a
+ * second place to configure the same thing: with this, a terminal line and a
+ * collector push are two values joined at the call site and neither knows the
+ * other is there.
+ */
+infix fun Progress.and(other: Progress): Progress = Both(this, other)
+
+/**
+ * The same reporter, ticked no more often than [every], and always ticked with
+ * the run's last snapshot.
+ *
+ * The sampler runs faster than any reporter is due, deliberately, so a reporter
+ * that costs something — a post over a network — throttles itself rather than
+ * asking the sampler to slow down and taking the terminal line with it.
+ */
+fun Progress.throttled(every: Duration): Progress = Throttled(this, every)
+
+/** Every callback forwarded, in the order the two were named. */
+private class Both(private val first: Progress, private val second: Progress) : Progress {
+
+    override fun tick(elapsed: Duration, snapshot: Snapshot) {
+        first.tick(elapsed, snapshot)
+        second.tick(elapsed, snapshot)
+    }
+
+    override fun starting(plan: Plan) {
+        first.starting(plan)
+        second.starting(plan)
+    }
+
+    override fun searching(search: Search) {
+        first.searching(search)
+        second.searching(search)
+    }
+
+    override fun climbed(rung: Rung, number: Int, atMost: Duration) {
+        first.climbed(rung, number, atMost)
+        second.climbed(rung, number, atMost)
+    }
+
+    override fun waited(queued: Duration) {
+        first.waited(queued)
+        second.waited(queued)
+    }
+
+    override fun aligning(shard: Shard, until: Duration) {
+        first.aligning(shard, until)
+        second.aligning(shard, until)
+    }
+}
+
+/**
+ * Only [tick] is held back. The rest are announcements a run makes once, and a
+ * throttle that swallowed one would lose it rather than delay it.
+ *
+ * The next due time is held rather than guarded, for the reason `Lines` holds
+ * its own: a run's ticks come from the sampler thread and its last from the
+ * thread that stops the sampler, and those two never overlap.
+ */
+private class Throttled(private val to: Progress, private val every: Duration) : Progress {
+
+    private val due = AtomicLong(every.inWholeNanoseconds)
+
+    override fun tick(elapsed: Duration, snapshot: Snapshot) {
+        if (!snapshot.ended && elapsed.inWholeNanoseconds < due.get()) return
+        due.set(elapsed.inWholeNanoseconds + every.inWholeNanoseconds)
+        to.tick(elapsed, snapshot)
+    }
+
+    override fun starting(plan: Plan) = to.starting(plan)
+
+    override fun searching(search: Search) = to.searching(search)
+
+    override fun climbed(rung: Rung, number: Int, atMost: Duration) = to.climbed(rung, number, atMost)
+
+    override fun waited(queued: Duration) = to.waited(queued)
+
+    override fun aligning(shard: Shard, until: Duration) = to.aligning(shard, until)
+}
+
+/**
  * The ticks a run's sampler sends and the one its own thread sends at the end
  * never overlap — the sampler is stopped first — so this holds the next due
  * time rather than guarding it.

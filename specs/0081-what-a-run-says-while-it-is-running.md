@@ -84,16 +84,24 @@ the terminal line with it.
 
 ## Stack
 
-- [ ] **`spec-0081-compose`** — `and` and `throttled` in core.
+- [x] **`spec-0081-compose`** — `and` and `throttled` in core.
       Done when: two reporters both see every tick, a throttled one sees at
       most one per interval and always sees the last tick of the run, and
       `Progress.silent and Progress.silent` prints nothing.
-- [ ] **`spec-0081-otlp`** — `otlpEvery` in `kestrel-otel`.
+- [x] **`spec-0081-otlp`** — `otlpEvery` in `kestrel-otel`.
       Done when: a run pushes departed, in-flight, requests, failed and
       `behind` under the names the finished run uses; a collector that refuses
       is a warning rather than a failed run; and nothing is pushed after the
       last tick.
-- [ ] **`spec-0081-docs`** — the cookbook recipe.
+      Built with one deviation, argued rather than silent: the lateness is
+      `kestrel.behind.last` rather than `kestrel.behind`. The finished export's
+      `kestrel.behind` is a histogram over every departure and a live tick has
+      one sample, and a collector handed the same name as a histogram and as a
+      gauge drops whichever it saw second. `requests` and `failures` keep their
+      names, carry no `step` — a snapshot is the run rather than its steps — and
+      are therefore their own series rather than points added to the finished
+      export's.
+- [x] **`spec-0081-docs`** — the cookbook recipe.
       Done when: the page says what is live and what is not, and why a
       percentile is not.
 

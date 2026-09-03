@@ -268,6 +268,71 @@ Nothing in a tick is read from what was recorded. A live histogram read for a
 percentile would put the watcher's work on the path being timed, so these are
 numbers the scheduler already keeps: a run costs the same watched as unwatched.
 
+## Watch a two-hour soak from a dashboard
+
+The progress line is one reporter. `and` puts a second one beside it, and
+`otlpEvery` pushes what the scheduler knows to a collector while the run is
+still going:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Progress
+import io.github.matthewjones372.kestrel.and
+import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.otel.otlpEvery
+import kotlin.time.Duration.Companion.seconds
+
+val kestrel = Kestrel(
+    Progress.lines() and otlpEvery(30.seconds, to = "http://collector:4318/v1/metrics", run = "soak-2026-09-03"),
+)
+```
+
+```groovy
+dependencies {
+    testImplementation("io.github.matthewjones372:kestrel-engine:0.1.0")
+    testImplementation("io.github.matthewjones372:kestrel-otel:0.1.0")
+}
+```
+
+What is live is what the scheduler already keeps, in the names the finished
+export uses:
+
+| Series | What it says |
+|---|---|
+| `kestrel.departed` | users handed to a thread so far |
+| `kestrel.in_flight` | users still running — a parked user counts here |
+| `kestrel.requests` | requests recorded since the last push |
+| `kestrel.failures` | failures recorded since the last push |
+| `kestrel.behind.last` | how late the last departure was |
+
+Read `kestrel.behind.last` before any of the counts. Where it is growing, the
+rate you named is no longer being offered and every number under it is about a
+lighter test than the one you asked for — which at minute four is a run worth
+stopping, and is the whole reason for watching one.
+
+**There is no live percentile, and that is deliberate.** A percentile is read
+off the histograms the recorders are still writing to, and reading those while
+a run is timing something is a lock on the path being timed: a tool that moves
+what it measures reports its own weight as the target's latency. Counts and the
+backlog are numbers the scheduler keeps anyway, so a watched run costs what an
+unwatched one does. The percentiles arrive when the run does, through
+`sendOtlp`.
+
+Two more things worth knowing:
+
+- **A collector that is down does not stop the run.** The first refusal is one
+  line on stderr and nothing after it. Losing the dashboard is not losing the
+  measurement.
+- **The push happens on the sampler's thread**, so a slow collector delays the
+  next sample rather than a departure. `otlpEvery` takes its own interval for
+  that reason; the same applies to any reporter of your own that goes over a
+  network, which `Progress.throttled(every)` wraps.
+
+Pass the same `run` label to `sendOtlp` at the end and the live series and the
+finished one join on one dashboard. The live points carry no `step`, because a
+snapshot is the run rather than its steps — which is also what keeps them a
+different series from the finished export's, so a run pushed live and then sent
+at the end is not counted twice.
+
 ## Flat, ramped, and staged
 
 `at` is the flat case and covers most tests. For anything else, name the shape:

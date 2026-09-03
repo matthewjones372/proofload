@@ -86,13 +86,13 @@ built. Each row links the spec that argued for it.
 | [0077](0077-what-each-stage-measured.md) | a staged run split at its own boundaries, so a ramp and the hold after it are two answers rather than a mixture |
 | [0078](0078-server-sent-events.md) | an SSE feed opened once and read as two numbers: the round trip to the first event, and the cadence of the rest |
 | [0079](0079-a-body-the-user-brings.md) | a request body filled from the session per user, so a run is not ten thousand copies of one order |
+| [0081](0081-what-a-run-says-while-it-is-running.md) | reporters composed and throttled, and the live snapshot pushed at a collector while the run is still going |
 
 ## Drafted, not built
 
 | Spec | What it is |
 |---|---|
 | [0080](0080-a-scenario-from-traffic-you-already-have.md) | a HAR read into Kotlin source: the captures a hand-written scenario gets wrong, and no credential in the output |
-| [0081](0081-what-a-run-says-while-it-is-running.md) | the live `Snapshot` that already exists, pushed somewhere, so a two-hour soak is not silent for two hours |
 | [0082](0082-a-response-nobody-has-to-hold.md) | a response drained and counted rather than held, for the download the request half can already stream |
 | [0083](0083-database-steps.md) | JDBC steps, with the connection checkout timed beside the query rather than inside it |
 | [0084](0084-a-goal-judged-where-it-was-asked.md) | a goal judged per stage, so a run cannot meet one by lengthening its ramp |

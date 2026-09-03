@@ -360,6 +360,13 @@ enough to list, and long enough to matter.
   implementation must be a data class or an object: one with identity equality
   gets a row per request instead of a count.
 
+- **A run says what it is doing while it is doing it.** `and` composes two
+  `Progress` reporters and `throttled(every)` slows one that costs something,
+  both in core; `otlpEvery(interval, to)` in `kestrel-otel` pushes the live
+  `Snapshot` at a collector, under the names the finished export uses. A
+  collector that refuses is one line on stderr rather than a two-hour run that
+  died at minute one.
+
 ### Limitations
 
 What this does not do yet. Each of these is checked against the tree at the
@@ -385,11 +392,12 @@ commit this section was written on, not planned or assumed.
   into memory to be checked and captured, so a step that downloads something
   large holds it once per user. The request half is streamed (`bodyFrom`); the
   response half is not, and a check or a capture is why.
-- **Nothing leaves during a run.** `sendOtlp` and every report are functions of
-  a finished `RunResult`, so a two-hour soak says nothing until it ends beyond
-  the progress line. `Progress.tick` carries a live `Snapshot` — departed, in
-  flight, behind, requests, failed — and is the seam a live exporter would use,
-  but none ships.
+- **Nothing but counts leaves during a run.** `otlpEvery` pushes what the
+  scheduler keeps — departed, in flight, requests, failures and the newest
+  lateness — to a collector while a run is going, and `and` puts it beside the
+  progress line. No percentile is live: reading a percentile means reading the
+  histograms the recorders are still writing to, which is a lock on the path
+  being timed. Percentiles arrive when the run does, through `sendOtlp`.
 - **Read `behind` before any percentile.** Coordinated omission is handled
   rather than avoided: `ResponseTime` measures from the departure the profile
   promised, so a generator that fell behind reports it. But if `behind` is

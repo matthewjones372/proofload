@@ -89,7 +89,17 @@ built. Each row links the spec that argued for it.
 
 ## Drafted, not built
 
-Nothing. Every drafted spec is built, bar the tails listed below.
+| Spec | What it is |
+|---|---|
+| [0080](0080-a-scenario-from-traffic-you-already-have.md) | a HAR read into Kotlin source: the captures a hand-written scenario gets wrong, and no credential in the output |
+| [0081](0081-what-a-run-says-while-it-is-running.md) | the live `Snapshot` that already exists, pushed somewhere, so a two-hour soak is not silent for two hours |
+| [0082](0082-a-response-nobody-has-to-hold.md) | a response drained and counted rather than held, for the download the request half can already stream |
+| [0083](0083-database-steps.md) | JDBC steps, with the connection checkout timed beside the query rather than inside it |
+| [0084](0084-a-goal-judged-where-it-was-asked.md) | a goal judged per stage, so a run cannot meet one by lengthening its ramp |
+| [0085](0085-an-api-that-is-written-down.md) | a checked-in API dump, so a break is a diff a reviewer sees rather than a thing somebody remembered |
+| [0086](0086-more-than-one-injector-started-together.md) | the clock a merged run cannot currently see is wrong — and the argument against the orchestrator around it |
+
+Every other drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed:
 `0029-tag`, which is the release itself, and `0061-containers`, which the fake
@@ -98,10 +108,11 @@ daemon.
 
 ## Known and unwritten
 
-Real, small, and not worth a spec each until someone wants them: OpenAPI import
-for the Pelican module, which is the only one left — it wants a YAML parser,
-and this repository has refused heavier dependencies for less. Per-stage
-results became [0077](0077-what-each-stage-measured.md), server-sent events
-[0078](0078-server-sent-events.md), and streaming request bodies
-[0079](0079-a-body-the-user-brings.md), which also closed a gap nobody had
-written down: a request body was one string every user sent unchanged.
+Nothing. Per-stage results became [0077](0077-what-each-stage-measured.md),
+server-sent events [0078](0078-server-sent-events.md), and streaming request
+bodies [0079](0079-a-body-the-user-brings.md), which also closed a gap nobody
+had written down: a request body was one string every user sent unchanged.
+OpenAPI import for the Pelican module wants a YAML parser, and
+[0080](0080-a-scenario-from-traffic-you-already-have.md) settles the question it
+raised — a parser belongs in a module of its own, the way `kafka-clients` and
+the OTel SDK already do — so it is writable whenever somebody wants it.

@@ -9,7 +9,7 @@ uses and inherits no stack it did not ask for.
 |---|---|---|
 | `kestrel-core` | scenarios, profiles, goals and results, all as values, and the `Engine` that runs one | **nothing** |
 | `kestrel-engine` | runs a simulation on virtual threads, departures on a schedule | core |
-| `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another | core |
+| `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another, and server-sent event streams | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |

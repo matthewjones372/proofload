@@ -203,6 +203,17 @@ enough to list, and long enough to matter.
   baseline written before this existed counts no visits, which reads as
   unmeasured rather than as no stream. Anything implementing `Action` by hand changes shape, and
   `run(session)` stays for callers that have a session and want the outcome.
+- **Server-sent events.** `sse.baseUrl(...).at(path)` opens a feed in
+  `kestrel-http` — no new module, no new dependency — and it is read with the
+  split 0071 settled for gRPC: `open` ends when the target agrees to stream,
+  `firstEvent` is the round trip to the first event, and `cadence` is one
+  sample per event after it, each measured from the event before. A `cadence`
+  before any `firstEvent` is refused rather than reporting the round trip as a
+  gap. A comment line is counted as a heartbeat and is not an event, so a feed
+  that only heartbeats times out instead of reading as a busy one. Nothing
+  reconnects: `retry:` and `Last-Event-ID` are ignored and a far end that lets
+  go fails the waiting step, a generator that reconnected being one that hides
+  the disconnection it exists to report.
 - **What each stage measured.** `RunResult.stages` splits a staged run at the
   boundaries its own profile named, so a ramp and the hold after it are two
   answers rather than one number over both. The aggregate on a staged run is a

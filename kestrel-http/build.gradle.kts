@@ -13,6 +13,11 @@ plugins {
 // `NoThirdPartyDependenciesTest` asserts that list rather than promising it.
 dependencies {
     api(project(":kestrel-core"))
+
+    // An engine to run the scenarios the SSE tests build. Test-only: this
+    // module measures steps and does not schedule them, and the assertion
+    // below is about the *main* classpath, which stays core and the JDK.
+    testImplementation(project(":kestrel-engine"))
 }
 
 tasks.test {

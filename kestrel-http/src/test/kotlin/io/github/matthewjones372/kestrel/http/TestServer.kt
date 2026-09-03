@@ -49,6 +49,47 @@ internal fun serving(vararg routes: Pair<String, Reply>, block: (TestServer) -> 
     }
 }
 
+/**
+ * Runs [block] against a server whose `/stream` is an SSE feed.
+ *
+ * [comments] go out at once and [events] after [beforeFirstMillis], so the two
+ * readings of a feed come out plainly different: from the request every event
+ * is about that long, and from the event before it only the first one is.
+ */
+internal fun streaming(
+    events: Int,
+    comments: Int = 0,
+    beforeFirstMillis: Long = 200,
+    contentType: String = "text/event-stream",
+    block: (TestServer) -> Unit,
+) {
+    val server = HttpServer.create(InetSocketAddress("localhost", 0), 0)
+    val received = CopyOnWriteArrayList<Received>()
+    server.createContext("/stream") { exchange ->
+        received += exchange.record()
+        exchange.responseHeaders.add("content-type", contentType)
+        // Zero is chunked with no length, which is what a feed is: the client
+        // reads until the far end stops rather than to a count it was told.
+        exchange.sendResponseHeaders(HTTP_OK, 0)
+        exchange.responseBody.use { out ->
+            repeat(comments) { out.write(": heartbeat\n\n".toByteArray()); out.flush() }
+            Thread.sleep(beforeFirstMillis)
+            repeat(events) { at ->
+                out.write("event: fill\nid: $at\ndata: fill $at\n\n".toByteArray())
+                out.flush()
+            }
+        }
+    }
+    server.start()
+    try {
+        block(TestServer(server, received))
+    } finally {
+        server.stop(0)
+    }
+}
+
+private const val HTTP_OK = 200
+
 private const val HTTP_NOT_FOUND = 404
 
 private fun HttpExchange.record(): Received = Received(

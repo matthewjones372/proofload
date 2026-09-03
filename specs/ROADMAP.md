@@ -84,6 +84,7 @@ built. Each row links the spec that argued for it.
 | [0060](0060-kafka-and-the-answer-on-another-topic.md) | Kafka produce steps, and the answer read off another topic by a correlation header |
 | [0061](0061-what-the-kafka-path-costs.md) | what the Kafka adapter costs, and a fake broker that satisfies the real client over a socket |
 | [0077](0077-what-each-stage-measured.md) | a staged run split at its own boundaries, so a ramp and the hold after it are two answers rather than a mixture |
+| [0078](0078-server-sent-events.md) | an SSE feed opened once and read as two numbers: the round trip to the first event, and the cadence of the rest |
 
 ## Drafted, not built
 
@@ -97,6 +98,6 @@ daemon.
 ## Known and unwritten
 
 Real, small, and not worth a spec each until someone wants them: OpenAPI import
-for the Pelican module, streaming request bodies, and server-sent events beside
-the WebSocket transport. Per-stage results left this list and became
-[0077](0077-what-each-stage-measured.md).
+for the Pelican module, and streaming request bodies. Per-stage results left
+this list and became [0077](0077-what-each-stage-measured.md); server-sent
+events became [0078](0078-server-sent-events.md).

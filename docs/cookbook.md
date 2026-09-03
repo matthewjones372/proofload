@@ -47,6 +47,7 @@ test that quietly asserts about a step nobody runs.
 [a step that is not HTTP](#a-step-that-is-not-http) ·
 [gRPC](#grpc) ·
 [WebSockets](#websockets) ·
+[server-sent events](#server-sent-events) ·
 [work that finishes somewhere else](#work-that-finishes-somewhere-else) ·
 [Kafka, and the answer on another topic](#kafka-and-the-answer-on-another-topic)
 
@@ -855,6 +856,68 @@ One socket per user, which is the opposite of the shared HTTP client and for the
 opposite reason: a stream test is about how many connections a target holds, so
 amortising the handshake would remove the thing being measured. Expect file
 descriptors to bound your user count long before the scheduler does.
+
+## Server-sent events
+
+A feed is not a round trip. A plain GET at a stream endpoint measures the moment
+the target agreed to start talking, and a feed that opens instantly and then
+goes silent reads exactly like one delivering sixty events a second. So an SSE
+stream is opened once and read with two verbs, because there are two honest
+numbers in it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.http.cadence
+import io.github.matthewjones372.kestrel.http.firstEvent
+import io.github.matthewjones372.kestrel.http.open
+import io.github.matthewjones372.kestrel.http.sse
+import io.github.matthewjones372.kestrel.http.stopReading
+
+val fills = sse.baseUrl("https://feeds.internal").traced().at("/fills")
+
+val watching = scenario("watching") {
+    open(opened, fills)
+    firstEvent(first, within = 5.seconds)
+    cadence(each, count = 99, within = 60.seconds)
+    stopReading(done)
+}
+```
+
+`open` ends when the response head arrives — the target agreeing to stream, not
+saying anything. `firstEvent` is the round trip to the first event, comparable
+with a plain request's latency. `cadence` is one sample per event after it, each
+measured from the event before: the rate the feed actually delivered at. A
+hundred events is `firstEvent` plus `cadence(count = 99)`.
+
+They are kept apart on purpose. Timed from the request, the *k*th event climbs
+with *k* and fills the histogram with a number describing the feed's length
+rather than the target's speed; put in with the round trip, the two average into
+a figure describing neither. A `cadence` before any `firstEvent` fails with
+`NoFirstEvent` rather than handing the round trip out as the first gap.
+
+**A heartbeat is not an event.** A comment line — `:` and anything after it — is
+counted on the stream and satisfies no wait:
+
+```kotlin
+session[eventStream]?.delivered    // events
+session[eventStream]?.heartbeats   // comment lines, counted and never timed
+```
+
+Counted as events they would let a target that has said nothing report as a busy
+one. A feed that only heartbeats times out, which is what it earned.
+
+**Nothing reconnects.** `retry:` and `Last-Event-ID` are ignored, and a far end
+that lets go fails the waiting step with `StreamEnded`. A generator that
+reconnected would hide the disconnection it exists to report, and the second
+connection would be a second experiment on the same row.
+
+**Nothing is parsed.** The frame fields are read only far enough to find where
+one event ends and the next begins. A JSON parser on this path would be
+measuring Jackson.
+
+`stopReading` cancels the subscription and drops the connection. It is not
+called `close` because SSE negotiates no closing handshake: there is nothing to
+send and nothing to wait for, and its sample is the cancel, which happens in
+this process.
 
 ## Work that finishes somewhere else
 

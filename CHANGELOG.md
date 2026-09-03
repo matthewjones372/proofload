@@ -381,6 +381,17 @@ enough to list, and long enough to matter.
   cannot-tell rather than as a red tick nobody can chase. Both reports put the
   verdict on the stage row it belongs to.
 
+- **Database steps, with the pool wait counted apart.** `kestrel-jdbc` sends
+  `query` and `update` over a `DataSource` the caller hands in — no driver, no
+  pool, no ORM, and `java.sql` is the whole of what it adds to a classpath. The
+  statement is timed from the statement: the connection checkout is recorded
+  beside it as `waitedForPool`, because a user queueing for the generator's own
+  resource is not the target being slow. Rows are counted rather than read, and
+  a failure is a `SqlState` carrying the code the database is required to give.
+  `StepStats` gained `queued` and `produced` for it, and `StepScope` the two
+  methods that report them; `StepSink` gained an `aside` with a default, so a
+  sink written as a lambda stays one.
+
 ### Limitations
 
 What this does not do yet. Each of these is checked against the tree at the
@@ -399,9 +410,12 @@ commit this section was written on, not planned or assumed.
   rather than answered off numbers that were never taken. The rate such a run
   reaches is the target's speed, not a rate anybody asked for, and the report
   says so.
-- **No database steps, and no queue beyond Kafka.** HTTP, server-sent events,
-  WebSocket handshakes, gRPC, Kafka and Pelican endpoints are the protocols.
-  `emit` is the seam for anything else, and the caller writes the client.
+- **No queue beyond Kafka.** HTTP, server-sent events, WebSocket handshakes,
+  gRPC, JDBC, Kafka and Pelican endpoints are the protocols. `emit` is the seam
+  for anything else, and the caller writes the client. `kestrel-jdbc` holds no
+  transaction across steps and sends no batches: a connection held across a
+  think time is a pool exhausted by a scenario rather than by load, and a batch
+  wants a spec saying whether it is one sample or many.
 - **A response body is held whole unless a step says otherwise.**
   `BodyHandlers.ofString` reads the answer into memory to be checked and
   captured, which is what a check and a capture need. `discardingBody()` counts

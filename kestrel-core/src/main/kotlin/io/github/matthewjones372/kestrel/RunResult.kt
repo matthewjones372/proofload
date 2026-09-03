@@ -334,6 +334,30 @@ data class StepStats(
      */
     val attempts: Long = 0L,
 
+    /**
+     * How long this step's users spent waiting for a resource the generator
+     * owns — a connection out of a pool, most often.
+     *
+     * Beside the latency rather than inside it, the way [RunResult.behind] sits
+     * beside a percentile: a user queueing for something this end of the wire
+     * rationed is not the target being slow, and a report that added the two
+     * would say the database took four hundred milliseconds when it took three.
+     * Absent where nothing waited, and where whatever recorded the run did not
+     * count waits.
+     */
+    val queued: Timing = Timing.none,
+
+    /**
+     * How much the target sent back under this step, counted by the module that
+     * made the request: rows for a query, an update count for an update.
+     *
+     * Beside [count], which is executions: a select that ran ten times and
+     * returned a million rows is a different finding from one that ran a
+     * million times. Zero where whatever recorded the run counted nothing,
+     * which a report prints as unmeasured rather than as none.
+     */
+    val produced: Long = 0L,
+
     /** Records that departed and never reached the sink: the finding, not a gap in the samples. */
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */

@@ -33,6 +33,17 @@ internal fun interface StepSink {
         attempts: Int,
         trace: String?,
     )
+
+    /**
+     * What a step reported about itself rather than about its answer: how long
+     * it [queued] for a resource this end of the wire owns, and how much the
+     * target [produced].
+     *
+     * A default of nothing rather than a second abstract method, so a sink
+     * written as a lambda — the trace printer, the one that records nothing —
+     * stays a lambda. Only a step with something to say reaches it.
+     */
+    fun aside(step: String, queued: Duration, produced: Long) {}
 }
 
 /**
@@ -112,6 +123,26 @@ internal class Recorders(
         // starting guess, not an assignment.
         val from = (Thread.currentThread().threadId() % slots.length()).toInt()
         recordFrom(from, step, failure, serviceTime, schedulingDelay, at, reached, visit, attempts, trace)
+    }
+
+    override fun aside(step: String, queued: Duration, produced: Long) {
+        val from = (Thread.currentThread().threadId() % slots.length()).toInt()
+        asideFrom(from, step, queued, produced)
+    }
+
+    /** A shard claimed the way [recordFrom] claims one, and moved on from for the same reason. */
+    private tailrec fun asideFrom(index: Int, step: String, queued: Duration, produced: Long) {
+        val claimed = slots.getAndSet(index, null)
+        if (claimed != null) {
+            try {
+                claimed.aside(step, queued, produced)
+            } finally {
+                slots.set(index, claimed)
+            }
+            return
+        }
+        Thread.onSpinWait()
+        asideFrom((index + 1) % slots.length(), step, queued, produced)
     }
 
     /**

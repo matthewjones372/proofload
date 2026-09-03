@@ -7,6 +7,7 @@ include(
     "kestrel-export",
     "kestrel-grpc",
     "kestrel-http",
+    "kestrel-jdbc",
     "kestrel-junit5",
     "kestrel-kafka",
     "kestrel-kotest",

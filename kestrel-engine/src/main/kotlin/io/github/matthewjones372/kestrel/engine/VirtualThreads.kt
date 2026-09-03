@@ -670,6 +670,12 @@ private class UserWalk(
                 result.trace,
             )
         }
+        // Beside the sample rather than in it, and only where a body had
+        // something to say: a step that waited for a connection out of a pool,
+        // or one whose answer was rows.
+        if (result.queued > Duration.ZERO || result.produced > 0L) {
+            sink.aside(name, result.queued, result.produced)
+        }
         sampling = null
         samplingVisit = false
         notes?.let { narrating?.invoke(name, it) }

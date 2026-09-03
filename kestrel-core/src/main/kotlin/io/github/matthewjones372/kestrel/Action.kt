@@ -63,11 +63,32 @@ sealed interface StepResult {
      */
     val sampled: Boolean
 
+    /**
+     * How long this step spent waiting for a resource the generator owns — a
+     * connection out of a pool, most often.
+     *
+     * Beside the sample rather than inside it. A user queueing for something
+     * this end of the wire rationed is not the target being slow, and folding
+     * it into the latency is coordinated omission with a different name.
+     */
+    val queued: Duration get() = Duration.ZERO
+
+    /**
+     * How much the target sent back under this step, counted by the module that
+     * made the request: rows for a query, an update count for an update.
+     *
+     * Zero where nothing counted, which is every step that has nothing to
+     * count — reported as unmeasured rather than as none.
+     */
+    val produced: Long get() = 0L
+
     data class Ok(
         override val session: Session,
         override val attempts: Int = 1,
         override val trace: String? = null,
         override val sampled: Boolean = false,
+        override val queued: Duration = Duration.ZERO,
+        override val produced: Long = 0L,
     ) : StepResult
 
     data class Failed(
@@ -76,6 +97,8 @@ sealed interface StepResult {
         override val attempts: Int = 1,
         override val trace: String? = null,
         override val sampled: Boolean = false,
+        override val queued: Duration = Duration.ZERO,
+        override val produced: Long = 0L,
     ) : StepResult
 }
 
@@ -135,6 +158,13 @@ class StepScope(
     // so the session and the reason accumulate across them and are frozen into
     // a StepResult the moment the body returns. Neither escapes mutable.
     private var reason: Reason? = null
+
+    // The same, two numbers a body reports about itself rather than about the
+    // answer: how long it queued for something this end owns, and how much came
+    // back. Both frozen into the StepResult with the rest.
+    private var queuedFor: Duration = Duration.ZERO
+
+    private var producedCount = 0L
 
     operator fun <T : Any> get(key: SessionKey<T>): T? = session[key]
 
@@ -218,6 +248,22 @@ class StepScope(
     }
 
     /**
+     * Says this body waited [took] for a resource the generator owns, before
+     * it could go to the target at all.
+     *
+     * Added rather than replaced: a body that checks out twice waited twice,
+     * and the step is still one sample.
+     */
+    fun queued(took: Duration) {
+        queuedFor += took
+    }
+
+    /** Says the target sent [count] back — rows, records, whatever this step counts. */
+    fun produced(count: Long) {
+        producedCount += count
+    }
+
+    /**
      * What the body reported, frozen.
      *
      * Public because [Engine] is: an engine in another module builds the scope
@@ -225,8 +271,8 @@ class StepScope(
      * seam in core precisely so one could.
      */
     fun result(): StepResult =
-        reason?.let { StepResult.Failed(session, it, attempts, trace, sampled) }
-            ?: StepResult.Ok(session, attempts, trace, sampled)
+        reason?.let { StepResult.Failed(session, it, attempts, trace, sampled, queuedFor, producedCount) }
+            ?: StepResult.Ok(session, attempts, trace, sampled, queuedFor, producedCount)
 }
 
 /** A step body as a value, so one action can be shared by several scenarios. */

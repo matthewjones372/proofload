@@ -1740,6 +1740,85 @@ as the first gap — the one mistake nobody reading the report could catch.
 `send`, `awaiting` and `done` fail with `NotSending` here: the one request went
 out with the call.
 
+## Database steps
+
+The database under a service is where the ceiling usually is, and from the HTTP
+side it is invisible except as latency nobody can attribute. `kestrel-jdbc`
+sends statements over a `DataSource` you hand in:
+
+```kotlin
+import io.github.matthewjones372.kestrel.jdbc.exec
+import io.github.matthewjones372.kestrel.jdbc.jdbc
+import io.github.matthewjones372.kestrel.jdbc.rows
+import io.github.matthewjones372.kestrel.jdbc.waitedForPool
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
+
+val orderId = sessionKey<Int>("orderId")
+val byId = step("select an order")
+
+val orders = jdbc.on(dataSource)
+
+val reading = scenario("reading") {
+    exec(byId, orders.query("select id, sku from orders where id = ?").binding { listOf(it[orderId]) })
+}
+```
+
+```groovy
+dependencies {
+    testImplementation("io.github.matthewjones372:kestrel-jdbc:0.1.0")
+    // The driver and the pool are yours, and are the point: this module carries
+    // neither, so a run measures the pool your service actually runs.
+    testImplementation("org.postgresql:postgresql:42.7.4")
+    testImplementation("com.zaxxer:HikariCP:6.2.1")
+}
+```
+
+**The pool wait is its own number, and it is what the module is for.**
+
+```kotlin
+result[byId].serviceTime.p99   // what the database took
+result[byId].waitedForPool.p99 // what your users spent queueing for a connection
+result[byId].rows              // rows the query returned, counted
+```
+
+A hand-written `exec(name) { }` with your own JDBC call inside times the
+checkout and the query together and calls the total the database's latency.
+That is `behind` all over again, one layer down: the generator's own queueing
+reported as the target's speed. With them apart, a report can say *the database
+answered in 3 ms and your users waited 400 ms for a connection*, which is a
+different bug with a different fix — and the one a team is more often actually
+hitting. A pool that saturates at 40 connections is the ceiling the whole
+service hits.
+
+`binding { }` reads the session, so a run is not ten thousand identical selects
+measuring a query cache. It takes the parameters in the order the `?`s appear.
+
+**Rows are counted, never read into objects.** `next()` in a loop with nothing
+in the body is the honest measurement of "the database sent this much"; anything
+more measures the driver's object mapping. A caller who needs a value uses
+`exec(name) { }` and their own client, exactly as they do today.
+
+**A failure is a SQLSTATE, not a stack trace.** A deadlock, a unique violation
+and a syntax error are three rows in a report under `SqlState`, and one row
+saying `SQLException` under a class name. A driver that names no SQLSTATE gets
+`Threw(class)`, and a driver-declared timeout gets `TimedOut`.
+
+**A word about carrier pinning.** JDBC is blocking, and each user runs on its
+own virtual thread. JDK 21 pins the carrier for the duration of a `synchronized`
+block, which several drivers still use on their hot paths — a run that pins is a
+run whose concurrency is capped at the carrier pool rather than at the database.
+The PostgreSQL driver from 42.7 and the newer MariaDB and MySQL drivers unmount
+cleanly; older ones and several commercial drivers do not. Read the injector's
+own limits on the page ([0065](../specs/0065-the-injectors-own-limits.md)) before
+believing a ceiling found this way, and run with
+`-Djdk.tracePinnedThreads=short` once to see whether yours pins.
+
+**No transactions across steps, and no batches yet.** A connection held across a
+step is a connection held across a think time, which is a pool exhausted by a
+scenario rather than by load.
+
 ## Kafka, and the answer on another topic
 
 A broker acking a produce is not a consumer having done the work, and a team

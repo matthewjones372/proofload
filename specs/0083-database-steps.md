@@ -43,8 +43,8 @@ as the target's speed.
 val orders = jdbc.on(dataSource)
 
 val reading = scenario("reading") {
-    exec(byId, orders.query("select * from orders where id = ?").binding { it[orderId] })
-    exec(insert, orders.update("insert into orders(id, sku) values (?, ?)").binding { ... })
+    exec(byId, orders.query("select * from orders where id = ?").binding { listOf(it[orderId]) })
+    exec(insert, orders.update("insert into orders(id, sku) values (?, ?)").binding { listOf(...) })
 }
 
 result[byId].rows          // rows the query returned, counted
@@ -91,21 +91,21 @@ injector's own limits (0065) already report a starved carrier pool.
 
 ## Stack
 
-- [ ] **`spec-0083-module`** — `kestrel-jdbc`, `jdbc.on(dataSource)`, `query`
+- [x] **`spec-0083-module`** — `kestrel-jdbc`, `jdbc.on(dataSource)`, `query`
       and `update` as steps, against an in-memory database on the test
       classpath only.
       Done when: a select is one row named for the statement, an update reports
       its count, the runtime classpath is core and `java.sql`, and no driver is
       on it.
-- [ ] **`spec-0083-pool`** — the connection checkout timed and reported beside
+- [x] **`spec-0083-pool`** — the connection checkout timed and reported beside
       the query rather than inside it.
       Done when: a pool of one under ten concurrent users reports a query
       latency that does not grow with the contention, and a pool wait that
       does.
-- [ ] **`spec-0083-reasons`** — `SqlState`, so a deadlock is not a stack trace.
+- [x] **`spec-0083-reasons`** — `SqlState`, so a deadlock is not a stack trace.
       Done when: a unique violation, a timeout and a syntax error are three
       reasons in a report, each naming its SQLSTATE.
-- [ ] **`spec-0083-docs`** — the cookbook page, the `docs/modules.md` row, and
+- [x] **`spec-0083-docs`** — the cookbook page, the `docs/modules.md` row, and
       the carrier-pinning note.
       Done when: the page says which part of the number is the pool's.
 
@@ -123,13 +123,21 @@ queueing.
 1. **Which in-memory database do the tests use?** H2 and HSQLDB are both test
     classpath only. Recommend H2 for its Postgres compatibility mode, so the
     statements in the tests look like statements somebody would write.
+    **Built with H2**, in that mode.
 2. **Should a batch be one sample or many?** `addBatch`/`executeBatch` is one
     round trip carrying N statements. Recommend one sample, named as a batch —
     0075's rule read the other way: what left once is one departure.
+    **Not built.** No stack entry asked for it and the recommendation is not a
+    decision; the CHANGELOG records the gap.
 3. **Does the pool wait belong in `behind`?** It is the same kind of number —
     the generator's own queueing — but `behind` means lateness against a
     schedule and a closed run has none. Recommend its own field, and a page
     note beside the existing one.
+    **Its own field**, and generic in core: `StepStats.queued` is "a resource
+    the generator owns" so nothing in core has to know what a pool is, and
+    `waitedForPool` is the name this module reads it under. The page note is
+    not built — no stack entry asked for one, and the cookbook carries the
+    explanation instead.
 4. **Can a step hold a transaction?** Refused above, and somebody will want it
     for a realistic write path. Recommend leaving it refused until a spec can
     say what happens to a connection held across a `pause`.

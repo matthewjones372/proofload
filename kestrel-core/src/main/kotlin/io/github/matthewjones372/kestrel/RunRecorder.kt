@@ -103,6 +103,20 @@ class RunRecorder(
     }
 
     /**
+     * What a step reported about itself rather than about its answer: how long
+     * it [queued] for a resource this end of the wire owns, and how much the
+     * target [produced].
+     *
+     * Apart from [record] because it is beside the measurement rather than part
+     * of one, and because only a step with something to say calls it — putting
+     * two more parameters on the recording path would cost every step that has
+     * neither.
+     */
+    fun aside(step: String, queued: Duration, produced: Long) {
+        steps.getOrPut(step) { StepRecorder() }.aside(queued, produced)
+    }
+
+    /**
      * A record the sink answered for. [latency] is already measured from the
      * departure the profile promised, so it is both times: there is no separate
      * service time for a stage nothing here called.
@@ -181,6 +195,15 @@ private class StepRecorder {
     // followed a redirect or retried.
     private var attempts = 0L
 
+    // Built on the first wait rather than with the recorder: a histogram is
+    // about 43KB, and every step in every shard carrying one for a wait almost
+    // no step has is memory spent on nothing.
+    private var queued: Histogram? = null
+
+    // And what came back under this step, where the module that made the
+    // request counted it.
+    private var produced = 0L
+
     val seconds = Seconds()
 
     fun record(
@@ -205,6 +228,13 @@ private class StepRecorder {
         seconds.record(at, failure, service, response)
     }
 
+    fun aside(queued: Duration, produced: Long) {
+        if (queued > Duration.ZERO) waits().record(queued)
+        this.produced += produced
+    }
+
+    private fun waits(): Histogram = queued ?: Histogram().also { queued = it }
+
     fun leftOver(more: Outstanding) {
         outstanding = Outstanding(
             unmatched = outstanding.unmatched + more.unmatched,
@@ -219,6 +249,8 @@ private class StepRecorder {
         reached += other.reached
         visits += other.visits
         attempts += other.attempts
+        other.queued?.let { waits().merge(it) }
+        produced += other.produced
         other.failures.forEach { (reason, seen) -> countFailure(reason, seen) }
         leftOver(other.outstanding)
     }
@@ -232,6 +264,8 @@ private class StepRecorder {
         reached = reached,
         visits = visits,
         attempts = attempts,
+        queued = queued?.timing() ?: Timing.none,
+        produced = produced,
         unmatched = outstanding.unmatched,
         inFlight = outstanding.inFlight,
         timeline = seconds.freeze(),

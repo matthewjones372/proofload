@@ -12,6 +12,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another, and server-sent event streams | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
+| `kestrel-jdbc` | database steps over a caller's own `DataSource`, the pool wait counted apart from the query | core |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
@@ -55,6 +56,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-kotest:$kestrelVersion")
 
     // As you need them.
+    implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-otel:$kestrelVersion")
@@ -75,6 +77,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-core` | [NoThirdPartyDependenciesTest](../kestrel-core/src/test/kotlin/io/github/matthewjones372/kestrel/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-engine` | [NoThirdPartyDependenciesTest](../kestrel-engine/src/test/kotlin/io/github/matthewjones372/kestrel/engine/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-http` | [NoThirdPartyDependenciesTest](../kestrel-http/src/test/kotlin/io/github/matthewjones372/kestrel/http/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-jdbc` | [NoThirdPartyDependenciesTest](../kestrel-jdbc/src/test/kotlin/io/github/matthewjones372/kestrel/jdbc/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |

@@ -38,6 +38,7 @@ test that quietly asserts about a step nobody runs.
 
 **Giving users their own data** — [a function of the user number](#a-function-of-the-user-number) ·
 [a fixed list](#a-fixed-list) · [a CSV file](#a-csv-file) ·
+[data you do not have](#data-you-do-not-have) ·
 [a token that expires mid-run](#a-token-that-expires-mid-run)
 
 **The requests themselves** — [chain two steps with a capture](#chain-two-steps-with-a-capture) ·
@@ -677,6 +678,51 @@ index into a list — nothing allocated, nothing locked, and it wraps round rath
 than running out. The grammar is a deliberately small part of RFC 4180 — quoted
 fields and doubled quotes inside them — because core carries no dependencies and
 anything wider is a CSV library.
+
+## Data you do not have
+
+A thousand-row file cycled for a million users keeps every one of those rows in
+every cache the target has, so part of the p99 on the page is a hit rate the
+test invented. Drawing a key uniformly at random is wrong the other way — it
+misses every cache — and real traffic does neither. What decides the number is
+how many distinct keys there are and how unevenly they are asked for, and
+`kestrel-arbs` is where both are said out loud:
+
+```kotlin
+import io.github.matthewjones372.kestrel.arbs.map
+import io.github.matthewjones372.kestrel.arbs.oneOf
+import io.github.matthewjones372.kestrel.arbs.zipf
+import io.github.matthewjones372.kestrel.feed
+
+val customerId = zipf(keys = 1_000_000, skew = 1.1).map { "customer-$it" }
+val basket = oneOf("anvil", "rocket", "birdseed")
+
+checkout.at(50.perSecond, over = 1.minutes)
+    .fedBy(feed(customer) { customerId at it } + feed(sku) { basket at it })
+```
+
+```groovy
+dependencies {
+    testImplementation("io.github.matthewjones372:kestrel-arbs:0.1.0")
+}
+```
+
+`at(userNumber)` and never `next()`: a generator is a pure function of the
+user's number, so a run replays, the value user 8,412 sent is re-derivable from
+its number, and fifty thousand virtual threads share no source to contend on.
+It is drawn where the feeder runs, before the departure, rather than inside a
+step body — a value made up on the measured path allocates there, and the
+collection pause it eventually buys is recorded in `hiccups` and read as the
+target's latency.
+
+`zipf` answers a rank rather than a key, because a generator that formatted
+strings would have guessed your id scheme; `map` turns it into whatever yours
+is. `uniform` is the flat keyspace, `digits` and `uuids` are ids of a fixed
+shape, and `weighted` is a traffic mix stated as proportions.
+
+These are not kotest's `Arb`. That one leans towards edge cases — the empty
+string, `MIN_VALUE`, the boundary — because it is hunting bugs, which is the
+wrong bias for load.
 
 ## A token that expires mid-run
 

@@ -40,3 +40,11 @@ internal fun salt(seed: Long, parameter: Long): Long = avalanche(seed * GOLDEN +
  * 2^63 over the bound, which is below anything a load test measures.
  */
 internal fun bounded(draw: Long, bound: Long): Long = (draw ushr 1) % bound
+
+/** A `Double` holds 53 bits, so eleven of a `Long`'s go before one of them is rounded away. */
+private const val SIGNIFICAND = 53
+private const val BEYOND_A_DOUBLE = 11
+private const val UNIT = 1.0 / (1L shl SIGNIFICAND)
+
+/** A draw in `[0, 1)`, taken off the top bits rather than the bottom ones. */
+internal fun unitInterval(draw: Long): Double = (draw ushr BEYOND_A_DOUBLE) * UNIT

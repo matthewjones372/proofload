@@ -192,6 +192,14 @@ enough to list, and long enough to matter.
   keyspace, and `Shape` says what was drawn and from what seed. Core and the
   JDK only — kotest's `Arb` leans towards edge cases because it is hunting
   bugs, which is the wrong bias for traffic.
+- **Cardinality and skew, said out loud.** `zipf(keys, skew)` is the generator
+  the module was written for: the exponent is the parameter that moves a p99,
+  and until now nothing in the tool named it. It answers a rank rather than a
+  key, so nothing has guessed the target's id scheme, and it is sampled by
+  rejection-inversion rather than off a cumulative table — a million keys cost
+  no table at all. `uniform` is the flat keyspace beside it, `digits` and
+  `uuids` are ids of a fixed shape, and `weighted` is a traffic mix stated as
+  proportions.
 
 ### Changed
 

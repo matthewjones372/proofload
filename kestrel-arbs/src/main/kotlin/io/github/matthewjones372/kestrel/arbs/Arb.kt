@@ -4,8 +4,8 @@ package io.github.matthewjones372.kestrel.arbs
  * What a generator draws, in words, and the seed it drew from.
  *
  * A run's numbers mean something different at one cardinality than at another,
- * so this is what a page states beside them and what a comparison against a
- * baseline can refuse to reason across.
+ * so this is what a page can state beside them, and what a comparison against
+ * a baseline can refuse to reason across.
  */
 data class Shape(val description: String, val seed: Long) {
 
@@ -36,7 +36,8 @@ fun <T, R> Arb<T>.map(transform: (T) -> R): Arb<R> = Mapped(this, transform)
 
 /**
  * One of [values], drawn for the user. Uniform over the list, which is the
- * right shape for a handful of product names and the wrong one for a keyspace.
+ * right shape for a handful of product names and the wrong one for a keyspace,
+ * which is what [zipf] is for.
  */
 fun <T> oneOf(values: List<T>, seed: Long = 0L): Arb<T> {
     require(values.isNotEmpty()) { "oneOf needs something to choose from, but was given an empty list" }

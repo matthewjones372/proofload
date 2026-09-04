@@ -24,3 +24,18 @@ public final class io/github/matthewjones372/kestrel/arbs/Shape {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/matthewjones372/kestrel/arbs/ShapesKt {
+	public static final fun digits (IJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun digits$default (IJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun uniform (JJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun uniform$default (JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun uuids (J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun uuids$default (JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun weighted (Ljava/util/List;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun weighted ([Lkotlin/Pair;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun weighted$default (Ljava/util/List;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun weighted$default ([Lkotlin/Pair;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun zipf (JDJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun zipf$default (JDJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+}
+

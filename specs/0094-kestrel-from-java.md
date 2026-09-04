@@ -100,6 +100,10 @@ to fail when something published stops working.
       accessors returning `java.time.Duration`.
       Done when: a Java caller runs a scenario against a JDK `HttpServer` and
       reads a p99 without touching a mangled name.
+- [ ] **`spec-0094-goals`** — `Goals.p99Under`, `failureRateUnder`,
+      `goodputAtLeast`, and a `Simulations.at(..., Goal...)` overload.
+      Done when: a Java caller declares two goals and reads both verdicts off
+      the result without naming a hash.
 - [ ] **`spec-0094-gate`** — a Java source set compiled by `build`, with the
       example above in it, plus `kestrel-java` added to `smoke`.
       Done when: deleting a facade method fails the build in the Java source
@@ -131,6 +135,23 @@ to fail when something published stops working.
   rather than a source set inside `examples`: the Kotlin examples are compiled
   with different conventions and mixing the two makes both build files harder
   to read than a second small one.
-- **Does `kestrel-junit5` get a Java-friendly assertion?** Recommend yes, in
-  this module rather than that one — `Assertions.assertNotWorseThan(...)` —
-  because the mangled name is on the call a Java test is supposed to end with.
+- **Does `kestrel-junit5` get a Java-friendly assertion?** ~~Recommend yes~~ —
+  **reversed on 2026-09-04, and the first answer was wrong.** It contradicted
+  two things this same spec says. `Difference` is a baselines type and
+  **Not doing** puts baselines outside this scope; and wrapping
+  `assertNotWorseThan` here would put JUnit on the `api` classpath of a
+  published facade module, which the layering rules forbid — `kestrel-junit5`
+  carries JUnit precisely so nothing else has to. A Java caller comparing
+  against a baseline reads the `Difference` fields and writes its own
+  assertion, or that assertion arrives with a Java-facing baselines module,
+  which is a different spec. The mangled name on `assertNotWorseThan-tz0I1MY`
+  is a real cost and is not paid for here.
+
+- **A value class cannot be returned to Java at all.** Not an open question — a
+  fact found while building, recorded here because it invalidates this spec's
+  "one static factory per value class" as written. `fun perSecond(r: Double):
+  Rate` compiles to `perSecond-DhIbz7I(double)` returning a `double`: the name
+  carries a hash *and* the box is erased, so `@JvmName` cannot reach it. The
+  factories are therefore **Java sources inside `kestrel-java`**, with
+  `internal` Kotlin doing the boxing. Still a facade that delegates; a
+  different shape from the one sketched above.

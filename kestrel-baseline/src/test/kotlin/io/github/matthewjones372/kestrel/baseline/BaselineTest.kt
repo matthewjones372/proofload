@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
+import io.github.matthewjones372.kestrel.Shape
 import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
@@ -27,6 +28,7 @@ import io.github.matthewjones372.kestrel.timing
 import io.github.matthewjones372.kestrel.users
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -48,6 +50,11 @@ class BaselineTest {
     private val here = Machine(cores = 8, jdk = "21.0.2+13", os = "Linux", arch = "aarch64")
 
     private fun planOf(profile: InjectionProfile) = Plan(scenario = "paying", steps = listOf("pay"), profile = profile)
+
+    private fun drawingPlan(shapes: List<Shape>): Plan {
+        val plan = planOf(constantRate(100.perSecond, over = 2.seconds))
+        return plan.copy(arms = plan.arms.map { it.copy(drawn = shapes) })
+    }
 
     private fun runOf(
         name: String = "pay",
@@ -164,7 +171,7 @@ class BaselineTest {
     fun `a baseline written by the version before this one reads, and claims no probe`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t3")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t3")
 
         parseBaseline(older).probe shouldBe null
     }
@@ -250,7 +257,7 @@ class BaselineTest {
             .lineSequence()
             .map { if (it.startsWith("shard\t")) it.split("\t").take(4).joinToString("\t") else it }
             .joinToString(separator = "\n")
-            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t7")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t7")
 
         val read = parseBaseline(older)
 
@@ -278,7 +285,7 @@ class BaselineTest {
             .lineSequence()
             .filterNot { it.split("\t").first() in setOf("behind", "stalls", "shard") }
             .joinToString(separator = "\n")
-            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t5")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t5")
 
         val read = parseBaseline(older)
 
@@ -290,10 +297,35 @@ class BaselineTest {
     }
 
     @Test
+    fun `the shapes travel, so a run read back still says what its data was drawn from`(@TempDir dir: Path) {
+        val shapes = listOf(Shape("zipf(keys=1000000, skew=1.1)", seed = 4L), Shape("one\tof(3)", seed = 5L))
+        val plan = drawingPlan(shapes)
+
+        val read = runOf(plan = plan).throughAFile(dir)
+
+        read.plan.drawn shouldBe shapes
+        runOf(plan = plan).against(read).shouldBeInstanceOf<Comparison.Compared>()
+    }
+
+    @Test
+    fun `a version 8 baseline reads, and claims nothing about what it drew from`() {
+        val older = runOf(plan = drawingPlan(listOf(Shape("zipf(keys=1000000, skew=1.1)", seed = 4L))))
+            .asBaseline()
+            .lineSequence()
+            .filterNot { it.startsWith("drawn\t") }
+            .joinToString(separator = "\n")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t8")
+
+        withClue("every stored baseline predates the field, so a reader must not invent a claim") {
+            parseBaseline(older).plan.drawn.shouldBeEmpty()
+        }
+    }
+
+    @Test
     fun `a version 4 baseline reads, and claims no warm-up`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t4")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t4")
 
         parseBaseline(older).plan.warmUp shouldBe null
     }
@@ -325,7 +357,7 @@ class BaselineTest {
     fun `a version 6 baseline reads, since nothing could have written a closed population into one`() {
         val older = runOf(plan = planOf(constantRate(100.perSecond, over = 2.seconds)))
             .asBaseline()
-            .replaceFirst("kestrel-baseline\t8", "kestrel-baseline\t6")
+            .replaceFirst("kestrel-baseline\t9", "kestrel-baseline\t6")
 
         parseBaseline(older).plan.profile shouldBe constantRate(100.perSecond, over = 2.seconds)
     }

@@ -207,7 +207,9 @@ enough to list, and long enough to matter.
   the cardinality and skew a run was measured under by looking at it — the
   caller says it here or the page has nothing to state. `Shape` lives in
   `kestrel-core` rather than in `kestrel-arbs` for that: a plan is a core value,
-  and a leaf module cannot put a type of its own into one.
+  and a leaf module cannot put a type of its own into one. A baseline keeps it
+  at format version 9; a version 8 file reads as it always did and claims
+  nothing, since every stored baseline predates the field.
 
 ### Changed
 

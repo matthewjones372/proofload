@@ -113,6 +113,17 @@ internal val TOOLS: List<Tool> = listOf(
         arguments = emptyList(),
     ),
     Tool(
+        name = "write_spec",
+        describes = "Writes a benchmark somebody can commit and argue with: the reasoning, the measured " +
+            "baseline, and the plan, as one markdown file.",
+        sends = "nothing",
+        arguments = listOf(
+            RUN_ID,
+            Argument("into", "Where to write it, e.g. benchmarks/search.md.", required = true),
+            Argument("why", "Why these endpoints, this rate, this target — the answers somebody gave."),
+        ),
+    ),
+    Tool(
         name = "compare",
         describes = "One finished run against another: better, worse, or cannot tell.",
         sends = "nothing",

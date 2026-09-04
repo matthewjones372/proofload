@@ -66,17 +66,37 @@ internal fun answer(call: Call): String = when (call.method) {
 
 private fun called(call: Call): String = when (call.tool) {
     "benchmark" -> benchmark(call.arguments, Allowance.fromFile())
+
     "plan_schema" -> content(PLAN_SCHEMA)
+
     "validate" -> validate(call.arguments)
+
     "preview" -> preview(call.arguments, Allowance.fromFile())
+
     "smoke" -> smoke(call.arguments, Allowance.fromFile())
+
     "trace" -> trace(call.arguments, Allowance.fromFile())
+
     "run" -> onThePlan(call.arguments) { plan -> RUNS.start(plan, Allowance.fromFile()) }
+
     "status" -> RUNS.status(call.arguments["runId"] as? String)
+
     "explain" -> explain(RUNS, call.arguments["runId"] as? String)
+
     "report" -> report(RUNS, call.arguments["runId"] as? String, REPORTS)
+
     "list_runs" -> listRuns(RUNS)
+
+    "write_spec" -> writeSpec(
+        RUNS,
+        call.arguments["runId"] as? String,
+        call.arguments["into"] as? String,
+        call.arguments["why"] as? String,
+    )
+
     "compare" -> compare(RUNS, call.arguments["runId"] as? String, call.arguments["against"] as? String)
+
     "from_openapi" -> fromOpenApi(call.arguments)
+
     else -> content("no tool `${call.tool}`", failed = true)
 }

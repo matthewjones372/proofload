@@ -22,7 +22,8 @@ internal sealed interface Progressing {
 
     data class Sending(val since: Instant, val expected: Duration, val describes: String) : Progressing
 
-    data class Finished(val result: RunResult) : Progressing
+    /** The plan travels with the result: what was measured is half of what a benchmark records. */
+    data class Finished(val result: RunResult, val plan: Declaration) : Progressing
 
     /** Refused by the allowance, or thrown out of the engine: either way the run is over. */
     data class Stopped(val why: String) : Progressing
@@ -81,7 +82,7 @@ internal class Registry(private val kestrel: () -> Kestrel = { Kestrel(progress 
                 Thread.ofVirtual().name("kestrel-mcp-$id").start {
                     byId[id] = try {
                         when (val ran = kestrel().runWithin(allowance, simulation)) {
-                            is Ran.Result -> Progressing.Finished(ran.result)
+                            is Ran.Result -> Progressing.Finished(ran.result, plan)
                             is Ran.Refused -> Progressing.Stopped(ran.reason.described)
                         }
                     } catch (broke: RuntimeException) {
@@ -116,6 +117,9 @@ internal class Registry(private val kestrel: () -> Kestrel = { Kestrel(progress 
         .sortedByDescending { it.first.removePrefix("r-").toIntOrNull() ?: 0 }
 
     fun finished(id: String): RunResult? = (byId[id] as? Progressing.Finished)?.result
+
+    /** The run and the plan that asked for it, which is what a committed benchmark needs. */
+    fun ran(id: String): Progressing.Finished? = byId[id] as? Progressing.Finished
 
     private fun sending(): Pair<String, Progressing.Sending>? = byId.entries
         .firstOrNull { it.value is Progressing.Sending }

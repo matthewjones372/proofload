@@ -1364,6 +1364,7 @@ public final class io/github/matthewjones372/kestrel/RunResult {
 }
 
 public final class io/github/matthewjones372/kestrel/RunResultKt {
+	public static final field MATERIAL D
 	public static final fun fellBehind (Lio/github/matthewjones372/kestrel/RunResult;)Z
 	public static final fun getHeldScheduleFor (Lio/github/matthewjones372/kestrel/RunResult;)Lkotlin/time/Duration;
 	public static final fun getInFlight (Lio/github/matthewjones372/kestrel/RunResult;)J

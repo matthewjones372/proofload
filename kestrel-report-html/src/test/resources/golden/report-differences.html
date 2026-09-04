@@ -41,9 +41,6 @@
       </svg>
     </figure>
   </section>
-  <p class="behind" id="kestrel-behind" role="status">
-    <strong>Behind schedule.</strong> 1.00 ms late at p99, 1.00 ms at worst. The response times below include that backlog.
-  </p>
   <section class="totals" aria-label="Totals">
     <div class="tile">
       <span class="tile-label">Requests</span>
@@ -65,7 +62,7 @@
   <section class="reading" aria-label="What these numbers say">
     <p><strong>100 requests</strong>, <strong>1 failed</strong> (1.0%).</p>
     <p>The run sent all 100 of them.</p>
-    <p>The generator fell behind its own schedule by 1.00 ms at p99, so the response times below include time this tool spent queueing rather than time the target took.</p>
+    <p>The run kept to its schedule, so these latencies are the target's rather than this tool's.</p>
     <p><strong>pay is the slowest step</strong> at 20.1 ms p99, and it carries 1 of the 1 failures.</p>
   </section>
   <section class="failures" aria-label="What the failures took">

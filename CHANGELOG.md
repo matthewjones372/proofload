@@ -287,6 +287,18 @@ enough to list, and long enough to matter.
   `firstAnswer` is refused rather than reporting the round trip as a gap.
   `grpc-api` and `grpc-stub` only: no transport, no protobuf runtime, no
   coroutines, so the thread model stays the caller's.
+- **A run nothing fires by accident.** `Allowance` is what a machine permits a
+  run to do, read from a `kestrel.toml` a human commits: `hosts`, `maxRate`,
+  `maxDuration` and `maxRequests`, any of them absent meaning unbounded. A
+  hand-read `key = value` subset rather than a TOML dependency in core — four
+  keys do not earn one, and the thing this has to get right is the message,
+  which names the line. An absent file is `Allowance.none` and bounds nothing,
+  because a tool that fails closed on an unconfigured machine is one people
+  delete the configuration to use. `Refusal` is a sealed type carrying what was
+  asked beside what is allowed, so a refusal names the number to come down to.
+  It is a fence and not a sandbox, and the documentation says so. Not to be
+  confused with `Limits`, which is the other direction: what the injector ran
+  into while measuring.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

@@ -7,6 +7,33 @@ public final class io/github/matthewjones372/kestrel/ActionKt {
 	public static final fun action (Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/Action;
 }
 
+public final class io/github/matthewjones372/kestrel/Allowance {
+	public static final field Companion Lio/github/matthewjones372/kestrel/Allowance$Companion;
+	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/kestrel/Rate;Lkotlin/time/Duration;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/kestrel/Rate;Lkotlin/time/Duration;Ljava/lang/Long;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun allows (Ljava/lang/String;)Z
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2-fKsMbh4 ()Lio/github/matthewjones372/kestrel/Rate;
+	public final fun component3-FghU774 ()Lkotlin/time/Duration;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy-81gQx3U (Ljava/util/List;Lio/github/matthewjones372/kestrel/Rate;Lkotlin/time/Duration;Ljava/lang/Long;)Lio/github/matthewjones372/kestrel/Allowance;
+	public static synthetic fun copy-81gQx3U$default (Lio/github/matthewjones372/kestrel/Allowance;Ljava/util/List;Lio/github/matthewjones372/kestrel/Rate;Lkotlin/time/Duration;Ljava/lang/Long;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Allowance;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHosts ()Ljava/util/List;
+	public final fun getMaxDuration-FghU774 ()Lkotlin/time/Duration;
+	public final fun getMaxRate-fKsMbh4 ()Lio/github/matthewjones372/kestrel/Rate;
+	public final fun getMaxRequests ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Allowance$Companion {
+	public final fun fromFile (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/Allowance;
+	public static synthetic fun fromFile$default (Lio/github/matthewjones372/kestrel/Allowance$Companion;Ljava/nio/file/Path;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Allowance;
+	public final fun getNone ()Lio/github/matthewjones372/kestrel/Allowance;
+	public final fun read (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Allowance;
+}
+
 public final class io/github/matthewjones372/kestrel/Arm {
 	public fun <init> (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/InjectionProfile;Lio/github/matthewjones372/kestrel/Feeder;Ljava/lang/Long;)V
 	public synthetic fun <init> (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/InjectionProfile;Lio/github/matthewjones372/kestrel/Feeder;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -1133,6 +1160,66 @@ public final class io/github/matthewjones372/kestrel/Refreshing$Companion {
 
 public final class io/github/matthewjones372/kestrel/RefreshingKt {
 	public static final fun refreshing-VtjQ1oo (JLkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/kestrel/Refreshing;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/Refusal {
+	public abstract fun getDescribed ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Refusal$HostNotAllowed : io/github/matthewjones372/kestrel/Refusal {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lio/github/matthewjones372/kestrel/Refusal$HostNotAllowed;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Refusal$HostNotAllowed;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Refusal$HostNotAllowed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowed ()Ljava/util/List;
+	public fun getDescribed ()Ljava/lang/String;
+	public final fun getHost ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Refusal$OverDuration : io/github/matthewjones372/kestrel/Refusal {
+	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-UwyO8pc ()J
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-QTBD994 (JJ)Lio/github/matthewjones372/kestrel/Refusal$OverDuration;
+	public static synthetic fun copy-QTBD994$default (Lio/github/matthewjones372/kestrel/Refusal$OverDuration;JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Refusal$OverDuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowed-UwyO8pc ()J
+	public final fun getAsked-UwyO8pc ()J
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Refusal$OverRate : io/github/matthewjones372/kestrel/Refusal {
+	public synthetic fun <init> (DDLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-JlLZVlU ()D
+	public final fun component2-JlLZVlU ()D
+	public final fun copy-bsiocVw (DD)Lio/github/matthewjones372/kestrel/Refusal$OverRate;
+	public static synthetic fun copy-bsiocVw$default (Lio/github/matthewjones372/kestrel/Refusal$OverRate;DDILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Refusal$OverRate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowed-JlLZVlU ()D
+	public final fun getAsked-JlLZVlU ()D
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Refusal$OverRequests : io/github/matthewjones372/kestrel/Refusal {
+	public fun <init> (JJ)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun copy (JJ)Lio/github/matthewjones372/kestrel/Refusal$OverRequests;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Refusal$OverRequests;JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Refusal$OverRequests;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowed ()J
+	public final fun getAsked ()J
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/kestrel/RunRecorder {

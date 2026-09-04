@@ -31,6 +31,14 @@ enough to list, and long enough to matter.
   and a test parses both of the worked plans it hands back, because a schema
   whose own examples do not parse is worse than no schema. Every tool's
   description states what it sends before a caller has to find out.
+- **The MCP tools that send nothing.** `validate` parses a plan and resolves its
+  steps and goals; `preview` says what it would send and sends none of it,
+  refusing what the machine's `Allowance` refuses; `from_openapi` reads a
+  document and hands back a plan. Each refuses with the sentence the library
+  already writes — the line, and the keys that were allowed — because that
+  sentence is what a caller correcting itself acts on, and a stack trace buries
+  it. A test drives all three against a counting `HttpServer` and asserts it saw
+  nothing: a tool a caller is told is free has to be free.
 - **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
   reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
   named by the operation the contract named and keyed on the path template, so

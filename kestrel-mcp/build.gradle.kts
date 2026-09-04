@@ -10,6 +10,9 @@
 // tie this release train to that one for something neither library is about.
 dependencies {
     api(project(":kestrel-cli"))
+    // The CLI keeps this one `implementation`, so this names it rather than
+    // reaching through: `from_openapi` is this module's tool, not a borrowed one.
+    implementation(project(":kestrel-openapi"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

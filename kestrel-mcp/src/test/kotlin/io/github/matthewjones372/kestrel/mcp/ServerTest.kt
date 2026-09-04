@@ -23,7 +23,7 @@ class ServerTest {
 
     @Test
     fun `it lists its tools, each saying what it sends`() {
-        val listed = exchange("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}""")
+        val listed = exchange(TOOLS_LIST)
 
         withClue(listed) {
             listed shouldContain """"name":"plan_schema""""
@@ -85,6 +85,20 @@ class ServerTest {
         }
     }
 
+    @Test
+    fun `every tool it lists is a tool it will actually call`() {
+        val listed = Regex(""""name":"(\w+)""").findAll(exchange(TOOLS_LIST)).map { it.groupValues[1] }.toList()
+
+        withClue("a tool in the list that dispatch does not know is one a caller is invited to fail at") {
+            listed.forEach { tool ->
+                val answered = exchange(
+                    """{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"$tool","arguments":{}}}""",
+                )
+                withClue("$tool: $answered") { answered shouldNotContain "no tool" }
+            }
+        }
+    }
+
     private fun exchange(line: String): String {
         val output = StringWriter()
         serve("$line\n".reader().buffered(), output, ::answer)
@@ -92,6 +106,8 @@ class ServerTest {
     }
 
     private companion object {
+        const val TOOLS_LIST = """{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""
+
         val KNOWN = setOf(
             "kestrel", "baseUrl", "scenario", "steps", "load", "goals",
             "headers", "body", "expecting", "declared", "pauseAfter",

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.mcp
 
+import io.github.matthewjones372.kestrel.Allowance
 import java.io.BufferedReader
 import java.io.Writer
 
@@ -46,5 +47,8 @@ internal fun answer(call: Call): String = when (call.method) {
 
 private fun called(call: Call): String = when (call.tool) {
     "plan_schema" -> content(PLAN_SCHEMA)
+    "validate" -> validate(call.arguments)
+    "preview" -> preview(call.arguments, Allowance.fromFile())
+    "from_openapi" -> fromOpenApi(call.arguments)
     else -> content("no tool `${call.tool}`", failed = true)
 }

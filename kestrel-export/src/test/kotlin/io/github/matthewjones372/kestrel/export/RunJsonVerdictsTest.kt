@@ -14,6 +14,7 @@ import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -77,6 +78,34 @@ class RunJsonVerdictsTest {
         withClue("a tick nobody earned is what the verdicts exist to stop printing") {
             unasked.json() shouldContain """"verdict": "nothingAsked""""
         }
+    }
+
+    @Test
+    fun `a run that fell behind says what to do about it, beside the verdict`() {
+        val behind = run(
+            goal = p99(StepName("pay"), of = Clock.ServiceTime) under 1.milliseconds,
+            behind = Histogram().apply { repeat(50) { record(80.milliseconds) } }.timing(),
+        ).json()
+
+        withClue("the headline sentence is the schedule's, because that outranks the goal") {
+            behind shouldContain """"remedy": "The generator's own lateness"""
+        }
+    }
+
+    @Test
+    fun `a summary says the sentence once and the full document says it per goal`() {
+        val missed = run(goal = p99(StepName("pay"), of = Clock.ServiceTime) under 1.milliseconds)
+
+        withClue("six goals with a paragraph each is the budget spent on one string repeated") {
+            missed.json(Density.Summary).split("\"remedy\"").size shouldBe 3
+            missed.json(Density.Full).split("\"remedy\"").size shouldBe 4
+        }
+    }
+
+    @Test
+    fun `a met run suggests nothing`() {
+        run(goal = p99(StepName("pay"), of = Clock.ServiceTime) under 500.milliseconds)
+            .json() shouldContain """"remedy": null"""
     }
 
     @Test

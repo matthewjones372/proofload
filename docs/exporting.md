@@ -63,6 +63,14 @@ The `verdict` is ordered rather than scored, and the order is the claim:
 | `cannotTell` | nothing missed, but something could not be judged at the resolution available; `cannotTell.wouldChangeIt` says what would fix that |
 | `met` | every goal asked was met |
 
+Beside the verdict is a **`remedy`**: one sentence saying what to do, chosen in
+the same order the verdict is — the schedule's if the generator lost it, then
+the first goal that definitely missed. A refused goal's remedy is its own
+`wouldChangeIt` rather than a second sentence written beside it. No remedy
+names a rate nobody measured: a suggested number would be an estimate printed
+as advice. `Density.Full` repeats the sentence on each goal; the summary states
+it once.
+
 Every document names its schema in its first field, and a reader must ignore
 fields it does not know: a new optional key is not a breaking change, and the
 version only moves when an existing one changes meaning.

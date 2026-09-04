@@ -5,6 +5,7 @@
   "durationUnit": "nanoseconds",
   "precision": 0.0078125,
   "verdict": "missed",
+  "remedy": "pay was slower than 200ms at p99. Look at pay's distribution and its failures before changing the load: a tail is usually one of the two.",
   "plan": {
     "arms": [
       {
@@ -21,7 +22,8 @@
     "heldFor": null,
     "lostGround": false,
     "behindP99": 120319,
-    "plannedInterval": 20000000
+    "plannedInterval": 20000000,
+    "remedy": null
   },
   "goals": [
     {

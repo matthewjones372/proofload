@@ -315,7 +315,13 @@ enough to list, and long enough to matter.
   does not know, so a new optional field is not a break. The verdict is ordered
   rather than scored: `behind` outranks a missed goal, because a run whose
   generator lost its schedule did not measure the target, and a run carrying no
-  goals reads `nothingAsked` rather than `met`. Durations are the
+  goals reads `nothingAsked` rather than `met`. Beside the verdict is a
+  `remedy`: `Verdict.remedy` and `RunResult.scheduleRemedy` in core say what to
+  do about a run in a sentence, taking `Tell.CannotTell.wouldChangeIt` where a
+  verdict was refused rather than writing a second answer beside it. No remedy
+  names a rate nothing measured — "try 38 a second" would be an estimate
+  printed as advice. The summary carries the sentence once; `Density.Full`
+  repeats it per goal. Durations are the
   nanoseconds the histogram reported: the document holds the measurement and
   the reader does the formatting. In `kestrel-export`, which stays core and the
   JDK only; the JSON the HTML report inlines is a separate document with a

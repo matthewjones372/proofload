@@ -1135,6 +1135,11 @@ public final class io/github/matthewjones372/kestrel/RefreshingKt {
 	public static final fun refreshing-VtjQ1oo (JLkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/kestrel/Refreshing;
 }
 
+public final class io/github/matthewjones372/kestrel/RemedyKt {
+	public static final fun getRemedy (Lio/github/matthewjones372/kestrel/Verdict;)Ljava/lang/String;
+	public static final fun getScheduleRemedy (Lio/github/matthewjones372/kestrel/RunResult;)Ljava/lang/String;
+}
+
 public final class io/github/matthewjones372/kestrel/RunRecorder {
 	public static final field Companion Lio/github/matthewjones372/kestrel/RunRecorder$Companion;
 	public static final field MAX_REASONS_PER_STEP I

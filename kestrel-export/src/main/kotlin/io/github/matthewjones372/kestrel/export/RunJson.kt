@@ -22,6 +22,8 @@ import io.github.matthewjones372.kestrel.heldScheduleFor
 import io.github.matthewjones372.kestrel.lostGround
 import io.github.matthewjones372.kestrel.ownInterval
 import io.github.matthewjones372.kestrel.precision
+import io.github.matthewjones372.kestrel.remedy
+import io.github.matthewjones372.kestrel.scheduleRemedy
 import io.github.matthewjones372.kestrel.steadyState
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,8 +54,8 @@ enum class Density {
 fun RunResult.json(density: Density = Density.Summary): String = jsonObject(
     depth = 0,
     fields = envelope(density) + when (density) {
-        Density.Summary -> summaryFields()
-        Density.Full -> summaryFields() + fullFields()
+        Density.Summary -> summaryFields(density)
+        Density.Full -> summaryFields(density) + fullFields()
     },
 ) + "\n"
 
@@ -74,13 +76,16 @@ private fun RunResult.envelope(density: Density): List<Pair<String, String>> = l
     "precision" to (precision?.toString() ?: "null"),
 )
 
-private fun RunResult.summaryFields(): List<Pair<String, String>> = listOf(
+private fun RunResult.summaryFields(density: Density): List<Pair<String, String>> = listOf(
     // First, because it is the field most readers want and the only one some
     // of them read.
     "verdict" to jsonString(headline().described),
+    // Beside the verdict rather than buried in the goals: a caller acting on
+    // one run reads the headline and the sentence under it, and nothing else.
+    "remedy" to (headlineRemedy()?.let { jsonString(it) } ?: "null"),
     "plan" to plan.toJson(depth = 1),
     "schedule" to scheduleJson(depth = 1),
-    "goals" to judged().jsonArray(depth = 1) { it.toJson(depth = 2) },
+    "goals" to judged().jsonArray(depth = 1) { it.toJson(depth = 2, density = density) },
     "steadyState" to steadyState.toJson(depth = 1),
     "concurrency" to concurrency.toJson(depth = 1),
     "probe" to probe.toJson(depth = 1),
@@ -166,10 +171,26 @@ private fun RunResult.scheduleJson(depth: Int): String = jsonObject(
         "lostGround" to lostGround().toString(),
         "behindP99" to behind.p99.inWholeNanoseconds.toString(),
         "plannedInterval" to ownInterval.inWholeNanoseconds.toString(),
+        "remedy" to (scheduleRemedy?.let { jsonString(it) } ?: "null"),
     ),
 )
 
-private fun Verdict.toJson(depth: Int): String = jsonObject(
+/**
+ * The one sentence a caller should act on, in the order the headline is
+ * decided: a schedule this tool failed to keep is the answer whatever else
+ * happened, and after that the first goal that definitely missed.
+ */
+private fun RunResult.headlineRemedy(): String? =
+    scheduleRemedy
+        ?: judged().firstOrNull { !it.met }?.remedy
+        ?: judged().firstOrNull { it.refused != null }?.remedy
+
+/**
+ * A summary carries the margin and leaves the sentence to the headline. Six
+ * goals with a paragraph each is the two-kilobyte budget spent on one string
+ * repeated, and the headline already names the one to act on.
+ */
+private fun Verdict.toJson(depth: Int, density: Density): String = jsonObject(
     depth = depth,
     fields = listOf(
         "asked" to jsonString(goal.described),
@@ -178,7 +199,10 @@ private fun Verdict.toJson(depth: Int): String = jsonObject(
         "overBy" to (overBy?.toString() ?: "null"),
         "stage" to (stage?.let { "${it.index + 1}" } ?: "null"),
         "cannotTell" to refused.toJson(depth + 1),
-    ),
+    ) + when (density) {
+        Density.Summary -> emptyList()
+        Density.Full -> listOf("remedy" to (remedy?.let { jsonString(it) } ?: "null"))
+    },
 )
 
 /** All three keys always: a reader testing for `took` should not have to know how absent is spelled. */

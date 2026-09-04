@@ -1082,6 +1082,48 @@ public final class io/github/matthewjones372/kestrel/PlannedArm {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/github/matthewjones372/kestrel/Preview {
+}
+
+public final class io/github/matthewjones372/kestrel/Preview$Allowed : io/github/matthewjones372/kestrel/Preview {
+	public synthetic fun <init> (JJLio/github/matthewjones372/kestrel/Rate;JZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2-UwyO8pc ()J
+	public final fun component3-fKsMbh4 ()Lio/github/matthewjones372/kestrel/Rate;
+	public final fun component4 ()J
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()I
+	public final fun copy-_rhdRkI (JJLio/github/matthewjones372/kestrel/Rate;JZLjava/util/List;I)Lio/github/matthewjones372/kestrel/Preview$Allowed;
+	public static synthetic fun copy-_rhdRkI$default (Lio/github/matthewjones372/kestrel/Preview$Allowed;JJLio/github/matthewjones372/kestrel/Rate;JZLjava/util/List;IILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Preview$Allowed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHosts ()Ljava/util/List;
+	public final fun getOver-UwyO8pc ()J
+	public final fun getPeakRate-fKsMbh4 ()Lio/github/matthewjones372/kestrel/Rate;
+	public final fun getRequestsAtLeast ()J
+	public final fun getRequestsBounded ()Z
+	public final fun getUntargeted ()I
+	public final fun getUsers ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Preview$Refused : io/github/matthewjones372/kestrel/Preview {
+	public fun <init> (Lio/github/matthewjones372/kestrel/Refusal;)V
+	public final fun component1 ()Lio/github/matthewjones372/kestrel/Refusal;
+	public final fun copy (Lio/github/matthewjones372/kestrel/Refusal;)Lio/github/matthewjones372/kestrel/Preview$Refused;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Preview$Refused;Lio/github/matthewjones372/kestrel/Refusal;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Preview$Refused;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lio/github/matthewjones372/kestrel/Refusal;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/PreviewKt {
+	public static final fun preview (Lio/github/matthewjones372/kestrel/Simulation;Lio/github/matthewjones372/kestrel/Allowance;)Lio/github/matthewjones372/kestrel/Preview;
+	public static synthetic fun preview$default (Lio/github/matthewjones372/kestrel/Simulation;Lio/github/matthewjones372/kestrel/Allowance;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Preview;
+}
+
 public final class io/github/matthewjones372/kestrel/Probe {
 	public static final field Companion Lio/github/matthewjones372/kestrel/Probe$Companion;
 	public static final field MATERIAL D
@@ -1958,6 +2000,10 @@ public final class io/github/matthewjones372/kestrel/Tail$Measured : io/github/m
 	public final fun getDuration-UwyO8pc ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/Targeted {
+	public abstract fun getHost ()Ljava/lang/String;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/Tell {

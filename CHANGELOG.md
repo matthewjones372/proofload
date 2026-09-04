@@ -299,6 +299,20 @@ enough to list, and long enough to matter.
   It is a fence and not a sandbox, and the documentation says so. Not to be
   confused with `Limits`, which is the other direction: what the injector ran
   into while measuring.
+- **Answers before you fire.** `simulation.preview(allowance)` says what a plan
+  would do without doing any of it: users, window, the tallest rate it reaches,
+  the fewest requests it can send, and every host it would touch — or a
+  `Refusal` naming what was asked beside what is allowed. The peak is the
+  tallest stage rather than the mean, because a fence that averaged a ramp
+  would allow a peak nobody agreed to, and a closed run states no rate at all,
+  because its departures are the target's to decide. `requestsBounded` says
+  whether the count has an upper bound; a scenario looping on `during` or
+  `doIf` has none, and is refused against a request cap rather than allowed on
+  its lower bound — a fence that cannot count cannot fence. Hosts come through
+  a new `Targeted` interface core declares and `kestrel-http` answers, read off
+  the base URL rather than resolved: a DNS lookup would be the first thing this
+  tool did to a host nobody agreed it may touch. A step whose target cannot be
+  read is counted as `untargeted` rather than as safe.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

@@ -81,7 +81,7 @@ public final class io/github/matthewjones372/kestrel/http/Http {
 	public final fun withCookies ()Lio/github/matthewjones372/kestrel/http/Http;
 }
 
-public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github/matthewjones372/kestrel/Action {
+public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github/matthewjones372/kestrel/Action, io/github/matthewjones372/kestrel/Targeted {
 	public final fun body (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun bodyFrom (Ljava/lang/Long;Lkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public static synthetic fun bodyFrom$default (Lio/github/matthewjones372/kestrel/http/HttpAction;Ljava/lang/Long;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/http/HttpAction;
@@ -91,6 +91,7 @@ public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github
 	public final fun expecting (I)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun following (I)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public static synthetic fun following$default (Lio/github/matthewjones372/kestrel/http/HttpAction;IILjava/lang/Object;)Lio/github/matthewjones372/kestrel/http/HttpAction;
+	public fun getHost ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
 	public final fun header (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun retrying-SxA4cEA (ILkotlin/jvm/functions/Function1;J)Lio/github/matthewjones372/kestrel/http/HttpAction;

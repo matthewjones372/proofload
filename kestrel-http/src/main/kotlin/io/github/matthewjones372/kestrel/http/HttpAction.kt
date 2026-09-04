@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.Action
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.SessionKey
 import io.github.matthewjones372.kestrel.StepScope
+import io.github.matthewjones372.kestrel.Targeted
 import java.io.InputStream
 import java.net.URI
 import java.time.Duration
@@ -49,7 +50,14 @@ class HttpAction internal constructor(
     private val following: Int = 0,
     private val retries: Retries? = null,
     private val discarding: Boolean = false,
-) : Action {
+) : Action, Targeted {
+
+    /**
+     * Read off the base URL rather than resolved: a preview runs before
+     * anything is sent, and a DNS lookup on that path would be the first thing
+     * this tool did to a host nobody has agreed it may touch.
+     */
+    override val host: String get() = URI.create(origin.baseUrl).host ?: origin.baseUrl
 
     /**
      * The path template as written. A report keyed on the substituted URL grows

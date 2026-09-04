@@ -111,8 +111,15 @@ skew. `spec-0091-data` should produce these types rather than its own.
       `Arm.drawn` and `Simulation.drawing(...)`, mirroring `Arm.thinkSeed` and
       `Simulation.thinkingFrom`. Downstream it moves `PlannedArm.unlike`, a
       baseline format bump (8 to 9, `READABLE` extended, or the field vanishes
-      on round-trip), and roughly fifteen goldens across the two report
-      modules. That is more than one branch: split it when it is cut.
+      on round-trip), and the two report modules. That is more than one branch:
+      split it when it is cut.
+
+      It moves **no goldens**, which is worth saying because the first estimate
+      here said fifteen. Absent means no claim: a run that declared no shape
+      renders byte for byte as it did, the way a run that warmed nothing prints
+      no warm-up line. The existing goldens then assert that the new field is
+      silent when unset, which is a better thing for them to be doing than
+      carrying a line every run had to grow.
 
       **An absent shape never refuses.** Two runs that both declared shapes are
       refused where those differ; a run that declared none compares exactly as
@@ -146,6 +153,13 @@ block naming a task nobody has written is one nobody can run.
 > Answered 2026-09-04, each on the recommendation in its own bullet. The
 > reasoning is left standing rather than deleted: a decision is easier to
 > reopen when the alternative it beat is still written down.
+
+- **Where does `Shape` live?** In `kestrel-core`, not in `kestrel-arbs` — not a
+  choice so much as the layering law answering it. The shape has to reach
+  `Plan`, `Plan` is a core value, and a leaf module cannot put a type of its own
+  inside one. The alternatives were a second `Shape` in core, which is two
+  fields to keep in step, or a stringly-typed `drawing(description, seed)`.
+  `Arb.shape` still answers a `Shape`; the class simply lives one module down.
 
 - **Is `Arb` the right name, given kotest's means something else?** Recommend
   keeping it and naming the difference in the KDoc's first line. The word is

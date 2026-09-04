@@ -43,6 +43,7 @@ class HttpAction internal constructor(
     private val headers: Map<String, String> = emptyMap(),
     private val body: Body? = null,
     private val expected: Int = OK,
+    private val declared: Set<Int> = emptySet(),
     private val timeout: Duration = requestTimeout,
     private val checks: List<Check> = emptyList(),
     private val captures: List<Capture<*>> = emptyList(),
@@ -117,6 +118,16 @@ class HttpAction internal constructor(
 
     /** The status that counts as a success. Anything else fails the step. */
     fun expecting(status: Int): HttpAction = copy(expected = status)
+
+    /**
+     * Statuses this endpoint is documented to answer with.
+     *
+     * They still fail the step — a declared `404` did not do what was asked —
+     * but they fail as [DeclaredStatus] rather than [HttpStatus], so a report
+     * can separate a service working as written from a service doing something
+     * nobody wrote down.
+     */
+    fun declaring(vararg codes: Int): HttpAction = copy(declared = declared + codes.toSet())
 
     fun timeout(timeout: Duration): HttpAction = copy(timeout = timeout)
 
@@ -226,7 +237,9 @@ class HttpAction internal constructor(
             // Nothing is captured out of a response the request did not ask
             // for: a body from an error page in the session is a failure that
             // reappears as a stranger, several steps later.
-            scope.fail(HttpStatus(response.status))
+            scope.fail(
+                if (response.status in declared) DeclaredStatus(response.status) else HttpStatus(response.status),
+            )
             return null
         }
         val rejected = checks.firstOrNull { it.rejects(response) }
@@ -310,6 +323,7 @@ class HttpAction internal constructor(
         headers: Map<String, String> = this.headers,
         body: Body? = this.body,
         expected: Int = this.expected,
+        declared: Set<Int> = this.declared,
         timeout: Duration = this.timeout,
         checks: List<Check> = this.checks,
         captures: List<Capture<*>> = this.captures,
@@ -324,6 +338,7 @@ class HttpAction internal constructor(
             headers,
             body,
             expected,
+            declared,
             timeout,
             checks,
             captures,

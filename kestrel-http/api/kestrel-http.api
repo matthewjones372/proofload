@@ -30,6 +30,18 @@ public final class io/github/matthewjones372/kestrel/http/CheckFailed : io/githu
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/matthewjones372/kestrel/http/DeclaredStatus : io/github/matthewjones372/kestrel/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/kestrel/http/DeclaredStatus;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/http/DeclaredStatus;IILjava/lang/Object;)Lio/github/matthewjones372/kestrel/http/DeclaredStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/matthewjones372/kestrel/http/EventStream {
 	public final fun getDelivered ()J
 	public final fun getHeartbeats ()J
@@ -87,6 +99,7 @@ public final class io/github/matthewjones372/kestrel/http/HttpAction : io/github
 	public static synthetic fun bodyFrom$default (Lio/github/matthewjones372/kestrel/http/HttpAction;Ljava/lang/Long;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun capture (Lio/github/matthewjones372/kestrel/SessionKey;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun checking (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/http/HttpAction;
+	public final fun declaring ([I)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun discardingBody ()Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun expecting (I)Lio/github/matthewjones372/kestrel/http/HttpAction;
 	public final fun following (I)Lio/github/matthewjones372/kestrel/http/HttpAction;

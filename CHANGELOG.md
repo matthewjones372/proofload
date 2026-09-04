@@ -43,6 +43,16 @@ enough to list, and long enough to matter.
   it made. One value, the same for every user — a generated plan is a smoke at
   one a second, and per-user variety is what `kestrel emit` and a feeder are
   for.
+- **A declared failure is not a defect.** `HttpAction.declaring(404, 409)` names
+  the statuses an endpoint is documented to answer with. They still fail the
+  step — a declared `404` did not do what was asked, and counting it a success
+  would inflate the goodput of a run against a service returning nothing but
+  declared errors — but they fail as `DeclaredStatus` rather than `HttpStatus`,
+  so a report separates a service working as written from one doing something
+  nobody wrote down. `plan/1` carries a `declared:` list per step, `kestrel
+  emit` prints it, and `planFrom` fills it from the endpoint's own `orFail`
+  declarations. Every other load tool has to be told this by hand, per step, and
+  mostly is not.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body

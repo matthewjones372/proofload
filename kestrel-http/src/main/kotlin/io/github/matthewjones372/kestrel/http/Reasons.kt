@@ -14,6 +14,21 @@ data class HttpStatus(val code: Int) : Reason {
 }
 
 /**
+ * The target answered with a status the caller said this endpoint can answer
+ * with — a documented `404`, a declared `409`.
+ *
+ * Still a failure: a request that did not do what the step asked for is not a
+ * success, and counting it as one would inflate the goodput of a run against a
+ * service returning nothing but declared errors. Its own reason so a reader can
+ * tell it apart from [HttpStatus], which is the service doing something nobody
+ * wrote down. That distinction is the one a load test otherwise has to be told
+ * by hand, per step, in every tool that has it at all.
+ */
+data class DeclaredStatus(val code: Int) : Reason {
+    override val described: String get() = "status $code, declared"
+}
+
+/**
  * A check the caller declared, by the name they gave it.
  *
  * The name is the whole point: a report saying `has an order id` sends someone

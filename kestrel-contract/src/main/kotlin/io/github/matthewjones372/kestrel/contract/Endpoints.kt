@@ -65,6 +65,11 @@ private fun Endpoint<*, *>.asStep(seed: Long): DeclaredStep = DeclaredStep(
     method = method.name,
     path = filledPath(seed),
     expecting = output.status,
+    // The failures the contract puts in the endpoint's own type. A load test
+    // otherwise has to be told these by hand, per step, and mostly is not — so
+    // a declared 404 is counted beside an undeclared 500 and the run reports a
+    // failure rate that describes two different things.
+    declared = errors.mapNotNull { it.status }.distinct().sorted(),
 )
 
 private fun Endpoint<*, *>.filledPath(seed: Long): String =

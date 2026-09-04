@@ -58,6 +58,8 @@ private fun Node.step(): DeclaredStep {
         headers = step.optional("headers")?.mapping("headers")?.pairs().orEmpty(),
         body = step.optional("body")?.text(),
         expecting = step.optional("expecting")?.number("expecting")?.toInt() ?: OK,
+        declared = step.optional("declared")?.sequence("declared")?.value.orEmpty()
+            .map { it.number("a declared status").toInt() },
         pauseAfter = step.optional("pauseAfter")?.duration(),
     )
 }
@@ -147,7 +149,7 @@ private fun Node.fail(said: String): Nothing {
 
 private val PLAN_KEYS = listOf("kestrel", "baseUrl", "scenario", "steps", "load", "goals")
 private val VERBS = listOf("get", "post", "put", "patch", "delete", "head")
-private val STEP_KEYS = listOf("name", "headers", "body", "expecting", "pauseAfter") + VERBS
+private val STEP_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
 private val LOAD_KEYS = listOf("rate", "over", "from", "to", "stages")
 private val PERCENTILES = listOf("p50", "p95", "p99", "p999")
 private val GOAL_KEYS = listOf("step", "failureRate") + PERCENTILES

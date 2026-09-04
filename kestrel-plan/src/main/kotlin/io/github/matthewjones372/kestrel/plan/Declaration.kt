@@ -52,6 +52,14 @@ data class DeclaredStep(
     val headers: Map<String, String> = emptyMap(),
     val body: String? = null,
     val expecting: Int = OK,
+    /**
+     * Statuses this endpoint is documented to answer with.
+     *
+     * They fail the step like any other unasked-for status, under their own
+     * reason, so a report can separate a service working as written from one
+     * doing something nobody wrote down.
+     */
+    val declared: List<Int> = emptyList(),
     /** A wait after this step, which records nothing and is not latency. */
     val pauseAfter: Duration? = null,
 )
@@ -124,7 +132,10 @@ private fun DeclaredStep.asAction(api: Http): HttpAction {
     }
 
     val withHeaders = headers.entries.fold(request) { action, (key, value) -> action.header(key, value) }
-    return (body?.let { withHeaders.body(it) } ?: withHeaders).expecting(expecting)
+    val withBody = (body?.let { withHeaders.body(it) } ?: withHeaders).expecting(expecting)
+    // Folded rather than spread: `declaring` adds to the set it already holds,
+    // so one at a time is the same action without the array copy.
+    return declared.fold(withBody) { action, code -> action.declaring(code) }
 }
 
 private fun DeclaredLoad.asProfile(): InjectionProfile = when (this) {

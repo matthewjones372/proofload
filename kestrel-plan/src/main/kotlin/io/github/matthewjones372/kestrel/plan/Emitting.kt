@@ -103,6 +103,7 @@ private fun DeclaredStep.lines(handle: String): List<String> = buildList {
             headers.forEach { (key, value) -> append(".header(\"$key\", \"$value\")") }
             body?.let { append(".body(\"\"\"$it\"\"\")") }
             if (expecting != OK) append(".expecting($expecting)")
+            if (declared.isNotEmpty()) append(".declaring(${declared.joinToString()})")
             append(")")
         },
     )

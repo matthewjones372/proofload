@@ -52,7 +52,7 @@ class NoThirdPartyDependenciesTest {
                 .filter { it.fileName.toString() != "kestrel-record" }
                 .map { it.resolve("build.gradle.kts") }
                 .filter { Files.exists(it) }
-                .filter { Files.readString(it).contains("kestrel-record") }
+                .filter { build -> Files.readString(build).lines().any { it.declaresRecord() } }
                 .map { root.relativize(it).toString() }
                 .toList()
         }
@@ -61,4 +61,12 @@ class NoThirdPartyDependenciesTest {
             declaring.shouldBeEmpty()
         }
     }
+
+    /**
+     * A declaration rather than a mention. Naming this module in a comment —
+     * "build-time tooling, like `kestrel-record`" — is a reader being told
+     * where the precedent is, not a consumer paying for a parser.
+     */
+    private fun String.declaresRecord(): Boolean =
+        contains("kestrel-record") && substringBefore("//").contains("project(")
 }

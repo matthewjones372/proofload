@@ -34,6 +34,7 @@ minutes.
 
 | Tool | Does | Sends |
 |---|---|---|
+| `benchmark` | a target in, a plan out — generated, validated, previewed and smoked, ready to `run` | one request per step |
 | `plan_schema` | returns `plan/1`, the subset, and two worked plans | nothing |
 | `validate` | parses a plan, resolves steps and goals, names the error | nothing |
 | `preview` | 0088: hosts, request count, duration, users needed | nothing |
@@ -59,6 +60,24 @@ bounded by the plan rather than by its rate. Everything else is free to call
 and free to get wrong.
 
 ## Why this shape
+
+**`benchmark` is the tool a request actually arrives as.** The rest of this
+table is a verb per step of Kestrel's own model, which is the shape a library
+has and not the shape a question has. Nobody asks to validate a plan; they ask
+whether their service holds up. Answering that through this table takes seven
+calls in an order the caller has to infer, and inferring it wrongly is how a
+run gets fired before anyone previewed it.
+
+So one tool takes a target — an OpenAPI document, a base URL, or a plan
+somebody wrote — and does the whole safe half: generates the plan, validates it,
+previews it against the allowance, and smokes one request per step. It answers
+with the plan, what running it would send, and what the smoke found. It does not
+send load. `run` still does that, and the gate the allowance exists to create
+stops being something a caller has to remember and becomes the only way through.
+
+The primitives stay. A caller that has a plan already should not have to hand it
+to a tool that would regenerate one, and `trace` answers a question `benchmark`
+does not ask. But they stop being the front door.
 
 `plan_schema` is the tool that makes the rest work. A caller that can ask for
 the format writes a valid plan on the first attempt instead of a plausible one,
@@ -100,6 +119,9 @@ other way.
       and `plan_schema`.
       Done when: an initialise and a `tools/list` round-trip over a pipe in a
       test, with no process spawned.
+- [ ] **`spec-0092-benchmark`** — `benchmark`, over the tools below it.
+      Done when: one call takes an OpenAPI document and answers with a plan, its
+      preview and its smoke, having sent one request per step and no load.
 - [ ] **`spec-0092-read-only`** — `validate`, `preview`, `from_openapi`.
       Done when: a test asserts no socket is opened by any of the three,
       against a counting `HttpServer`.
@@ -138,6 +160,11 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | build/install/kestrel-mc
 - **Where do finished runs live?** Recommend a workspace directory with the
   HTML report and the JSON beside each `runId`, so `explain` is a read and the
   human has a page to open. Purge policy is an open question of its own.
+- **Should `benchmark` also start the run, given `confirm: true`?** Recommend
+  no. It would make the whole thing one call, and it would put the decision to
+  send load inside a tool whose name says it is preparing to. The allowance is a
+  fence against a caller that did not mean it; a flag that steps over the fence
+  in the same breath as building it is the fence being decorative.
 - **Does `smoke` need its own plan, or does it read the run's?** Recommend the
   run's, at one request per step: a second plan format for smoking is a second
   thing to keep in step with `plan/1`.

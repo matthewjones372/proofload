@@ -50,6 +50,9 @@ fun main() {
     serve(System.`in`.bufferedReader(), protocol.writer()) { call -> answer(call) }
 }
 
+/** The runs this process has started. One server, one registry, lost with the process. */
+internal val RUNS = Registry()
+
 internal fun answer(call: Call): String = when (call.method) {
     "initialize" -> replyTo(call.id, initialised())
     "tools/list" -> replyTo(call.id, toolsAsJson())
@@ -63,6 +66,8 @@ private fun called(call: Call): String = when (call.tool) {
     "preview" -> preview(call.arguments, Allowance.fromFile())
     "smoke" -> smoke(call.arguments, Allowance.fromFile())
     "trace" -> trace(call.arguments, Allowance.fromFile())
+    "run" -> onThePlan(call.arguments) { plan -> RUNS.start(plan, Allowance.fromFile()) }
+    "status" -> RUNS.status(call.arguments["runId"] as? String)
     "from_openapi" -> fromOpenApi(call.arguments)
     else -> content("no tool `${call.tool}`", failed = true)
 }

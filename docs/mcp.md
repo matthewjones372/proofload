@@ -55,6 +55,8 @@ directory, not yours.
 | `from_openapi` | reads an OpenAPI document, writes the plan it describes | nothing |
 | `smoke` | one request per step, so a typo is found here rather than at three thousand a second | one request per step |
 | `trace` | walks one user and says what each step sent and what came back | one journey |
+| `run` | starts the run, returns a `runId`, does not wait | **the load the plan asks for** |
+| `status` | what a run is doing, or the verdict and remedy of a finished one | nothing |
 
 **Ask `plan_schema` first.** It is the tool the others depend on: a caller who
 can ask for the format writes a valid plan on the first attempt rather than a
@@ -88,9 +90,28 @@ A method the server does not serve is a JSON-RPC *error*, not a tool result. A
 client has to be able to tell a call it cannot make from a tool that ran and
 said no; confusing the two makes it retry something that will never work.
 
+## Running one
+
+`run` returns as soon as the run is underway, with an id and what it is about to
+send:
+
+```json
+{"runId":"r-1","sending":"3000 requests over 1m to orders.internal"}
+```
+
+Poll `status` with that id. A ten-minute run inside one tool call is a dead
+connection, a retry, and a second ten-minute run against the same target, which
+is why the two are separate.
+
+One run at a time. A second `run` while one is sending is refused by name —
+`r-1 is still sending` — rather than handed an id for a run that never started
+and could be polled forever.
+
+Runs live in the server's memory and are lost when it stops. That is the honest
+scope for a server a client starts and stops; anything meant to survive goes to
+disk, which is what `report` will be for.
+
 ## Not here yet
 
-`run`, `status`, `explain`, `report`, `list_runs` and `compare` are specified in
-[0092](../specs/0092-kestrel-over-mcp.md) and not built. **Nothing here sends
-load yet**: the server can write a plan, check it, and send one request per step
-of it, and cannot run one under load.
+`explain`, `report`, `list_runs` and `compare` are specified in
+[0092](../specs/0092-kestrel-over-mcp.md) and not built.

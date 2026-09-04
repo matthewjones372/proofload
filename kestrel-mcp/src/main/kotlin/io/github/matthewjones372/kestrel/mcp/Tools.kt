@@ -70,6 +70,18 @@ internal val TOOLS: List<Tool> = listOf(
         arguments = listOf(PLAN),
     ),
     Tool(
+        name = "run",
+        describes = "Starts the run and returns a runId. Poll `status` with it; it does not wait.",
+        sends = "**the load the plan asks for**",
+        arguments = listOf(PLAN),
+    ),
+    Tool(
+        name = "status",
+        describes = "What a run is doing, or the verdict and remedy of a finished one.",
+        sends = "nothing",
+        arguments = listOf(Argument("runId", "The id `run` returned.", required = true)),
+    ),
+    Tool(
         name = "from_openapi",
         describes = "Reads an OpenAPI document and writes the plan it describes.",
         sends = "nothing",

@@ -30,6 +30,9 @@ dependencies {
     // engine is this module's dependency rather than one reached through
     // the command line.
     implementation(project(":kestrel-engine"))
+    // `status` answers a finished run with 0087's summary, which is this
+    // module's document rather than one the command line lends it.
+    implementation(project(":kestrel-export"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

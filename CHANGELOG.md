@@ -52,6 +52,15 @@ enough to list, and long enough to matter.
   default progress prints to it too; either landing mid-message would end the
   session. Cheaper than auditing every call for prints, and it stays true for
   calls nobody has written yet.
+- **Running one over MCP.** `run` starts a run and returns a `runId` with what
+  it is about to send; `status` answers with how much of the window is left, or
+  with 0087's summary once it is done. Split because a ten-minute run inside one
+  tool call is a dead connection, a retry, and a second ten-minute run against
+  the same target. One at a time: a second `run` while one is sending is refused
+  by name rather than handed an id for a run that never started, which is
+  something a caller can poll forever. The `Allowance` refuses before the run
+  begins, so a refused run departs nothing. Runs are held in memory and lost
+  with the process — the honest scope for a server a client starts and stops.
 - **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
   reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
   named by the operation the contract named and keyed on the path template, so

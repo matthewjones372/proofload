@@ -10,6 +10,22 @@ baselines and reports, each a few lines with the reason it is those lines.
 [Modules](modules.md) says which coordinates carry what, and the
 [README](../README.md) says what the library is for.
 
+## Written wrong, written right
+
+The failure here is not missing knowledge, it is confident knowledge carried in
+from a more popular tool: a model asked for a Kestrel scenario writes Gatling or
+k6 with Kotlin syntax, and the caller finds out through a compile error it cannot
+map back to the right shape. Each row is a shape reached for and the shape that
+compiles. Every call in the right-hand column is checked against `examples` by
+`WrittenRightTest`, so none of it is a shape only this document believes in.
+
+| Written wrong | Why it is not that | Written right |
+|---|---|---|
+| `class CheckoutSimulation : Simulation()` | Gatling's `Simulation` is a base class to extend. Kestrel's `Simulation` is the value `at` returns, and nothing extends anything. | An ordinary class — `class CheckoutLoadTest` — with `@LoadTest` on a method that is handed the runner: ``fun `checkout holds up at fifty a second`(kestrel: Kestrel)``. |
+| `setUp(scn.inject(constantUsersPerSec(50).during(60)))` | There is no `setUp`, no `inject`, no registry and nothing to run at startup. A profile is applied to a scenario, and the result is a value. | `checkout.at(50.perSecond, over = 1.minutes)`, which answers before it runs: `userCount()` is `3000` with nothing sent. |
+| `exec(http("place order").post("/orders"))`, and then `result["place order"]` elsewhere | The name is written twice, so a rename compiles and leaves an assertion about a step nobody ran. k6's `group("place order")` is the same shape. | `val placeOrder = step("place order")` once, then `exec(browse, api.get("/products"))` beside it and `result[placeOrder].failed.count` after. A `String` overload is there for a step nothing later asks about. |
+| `.check(status is 200)`, or k6's `check(res, { 'is 200': r => r.status === 200 })` | There is no check DSL and no `status` receiver to compare against. The status a request expects is declared on the request; anything else is a named predicate over the `Response`. | `.expecting(201)` for the status, and `.checking("has an id") { it.body.contains("\"id\"") }` for the body. A failed check is a failed step carrying the check's name as its reason. |
+
 ## The surface
 
 Rendered from the `.api` dumps that `apiCheck` gates, by `./gradlew apiDocDump`,

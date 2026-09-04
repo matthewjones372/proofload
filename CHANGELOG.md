@@ -20,6 +20,18 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+- **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
+  reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
+  named by the operation the contract named and keyed on the path template, so
+  `/orders/{id}` is one step rather than one per id. Read methods only unless
+  another is asked for — a generated `DELETE` loop against staging is somebody's
+  evening — and asking for a method the contract does not serve says which ones
+  it does. The load it generates is one a second for ten seconds, because a
+  generated artefact should never be the thing that hurt something; the caller
+  raises it on purpose, under an `Allowance`. Every step carries a goal against
+  a placeholder limit, so a generated plan cannot validate green while asserting
+  nothing. Its own module rather than a generator inside `kestrel-pelican`,
+  whose dependency test promises a consumer nothing but core and `pelican-core`.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body

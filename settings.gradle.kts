@@ -3,6 +3,7 @@ rootProject.name = "kestrel"
 include(
     "kestrel-baseline",
     "kestrel-cli",
+    "kestrel-contract",
     "kestrel-core",
     "kestrel-engine",
     "kestrel-export",

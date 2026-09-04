@@ -313,6 +313,14 @@ enough to list, and long enough to matter.
   the base URL rather than resolved: a DNS lookup would be the first thing this
   tool did to a host nobody agreed it may touch. A step whose target cannot be
   read is counted as `untargeted` rather than as safe.
+- **`runWithin`.** `kestrel.runWithin(allowance, simulation)` returns `Ran.Result`
+  or `Ran.Refused`, taking the same `preview` a caller can take itself, so what
+  a run is refused for is what it was shown. It sits beside `run` rather than
+  replacing it: a library call somebody wrote by hand is that person's decision,
+  and widening `run` to a sum type would delete a line from a published `.api`
+  file for every caller that never asked for a fence. A refused run departs
+  nothing, which the engine's own test proves by counting what the action was
+  asked to do rather than by believing the runner.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

@@ -1167,6 +1167,31 @@ public final class io/github/matthewjones372/kestrel/ProgressKt {
 	public static final fun throttled-HG0u8IE (Lio/github/matthewjones372/kestrel/Progress;J)Lio/github/matthewjones372/kestrel/Progress;
 }
 
+public abstract interface class io/github/matthewjones372/kestrel/Ran {
+}
+
+public final class io/github/matthewjones372/kestrel/Ran$Refused : io/github/matthewjones372/kestrel/Ran {
+	public fun <init> (Lio/github/matthewjones372/kestrel/Refusal;)V
+	public final fun component1 ()Lio/github/matthewjones372/kestrel/Refusal;
+	public final fun copy (Lio/github/matthewjones372/kestrel/Refusal;)Lio/github/matthewjones372/kestrel/Ran$Refused;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Ran$Refused;Lio/github/matthewjones372/kestrel/Refusal;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Ran$Refused;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lio/github/matthewjones372/kestrel/Refusal;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/Ran$Result : io/github/matthewjones372/kestrel/Ran {
+	public fun <init> (Lio/github/matthewjones372/kestrel/RunResult;)V
+	public final fun component1 ()Lio/github/matthewjones372/kestrel/RunResult;
+	public final fun copy (Lio/github/matthewjones372/kestrel/RunResult;)Lio/github/matthewjones372/kestrel/Ran$Result;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/Ran$Result;Lio/github/matthewjones372/kestrel/RunResult;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Ran$Result;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getResult ()Lio/github/matthewjones372/kestrel/RunResult;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/matthewjones372/kestrel/Rate {
 	public static final field Companion Lio/github/matthewjones372/kestrel/Rate$Companion;
 	public static final synthetic fun box-impl (D)Lio/github/matthewjones372/kestrel/Rate;

@@ -181,3 +181,18 @@ private fun List<Step>.countable(): Boolean = all { step ->
 }
 
 private const val MILLIS_A_SECOND = 1000.0
+
+/**
+ * What became of an attempt to run inside an [Allowance].
+ *
+ * Its own type rather than a widened [RunResult]: the refusal has to be a
+ * value, because a caller asking to run within a fence was promised it might be
+ * turned away, and a `run` that returned a sum would delete a line from a
+ * published `.api` file for every caller that never asked for one.
+ */
+sealed interface Ran {
+
+    data class Result(val result: RunResult) : Ran
+
+    data class Refused(val reason: Refusal) : Ran
+}

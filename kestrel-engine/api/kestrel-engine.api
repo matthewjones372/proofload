@@ -21,6 +21,10 @@ public final class io/github/matthewjones372/kestrel/engine/Kestrel {
 	public static synthetic fun trace$default (Lio/github/matthewjones372/kestrel/engine/Kestrel;Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Feeder;ILjava/lang/Object;)V
 }
 
+public final class io/github/matthewjones372/kestrel/engine/RunWithinKt {
+	public static final fun runWithin (Lio/github/matthewjones372/kestrel/engine/Kestrel;Lio/github/matthewjones372/kestrel/Allowance;Lio/github/matthewjones372/kestrel/Simulation;)Lio/github/matthewjones372/kestrel/Ran;
+}
+
 public final class io/github/matthewjones372/kestrel/engine/TraceKt {
 	public static final fun trace (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Feeder;)V
 	public static synthetic fun trace$default (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Feeder;ILjava/lang/Object;)V

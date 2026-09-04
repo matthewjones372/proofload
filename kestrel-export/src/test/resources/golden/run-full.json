@@ -1,0 +1,121 @@
+{
+  "schema": "kestrel/run/1",
+  "density": "full",
+  "startedAt": "2026-09-02T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "plan": {
+    "arms": [
+      {
+        "scenario": "checkout",
+        "steps": [
+          "pay"
+        ],
+        "plannedUsers": 3000
+      }
+    ]
+  },
+  "count": 7,
+  "ok": 4,
+  "failed": 3,
+  "failures": [
+    {
+      "reason": "status 503",
+      "count": 2
+    },
+    {
+      "reason": "ConnectException",
+      "count": 1
+    }
+  ],
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
+  "machine": {
+    "cores": 4,
+    "jdk": "21.0.2+13",
+    "os": "Linux",
+    "arch": "aarch64"
+  },
+  "behind": {
+    "count": 3,
+    "p50": 120319,
+    "p95": 120319,
+    "p99": 120319,
+    "p999": null,
+    "max": 120319
+  },
+  "hiccups": {
+    "count": 2,
+    "p50": 4014079,
+    "p95": 4014079,
+    "p99": 4014079,
+    "p999": null,
+    "max": 4014079
+  },
+  "steps": [
+    {
+      "name": "pay",
+      "count": 7,
+      "reached": 0,
+      "serviceTime": {
+        "count": 7,
+        "p50": 21102591,
+        "p95": 901775359,
+        "p99": 901775359,
+        "p999": null,
+        "max": 901775359
+      },
+      "responseTime": {
+        "count": 7,
+        "p50": 21102591,
+        "p95": 901775359,
+        "p99": 901775359,
+        "p999": null,
+        "max": 901775359
+      },
+      "ok": {
+        "count": 4,
+        "serviceTime": {
+          "count": 4,
+          "p50": 1105919,
+          "p95": 21102591,
+          "p99": 21102591,
+          "p999": null,
+          "max": 21102591
+        },
+        "responseTime": {
+          "count": 4,
+          "p50": 1155071,
+          "p95": 21102591,
+          "p99": 21102591,
+          "p999": null,
+          "max": 21102591
+        }
+      },
+      "failed": {
+        "count": 3,
+        "serviceTime": {
+          "count": 3,
+          "p50": 310378495,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        },
+        "responseTime": {
+          "count": 3,
+          "p50": 310378495,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        }
+      }
+    }
+  ],
+  "timeline": [],
+  "latePerSecond": []
+}

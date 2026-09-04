@@ -1,0 +1,42 @@
+{
+  "schema": "kestrel/run/1",
+  "density": "summary",
+  "startedAt": "2026-09-02T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "plan": {
+    "arms": [
+      {
+        "scenario": "checkout",
+        "steps": [
+          "pay"
+        ],
+        "plannedUsers": 3000
+      }
+    ]
+  },
+  "count": 7,
+  "ok": 4,
+  "failed": 3,
+  "failures": [
+    {
+      "reason": "status 503",
+      "count": 2
+    },
+    {
+      "reason": "ConnectException",
+      "count": 1
+    }
+  ],
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
+  "machine": {
+    "cores": 4,
+    "jdk": "21.0.2+13",
+    "os": "Linux",
+    "arch": "aarch64"
+  }
+}

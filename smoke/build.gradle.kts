@@ -16,6 +16,7 @@ dependencies {
     // module with a broken POM, a missing transitive dependency or a name
     // nobody publishes fails here, at resolution, and nothing inside the source
     // tree can fail in its place.
+    testImplementation("io.github.matthewjones372:kestrel-arbs:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-core:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-engine:$kestrelVersion")

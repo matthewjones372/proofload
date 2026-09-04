@@ -14,7 +14,7 @@ one.
 
 ## [0.1.0] — unreleased
 
-The first release. Sixteen modules, published together and versioned together.
+The first release. Seventeen modules, published together and versioned together.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.

@@ -20,6 +20,17 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+- **Kestrel over MCP.** `kestrel-mcp` is a stdio server whose every tool is a
+  call `kestrel-cli` already makes, so what a program can do is what a person at
+  a terminal can do and there is no second behaviour to keep in step. The
+  framing is line-delimited JSON-RPC written here rather than taken from a
+  library — a notification is not answered, a method nobody serves is a JSON-RPC
+  error rather than a tool result, and an unreadable line does not stop the
+  server. `plan_schema` is the tool that makes the rest work: a caller who can
+  ask for the format writes a valid plan first time instead of a plausible one,
+  and a test parses both of the worked plans it hands back, because a schema
+  whose own examples do not parse is worse than no schema. Every tool's
+  description states what it sends before a caller has to find out.
 - **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
   reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
   named by the operation the contract named and keyed on the path template, so

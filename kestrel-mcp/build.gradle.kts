@@ -1,0 +1,27 @@
+// The tools a program reaches Kestrel through, over stdio.
+//
+// A shell over `kestrel-cli`: every tool here is a call that command line
+// already makes, so what a model can do is what a person at a terminal can do
+// and there is no second behaviour to keep in step.
+//
+// The JSON-RPC framing is written here rather than taken from a library. It is
+// a few hundred lines of line-delimited request and response, and the sibling
+// repository's own MCP server is next door to read — but depending on it would
+// tie this release train to that one for something neither library is about.
+dependencies {
+    api(project(":kestrel-cli"))
+    implementation("org.snakeyaml:snakeyaml-engine:2.10")
+}
+
+tasks.test {
+    val mainRuntime = configurations.runtimeClasspath
+    inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
+    jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf(
+                "-Dkestrel.mcp.runtimeClasspath=" +
+                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+            )
+        },
+    )
+}

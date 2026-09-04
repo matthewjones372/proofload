@@ -22,6 +22,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-record` | a HAR recording read into a Kotlin scenario you edit and commit | core, `kotlinx-serialization-json` |
 | `kestrel-plan` | a plan written down, read and lowered into the values the DSL builds, and printed back as Kotlin | core, http, `snakeyaml-engine` |
 | `kestrel-cli` | `validate`, `preview`, `run` and `emit` from a shell, with the verdict as the exit code | core, plan, engine, export |
+| `kestrel-mcp` | the same calls over MCP, for a caller that is a program | core, cli, `snakeyaml-engine` |
 | `kestrel-openapi` | an OpenAPI document read into a plan you edit and commit | core, plan, `snakeyaml-engine` |
 | `kestrel-contract` | endpoint values read into a plan you edit and commit | core, plan, openapi, `pelican-core` |
 | `kestrel-report-html` | one self-contained, interactive HTML page | core |
@@ -94,6 +95,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-openapi` | [NoThirdPartyDependenciesTest](../kestrel-openapi/src/test/kotlin/io/github/matthewjones372/kestrel/openapi/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-contract` | [NoThirdPartyDependenciesTest](../kestrel-contract/src/test/kotlin/io/github/matthewjones372/kestrel/contract/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-cli` | [NoThirdPartyDependenciesTest](../kestrel-cli/src/test/kotlin/io/github/matthewjones372/kestrel/cli/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-mcp` | [NoThirdPartyDependenciesTest](../kestrel-mcp/src/test/kotlin/io/github/matthewjones372/kestrel/mcp/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-html` | [NoThirdPartyDependenciesTest](../kestrel-report-html/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-github` | [NoThirdPartyDependenciesTest](../kestrel-report-github/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |

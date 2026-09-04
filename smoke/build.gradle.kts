@@ -23,6 +23,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-cli:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-contract:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-openapi:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-mcp:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-grpc:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")

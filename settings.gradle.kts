@@ -15,6 +15,7 @@ include(
     "kestrel-kotest",
     "kestrel-otel",
     "kestrel-openapi",
+    "kestrel-mcp",
     "kestrel-plan",
     "kestrel-pelican",
     "kestrel-record",

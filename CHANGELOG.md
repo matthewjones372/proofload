@@ -32,6 +32,17 @@ enough to list, and long enough to matter.
   a placeholder limit, so a generated plan cannot validate green while asserting
   nothing. Its own module rather than a generator inside `kestrel-pelican`,
   whose dependency test promises a consumer nothing but core and `pelican-core`.
+- **Values a contract already calls legal.** A generated step's path is filled
+  from the constraints on its own inputs — `between(1, 100)` is both the rule
+  that refuses a request and the schema's `minimum`/`maximum`, so a value drawn
+  inside it exercises the endpoint rather than its validation. Seeded, so the
+  same contract yields the same plan twice and a generated file is reviewable.
+  This is not a nicety: `{id}` in a path is read from the session key of that
+  name and fails the step when nothing is there, and a plan has no feeder to put
+  one there, so a generated step that kept its braces would fail every request
+  it made. One value, the same for every user — a generated plan is a smoke at
+  one a second, and per-user variety is what `kestrel emit` and a feeder are
+  for.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body

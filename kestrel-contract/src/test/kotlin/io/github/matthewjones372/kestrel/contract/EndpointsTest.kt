@@ -12,6 +12,8 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,11 +56,15 @@ class EndpointsTest {
     }
 
     @Test
-    fun `a path parameter is one step, not one step per value`() {
+    fun `a path parameter is one step, named for the operation rather than the url`() {
         val plan = planFrom(listOf(getOrder), baseUrl = "https://orders.internal")
 
         withClue("ten ids would otherwise be ten rows describing one endpoint") {
-            plan.steps.single().path shouldContain "{id}"
+            plan.steps.single().name shouldBe "getOrder"
+        }
+        withClue("the path is filled, because a brace left in one fails every request") {
+            plan.steps.single().path shouldStartWith "/orders/"
+            plan.steps.single().path shouldNotContain "{"
         }
     }
 

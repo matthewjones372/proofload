@@ -24,6 +24,7 @@ fun planFrom(
     baseUrl: String,
     scenario: String = "smoke",
     methods: Set<Method> = setOf(Method.GET),
+    seed: Long = 0L,
 ): Declaration {
     val taken = endpoints.filter { it.method in methods }
     require(taken.isNotEmpty()) {
@@ -31,7 +32,7 @@ fun planFrom(
             endpoints.joinToString { "${it.method} ${it.pathSpec.template}" }
     }
 
-    val steps = taken.map { it.asStep() }
+    val steps = taken.mapIndexed { index, endpoint -> endpoint.asStep(seed + index) }
     return Declaration(
         version = Declaration.VERSION,
         baseUrl = baseUrl,
@@ -48,16 +49,28 @@ fun planFrom(
 
 /**
  * Named by the operation the contract named, because that is what its own
- * document calls the row and what a reader will search for. Falling back to the
- * template, never to the substituted URL — `/orders/{id}` is one step and one
- * row, where ten ids would be ten of each.
+ * document calls the row and what a reader will search for; falling back to the
+ * template, never to a substituted URL, so `/orders/{id}` is one row rather
+ * than one per id.
+ *
+ * The path itself is filled, though. `{id}` in a path is read from the session
+ * key of that name and fails the step when nothing is there, and a plan has no
+ * feeder to put one there — so a generated step whose path kept its braces
+ * would fail every request it made. One value the contract already calls legal,
+ * the same one every user sends: this is a smoke at one a second, and per-user
+ * variety is what `kestrel emit` and a feeder are for.
  */
-private fun Endpoint<*, *>.asStep(): DeclaredStep = DeclaredStep(
+private fun Endpoint<*, *>.asStep(seed: Long): DeclaredStep = DeclaredStep(
     name = operationId?.takeIf { it.isNotBlank() } ?: "${method.name.lowercase()} ${pathSpec.template}",
     method = method.name,
-    path = pathSpec.template,
+    path = filledPath(seed),
     expecting = output.status,
 )
+
+private fun Endpoint<*, *>.filledPath(seed: Long): String =
+    pathSpec.captures.foldIndexed(pathSpec.template) { index, path, param ->
+        path.replace("{${param.name}}", param.legalValue(seed + index))
+    }
 
 /** One a second for ten seconds: enough to see it answer, not enough to be an event. */
 private const val SMOKE_RATE = 1

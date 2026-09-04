@@ -151,6 +151,7 @@ a note on why it is those lines and not the obvious alternative:
 
 - **[docs/what-it-costs.md](docs/what-it-costs.md)** — the tool's own measured overhead, so you can trust the numbers above it.
 - **[docs/modules.md](docs/modules.md)** — the modules and the coordinates to depend on them.
+- **[docs/from-java.md](docs/from-java.md)** — writing a load test in Java, and why the facade is a module rather than annotations on core.
 - **[AGENTS.md](AGENTS.md)** — read this first if you want to work on Kestrel itself.
 
 ```bash

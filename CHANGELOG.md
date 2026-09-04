@@ -421,7 +421,9 @@ enough to list, and long enough to matter.
   bridge: a Kotlin function returning a `@JvmInline` value compiles to a mangled
   name returning the `String` or `double` underneath it, so no Kotlin signature
   can hand one to Java at all. `sessionKey(name, type)` is the new function in
-  core those keys come from.
+  core those keys come from, and
+  [docs/from-java.md](docs/from-java.md) is the page — every Java line on it is
+  a line of the source set the build compiles, which `FromJavaDocTest` fails on.
 
 - **A Java scenario is a Kotlin scenario.** `Scenarios.named("checkout")
   .exec(placeOrder, action).pause(Duration.ofSeconds(1)).build()` accumulates

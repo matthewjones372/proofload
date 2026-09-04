@@ -724,6 +724,25 @@ These are not kotest's `Arb`. That one leans towards edge cases — the empty
 string, `MIN_VALUE`, the boundary — because it is hunting bugs, which is the
 wrong bias for load.
 
+A `Feeder` is a function of the user's number and nothing else, so nothing
+downstream can work out what a run's keys were drawn from by looking at it.
+`drawing` is where you say it, beside `fedBy`:
+
+```kotlin
+import io.github.matthewjones372.kestrel.drawing
+
+checkout.at(50.perSecond, over = 1.minutes)
+    .fedBy(feed(customer) { customerId at it } + feed(sku) { basket at it })
+    .drawing(customerId.shape, basket.shape)
+```
+
+The shapes travel with the result and into a baseline file, and a comparison
+refuses two runs that named different ones rather than reporting the cache hit
+rate one of them bought as a regression. A run that named none compares exactly
+as it did before — every baseline written so far has no shape in it, so the
+strict reading would refuse them all. The cost of that is stated rather than
+hidden: moving a CSV-fed run onto a generator is a change no comparison flags.
+
 ## A token that expires mid-run
 
 Fetching a token inside a step puts that round trip in one request out of a few
@@ -2087,7 +2106,7 @@ So:
 | It says | When |
 |---|---|
 | `no baseline to compare against` | the cache missed, or this is the first run |
-| `these runs were not asked to do the same thing` | a different scenario, steps, or rate line |
+| `these runs were not asked to do the same thing` | a different scenario, steps, rate line, or drawn data both runs named |
 
 and `Comparison.Compared` carries a `caveat` where the two runs are comparable
 but something about the machines argues against the numbers. A calibration

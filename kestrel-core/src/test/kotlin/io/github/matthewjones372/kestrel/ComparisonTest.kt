@@ -24,6 +24,11 @@ class ComparisonTest {
     private fun planAt(rate: Rate, scenario: String = "paying"): Plan =
         Plan(scenario = scenario, steps = listOf("pay"), profile = constantRate(rate, over = 2.seconds))
 
+    private fun planDrawing(vararg shapes: Shape): Plan {
+        val plan = planAt(100.perSecond)
+        return plan.copy(arms = plan.arms.map { it.copy(drawn = shapes.toList()) })
+    }
+
     private fun planOfBoth(browsingAt: Rate = 20.perSecond): Plan = Plan(
         arms = listOf(
             PlannedArm("paying", listOf("pay"), constantRate(100.perSecond, over = 2.seconds)),
@@ -160,6 +165,49 @@ class ComparisonTest {
         withClue(why) {
             why shouldContain "arm \"browsing\" profile"
             why shouldContain "500.0"
+        }
+    }
+
+    @Test
+    fun `two runs drawn at different skews are refused rather than reported as a regression`() {
+        val heavy = runOf(mapOf("pay" to 80L..120L), plan = planDrawing(Shape("zipf(keys=1000000, skew=1.1)", 0L)))
+        val flat = runOf(mapOf("pay" to 80L..120L), plan = planDrawing(Shape("zipf(keys=1000000, skew=0.8)", 0L)))
+
+        val why = heavy.against(flat).shouldBeInstanceOf<Comparison.NotComparable>().why
+
+        withClue(why) {
+            why shouldContain "drawn"
+            why shouldContain "skew=0.8"
+            why shouldContain "skew=1.1"
+        }
+    }
+
+    @Test
+    fun `the same shape drawn from another seed is refused, since the keys asked for were not the same`() {
+        val one = runOf(mapOf("pay" to 80L..120L), plan = planDrawing(Shape("uuids()", seed = 1L)))
+        val other = runOf(mapOf("pay" to 80L..120L), plan = planDrawing(Shape("uuids()", seed = 2L)))
+
+        one.against(other).shouldBeInstanceOf<Comparison.NotComparable>()
+    }
+
+    @Test
+    fun `two runs drawn the same way compare`() {
+        val plan = planDrawing(Shape("zipf(keys=1000000, skew=1.1)", 0L))
+        val now = runOf(mapOf("pay" to 80L..120L), plan = plan)
+        val before = runOf(mapOf("pay" to 80L..120L), plan = plan)
+
+        now.against(before).shouldBeInstanceOf<Comparison.Compared>()
+    }
+
+    @Test
+    fun `a baseline that declared no shape compares against a run that drew one, and against one that did not`() {
+        val declared = runOf(mapOf("pay" to 80L..120L), plan = planDrawing(Shape("zipf(keys=1000000, skew=1.1)", 0L)))
+        val silent = runOf(mapOf("pay" to 80L..120L), plan = planAt(100.perSecond))
+
+        withClue("every stored baseline predates the field, so an absent shape is no claim to refuse across") {
+            declared.against(silent).shouldBeInstanceOf<Comparison.Compared>()
+            silent.against(declared).shouldBeInstanceOf<Comparison.Compared>()
+            silent.against(silent).shouldBeInstanceOf<Comparison.Compared>()
         }
     }
 

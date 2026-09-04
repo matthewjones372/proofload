@@ -1,0 +1,78 @@
+public final class io/github/matthewjones372/kestrel/cli/CliKt {
+	public static final fun main ([Ljava/lang/String;)V
+	public static final fun obey (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/kestrel/cli/Finished;
+	public static synthetic fun obey$default (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Finished;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/Code : java/lang/Enum {
+	public static final field Behind Lio/github/matthewjones372/kestrel/cli/Code;
+	public static final field Met Lio/github/matthewjones372/kestrel/cli/Code;
+	public static final field Missed Lio/github/matthewjones372/kestrel/cli/Code;
+	public static final field Refused Lio/github/matthewjones372/kestrel/cli/Code;
+	public static final field Unusable Lio/github/matthewjones372/kestrel/cli/Code;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getNumber ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/cli/Code;
+	public static fun values ()[Lio/github/matthewjones372/kestrel/cli/Code;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/cli/Command {
+	public abstract fun getPlan ()Ljava/nio/file/Path;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/Command$Preview : io/github/matthewjones372/kestrel/cli/Command {
+	public fun <init> (Ljava/nio/file/Path;)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun copy (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/cli/Command$Preview;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/cli/Command$Preview;Ljava/nio/file/Path;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Command$Preview;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPlan ()Ljava/nio/file/Path;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/Command$Run : io/github/matthewjones372/kestrel/cli/Command {
+	public fun <init> (Ljava/nio/file/Path;Z)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/nio/file/Path;Z)Lio/github/matthewjones372/kestrel/cli/Command$Run;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/cli/Command$Run;Ljava/nio/file/Path;ZILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Command$Run;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getJson ()Z
+	public fun getPlan ()Ljava/nio/file/Path;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/Command$Validate : io/github/matthewjones372/kestrel/cli/Command {
+	public fun <init> (Ljava/nio/file/Path;)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun copy (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/cli/Command$Validate;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/cli/Command$Validate;Ljava/nio/file/Path;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Command$Validate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPlan ()Ljava/nio/file/Path;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/CommandKt {
+	public static final fun getUsage ()Ljava/lang/String;
+	public static final fun parse (Ljava/util/List;)Lio/github/matthewjones372/kestrel/cli/Command;
+}
+
+public final class io/github/matthewjones372/kestrel/cli/Finished {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/cli/Code;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/cli/Code;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lio/github/matthewjones372/kestrel/cli/Code;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/cli/Code;)Lio/github/matthewjones372/kestrel/cli/Finished;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/cli/Finished;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/kestrel/cli/Code;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Finished;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lio/github/matthewjones372/kestrel/cli/Code;
+	public final fun getError ()Ljava/lang/String;
+	public final fun getOut ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

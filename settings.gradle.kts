@@ -2,6 +2,7 @@ rootProject.name = "kestrel"
 
 include(
     "kestrel-baseline",
+    "kestrel-cli",
     "kestrel-core",
     "kestrel-engine",
     "kestrel-export",

@@ -341,6 +341,17 @@ enough to list, and long enough to matter.
   caller working from the schema needs in order to fix it. `Rate.parse` moves
   into core so that `"500/s"` in a plan and `"500/s"` in a `kestrel.toml` cannot
   come to mean different things.
+- **A command line.** `kestrel validate <plan>`, `kestrel preview <plan>` and
+  `kestrel run <plan> [--json]`, in `kestrel-cli`. The exit code is the verdict
+  — 0 met, 1 missed a goal, 2 the generator fell behind, 3 refused by the
+  allowance, 4 the plan does not read — so a shell branches on it without a JSON
+  reader in sight, and `behind` outranks a missed goal there for the reason it
+  does everywhere else. Arguments parse into a `Command` value and every command
+  returns a `Finished` value, so what a shell would see is asserted without
+  spawning one. `--json` prints 0087's summary; without it the same verdict is
+  printed in words, off the same goals and the same remedy, so a caller cannot
+  be told two things. A plan that does not read exits with the parser's own
+  sentence — the line and what was allowed — rather than a stack trace.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

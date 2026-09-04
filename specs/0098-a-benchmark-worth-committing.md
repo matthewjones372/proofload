@@ -118,6 +118,17 @@ question "why is this the rate" is asked every time somebody changes it.
   Recommend the prose for reading and 0021's baseline file for comparing, and
   say in the document which is which. A table nobody can diff numerically is
   documentation; a baseline nobody can read is not a decision.
-- **Does `write_spec` refuse a run that fell behind?** Recommend refusing: a
-  baseline recorded from a run whose numbers were not the target's is a wrong
-  number committed, which is worse than no number.
+- **Does `write_spec` refuse a run that fell behind?** ~~Recommend refusing.~~
+  **Reversed while building it.** Refusing outright makes the tool unusable on
+  any machine with ordinary jitter — a short run against a fast target is
+  routinely a few percent behind, and a benchmark you cannot record on a laptop
+  is one nobody writes. It also contradicts how this codebase treats every other
+  unreliable number: `Tail.Absent` carries its reason, `Tell.CannotTell` carries
+  what would change it, `Measurement.Absent` says why there was nothing to
+  measure. None of them withhold.
+
+  So: **`lostGround` refuses** — the load that left was not the load the profile
+  named, which makes the plan itself wrong and there is nothing worth recording.
+  **`fellBehind` writes, and says so in the document**, above the table, in the
+  words the remedy already uses. A recorded caveat is not a wrong number
+  committed; it is the thing this repository does everywhere else.

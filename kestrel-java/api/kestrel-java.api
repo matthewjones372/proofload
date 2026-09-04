@@ -1,0 +1,18 @@
+public final class io/github/matthewjones372/kestrel/java/Rates {
+	public static fun perMinute (D)Lio/github/matthewjones372/kestrel/Rate;
+	public static fun perSecond (D)Lio/github/matthewjones372/kestrel/Rate;
+}
+
+public final class io/github/matthewjones372/kestrel/java/SessionKeys {
+	public static final field INSTANCE Lio/github/matthewjones372/kestrel/java/SessionKeys;
+	public static final fun of (Ljava/lang/Class;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/SessionKey;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Shares {
+	public static fun percent (D)Lio/github/matthewjones372/kestrel/Share;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Steps {
+	public static fun named (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/StepName;
+}
+

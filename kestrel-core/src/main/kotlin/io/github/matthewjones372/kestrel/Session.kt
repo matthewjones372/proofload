@@ -22,6 +22,14 @@ class SessionKey<T : Any> @PublishedApi internal constructor(
 inline fun <reified T : Any> sessionKey(name: String): SessionKey<T> = SessionKey(name, T::class)
 
 /**
+ * The same key where the type is only known at runtime. A `reified inline`
+ * function compiles to no method at all, so this is the only form a caller
+ * outside Kotlin — or one holding a `Class` rather than writing a literal — can
+ * reach.
+ */
+fun <T : Any> sessionKey(name: String, type: KClass<T>): SessionKey<T> = SessionKey(name, type)
+
+/**
  * The state one virtual user carries between steps. Immutable, so a step can
  * be handed a session without the engine copying defensively before a run and
  * without two users sharing a map.

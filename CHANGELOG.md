@@ -413,6 +413,16 @@ enough to list, and long enough to matter.
   run is one nobody edits. It carries a JSON parser, which is why it is a module
   of its own and on nobody else's classpath.
 
+- **`kestrel-java`** — the same values, built from Java. `Rates.perSecond(50)`,
+  `Steps.named("pay")` and `Shares.percent(1)` hand back core's own `Rate`,
+  `StepName` and `Share` rather than a copy of them, and `SessionKeys.of(
+  String.class, "orderId")` reaches the key that `sessionKey<T>` cannot give a
+  caller with no reified `T`. The factories are Java sources over a Kotlin
+  bridge: a Kotlin function returning a `@JvmInline` value compiles to a mangled
+  name returning the `String` or `double` underneath it, so no Kotlin signature
+  can hand one to Java at all. `sessionKey(name, type)` is the new function in
+  core those keys come from.
+
 - **The public API is recorded, and a break is a diff.**
   `binary-compatibility-validator` is applied to every published module and
   wired into `check`, so `./gradlew build` fails on an unrecorded break exactly

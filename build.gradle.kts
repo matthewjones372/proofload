@@ -71,6 +71,7 @@ val moduleDescriptions = mapOf(
     "kestrel-export" to "A run's measurements in formats other tools read. No dependencies.",
     "kestrel-grpc" to "gRPC steps over a caller's own stubs and channel.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
+    "kestrel-java" to "Kestrel from Java: static factories and builders over the same values Kotlin builds.",
     "kestrel-jdbc" to "Database steps over a caller's own DataSource, with the pool wait counted apart.",
     "kestrel-junit5" to "Load tests that are ordinary JUnit 5 tests.",
     "kestrel-kafka" to "Kafka produce steps, and completions read off another topic.",

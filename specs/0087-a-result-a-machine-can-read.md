@@ -109,9 +109,16 @@ published schema.
 > reasoning is left standing rather than deleted: a decision is easier to
 > reopen when the alternative it beat is still written down.
 
-- **Does `Summary` include per-step p99, or only goals?** Recommend goals only:
-  a step with no goal on it is a number nobody asked a question about, and
-  `Full` is one flag away.
+- **Does `Summary` include per-step p99, or only goals?** ~~Recommend goals
+  only.~~ **Reversed on 2026-09-04, after using it.** Asked for a p99 baseline,
+  the summary could not answer: a run with no goals on it — which is what
+  measuring a baseline *is* — reported counts and nothing else, so the number
+  everyone asks for needed `Full` and four hundred lines of document to reach
+  it. "A step with no goal on it is a number nobody asked a question about" was
+  wrong in the ordinary case, where somebody is asking what the number *is*
+  before deciding what to demand of it. `Summary` carries p50 and p99 per step,
+  on the response-time clock. It costs about sixty bytes a step against a two
+  kilobyte budget, which was never the constraint worth protecting here.
 - **Is `schema` a version string or a URL?** Recommend the string
   `kestrel/run/1`, with the URL in the schema file — a URL in every document is
   a hostname to keep alive.

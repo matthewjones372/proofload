@@ -59,6 +59,12 @@ internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): Stri
 
             // Before the call to action rather than after it: a caller already
             // told what to do next has stopped reading.
+            LAST_SMOKE.get()?.recommendation()?.let {
+                appendLine("Worth pointing the load at:")
+                appendLine("  $it")
+                appendLine()
+            }
+
             val asking = plan.questions(from, smoked)
             if (asking.isNotEmpty()) {
                 appendLine("This plan is guessing. Ask whoever wants the benchmark:")
@@ -67,6 +73,10 @@ internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): Stri
             }
 
             appendLine("Nothing above sent load. Edit the plan with the answers, then call `run` with it.")
+            // Where somebody looking for a tool that is not here will actually
+            // be looking. A launcher over built jars is stale the moment the
+            // source moves, and nothing else says so.
+            appendLine("(kestrel-mcp ${describedBuild()} — rebuild with `./gradlew :kestrel-mcp:installDist`)")
         }.trimEnd(),
         // A smoke that failed is the answer, not a footnote: a plan whose steps
         // 404 once will 404 three thousand times.

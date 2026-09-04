@@ -27,6 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 internal fun smoke(arguments: Map<String, Any?>, allowance: Allowance): String =
     sending(arguments, allowance) { plan ->
         val result = onceThrough(plan)
+        LAST_SMOKE.set(result)
         val undeclared = result.undeclared()
         content(
             buildString {
@@ -101,6 +102,15 @@ private fun capturing(walk: () -> Unit): String {
     }
     return caught.toString(Charsets.UTF_8).trimEnd()
 }
+
+/**
+ * What the last smoke measured, so `benchmark` can recommend off it without
+ * running the steps a second time.
+ *
+ * A thread local rather than a field: two callers smoking at once should not
+ * read each other's answer, and nothing here outlives the call that set it.
+ */
+internal val LAST_SMOKE: ThreadLocal<RunResult?> = ThreadLocal.withInitial { null }
 
 /**
  * Failures the contract did not declare.

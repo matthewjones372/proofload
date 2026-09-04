@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.mcp
 
+import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.DeclaredGoal
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
@@ -77,3 +78,32 @@ private fun DeclaredGoal.isPlaceholder(): Boolean =
     this is DeclaredGoal.Percentile && under.inWholeMilliseconds >= PLACEHOLDER_MILLIS
 
 private const val PLACEHOLDER_MILLIS = 1_000L
+
+/**
+ * Which step is worth the load, said rather than asked.
+ *
+ * A caller that has been asked four questions and given no opinion has been
+ * handed the work back. The smoke already measured something — one request per
+ * step — and the slowest of them is where a percentile will say anything at
+ * all: a percentile over a constant is the constant, and reporting it as a tail
+ * dresses one number up as a distribution.
+ *
+ * One request is a hint and not a measurement, and this says so. A
+ * recommendation that overstated its evidence would be the thing this tool
+ * exists not to do.
+ */
+internal fun RunResult.recommendation(): String? {
+    val ran = steps.values.filter { it.count > 0 }
+    if (ran.size < 2) return null
+
+    val slowest = ran.maxBy { it.responseTime.p99 }
+    val rest = ran.filter { it.name != slowest.name }.maxOfOrNull { it.responseTime.p99 } ?: return null
+    if (slowest.responseTime.p99 <= rest * CLEARLY) return null
+
+    return "`${slowest.name}` took ${slowest.responseTime.p99} against $rest for the next slowest, so it is " +
+        "where a percentile will say something — a percentile over a constant is the constant. That is one " +
+        "request each, so it is a hint about where to point the load, not a measurement."
+}
+
+/** How much slower the slowest has to be before naming it is worth more than the noise in one request. */
+private const val CLEARLY = 2.0

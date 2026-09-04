@@ -36,7 +36,7 @@ internal fun serve(input: BufferedReader, output: Writer, answer: (Call) -> Stri
 /** What this server is, in the shape `initialize` asks for. */
 internal fun initialised(): String =
     """{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},""" +
-        """"serverInfo":{"name":"kestrel","version":"0.1.0"}}"""
+        """"serverInfo":{"name":"kestrel","version":${describedBuild().asJsonString()}}}"""
 
 fun main() {
     // stdout is the protocol. Anything in the library that prints — a trace, a

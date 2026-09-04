@@ -245,7 +245,52 @@ class BenchmarkTest {
     }
 
     @Test
+    fun `it names the endpoint worth pointing the load at`() {
+        server.createContext("/slow") { exchange ->
+            arrived.incrementAndGet()
+            Thread.sleep(SLOW)
+            exchange.sendResponseHeaders(200, -1)
+            exchange.close()
+        }
+        val both = """
+            openapi: 3.1.0
+            servers: [{url: "$where"}]
+            paths:
+              /orders:
+                get: {operationId: fast, responses: {"200": {description: ok}}}
+              /slow:
+                get: {operationId: slow, responses: {"200": {description: ok}}}
+        """.trimIndent()
+
+        val answered = benchmark(mapOf("document" to both), Allowance.none)
+
+        withClue(answered) {
+            answered shouldContain "Worth pointing the load at"
+            answered shouldContain "slow"
+            withClue("one request each is a hint, and saying otherwise would be the thing this avoids") {
+                answered shouldContain "not a measurement"
+            }
+        }
+    }
+
+    @Test
+    fun `one step has nothing to recommend over`() {
+        withClue("naming the only step as the slowest is not advice") {
+            benchmark(mapOf("baseUrl" to where), Allowance.none) shouldNotContain "Worth pointing the load at"
+        }
+    }
+
+    @Test
+    fun `it says when it was built, where somebody hunting a missing tool will look`() {
+        benchmark(mapOf("baseUrl" to where), Allowance.none) shouldContain "installDist"
+    }
+
+    @Test
     fun `nothing to benchmark says what it wanted`() {
         benchmark(emptyMap(), Allowance.none) shouldContain "wants one of"
+    }
+
+    private companion object {
+        const val SLOW = 60L
     }
 }

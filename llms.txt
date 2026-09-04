@@ -93,6 +93,7 @@ class CheckoutLoadTest {
 - [README](https://github.com/matthewjones372/kestrel/blob/main/README.md): what it is, and the smallest test that runs.
 - [Cookbook](https://github.com/matthewjones372/kestrel/blob/main/docs/cookbook.md):
   profiles, feeders, captures, goals, gRPC, Kafka, JDBC, WebSockets, baselines and reports. Start here for code.
+- [For agents](https://github.com/matthewjones372/kestrel/blob/main/docs/for-agents.md): every public signature, rendered from the `.api` dumps, and the mistakes to avoid.
 - [Modules](https://github.com/matthewjones372/kestrel/blob/main/docs/modules.md): each module, and what it depends on.
 - [What it costs](https://github.com/matthewjones372/kestrel/blob/main/docs/what-it-costs.md): the tool's own measured overhead.
 - [AGENTS.md](https://github.com/matthewjones372/kestrel/blob/main/AGENTS.md): for working *on* Kestrel, not with it.

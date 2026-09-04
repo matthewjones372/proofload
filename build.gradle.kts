@@ -151,6 +151,135 @@ apiValidation {
     ignoredProjects.addAll(subprojects.map { it.name } - publishedModules.toSet())
 }
 
+// The signature section of `docs/for-agents.md` is rendered from those same
+// dumps rather than written out. A hand-written list of a public surface is
+// the second source of truth `apiCheck` exists to stop the repository having,
+// and it is stale the first release nobody re-reads it; rendering means a
+// method that leaves the library leaves the documentation in the commit that
+// removed it.
+val forAgents: File = file("docs/for-agents.md")
+
+val generatedFrom = "<!-- Rendered from the .api dumps by ./gradlew apiDocDump. Do not edit below. -->"
+val generatedTo = "<!-- End of the rendered surface. -->"
+
+val jvmPrimitives = mapOf(
+    'V' to "Unit", 'Z' to "Boolean", 'B' to "Byte", 'C' to "Char", 'S' to "Short",
+    'I' to "Int", 'J' to "Long", 'F' to "Float", 'D' to "Double",
+)
+
+/** Written by `equals`, `copy`, `component1` and the value-class bridges, and read by nobody. */
+val boilerplate = Regex("""^(component\d*|copy|equals\d*|hashCode|toString|box|unbox|constructor|access.*)$""")
+
+val declaresClass = Regex("""^public (.*?)class (\S+)(?: : (.*))? \{$""")
+val declaresFun = Regex("""^\tpublic (.*?)fun (\S+) \(([^)]*)\)(.*)$""")
+val declaresField = Regex("""^\tpublic (.*?)field (\S+) (.*)$""")
+
+fun simpleName(binary: String): String = binary.substringAfterLast('/').replace('$', '.')
+
+/** A value class in a signature mangles the name it is in; the suffix is not part of the API. */
+fun demangled(name: String): String = name.substringBefore("\$default").substringBefore('-')
+
+fun readOneType(descriptor: String, from: Int): Pair<String, Int> {
+    val dimensions = descriptor.drop(from).takeWhile { it == '[' }.length
+    val at = from + dimensions
+    val (name, next) = when (descriptor[at]) {
+        'L' -> descriptor.indexOf(';', at).let { simpleName(descriptor.substring(at + 1, it)) to it + 1 }
+        else -> (jvmPrimitives[descriptor[at]] ?: "?") to at + 1
+    }
+    return "Array<".repeat(dimensions) + name + ">".repeat(dimensions) to next
+}
+
+fun typesIn(descriptors: String): List<String> = generateSequence(0 to "") { (at, _) ->
+    if (at >= descriptors.length) null else readOneType(descriptors, at).let { (name, next) -> next to name }
+}.drop(1).map { it.second }.toList()
+
+fun renderMember(line: String): String? {
+    if ("synthetic" in line) return null
+    declaresField.find(line)?.groupValues?.let { (_, _, name, type) ->
+        return if (name in setOf("Companion", "INSTANCE")) null else "val $name: ${typesIn(type).single()}"
+    }
+    val (_, _, raw, parameters, returns) = declaresFun.find(line)?.groupValues ?: return null
+    val name = demangled(raw)
+    if (boilerplate.matches(name)) return null
+    val arguments = typesIn(parameters).joinToString()
+    val returned = typesIn(returns).single()
+    return when {
+        name == "<init>" -> "constructor($arguments)"
+
+        arguments.isEmpty() && name.startsWith("get") && name.length > 3 ->
+            "val ${name[3].lowercaseChar()}${name.substring(4)}: $returned"
+
+        returned == "Unit" -> "fun $name($arguments)"
+
+        else -> "fun $name($arguments): $returned"
+    }
+}
+
+// The same rendering twice running is one declaration the compiler emitted two
+// ways — a boxed overload beside an unboxed one — not two a caller can pick from.
+fun renderDump(dump: String): List<String> = renderedLines(dump)
+    .let { lines -> lines.filterIndexed { at, line -> at == 0 || line != lines[at - 1] } }
+
+fun renderedLines(dump: String): List<String> = dump.lines().mapNotNull { line ->
+    declaresClass.find(line)?.let { found ->
+        val (modifiers, name, supertypes) = found.destructured
+        val declared = simpleName(name)
+        // A file facade is not a type: `ScenarioKt` is where `scenario` and
+        // `step` live, and a reader told it is a class will try to make one.
+        val kind = when {
+            declared.endsWith("Kt") -> "top-level in"
+            "interface" in modifiers -> "interface"
+            else -> "class"
+        }
+        val extends = supertypes.split(", ").filter { it.isNotBlank() }.joinToString { simpleName(it) }
+        "$kind $declared" + if (extends.isEmpty()) "" else " : $extends"
+    } ?: renderMember(line)?.let { "    $it" }
+}
+
+fun renderedSurface(): String = publishedModules.sorted().joinToString(separator = "\n") { module ->
+    val rendered = renderDump(file("$module/api/$module.api").readText()).joinToString(separator = "\n")
+    "### `io.github.matthewjones372:$module`\n\n```text\n$rendered\n```\n"
+}
+
+fun forAgentsWithSurface(): String {
+    val document = forAgents.readText()
+    val before = document.substringBefore(generatedFrom, missingDelimiterValue = "")
+    val after = document.substringAfter(generatedTo, missingDelimiterValue = "")
+    if (before.isEmpty() || after.isEmpty()) {
+        throw GradleException("${forAgents.path} must hold the markers `$generatedFrom` and `$generatedTo`.")
+    }
+    return "$before$generatedFrom\n\n${renderedSurface()}\n$generatedTo$after"
+}
+
+tasks.register("apiDocDump") {
+    group = "documentation"
+    description = "Renders the checked-in .api dumps into the signature section of docs/for-agents.md."
+    inputs.files(publishedModules.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
+    inputs.file(forAgents).withPropertyName("theDocumentAroundThem")
+    outputs.file(forAgents)
+    doLast { forAgents.writeText(forAgentsWithSurface()) }
+}
+
+// Fires from `check`, so a surface that moved without the documentation moving
+// with it fails `./gradlew build` the way a stale `.api` dump already does.
+val apiDocCheck = tasks.register("apiDocCheck") {
+    group = "verification"
+    description = "Fails when docs/for-agents.md no longer matches the .api dumps it is rendered from."
+    inputs.files(publishedModules.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
+    inputs.file(forAgents).withPropertyName("theDocumentRenderedFromThem")
+    outputs.upToDateWhen { true }
+    doLast {
+        if (forAgents.readText() != forAgentsWithSurface()) {
+            throw GradleException(
+                "${forAgents.path} no longer matches the .api dumps it is rendered from. " +
+                    "Run `./gradlew apiDocDump` and commit the diff beside the change that moved the surface.",
+            )
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(apiDocCheck) }
+
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     repositories { mavenCentral() }

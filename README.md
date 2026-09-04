@@ -151,6 +151,7 @@ a note on why it is those lines and not the obvious alternative:
 
 - **[docs/what-it-costs.md](docs/what-it-costs.md)** — the tool's own measured overhead, so you can trust the numbers above it.
 - **[docs/modules.md](docs/modules.md)** — the modules and the coordinates to depend on them.
+- **[docs/for-agents.md](docs/for-agents.md)** — every public signature, rendered from the `.api` dumps, for handing to a model.
 - **[AGENTS.md](AGENTS.md)** — read this first if you want to work on Kestrel itself.
 
 ```bash

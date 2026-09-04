@@ -9,6 +9,10 @@
 dependencies {
     api(project(":kestrel-core"))
     testImplementation("org.hdrhistogram:HdrHistogram:2.2.2")
+    // The schema is the contract this module publishes, so it is checked by a
+    // real validator rather than by a reader written here — the same reason
+    // HdrHistogram sits above as the oracle for the encoding.
+    testImplementation("com.networknt:json-schema-validator:1.5.8")
 }
 
 tasks.test {

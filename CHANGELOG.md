@@ -352,12 +352,38 @@ enough to list, and long enough to matter.
   `writeOpenMetrics(path)` write a Prometheus/OpenMetrics exposition, cumulative
   buckets on the histogram's own boundaries, no `_sum` because nothing here adds
   latencies up. `sendOtlp(endpoint)` pushes the same measurements as one delta
-  export and answers `Accepted` or `Refused` rather than throwing. The exports
-  carry measurements only — the plan, the goals, the verdicts, the intervals and
-  every "cannot tell" stay in the report. `kestrel-export` is core and the JDK
+  export and answers `Accepted` or `Refused` rather than throwing. These three
+  metrics formats carry measurements only — the plan, the goals, the verdicts,
+  the intervals and every "cannot tell" stay in the report, and in the run
+  document below, which is read whole rather than scraped. `kestrel-export` is core and the JDK
   only; `kestrel-otel` carries the SDK, over `java.net.http` rather than the
   OkHttp the exporter ships with. See
   [docs/exporting.md](docs/exporting.md).
+- **A result a machine can read.** `result.json(Density.Summary)` is the run's
+  answer in under two kilobytes — a one-word `verdict`, the plan, whether the
+  schedule held, every goal with the margin it missed by, the steady segment,
+  Little's law, the counts and the failures folded together by reason — and
+  `Density.Full` adds the per-step timings, the timeline and the run's own
+  lateness. `writeJson(path)` puts either on disk. Every document names its
+  schema, `kestrel/run/1`, in its first field, and a reader must ignore keys it
+  does not know, so a new optional field is not a break. The verdict is ordered
+  rather than scored: `behind` outranks a missed goal, because a run whose
+  generator lost its schedule did not measure the target, and a run carrying no
+  goals reads `nothingAsked` rather than `met`. Beside the verdict is a
+  `remedy`: `Verdict.remedy` and `RunResult.scheduleRemedy` in core say what to
+  do about a run in a sentence, taking `Tell.CannotTell.wouldChangeIt` where a
+  verdict was refused rather than writing a second answer beside it. No remedy
+  names a rate nothing measured — "try 38 a second" would be an estimate
+  printed as advice. The summary carries the sentence once; `Density.Full`
+  repeats it per goal. The shape is written down in `docs/schemas/run-1.json`
+  and both densities are validated against it on every build, with undeclared
+  properties refused: emitting a field without declaring it fails the build,
+  while a reader is still told to ignore keys it does not know. Durations are
+  the
+  nanoseconds the histogram reported: the document holds the measurement and
+  the reader does the formatting. In `kestrel-export`, which stays core and the
+  JDK only; the JSON the HTML report inlines is a separate document with a
+  separate job and is unchanged.
 - **A precision that travels with the number.** `Timing.precision` carries the
   width of the bucket its percentiles were read off, set at the freeze from the
   histogram behind it, and `List<Timing>.merged()` refuses across unlike widths

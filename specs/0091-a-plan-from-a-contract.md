@@ -93,8 +93,8 @@ document importer is cut.
       undeclared statuses counted apart.
       Done when: a run against a stub returning a declared 404 and an
       undeclared 500 reports one of each, separately.
-- [ ] **`spec-0091-openapi`** — `kestrel-openapi` over `pelican-import`, its
-      dependency test, and the `from-openapi` command.
+- [ ] **`spec-0091-openapi`** — the document reader in `kestrel-contract` and
+      the `from-openapi` command.
       Done when: a document with fifteen paths produces a plan that `kestrel
       validate` accepts, with the auth placeholder unfilled and refusing.
 
@@ -113,9 +113,21 @@ build/install/kestrel/bin/kestrel validate plan.yaml   # fails: token placeholde
 > reopen when the alternative it beat is still written down.
 
 - **Does `kestrel-openapi` depend on `pelican-import`, or does Kestrel read the
-  document itself?** Recommend depending on it. It is the same author, it is
-  build-time only, and a second OpenAPI reader in the same house that disagrees
-  about a schema is worse than a coupled release train.
+  document itself?** ~~Recommend depending on it.~~ **Reversed on 2026-09-04:
+  the option did not exist.** `pelican-import` is a build-time code generator,
+  not a reader — `importEndpoints(document, sourceRoot, …): List<File>` writes
+  Kotlin source and returns the paths it wrote. There is no parsed model to
+  call, so depending on it would mean generating source, compiling it and
+  loading the endpoint values, which is not a thing a command line can do.
+
+  Kestrel reads the document itself, in `kestrel-contract`, on the
+  snakeyaml-engine already there. The reader is small because the target is: it
+  needs paths, methods, path-parameter schema facets and response statuses, not
+  the full type model a code generator has to build. There are now two OpenAPI
+  readers under this author's name, which the first answer was written to avoid;
+  they read the same document for different things, and the honest fix is for
+  `pelican-import` to expose its parsed model as a value — a spec in that
+  repository, not a patch from this one.
 - **What rate does a generated plan carry?** Recommend a deliberately small one
   — 1/s over 10s, a smoke — so the generated artefact is never the thing that
   hurt something. The caller raises it on purpose, under 0088's ceiling.

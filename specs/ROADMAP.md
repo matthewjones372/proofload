@@ -112,6 +112,7 @@ than from a person with a compiler.
 | [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
+| [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
 
 They stack in that order; only 0092 needs all of them.
 

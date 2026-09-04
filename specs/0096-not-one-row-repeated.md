@@ -51,11 +51,11 @@ val customerId = zipf(keys = 1_000_000, skew = 1.1)   // a few keys are most of 
 val basket     = oneOf("anvil", "rocket", "birdseed")
 val idempotency = uuids()
 
+// Drawn in the feeder, before the departure — never in the step body, which is
+// the measured path.
 val checkout = scenario("checkout") {
-    exec(placeOrder, api.post("/orders").body { user ->
-        """{"customer":"${customerId at user}","cart":"${basket at user}"}"""
-    })
-}
+    exec(placeOrder, api.post("/orders").body(order))
+}.feeding(customer, cart) { user -> customerId at user to (basket at user) }
 ```
 
 Three rules the module holds to:
@@ -104,8 +104,27 @@ skew. `spec-0091-data` should produce these types rather than its own.
 - [ ] **`spec-0096-recorded`** — the drawn shape and seed carried into
       `RunResult`, on the page, and refused across a baseline comparison that
       drew differently.
+
+      Nothing about a feeder reaches `Plan` today: `Arm.feeder` is a bare
+      `fun interface` and `PlannedArm` is built from the scenario tree and the
+      arm alone, so this needs a **new declaration point in core** —
+      `Arm.drawn` and `Simulation.drawing(...)`, mirroring `Arm.thinkSeed` and
+      `Simulation.thinkingFrom`. Downstream it moves `PlannedArm.unlike`, a
+      baseline format bump (8 to 9, `READABLE` extended, or the field vanishes
+      on round-trip), and roughly fifteen goldens across the two report
+      modules. That is more than one branch: split it when it is cut.
+
+      **An absent shape never refuses.** Two runs that both declared shapes are
+      refused where those differ; a run that declared none compares exactly as
+      it does today. Every stored baseline predates this field, so the strict
+      reading would break every existing comparison the day somebody adopts a
+      generator — which is the version people route around rather than adopt.
+      The cost is accepted and stated here: moving a CSV-fed run onto a `zipf`
+      feeder is a change no comparison will flag.
+
       Done when: comparing a run drawn at skew 1.1 against one drawn at 0.8 says
-      so rather than reporting a regression.
+      so rather than reporting a regression, and comparing either against a
+      baseline that declared nothing still compares.
 - [ ] **`spec-0096-kotest`** — `kestrel-arbs-kotest`: `kotest.Arb<T>.shaped()`
       for callers who want the library's generators anyway.
       Done when: the adapter is one file, and its module's dependency test shows
@@ -115,8 +134,12 @@ skew. `spec-0091-data` should produce these types rather than its own.
 
 ```bash
 ./gradlew build
-./gradlew :benchmarks:footprint   # 0093: per-departure allocation unchanged
 ```
+
+The allocation claim is a test inside that build, not a benchmark beside it:
+a million draws measured with `ThreadMXBean.getThreadAllocatedBytes`, asserted
+under a byte each. 0093's `footprint` harness is unbuilt, and an acceptance
+block naming a task nobody has written is one nobody can run.
 
 ## Open questions
 

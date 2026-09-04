@@ -4,6 +4,7 @@
 dependencies {
     api(project(":kestrel-core"))
     api(project(":kestrel-plan"))
+    implementation(project(":kestrel-openapi"))
     implementation(project(":kestrel-engine"))
     implementation(project(":kestrel-export"))
 }

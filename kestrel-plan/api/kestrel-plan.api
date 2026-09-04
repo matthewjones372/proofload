@@ -138,3 +138,7 @@ public final class io/github/matthewjones372/kestrel/plan/ReadingKt {
 	public static final fun readPlan (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/plan/Declaration;
 }
 
+public final class io/github/matthewjones372/kestrel/plan/WritingKt {
+	public static final fun asYaml (Lio/github/matthewjones372/kestrel/plan/Declaration;)Ljava/lang/String;
+}
+

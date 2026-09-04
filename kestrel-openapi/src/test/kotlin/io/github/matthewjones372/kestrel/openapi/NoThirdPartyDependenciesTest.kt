@@ -1,4 +1,4 @@
-package io.github.matthewjones372.kestrel.contract
+package io.github.matthewjones372.kestrel.openapi
 
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -10,10 +10,9 @@ import java.io.File
  * What this module is allowed to put on a consumer's classpath, stated as a
  * test rather than promised in a document.
  *
- * A contract reader carries the contract library and the plan it writes, and no
- * server stack: nothing here runs while anything is being measured, in the way
- * `kestrel-record` does not either. No Pekko, which is `pelican-client-pekko`'s
- * and would be a second scheduler inside a load generator.
+ * A document reader carries the plan it writes and the parser that reads one,
+ * and nothing else — no Pelican, because most people with an OpenAPI document
+ * do not have a Pelican service and should not take one to read it.
  */
 class NoThirdPartyDependenciesTest {
 
@@ -23,15 +22,13 @@ class NoThirdPartyDependenciesTest {
         "kestrel-core",
         "kestrel-http",
         "kestrel-plan",
-        "kestrel-openapi",
-        "pelican-core",
         "snakeyaml-engine",
     )
 
     @Test
-    fun `the main runtime classpath is kestrel, pelican-core and the one parser`() {
-        val raw = System.getProperty("kestrel.contract.runtimeClasspath")
-        withClue("the build must pass -Dkestrel.contract.runtimeClasspath; see build.gradle.kts") {
+    fun `the main runtime classpath is a plan and one parser, with no Pelican in it`() {
+        val raw = System.getProperty("kestrel.openapi.runtimeClasspath")
+        withClue("the build must pass -Dkestrel.openapi.runtimeClasspath; see build.gradle.kts") {
             raw.shouldNotBeNull()
         }
 
@@ -39,7 +36,7 @@ class NoThirdPartyDependenciesTest {
             .filter { it.isNotBlank() }
             .filterNot { entry -> allowed.any { entry.startsWith(it) } }
 
-        withClue("kestrel-contract carries no server stack and no actor system, but found: $unexpected") {
+        withClue("kestrel-openapi carries a parser and a plan, but found: $unexpected") {
             unexpected.shouldBeEmpty()
         }
     }

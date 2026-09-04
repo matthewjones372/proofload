@@ -1,0 +1,12 @@
+public final class io/github/matthewjones372/kestrel/openapi/DocumentKt {
+	public static final fun planFromDocument (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;J)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static final fun planFromDocument (Ljava/nio/file/Path;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static synthetic fun planFromDocument$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static synthetic fun planFromDocument$default (Ljava/nio/file/Path;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+}
+
+public final class io/github/matthewjones372/kestrel/openapi/LegalKt {
+	public static final fun legalFor (Ljava/util/Map;Ljava/lang/String;Ljava/lang/Object;J)Ljava/lang/String;
+	public static synthetic fun legalFor$default (Ljava/util/Map;Ljava/lang/String;Ljava/lang/Object;JILjava/lang/Object;)Ljava/lang/String;
+}
+

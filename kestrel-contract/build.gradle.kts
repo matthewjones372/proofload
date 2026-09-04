@@ -10,6 +10,7 @@
 // nothing here is reached while a run is measuring.
 dependencies {
     api(project(":kestrel-plan"))
+    api(project(":kestrel-openapi"))
     api("io.github.matthewjones372:pelican-core:1.0.0-RC1")
 }
 

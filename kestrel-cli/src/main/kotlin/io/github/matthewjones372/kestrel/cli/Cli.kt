@@ -10,12 +10,15 @@ import io.github.matthewjones372.kestrel.export.Density
 import io.github.matthewjones372.kestrel.export.json
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.lostGround
+import io.github.matthewjones372.kestrel.openapi.planFromDocument
 import io.github.matthewjones372.kestrel.plan.asKotlin
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.asYaml
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.github.matthewjones372.kestrel.preview
 import io.github.matthewjones372.kestrel.remedy
 import io.github.matthewjones372.kestrel.scheduleRemedy
+import java.nio.file.Files
 import kotlin.system.exitProcess
 
 /** What a command printed and what it exited with, so a test can read both without a process. */
@@ -28,6 +31,16 @@ data class Finished(val out: String, val error: String = "", val code: Code = Co
  * and `main` is four lines that cannot be got wrong.
  */
 fun obey(command: Command, allowance: Allowance = Allowance.fromFile(), kestrel: () -> Kestrel = ::Kestrel): Finished {
+    // Read before anything else: this one takes a document, not a plan, so the
+    // plan reader below has nothing to read yet.
+    if (command is Command.FromOpenApi) {
+        return try {
+            Finished(out = planFromDocument(Files.readString(command.plan, Charsets.UTF_8), command.baseUrl).asYaml())
+        } catch (unusable: IllegalArgumentException) {
+            Finished(out = "", error = unusable.message.orEmpty(), code = Code.Unusable)
+        }
+    }
+
     val simulation = try {
         readPlan(command.plan).asSimulation()
     } catch (unusable: IllegalArgumentException) {

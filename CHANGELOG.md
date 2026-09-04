@@ -53,6 +53,21 @@ enough to list, and long enough to matter.
   emit` prints it, and `planFrom` fills it from the endpoint's own `orFail`
   declarations. Every other load tool has to be told this by hand, per step, and
   mostly is not.
+- **A plan from an OpenAPI document.** `kestrel from-openapi orders.yaml` reads
+  a document and writes the plan it describes: a step per read operation, the
+  path filled from the schema its own parameters declare, and every other
+  documented status carried as `declared:`. `$ref` into `components` is
+  followed, and YAML 1.2 being a superset of JSON means a `.json` document reads
+  through the same parser. `Declaration.asYaml()` writes a plan back out, and
+  `readPlan(plan.asYaml())` is the same declaration — a generator whose output
+  nobody can read back is a generator nobody can use.
+
+  In `kestrel-openapi`, apart from `kestrel-contract`, so that reading a
+  document costs nothing from Pelican: most people with a document do not have a
+  Pelican service, and the command line would otherwise install `pelican-core`
+  for a feature that never touches it. The two share the half that turns a
+  schema's facets into a value the service will accept, because a `minimum` in a
+  document and a `between(1, 100)` on an input are the same constraint.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body

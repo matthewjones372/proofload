@@ -115,6 +115,41 @@ class CliTest {
         }
     }
 
+    @Test
+    fun `from-openapi turns a document into a plan this reads`(@TempDir dir: Path) {
+        val document = dir.resolve("orders.yaml")
+        Files.writeString(
+            document,
+            """
+            openapi: 3.1.0
+            servers: [{url: "https://orders.internal"}]
+            paths:
+              /orders/{id}:
+                get:
+                  operationId: getOrder
+                  parameters:
+                    - {name: id, in: path, required: true, schema: {type: integer, minimum: 1, maximum: 9}}
+                  responses:
+                    "200": {description: one order}
+                    "404": {description: no such order}
+            """.trimIndent(),
+        )
+
+        val finished = obey(Command.FromOpenApi(document, baseUrl = null), Allowance.none)
+
+        withClue(finished.out) {
+            finished.code shouldBe Code.Met
+            finished.out shouldContain "getOrder"
+            finished.out shouldContain "declared: [404]"
+        }
+
+        val written = dir.resolve("plan.yaml")
+        Files.writeString(written, finished.out)
+        withClue("a generated plan nobody can validate is a generated plan nobody can run") {
+            obey(Command.Validate(written), Allowance.none).code shouldBe Code.Met
+        }
+    }
+
     private fun planFile(dir: Path): Path =
         dir.resolve("plan.yaml").also { Files.writeString(it, plan()) }
 

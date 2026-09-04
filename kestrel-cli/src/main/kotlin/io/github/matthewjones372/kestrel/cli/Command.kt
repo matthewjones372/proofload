@@ -22,6 +22,14 @@ sealed interface Command {
 
     /** Prints the plan as the Kotlin it was equivalent to, for a caller who has outgrown the subset. */
     data class Emit(override val plan: Path, val packageName: String) : Command
+
+    /**
+     * Reads an OpenAPI document and writes the plan it describes.
+     *
+     * [plan] is the document here rather than a plan, which is the one command
+     * where that word means the input.
+     */
+    data class FromOpenApi(override val plan: Path, val baseUrl: String?) : Command
 }
 
 /**
@@ -57,6 +65,7 @@ fun parse(args: List<String>): Command? {
         "preview" -> Command.Preview(plan)
         "run" -> Command.Run(plan, json = "--json" in args)
         "emit" -> Command.Emit(plan, packageName = args.after("--package") ?: "load")
+        "from-openapi" -> Command.FromOpenApi(plan, baseUrl = args.after("--base-url"))
         else -> null
     }
 }
@@ -67,6 +76,7 @@ val usage: String = """
     kestrel preview  <plan>          say what it would send, and send none of it
     kestrel run      <plan> [--json] run it; the exit code is the verdict
     kestrel emit     <plan> [--package p]  print it as the Kotlin it was equivalent to
+    kestrel from-openapi <doc> [--base-url u]  read a document and write the plan it describes
 
     exit codes: 0 met, 1 missed a goal, 2 the generator fell behind, 3 refused, 4 unusable
 """.trimIndent()

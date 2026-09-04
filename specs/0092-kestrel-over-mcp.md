@@ -9,10 +9,11 @@ caller that is a model has the further problem that it does not know the plan
 format, so its first attempt is a syntactically valid file describing a tool
 that does not exist.
 
-Three things have to be true for that loop to close: the format has to be
+Four things have to be true for that loop to close: the format has to be
 askable rather than remembered, a plan has to be checkable without sending
-anything, and a run that takes ten minutes must not be a call that blocks for
-ten minutes.
+anything, a plan that is answering 400s has to be debuggable without a load
+run, and a run that takes ten minutes must not be a call that blocks for ten
+minutes.
 
 ## Not doing
 
@@ -31,16 +32,20 @@ ten minutes.
 
 `kestrel-mcp`, a stdio MCP server over the CLI's own entry points:
 
-| Tool | Does | Sends requests |
+| Tool | Does | Sends |
 |---|---|---|
-| `plan_schema` | returns `plan/1`, the subset, and two worked plans | no |
-| `validate` | parses a plan, resolves steps and goals, names the error | no |
-| `preview` | 0088: hosts, request count, duration, users needed | no |
-| `from_openapi` | 0091: a document in, a plan out | no |
-| `run` | starts a run, returns a `runId` | **yes** |
-| `status` | the countdown from 0064, or the 0087 summary when done | no |
-| `explain` | the 0087 `Full` document for a finished run | no |
-| `compare` | 0038 against a baseline: better, worse, or cannot tell | no |
+| `plan_schema` | returns `plan/1`, the subset, and two worked plans | nothing |
+| `validate` | parses a plan, resolves steps and goals, names the error | nothing |
+| `preview` | 0088: hosts, request count, duration, users needed | nothing |
+| `from_openapi` | 0091: a document in, a plan out | nothing |
+| `smoke` | one request per step, so a typo is not found at three thousand a second | one per step |
+| `trace` | 0058: one user walked, with URL, headers, body, status and captures | one journey |
+| `run` | starts a run, returns a `runId` | **the load** |
+| `status` | the countdown from 0064, or the 0087 summary when done | nothing |
+| `explain` | the 0087 `Full` document for a finished run | nothing |
+| `report` | the path of the run's self-contained HTML page, for a person to open | nothing |
+| `list_runs` | what is in the workspace, newest first, with each verdict | nothing |
+| `compare` | 0038 against a baseline: better, worse, or cannot tell | nothing |
 
 ```
 run   { "plan": "<yaml>" }        -> { "runId": "r-7", "sending": "3,000 requests over 1m" }
@@ -48,8 +53,10 @@ status{ "runId": "r-7" }          -> { "state": "running", "remaining": "38s" }
 status{ "runId": "r-7" }          -> { "state": "done", "verdict": "behind", "remedy": "..." }
 ```
 
-Exactly one tool sends a request, and it says what it is about to send in its
-own result. Everything else is free to call and free to get wrong.
+Every tool states what it will send before it sends it, and only `run` sends
+load: `smoke` sends one request per step and `trace` walks one user, both
+bounded by the plan rather than by its rate. Everything else is free to call
+and free to get wrong.
 
 ## Why this shape
 
@@ -58,6 +65,19 @@ the format writes a valid plan on the first attempt instead of a plausible one,
 and the schema it gets back is the schema the parser enforces rather than
 documentation about it. 0090's `llms.txt` covers the caller who reads the
 repository; this covers the caller who never sees it.
+
+`trace` and `smoke` are the difference between an agent that iterates and one
+that guesses. A plan whose bodies are being rejected produces a run full of
+400s, and the run says only that they were 400s; 0058 already walks a single
+user and prints what was actually sent, which is the answer. Firing three
+thousand requests to discover a typo in a path is the other half of the same
+mistake, and one request per step finds it.
+
+`report` exists because the two readers want different artefacts. An agent
+reads 0087's JSON; a person opens 0006's page, which is one self-contained file
+and cannot usefully be read by a model. Returning the path rather than the bytes
+keeps the distinction honest — nothing gains from a language model reading
+inlined SVG.
 
 Splitting `run` from `status` is not politeness about timeouts, it is the only
 shape that works: a ten-minute run inside one tool call is a dead connection, a
@@ -83,13 +103,17 @@ other way.
 - [ ] **`spec-0092-read-only`** — `validate`, `preview`, `from_openapi`.
       Done when: a test asserts no socket is opened by any of the three,
       against a counting `HttpServer`.
+- [ ] **`spec-0092-debugging`** — `smoke` and `trace` over 0058's walk.
+      Done when: `smoke` on a four-step plan sends exactly four requests against
+      a counting `HttpServer`, and `trace` returns the body it actually sent.
 - [ ] **`spec-0092-run`** — `run`, `status`, the run registry and the 0088
       refusal path.
       Done when: a `run` over the limits returns the refusal as a result rather
       than an error, and a second concurrent `run` is refused by name.
-- [ ] **`spec-0092-results`** — `explain` and `compare`.
+- [ ] **`spec-0092-results`** — `explain`, `report`, `list_runs` and `compare`.
       Done when: `compare` on two runs of the same plan returns 0038's third
-      answer, "cannot tell", where the intervals overlap.
+      answer, "cannot tell", where the intervals overlap, and `report` returns a
+      path that opens.
 - [ ] **`spec-0092-docs`** — `docs/mcp.md`: the config block, the tool table,
       and what the server will refuse.
       Done when: the config block is copied into a client and the tools appear.
@@ -114,6 +138,9 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | build/install/kestrel-mc
 - **Where do finished runs live?** Recommend a workspace directory with the
   HTML report and the JSON beside each `runId`, so `explain` is a read and the
   human has a page to open. Purge policy is an open question of its own.
+- **Does `smoke` need its own plan, or does it read the run's?** Recommend the
+  run's, at one request per step: a second plan format for smoking is a second
+  thing to keep in step with `plan/1`.
 - **Should `sustainable` (0031) be a tool?** Recommend not in the first
   version. A capacity search is a long sequence of runs, and the ceiling it
   needs is the one thing 0088 is least sure of.

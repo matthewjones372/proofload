@@ -106,7 +106,7 @@ than from a person with a compiler.
 | [0089](0089-a-plan-without-a-compiler.md) | a plan as a file, validated in milliseconds, emitted back as DSL to grow into |
 | [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
 | [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
-| [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP, exactly one of which sends a request |
+| [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure — the half of its cost 0011 gave itself 2g to avoid |
 | [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
 | [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |

@@ -3,9 +3,36 @@ public final class io/github/matthewjones372/kestrel/java/Actions {
 	public static final fun of (Ljava/util/function/Consumer;)Lio/github/matthewjones372/kestrel/Action;
 }
 
+public final class io/github/matthewjones372/kestrel/java/Https {
+	public static final field INSTANCE Lio/github/matthewjones372/kestrel/java/Https;
+	public static final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/Http;
+	public static final fun capturing (Lio/github/matthewjones372/kestrel/http/HttpAction;Lio/github/matthewjones372/kestrel/SessionKey;Ljava/util/function/Function;)Lio/github/matthewjones372/kestrel/http/HttpAction;
+	public static final fun checking (Lio/github/matthewjones372/kestrel/http/HttpAction;Ljava/lang/String;Ljava/util/function/Function;)Lio/github/matthewjones372/kestrel/http/HttpAction;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Kestrel {
+	public static final field INSTANCE Lio/github/matthewjones372/kestrel/java/Kestrel;
+	public static final fun create ()Lio/github/matthewjones372/kestrel/engine/Kestrel;
+}
+
 public final class io/github/matthewjones372/kestrel/java/Rates {
 	public static fun perMinute (D)Lio/github/matthewjones372/kestrel/Rate;
 	public static fun perSecond (D)Lio/github/matthewjones372/kestrel/Rate;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Results {
+	public static fun count (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)J
+	public static fun failed (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)J
+	public static fun max (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Ljava/time/Duration;
+	public static fun max (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Clock;)Ljava/time/Duration;
+	public static fun ok (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)J
+	public static fun p50 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Ljava/time/Duration;
+	public static fun p50 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Clock;)Ljava/time/Duration;
+	public static fun p95 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Ljava/time/Duration;
+	public static fun p95 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Clock;)Ljava/time/Duration;
+	public static fun p99 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Ljava/time/Duration;
+	public static fun p99 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Clock;)Ljava/time/Duration;
+	public static fun ran (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Z
 }
 
 public final class io/github/matthewjones372/kestrel/java/Scenarios {
@@ -26,6 +53,10 @@ public final class io/github/matthewjones372/kestrel/java/SessionKeys {
 
 public final class io/github/matthewjones372/kestrel/java/Shares {
 	public static fun percent (D)Lio/github/matthewjones372/kestrel/Share;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Simulations {
+	public static fun at (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Rate;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Simulation;
 }
 
 public final class io/github/matthewjones372/kestrel/java/Steps {

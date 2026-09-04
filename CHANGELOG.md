@@ -431,6 +431,14 @@ enough to list, and long enough to matter.
   the step body as a `Consumer<StepScope>`, since a lambda with a receiver is
   the one shape Java has nothing for.
 
+- **A Java caller runs the thing and reads what it measured.**
+  `Kestrel.create().run(Simulations.at(checkout, Rates.perSecond(50),
+  Duration.ofMinutes(1)))` hands back core's own `RunResult`, and `Results.p99(
+  result, placeOrder)` reads a percentile off it as a `java.time.Duration` —
+  there is no parallel result tree, only accessors that convert. `Https.baseUrl`
+  reaches the HTTP steps, with `capturing` and `checking` for the two calls
+  Kotlin states as a lambda.
+
 - **The public API is recorded, and a break is a diff.**
   `binary-compatibility-validator` is applied to every published module and
   wired into `check`, so `./gradlew build` fails on an unrecorded break exactly

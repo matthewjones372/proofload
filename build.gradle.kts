@@ -142,12 +142,12 @@ gradle.taskGraph.whenReady {
 }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name } - "examples" - "benchmarks"
+val publishedModules = subprojects.map { it.name } - "examples" - "examples-java" - "benchmarks"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no
-// record of what it promised. `examples` and `benchmarks` are not libraries and
-// their surface is nobody's business.
+// record of what it promised. `examples`, `examples-java` and `benchmarks` are
+// not libraries and their surface is nobody's business.
 apiValidation {
     ignoredProjects.addAll(subprojects.map { it.name } - publishedModules.toSet())
 }

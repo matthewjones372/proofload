@@ -439,6 +439,13 @@ enough to list, and long enough to matter.
   reaches the HTTP steps, with `capturing` and `checking` for the two calls
   Kotlin states as a lambda.
 
+- **The Java surface is gated by a Java compiler.** `examples-java` is a module
+  whose whole content is one load test written in Java, compiled by
+  `./gradlew build`. `apiCheck` records the Kotlin surface and cannot see
+  whether it is *callable* from Java; deleting a facade method fails here
+  instead of in a consumer's project. `kestrel-java` is in `smoke/` beside the
+  other published modules.
+
 - **The public API is recorded, and a break is a diff.**
   `binary-compatibility-validator` is applied to every published module and
   wired into `check`, so `./gradlew build` fails on an unrecorded break exactly

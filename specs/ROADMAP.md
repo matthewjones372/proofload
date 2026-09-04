@@ -113,6 +113,8 @@ than from a person with a compiler.
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
+| [0099](0099-kafka-in-a-plan.md) | a topic as a step, and the answer on another topic as its latency |
+| [0100](0100-grpc-without-a-stub.md) | a method and a JSON body in a plan, for a caller with no generated stubs |
 
 They stack in that order; only 0092 needs all of them.
 

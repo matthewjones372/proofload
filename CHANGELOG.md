@@ -321,6 +321,16 @@ enough to list, and long enough to matter.
   file for every caller that never asked for a fence. A refused run departs
   nothing, which the engine's own test proves by counting what the action was
   asked to do rather than by believing the runner.
+- **A plan as a value.** `kestrel-plan` holds `Declaration` — a plan somebody
+  wrote down — and `asSimulation()`, which lowers it into the values the Kotlin
+  DSL already builds, so the two cannot describe different runs. Deliberately a
+  strict subset: everything needing a lambda, a capture or a condition is absent
+  rather than spelled with a string key, because a file that grew those would be
+  a worse language for the same job. Everything a plan can get wrong is refused
+  before anything departs — an unknown version, no steps, a verb nobody serves,
+  a goal naming a step that was never declared. The model and the lowering live
+  here rather than in core because lowering a path into a step needs an HTTP
+  client, and core declares an `Action` without a protocol type.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

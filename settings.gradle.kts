@@ -12,6 +12,7 @@ include(
     "kestrel-kafka",
     "kestrel-kotest",
     "kestrel-otel",
+    "kestrel-plan",
     "kestrel-pelican",
     "kestrel-record",
     "kestrel-report-github",

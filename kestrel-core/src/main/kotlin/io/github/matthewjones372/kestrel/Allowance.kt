@@ -88,13 +88,7 @@ private data class Field(val number: Int, val key: String, val value: String) {
 
     fun rate(): Rate {
         val text = value.unquoted()
-        val perSecond = when {
-            text.endsWith("/s") -> text.removeSuffix("/s").toDoubleOrNull()
-            text.endsWith("/m") -> text.removeSuffix("/m").toDoubleOrNull()?.div(SECONDS_A_MINUTE)
-            else -> null
-        }
-        return requireNotNull(perSecond) { "line $number: `$text` is not a rate like \"500/s\" or \"30/m\"" }
-            .perSecond
+        return requireNotNull(Rate.parse(text)) { "line $number: `$text` is not a rate like \"500/s\" or \"30/m\"" }
     }
 
     fun duration(): Duration {
@@ -113,8 +107,6 @@ private fun String.unquoted(): String = trim().removeSurrounding("\"")
 /** `*.staging.internal` covers a subdomain of it, and not the domain itself. */
 private fun String.matchesHost(host: String): Boolean =
     if (startsWith("*.")) host.endsWith(substring(1)) && host.length > length - 1 else this == host
-
-private const val SECONDS_A_MINUTE = 60.0
 
 /**
  * Why a run was not allowed to start.

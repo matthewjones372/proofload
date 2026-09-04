@@ -1207,6 +1207,7 @@ public final class io/github/matthewjones372/kestrel/Rate {
 }
 
 public final class io/github/matthewjones372/kestrel/Rate$Companion {
+	public final fun parse-9B4ByH0 (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/Rate;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/Reason {

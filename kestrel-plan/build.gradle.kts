@@ -5,9 +5,15 @@
 // needs an HTTP client. Core declares an `Action` without a protocol type and
 // may not grow one, so the module that already carries the JDK's client is the
 // one that can turn a path into a step.
+// The parser is snakeyaml-engine and nothing more. YAML 1.2 is a superset of
+// JSON, so one dependency reads a plan a person hand-edited with comments in it
+// and a plan a program generated, and there is no second reader to disagree
+// with the first. It is the sibling repository's answer to the same question
+// and is copied rather than re-decided.
 dependencies {
     api(project(":kestrel-core"))
     api(project(":kestrel-http"))
+    implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 
 tasks.test {

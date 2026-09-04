@@ -127,3 +127,8 @@ public final class io/github/matthewjones372/kestrel/plan/DeclaredStep {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/matthewjones372/kestrel/plan/ReadingKt {
+	public static final fun readPlan (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static final fun readPlan (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+}
+

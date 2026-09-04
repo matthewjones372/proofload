@@ -12,6 +12,23 @@ value class Rate private constructor(val perSecond: Double) {
 
     companion object {
         internal fun ofPerSecond(perSecond: Double): Rate = Rate(perSecond)
+
+        /**
+         * A rate as a person writes one — `"500/s"`, `"30/m"` — or null where
+         * that is not what it says.
+         *
+         * Here rather than in each configuration format that reads one: a rate
+         * written the same way in two files has to mean the same thing, and two
+         * parsers is the way it stops.
+         */
+        fun parse(text: String): Rate? {
+            val trimmed = text.trim()
+            return when {
+                trimmed.endsWith("/s") -> trimmed.removeSuffix("/s").trim().toDoubleOrNull()
+                trimmed.endsWith("/m") -> trimmed.removeSuffix("/m").trim().toDoubleOrNull()?.div(SECONDS_PER_MINUTE)
+                else -> null
+            }?.let(::ofPerSecond)
+        }
     }
 }
 

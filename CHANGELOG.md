@@ -331,6 +331,16 @@ enough to list, and long enough to matter.
   a goal naming a step that was never declared. The model and the lowering live
   here rather than in core because lowering a path into a step needs an HTTP
   client, and core declares an `Action` without a protocol type.
+- **A plan read from a file.** `readPlan(text)` and `readPlan(path)` read a
+  `plan/1` document, on snakeyaml-engine and nothing more: YAML 1.2 is a
+  superset of JSON, so one parser reads a plan a person hand-edited with
+  comments in it and a plan a program generated, and there is no second reader
+  to disagree with the first. It composes to nodes rather than loading to maps
+  so that every failure names the line it came from — an undeclared key is
+  refused with the line and the list of keys that were allowed, which is what a
+  caller working from the schema needs in order to fix it. `Rate.parse` moves
+  into core so that `"500/s"` in a plan and `"500/s"` in a `kestrel.toml` cannot
+  come to mean different things.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

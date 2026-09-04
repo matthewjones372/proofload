@@ -7,6 +7,11 @@ import kotlin.time.Duration
  * [window] of now, so a scheduler holds a window's worth of tasks rather than a
  * whole run's.
  *
+ * What that is worth is measured rather than asserted: `:benchmarks:footprint`
+ * reports a live set that does not grow with the users a run sends, and a
+ * scheduler holding every departure of a long run at a high rate is the obvious
+ * way to lose that.
+ *
  * Offsets are read from the schedule's lazy sequence in the order it produced
  * them, so nothing here recomputes a departure and nothing can hand a recorder
  * a gap that runs backwards.

@@ -104,6 +104,17 @@ class CliTest {
         }
     }
 
+    @Test
+    fun `emit prints the plan as source, and sends nothing`(@TempDir dir: Path) {
+        val finished = obey(Command.Emit(planFile(dir), packageName = "load"), Allowance.none)
+
+        withClue(finished.out) {
+            finished.code shouldBe Code.Met
+            finished.out shouldContain "package load"
+            finished.out shouldContain "val browse = step(\"browse\")"
+        }
+    }
+
     private fun planFile(dir: Path): Path =
         dir.resolve("plan.yaml").also { Files.writeString(it, plan()) }
 

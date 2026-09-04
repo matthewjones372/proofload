@@ -7,3 +7,16 @@ dependencies {
     implementation(project(":kestrel-engine"))
     implementation(project(":kestrel-export"))
 }
+
+tasks.test {
+    val mainRuntime = configurations.runtimeClasspath
+    inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
+    jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf(
+                "-Dkestrel.cli.runtimeClasspath=" +
+                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+            )
+        },
+    )
+}

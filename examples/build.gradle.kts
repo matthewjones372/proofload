@@ -87,5 +87,8 @@ dependencies {
     // whichever test ran last.
     implementation(project(":kestrel-report-github"))
     testImplementation(project(":kestrel-junit5"))
+    // The emitted source below is compiled by `implementation`; this is the test
+    // that keeps it identical to what the emitter writes today.
+    testImplementation(project(":kestrel-plan"))
     testImplementation(project(":kestrel-report-html"))
 }

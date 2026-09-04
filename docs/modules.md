@@ -20,6 +20,8 @@ uses and inherits no stack it did not ask for.
 | `kestrel-export` | a run's measurements in the formats other tools already read | core |
 | `kestrel-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
 | `kestrel-record` | a HAR recording read into a Kotlin scenario you edit and commit | core, `kotlinx-serialization-json` |
+| `kestrel-plan` | a plan written down, read and lowered into the values the DSL builds, and printed back as Kotlin | core, http, `snakeyaml-engine` |
+| `kestrel-cli` | `validate`, `preview`, `run` and `emit` from a shell, with the verdict as the exit code | core, plan, engine, export |
 | `kestrel-report-html` | one self-contained, interactive HTML page | core |
 | `kestrel-report-github` | markdown, a job summary and a Pages directory | core |
 | `kestrel-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core, `pelican-core` |
@@ -60,6 +62,7 @@ dependencies {
     implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-otel:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
@@ -85,6 +88,8 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |
 | `kestrel-export` | [NoThirdPartyDependenciesTest](../kestrel-export/src/test/kotlin/io/github/matthewjones372/kestrel/export/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-plan` | [NoThirdPartyDependenciesTest](../kestrel-plan/src/test/kotlin/io/github/matthewjones372/kestrel/plan/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-cli` | [NoThirdPartyDependenciesTest](../kestrel-cli/src/test/kotlin/io/github/matthewjones372/kestrel/cli/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-html` | [NoThirdPartyDependenciesTest](../kestrel-report-html/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-report-github` | [NoThirdPartyDependenciesTest](../kestrel-report-github/src/test/kotlin/io/github/matthewjones372/kestrel/report/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |

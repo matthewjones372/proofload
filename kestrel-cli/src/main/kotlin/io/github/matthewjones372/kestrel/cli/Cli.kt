@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.export.Density
 import io.github.matthewjones372.kestrel.export.json
 import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.lostGround
+import io.github.matthewjones372.kestrel.plan.asKotlin
 import io.github.matthewjones372.kestrel.plan.asSimulation
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.github.matthewjones372.kestrel.preview
@@ -36,6 +37,10 @@ fun obey(command: Command, allowance: Allowance = Allowance.fromFile(), kestrel:
     }
 
     return when (command) {
+        is Command.Emit -> Finished(
+            out = readPlan(command.plan).asKotlin(command.packageName, command.plan.fileName.toString()),
+        )
+
         is Command.Validate -> Finished(out = "${command.plan} is a plan this reads")
 
         is Command.Preview -> when (val asked = simulation.preview(allowance)) {

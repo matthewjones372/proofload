@@ -352,6 +352,18 @@ enough to list, and long enough to matter.
   printed in words, off the same goals and the same remedy, so a caller cannot
   be told two things. A plan that does not read exits with the parser's own
   sentence — the line and what was allowed — rather than a stack trace.
+- **The way out of the file.** `kestrel emit <plan>` prints the plan as the
+  Kotlin it was equivalent to — step handles, the scenario, the profile and the
+  goals — so the moment a plan needs a capture, a condition or a body per user
+  the caller carries on in the language rather than asking for another key in
+  the file. That is what stops `plan/1` growing into a worse DSL. The emitted
+  source is checked in under `examples`, so the build compiles it and a test
+  keeps it identical to what the emitter writes: a golden can show the text is
+  unchanged and only a compiler can show it is Kotlin. `kestrel-record` emits
+  Kotlin too and is deliberately not reused — its output is a scenario where
+  this is a whole load test, and its header describes a browser recording with
+  the credentials stripped out, which would be a false account of where a plan
+  came from.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.

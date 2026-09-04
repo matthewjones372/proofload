@@ -29,6 +29,17 @@ import kotlin.time.Duration.Companion.minutes
 class CodeTest {
 
     @Test
+    fun `the numbers are what a shell script was written against`() {
+        withClue("these are published in the usage text; reordering the enum must not move them") {
+            Code.Met.number shouldBe 0
+            Code.Missed.number shouldBe 1
+            Code.Behind.number shouldBe 2
+            Code.Refused.number shouldBe 3
+            Code.Unusable.number shouldBe 4
+        }
+    }
+
+    @Test
     fun `a run that met its goals exits zero`() {
         result(goal = p99(StepName("pay"), of = Clock.ServiceTime) under 500.milliseconds).code() shouldBe Code.Met
     }

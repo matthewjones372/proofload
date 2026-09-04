@@ -19,6 +19,9 @@ sealed interface Command {
     data class Preview(override val plan: Path) : Command
 
     data class Run(override val plan: Path, val json: Boolean) : Command
+
+    /** Prints the plan as the Kotlin it was equivalent to, for a caller who has outgrown the subset. */
+    data class Emit(override val plan: Path, val packageName: String) : Command
 }
 
 /**
@@ -27,13 +30,24 @@ sealed interface Command {
  * The order is 0087's verdict order: a generator that lost its schedule
  * outranks a missed goal, because its numbers are not the target's.
  */
-enum class Code(val number: Int) {
-    Met(0),
-    Missed(1),
-    Behind(2),
-    Refused(3),
-    Unusable(4),
+enum class Code {
+    Met,
+    Missed,
+    Behind,
+    Refused,
+    Unusable,
+    ;
+
+    /**
+     * Declaration order, so the list above is the contract rather than a second
+     * copy of it. `CodeTest` pins the numbers, because a shell script written
+     * against them does not recompile when somebody reorders an enum.
+     */
+    val number: Int get() = ordinal
 }
+
+private fun List<String>.after(flag: String): String? =
+    indexOf(flag).takeIf { it >= 0 }?.let { getOrNull(it + 1) }
 
 /** The command these arguments name, or null where they name none. */
 fun parse(args: List<String>): Command? {
@@ -42,6 +56,7 @@ fun parse(args: List<String>): Command? {
         "validate" -> Command.Validate(plan)
         "preview" -> Command.Preview(plan)
         "run" -> Command.Run(plan, json = "--json" in args)
+        "emit" -> Command.Emit(plan, packageName = args.after("--package") ?: "load")
         else -> null
     }
 }
@@ -51,6 +66,7 @@ val usage: String = """
     kestrel validate <plan>          parse it, resolve it, send nothing
     kestrel preview  <plan>          say what it would send, and send none of it
     kestrel run      <plan> [--json] run it; the exit code is the verdict
+    kestrel emit     <plan> [--package p]  print it as the Kotlin it was equivalent to
 
     exit codes: 0 met, 1 missed a goal, 2 the generator fell behind, 3 refused, 4 unusable
 """.trimIndent()

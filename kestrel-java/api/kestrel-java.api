@@ -1,6 +1,22 @@
+public final class io/github/matthewjones372/kestrel/java/Actions {
+	public static final field INSTANCE Lio/github/matthewjones372/kestrel/java/Actions;
+	public static final fun of (Ljava/util/function/Consumer;)Lio/github/matthewjones372/kestrel/Action;
+}
+
 public final class io/github/matthewjones372/kestrel/java/Rates {
 	public static fun perMinute (D)Lio/github/matthewjones372/kestrel/Rate;
 	public static fun perSecond (D)Lio/github/matthewjones372/kestrel/Rate;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Scenarios {
+	public static fun named (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/java/Scenarios$Builder;
+}
+
+public final class io/github/matthewjones372/kestrel/java/Scenarios$Builder {
+	public fun build ()Lio/github/matthewjones372/kestrel/Scenario;
+	public fun exec (Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Action;)Lio/github/matthewjones372/kestrel/java/Scenarios$Builder;
+	public fun exec (Ljava/lang/String;Lio/github/matthewjones372/kestrel/Action;)Lio/github/matthewjones372/kestrel/java/Scenarios$Builder;
+	public fun pause (Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/java/Scenarios$Builder;
 }
 
 public final class io/github/matthewjones372/kestrel/java/SessionKeys {

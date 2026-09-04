@@ -423,6 +423,14 @@ enough to list, and long enough to matter.
   can hand one to Java at all. `sessionKey(name, type)` is the new function in
   core those keys come from.
 
+- **A Java scenario is a Kotlin scenario.** `Scenarios.named("checkout")
+  .exec(placeOrder, action).pause(Duration.ofSeconds(1)).build()` accumulates
+  core's own `Step`s and freezes them into core's own `Scenario`, so the value a
+  Java caller hands the engine compares equal to the one `scenario { }` builds
+  for the same steps — which is a test rather than a claim. `Actions.of` takes
+  the step body as a `Consumer<StepScope>`, since a lambda with a receiver is
+  the one shape Java has nothing for.
+
 - **The public API is recorded, and a break is a diff.**
   `binary-compatibility-validator` is applied to every published module and
   wired into `check`, so `./gradlew build` fails on an unrecorded break exactly

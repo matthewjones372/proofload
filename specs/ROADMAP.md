@@ -96,7 +96,21 @@ built. Each row links the spec that argued for it.
 
 ## Drafted, not built
 
-Nothing. Every drafted spec is built, bar the tails listed below.
+Six, drafted together: what it takes to drive Kestrel from a program rather
+than from a person with a compiler.
+
+| Spec | What it argues for |
+|---|---|
+| [0087](0087-a-result-a-machine-can-read.md) | the run's judgement as a document, in two densities, with a remedy on every verdict |
+| [0088](0088-a-run-nothing-fires-by-accident.md) | a ceiling a human commits, and a plan you can ask what it would send |
+| [0089](0089-a-plan-without-a-compiler.md) | a plan as a file, validated in milliseconds, emitted back as DSL to grow into |
+| [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
+| [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
+| [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP, exactly one of which sends a request |
+
+They stack in that order; only 0092 needs all of them.
+
+Every other drafted spec is built, bar the tails listed below.
 
 Unbuilt tails of specs otherwise landed:
 `0029-tag`, which is the release itself; `0061-containers`, which the fake

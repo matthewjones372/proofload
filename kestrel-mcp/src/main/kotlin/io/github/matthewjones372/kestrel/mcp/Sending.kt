@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.http.DeclaredStatus
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.asSimulation
@@ -26,6 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 internal fun smoke(arguments: Map<String, Any?>, allowance: Allowance): String =
     sending(arguments, allowance) { plan ->
         val result = onceThrough(plan)
+        val undeclared = result.undeclared()
         content(
             buildString {
                 appendLine("${result.count} requests, ${result.ok} ok, ${result.failed} failed")
@@ -33,8 +35,17 @@ internal fun smoke(arguments: Map<String, Any?>, allowance: Allowance): String =
                     val why = step.failed.reasons.keys.joinToString { it.described }
                     appendLine("  ${step.name}: ${step.count} sent${if (why.isEmpty()) "" else ", $why"}")
                 }
+                if (result.failed > undeclared) {
+                    appendLine(
+                        "${result.failed - undeclared} of those the contract declares, " +
+                            "which is the service working.",
+                    )
+                }
             }.trimEnd(),
-            failed = result.failed > 0,
+            // Undeclared only. A documented 401 is the service behaving as
+            // written, and reporting it as something gone wrong throws away the
+            // distinction the declared list exists to make.
+            failed = undeclared > 0,
         )
     }
 
@@ -89,4 +100,15 @@ private fun capturing(walk: () -> Unit): String {
         System.setOut(was)
     }
     return caught.toString(Charsets.UTF_8).trimEnd()
+}
+
+/**
+ * Failures the contract did not declare.
+ *
+ * A declared status is still a failed step — it did not do what was asked — and
+ * is still not a defect. Everything that decides whether something is *wrong*
+ * counts these rather than [RunResult.failed].
+ */
+internal fun RunResult.undeclared(): Long = steps.values.sumOf { step ->
+    step.failed.reasons.entries.filterNot { it.key is DeclaredStatus }.sumOf { it.value }
 }

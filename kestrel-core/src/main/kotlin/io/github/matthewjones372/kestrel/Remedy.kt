@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel
 
+import kotlin.time.Duration
+
 /**
  * What to do about a verdict, where there is anything to do.
  *
@@ -52,12 +54,24 @@ private fun Goal.shortfall(): String = when (this) {
  * is worth saying to a caller who asked for nothing.
  */
 val RunResult.scheduleRemedy: String?
-    get() {
-        if (!fellBehind() && !lostGround()) return null
+    get() = when {
+        // Two tests, two sentences. One remedy serving both quoted the interval
+        // at a reader whose verdict came from the other comparison entirely —
+        // evidence arguing against the conclusion it was attached to, which is
+        // worse than saying nothing.
+        lostGround() ->
+            "The generator's own lateness reached ${behind.p99} at p99, past the $ownInterval it " +
+                "planned between departures. The load that left is not the load the profile named. Re-run at a " +
+                "lower rate, or spread the load across more injectors."
 
-        val planned = ownInterval
-        return "The generator's own lateness reached ${behind.p99} at p99" +
-            (if (planned > kotlin.time.Duration.ZERO) ", against the $planned it planned between departures" else "") +
-            ". These latencies include a queue this tool built, so they are not the target's. " +
-            "Re-run at a lower rate, or spread the load across more injectors."
+        fellBehind() ->
+            "The generator's own lateness reached ${behind.p99} at p99, which is large enough to " +
+                "show in a ${slowest()} tail. These latencies carry a queue this tool built. Re-run at a lower " +
+                "rate, or spread the load across more injectors."
+
+        else -> null
     }
+
+/** The tail `fellBehind` weighed the lateness against, which is the worst step's. */
+private fun RunResult.slowest(): Duration =
+    steps.values.maxOfOrNull { it.responseTime.p99 } ?: Duration.ZERO

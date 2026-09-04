@@ -207,6 +207,44 @@ class BenchmarkTest {
     }
 
     @Test
+    fun `a declared status is the service working, not a benchmark that failed`() {
+        server.createContext("/locked") { exchange ->
+            arrived.incrementAndGet()
+            exchange.sendResponseHeaders(401, -1)
+            exchange.close()
+        }
+        val documented = """
+            openapi: 3.1.0
+            servers: [{url: "$where"}]
+            paths:
+              /locked:
+                get:
+                  operationId: locked
+                  responses:
+                    "200": {description: ok}
+                    "401": {description: no token}
+        """.trimIndent()
+
+        val answered = benchmark(mapOf("document" to documented), Allowance.none)
+
+        withClue(answered) {
+            withClue("the document says this endpoint answers 401; that is not something gone wrong") {
+                answered shouldContain """"isError":false"""
+            }
+            answered shouldContain "the contract declares"
+        }
+    }
+
+    @Test
+    fun `an undeclared failure is still a failure`() {
+        val broken = document().replace("/orders", "/broken")
+
+        withClue("nobody wrote down that this answers 500") {
+            benchmark(mapOf("document" to broken), Allowance.none) shouldContain """"isError":true"""
+        }
+    }
+
+    @Test
     fun `nothing to benchmark says what it wanted`() {
         benchmark(emptyMap(), Allowance.none) shouldContain "wants one of"
     }

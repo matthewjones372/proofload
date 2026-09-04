@@ -4,6 +4,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration.Companion.microseconds
@@ -59,6 +60,21 @@ class RemedyTest {
         withClue(remedy) {
             remedy shouldContain "80"
             remedy shouldContain "20"
+        }
+    }
+
+    @Test
+    fun `a run that fell behind without losing ground quotes the tail, not the interval`() {
+        // Late by less than the interval, so `lostGround` is false, but large
+        // against a tail this short, so `fellBehind` is true.
+        val late = Histogram().apply { repeat(50) { record(2.milliseconds) } }.timing()
+        val remedy = requireNotNull(run(behind = late).scheduleRemedy)
+
+        withClue(remedy) {
+            withClue("quoting the interval here would argue against the verdict it explains") {
+                remedy shouldNotContain "planned between departures"
+            }
+            remedy shouldContain "tail"
         }
     }
 

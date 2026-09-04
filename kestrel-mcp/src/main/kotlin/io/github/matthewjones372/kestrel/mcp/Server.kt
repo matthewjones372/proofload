@@ -2,6 +2,9 @@ package io.github.matthewjones372.kestrel.mcp
 
 import io.github.matthewjones372.kestrel.Allowance
 import java.io.BufferedReader
+import java.io.FileDescriptor
+import java.io.FileOutputStream
+import java.io.PrintStream
 import java.io.Writer
 
 /**
@@ -35,7 +38,16 @@ internal fun initialised(): String =
         """"serverInfo":{"name":"kestrel","version":"0.1.0"}}"""
 
 fun main() {
-    serve(System.`in`.bufferedReader(), System.out.writer()) { call -> answer(call) }
+    // stdout is the protocol. Anything in the library that prints — a trace, a
+    // progress line, a stack trace somebody added later — would land in the
+    // middle of a JSON-RPC message and end the session, so the real stdout is
+    // taken for the protocol and everything else is pointed at stderr before a
+    // single tool runs. Cheaper than auditing every call for prints, and it
+    // stays true for calls nobody has written yet.
+    val protocol = PrintStream(FileOutputStream(FileDescriptor.out), true, Charsets.UTF_8)
+    System.setOut(PrintStream(FileOutputStream(FileDescriptor.err), true, Charsets.UTF_8))
+
+    serve(System.`in`.bufferedReader(), protocol.writer()) { call -> answer(call) }
 }
 
 internal fun answer(call: Call): String = when (call.method) {
@@ -49,6 +61,8 @@ private fun called(call: Call): String = when (call.tool) {
     "plan_schema" -> content(PLAN_SCHEMA)
     "validate" -> validate(call.arguments)
     "preview" -> preview(call.arguments, Allowance.fromFile())
+    "smoke" -> smoke(call.arguments, Allowance.fromFile())
+    "trace" -> trace(call.arguments, Allowance.fromFile())
     "from_openapi" -> fromOpenApi(call.arguments)
     else -> content("no tool `${call.tool}`", failed = true)
 }

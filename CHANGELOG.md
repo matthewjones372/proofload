@@ -39,6 +39,19 @@ enough to list, and long enough to matter.
   sentence is what a caller correcting itself acts on, and a stack trace buries
   it. A test drives all three against a counting `HttpServer` and asserts it saw
   nothing: a tool a caller is told is free has to be free.
+- **The MCP debug loop.** `smoke` sends one request per step and `trace` walks a
+  single user, both bounded by the plan's shape rather than its rate — a plan
+  asking for five thousand a second still sends one of each. A plan answering
+  400s produces a run full of them and the run says only that they were 400s;
+  these are how a caller finds out why without sending load to do it. The
+  machine's `Allowance` still refuses a host it does not permit, because that is
+  true whether a plan would send one request or a million.
+
+  The server also takes stdout for the protocol and points everything else at
+  stderr before a single tool runs. `trace` narrates to stdout and `Kestrel`'s
+  default progress prints to it too; either landing mid-message would end the
+  session. Cheaper than auditing every call for prints, and it stays true for
+  calls nobody has written yet.
 - **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
   reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
   named by the operation the contract named and keyed on the path template, so

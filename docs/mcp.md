@@ -53,16 +53,25 @@ directory, not yours.
 | `validate` | parses a plan, resolves its steps and goals, names the line of anything wrong | nothing |
 | `preview` | what the plan would send — users, requests, window, peak rate, hosts | nothing |
 | `from_openapi` | reads an OpenAPI document, writes the plan it describes | nothing |
+| `smoke` | one request per step, so a typo is found here rather than at three thousand a second | one request per step |
+| `trace` | walks one user and says what each step sent and what came back | one journey |
 
 **Ask `plan_schema` first.** It is the tool the others depend on: a caller who
 can ask for the format writes a valid plan on the first attempt rather than a
 plausible one, and what comes back is the shape the parser enforces rather than
 documentation about it.
 
-Every tool's description states what it sends before you have to find out. All
-four of the ones above send nothing, so they are free to call and free to get
-wrong — which is the point, because it lets a caller iterate against a parser
-instead of guessing.
+Every tool's description states what it sends before you have to find out. The
+first four send nothing, so they are free to call and free to get wrong — which
+is the point, because it lets a caller iterate against a parser instead of
+guessing.
+
+`smoke` and `trace` are the debug loop, and both are bounded by the plan's shape
+rather than its rate: a plan asking for five thousand a second for ten minutes
+still sends one request per step. A plan answering 400s produces a run full of
+them and the run says only that they were 400s; `trace` says what was actually
+sent. Finding a typo in a path by firing three thousand requests is the other
+half of the same mistake.
 
 ## What it will refuse
 
@@ -81,7 +90,7 @@ said no; confusing the two makes it retry something that will never work.
 
 ## Not here yet
 
-`smoke`, `trace`, `run`, `status`, `explain`, `report`, `list_runs` and
-`compare` are specified in
+`run`, `status`, `explain`, `report`, `list_runs` and `compare` are specified in
 [0092](../specs/0092-kestrel-over-mcp.md) and not built. **Nothing here sends
-load yet**: the server can write and check a plan, and cannot run one.
+load yet**: the server can write a plan, check it, and send one request per step
+of it, and cannot run one under load.

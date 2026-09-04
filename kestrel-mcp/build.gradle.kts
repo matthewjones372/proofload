@@ -26,6 +26,10 @@ dependencies {
     // The CLI keeps this one `implementation`, so this names it rather than
     // reaching through: `from_openapi` is this module's tool, not a borrowed one.
     implementation(project(":kestrel-openapi"))
+    // Named for the same reason: smoke and trace run one user, and the
+    // engine is this module's dependency rather than one reached through
+    // the command line.
+    implementation(project(":kestrel-engine"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

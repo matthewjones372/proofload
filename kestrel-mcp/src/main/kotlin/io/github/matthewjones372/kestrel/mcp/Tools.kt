@@ -57,6 +57,19 @@ internal val TOOLS: List<Tool> = listOf(
         arguments = listOf(PLAN),
     ),
     Tool(
+        name = "smoke",
+        describes = "One request per step, so a typo in a path is found here rather than " +
+            "at three thousand a second.",
+        sends = "one request per step",
+        arguments = listOf(PLAN),
+    ),
+    Tool(
+        name = "trace",
+        describes = "Walks one user through the plan and prints what each step sent and what came back.",
+        sends = "one journey",
+        arguments = listOf(PLAN),
+    ),
+    Tool(
         name = "from_openapi",
         describes = "Reads an OpenAPI document and writes the plan it describes.",
         sends = "nothing",

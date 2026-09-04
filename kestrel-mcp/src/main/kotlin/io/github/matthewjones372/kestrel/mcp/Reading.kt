@@ -53,7 +53,13 @@ internal fun fromOpenApi(arguments: Map<String, Any?>): String {
     }
 }
 
-private fun onThePlan(arguments: Map<String, Any?>, read: (Declaration) -> String): String {
+/**
+ * Reads the plan, or answers with why it could not be read.
+ *
+ * Shared by every tool that takes one, so a caller gets the same sentence
+ * whichever tool it was reaching for.
+ */
+internal fun onThePlan(arguments: Map<String, Any?>, read: (Declaration) -> String): String {
     val text = arguments["plan"] as? String ?: return content("this tool wants a `plan`", failed = true)
 
     return try {

@@ -107,6 +107,7 @@ than from a person with a compiler.
 | [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
 | [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
 | [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP, exactly one of which sends a request |
+| [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure — the half of its cost 0011 gave itself 2g to avoid |
 
 They stack in that order; only 0092 needs all of them.
 

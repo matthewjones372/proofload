@@ -8,6 +8,19 @@
 // a few hundred lines of line-delimited request and response, and the sibling
 // repository's own MCP server is next door to read — but depending on it would
 // tie this release train to that one for something neither library is about.
+// A launcher, because a server nobody can start is a server nobody uses. The
+// `application` plugin adds `installDist`, which writes a start script and the
+// jars beside it — enough for a client's `command` to point at, with no fat jar
+// to keep in step with the modules it shades.
+plugins {
+    application
+}
+
+application {
+    mainClass.set("io.github.matthewjones372.kestrel.mcp.ServerKt")
+    applicationName = "kestrel-mcp"
+}
+
 dependencies {
     api(project(":kestrel-cli"))
     // The CLI keeps this one `implementation`, so this names it rather than

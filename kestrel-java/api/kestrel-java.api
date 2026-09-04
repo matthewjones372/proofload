@@ -3,6 +3,21 @@ public final class io/github/matthewjones372/kestrel/java/Actions {
 	public static final fun of (Ljava/util/function/Consumer;)Lio/github/matthewjones372/kestrel/Action;
 }
 
+public final class io/github/matthewjones372/kestrel/java/Goals {
+	public static fun failureRateUnder (D)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun failureRateUnder (Lio/github/matthewjones372/kestrel/StepName;D)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun goodputAtLeast (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;D)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun goodputAtLeast (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;DLio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p50Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p50Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;Lio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p95Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p95Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;Lio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p999Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p999Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;Lio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p99Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Goal;
+	public static fun p99Under (Lio/github/matthewjones372/kestrel/StepName;Ljava/time/Duration;Lio/github/matthewjones372/kestrel/Clock;)Lio/github/matthewjones372/kestrel/Goal;
+}
+
 public final class io/github/matthewjones372/kestrel/java/Https {
 	public static final field INSTANCE Lio/github/matthewjones372/kestrel/java/Https;
 	public static final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/http/Http;
@@ -33,6 +48,7 @@ public final class io/github/matthewjones372/kestrel/java/Results {
 	public static fun p99 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Ljava/time/Duration;
 	public static fun p99 (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;Lio/github/matthewjones372/kestrel/Clock;)Ljava/time/Duration;
 	public static fun ran (Lio/github/matthewjones372/kestrel/RunResult;Lio/github/matthewjones372/kestrel/StepName;)Z
+	public static fun verdicts (Lio/github/matthewjones372/kestrel/RunResult;)Ljava/util/List;
 }
 
 public final class io/github/matthewjones372/kestrel/java/Scenarios {
@@ -57,6 +73,7 @@ public final class io/github/matthewjones372/kestrel/java/Shares {
 
 public final class io/github/matthewjones372/kestrel/java/Simulations {
 	public static fun at (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Rate;Ljava/time/Duration;)Lio/github/matthewjones372/kestrel/Simulation;
+	public static fun at (Lio/github/matthewjones372/kestrel/Scenario;Lio/github/matthewjones372/kestrel/Rate;Ljava/time/Duration;[Lio/github/matthewjones372/kestrel/Goal;)Lio/github/matthewjones372/kestrel/Simulation;
 }
 
 public final class io/github/matthewjones372/kestrel/java/Steps {

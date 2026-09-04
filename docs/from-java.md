@@ -58,8 +58,10 @@ Scenario checkout = Scenarios.named("checkout")
     .pause(Duration.ofSeconds(1))
     .build();
 
-RunResult result = Kestrel.create()
-    .run(Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1)));
+RunResult result = Kestrel.create().run(
+    Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1),
+        Goals.p99Under(PLACE_ORDER, Duration.ofMillis(200)),
+        Goals.failureRateUnder(0.1)));
 ```
 
 Read what it measured through `Results`, which converts on the way out:
@@ -92,11 +94,36 @@ a receiver is the one shape Java has nothing for. The rest of `Http` — `get`,
 called directly; only `capture` and `checking` are stated as a lambda in Kotlin
 and so are named again on `Https`.
 
+## Goals, and the verdicts they produce
+
+Assert when one number decides the test. Declare goals when several do, or when
+you want the report to say which one missed and by how much:
+
+```java
+RunResult result = Kestrel.create().run(
+    Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1),
+        Goals.p99Under(PLACE_ORDER, Duration.ofMillis(200)),
+        Goals.failureRateUnder(0.1)));
+
+for (Verdict verdict : Results.verdicts(result)) {
+    System.out.println(verdict.getGoal().getDescribed() + (verdict.getMet() ? " met" : " missed"));
+}
+```
+
+Kotlin writes the first of those as `p99(placeOrder) under 200.milliseconds`.
+The infix form has no Java spelling, and every call that builds a goal takes a
+`StepName` or a `Share` — so `Goals` is where they are named instead. The clock
+defaults to response time in both languages, because a goal written against
+service time can be met by a generator that never sent the load.
+
 ## What it does not cover
 
-The path a load test walks: scenarios, HTTP steps, running, and reading a
-result. Capacity search, baselines, sharding and the exports are reachable as
-statics later. A facade that has to stay exhaustive is a facade that falls
+The path a load test walks: scenarios, HTTP steps, running, goals, and reading
+a result. Capacity search, baselines, sharding and the exports are reachable as
+statics later. There is deliberately no Java `assertNotWorseThan`: `Difference`
+is a baselines type, and wrapping it here would put JUnit on the classpath of
+every project that takes this module, which is what `kestrel-junit5` exists to
+prevent. A facade that has to stay exhaustive is a facade that falls
 behind and lies about it.
 
 ## The gate

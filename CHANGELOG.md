@@ -20,6 +20,17 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+- **Goals from Java.** `Goals.p99Under`, `p95Under`, `p50Under`, `p999Under`,
+  `failureRateUnder` and `goodputAtLeast` build core's own `Goal` values, and
+  `Simulations.at(scenario, rate, over, goals...)` attaches them.
+  `Results.verdicts(result)` reads back what each one measured and the margin it
+  missed by. Kotlin writes these infix — `p99(placeOrder) under
+  200.milliseconds` — which has no Java spelling, and every call that builds one
+  takes a `StepName` or a `Share`, whose names mangle; so these are Java sources
+  over an `internal` Kotlin layer, the same split the rest of the facade uses.
+  There is deliberately no Java `assertNotWorseThan`: `Difference` is a
+  baselines type, and wrapping it would put JUnit on the classpath of every
+  project that takes the facade.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body

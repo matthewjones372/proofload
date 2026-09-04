@@ -3,7 +3,9 @@ package io.github.matthewjones372.kestrel.java;
 import io.github.matthewjones372.kestrel.Clock;
 import io.github.matthewjones372.kestrel.RunResult;
 import io.github.matthewjones372.kestrel.StepName;
+import io.github.matthewjones372.kestrel.Verdict;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * What a run measured, off core's own {@code RunResult} rather than a copy of
@@ -18,6 +20,11 @@ import java.time.Duration;
 public final class Results {
 
     private Results() {
+    }
+
+    /** Every goal the run declared, with what it measured and the margin it missed by. */
+    public static List<Verdict> verdicts(RunResult result) {
+        return Judgements.verdicts(result);
     }
 
     public static boolean ran(RunResult result, StepName step) {

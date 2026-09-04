@@ -4,7 +4,9 @@ import io.github.matthewjones372.kestrel.RunResult;
 import io.github.matthewjones372.kestrel.Scenario;
 import io.github.matthewjones372.kestrel.SessionKey;
 import io.github.matthewjones372.kestrel.StepName;
+import io.github.matthewjones372.kestrel.Verdict;
 import io.github.matthewjones372.kestrel.http.Http;
+import io.github.matthewjones372.kestrel.java.Goals;
 import io.github.matthewjones372.kestrel.java.Https;
 import io.github.matthewjones372.kestrel.java.Kestrel;
 import io.github.matthewjones372.kestrel.java.Rates;
@@ -43,8 +45,14 @@ public final class Checkout {
             .pause(Duration.ofSeconds(1))
             .build();
 
-        RunResult result = Kestrel.create()
-            .run(Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1)));
+        RunResult result = Kestrel.create().run(
+            Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1),
+                Goals.p99Under(PLACE_ORDER, Duration.ofMillis(200)),
+                Goals.failureRateUnder(0.1)));
+
+        for (Verdict verdict : Results.verdicts(result)) {
+            System.out.println(verdict.getGoal().getDescribed() + (verdict.getMet() ? " met" : " missed"));
+        }
 
         Duration tail = Results.p99(result, PLACE_ORDER);
         System.out.println(PLACE_ORDER.getName() + " p99 " + tail.toMillis() + "ms over "

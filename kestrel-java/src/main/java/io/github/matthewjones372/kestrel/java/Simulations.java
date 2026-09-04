@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.java;
 
+import io.github.matthewjones372.kestrel.Goal;
 import io.github.matthewjones372.kestrel.Rate;
 import io.github.matthewjones372.kestrel.Scenario;
 import io.github.matthewjones372.kestrel.Simulation;
@@ -19,5 +20,10 @@ public final class Simulations {
 
     public static Simulation at(Scenario scenario, Rate rate, Duration over) {
         return Runs.at(scenario, rate.getPerSecond(), over);
+    }
+
+    /** The same run, with the goals it is judged against. */
+    public static Simulation at(Scenario scenario, Rate rate, Duration over, Goal... goals) {
+        return Judgements.expecting(at(scenario, rate, over), goals);
     }
 }

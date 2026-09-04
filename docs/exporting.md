@@ -46,11 +46,22 @@ println(result.json(Density.Summary))            // the answer, under two kiloby
 result.writeJson(Path.of("build/run.json"))      // Density.Full, every step
 ```
 
-`Summary` is what the run concluded and nothing else: the plan, the counts, the
-failures folded together by reason, and the machine that measured them. `Full`
-adds the per-step timings, the timeline and the run's own lateness. Durations
-are the nanoseconds the histogram reported — the document holds the
+`Summary` is what the run concluded and nothing else: a one-word `verdict`, the
+plan, whether the schedule held, every goal with what it measured and the margin
+it missed by, the steady segment, Little's law, the counts, and the failures
+folded together by reason. `Full` adds the per-step timings and the timeline.
+Durations are the nanoseconds the histogram reported — the document holds the
 measurement, the reader does the formatting.
+
+The `verdict` is ordered rather than scored, and the order is the claim:
+
+| | |
+|---|---|
+| `behind` | the generator lost its own schedule, so the numbers are not the target's — this outranks everything, including a goal that also missed |
+| `nothingAsked` | the run carried no goals. Not `met`: a run asked nothing met nothing |
+| `missed` | a goal missed, and `goals[].overBy` says by how much |
+| `cannotTell` | nothing missed, but something could not be judged at the resolution available; `cannotTell.wouldChangeIt` says what would fix that |
+| `met` | every goal asked was met |
 
 Every document names its schema in its first field, and a reader must ignore
 fields it does not know: a new optional key is not a breaking change, and the

@@ -4,6 +4,7 @@
   "startedAt": "2026-09-02T09:00:00Z",
   "durationUnit": "nanoseconds",
   "precision": 0.0078125,
+  "verdict": "missed",
   "plan": {
     "arms": [
       {
@@ -15,6 +16,43 @@
       }
     ]
   },
+  "schedule": {
+    "kept": true,
+    "heldFor": null,
+    "lostGround": false,
+    "behindP99": 120319,
+    "plannedInterval": 20000000
+  },
+  "goals": [
+    {
+      "asked": "pay p99 under 200ms",
+      "met": false,
+      "measured": {
+        "took": 901775359,
+        "percent": null,
+        "because": null
+      },
+      "overBy": 350.8876795,
+      "stage": null,
+      "cannotTell": null
+    }
+  ],
+  "steadyState": {
+    "tolerance": 0.125,
+    "settledAfter": null,
+    "why": "nothing was recorded second by second, so there was no shape to look at"
+  },
+  "concurrency": {
+    "observed": null,
+    "fromServiceTime": null,
+    "fromResponseTime": null,
+    "ratio": null,
+    "backlog": null,
+    "agrees": null,
+    "samples": null,
+    "because": "nothing was recorded second by second, so there is no window"
+  },
+  "probe": null,
   "count": 7,
   "ok": 4,
   "failed": 3,

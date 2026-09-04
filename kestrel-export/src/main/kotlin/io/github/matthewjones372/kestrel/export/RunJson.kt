@@ -1,16 +1,28 @@
 package io.github.matthewjones372.kestrel.export
 
 import io.github.matthewjones372.kestrel.Arrivals
+import io.github.matthewjones372.kestrel.Concurrency
 import io.github.matthewjones372.kestrel.Machine
+import io.github.matthewjones372.kestrel.Measurement
 import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
+import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Second
+import io.github.matthewjones372.kestrel.SteadyState
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Tail
+import io.github.matthewjones372.kestrel.Tell
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.Verdict
+import io.github.matthewjones372.kestrel.concurrency
+import io.github.matthewjones372.kestrel.fellBehind
+import io.github.matthewjones372.kestrel.heldScheduleFor
+import io.github.matthewjones372.kestrel.lostGround
+import io.github.matthewjones372.kestrel.ownInterval
 import io.github.matthewjones372.kestrel.precision
+import io.github.matthewjones372.kestrel.steadyState
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -63,7 +75,15 @@ private fun RunResult.envelope(density: Density): List<Pair<String, String>> = l
 )
 
 private fun RunResult.summaryFields(): List<Pair<String, String>> = listOf(
+    // First, because it is the field most readers want and the only one some
+    // of them read.
+    "verdict" to jsonString(headline().described),
     "plan" to plan.toJson(depth = 1),
+    "schedule" to scheduleJson(depth = 1),
+    "goals" to judged().jsonArray(depth = 1) { it.toJson(depth = 2) },
+    "steadyState" to steadyState.toJson(depth = 1),
+    "concurrency" to concurrency.toJson(depth = 1),
+    "probe" to probe.toJson(depth = 1),
     "count" to count.toString(),
     "ok" to ok.toString(),
     "failed" to failed.toString(),
@@ -95,6 +115,149 @@ private fun RunResult.failuresByReason(): List<Pair<String, Long>> =
         .fold(0L) { running, entry -> running + entry.value }
         .toList()
         .sortedWith(compareByDescending<Pair<String, Long>> { it.second }.thenBy { it.first })
+
+/**
+ * What a run concluded, in one word.
+ *
+ * The order is the claim: a generator that lost its own schedule did not
+ * measure the target, so its missed goals describe a queue this tool built and
+ * reporting them as the answer is the trap Kestrel exists to close. It still
+ * outranks having asked nothing, because a run that kept no schedule is worth
+ * saying so about whether or not anyone set it a goal. A definite miss then
+ * outranks a refusal, because one is a fact and the other is uncertainty.
+ */
+private fun RunResult.headline(): Headline {
+    val verdicts = judged()
+    return when {
+        fellBehind() || lostGround() -> Headline.Behind
+        verdicts.isEmpty() -> Headline.NothingAsked
+        verdicts.any { !it.met } -> Headline.Missed
+        verdicts.any { it.refused != null } -> Headline.CannotTell
+        else -> Headline.Met
+    }
+}
+
+private enum class Headline {
+    Behind,
+
+    /**
+     * A run with no goals on it. Not `Met`: a run that was asked nothing met
+     * nothing, and a tick nobody earned is the thing the verdicts exist to
+     * stop printing.
+     */
+    NothingAsked,
+    Missed,
+    CannotTell,
+    Met,
+    ;
+
+    val described: String get() = name.replaceFirstChar { it.lowercase() }
+}
+
+private fun RunResult.judged(): List<Verdict> = plan.goals.flatMap { it.judgeAll(this) }
+
+private fun RunResult.scheduleJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "kept" to (!fellBehind() && !lostGround()).toString(),
+        // How long it held before the first second that lost ground, which is
+        // what says at what point a rate stopped being the rate that left.
+        "heldFor" to (heldScheduleFor?.inWholeNanoseconds?.toString() ?: "null"),
+        "lostGround" to lostGround().toString(),
+        "behindP99" to behind.p99.inWholeNanoseconds.toString(),
+        "plannedInterval" to ownInterval.inWholeNanoseconds.toString(),
+    ),
+)
+
+private fun Verdict.toJson(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "asked" to jsonString(goal.described),
+        "met" to met.toString(),
+        "measured" to measured.toJson(depth + 1),
+        "overBy" to (overBy?.toString() ?: "null"),
+        "stage" to (stage?.let { "${it.index + 1}" } ?: "null"),
+        "cannotTell" to refused.toJson(depth + 1),
+    ),
+)
+
+/** All three keys always: a reader testing for `took` should not have to know how absent is spelled. */
+private fun Measurement.toJson(depth: Int): String {
+    val (took, percent, because) = when (this) {
+        is Measurement.Took -> Triple(duration.inWholeNanoseconds.toString(), "null", "null")
+        is Measurement.Share -> Triple("null", percent.toString(), "null")
+        is Measurement.Absent -> Triple("null", "null", jsonString(because))
+    }
+    return jsonObject(
+        depth = depth,
+        fields = listOf("took" to took, "percent" to percent, "because" to because),
+    )
+}
+
+/**
+ * `wouldChangeIt` travels with `why`. A refusal nobody can act on is one a
+ * caller learns to route around, and that holds for a caller reading JSON.
+ */
+private fun Tell.CannotTell?.toJson(depth: Int): String = when (this) {
+    null -> "null"
+
+    else -> jsonObject(
+        depth = depth,
+        fields = listOf("why" to jsonString(why), "wouldChangeIt" to jsonString(wouldChangeIt)),
+    )
+}
+
+private fun SteadyState.toJson(depth: Int): String {
+    val (settledAfter, why) = when (this) {
+        is SteadyState.From -> offset.inWholeNanoseconds.toString() to "null"
+        is SteadyState.NeverSettled -> "null" to jsonString(why)
+    }
+    return jsonObject(
+        depth = depth,
+        fields = listOf(
+            "tolerance" to SteadyState.TOLERANCE.toString(),
+            "settledAfter" to settledAfter,
+            "why" to why,
+        ),
+    )
+}
+
+/** L = lambda W, both sides and whether they agree — the run's own arithmetic checked against itself. */
+private fun Concurrency.toJson(depth: Int): String = when (this) {
+    is Concurrency.Measured -> jsonObject(
+        depth = depth,
+        fields = listOf(
+            "observed" to observed.toString(),
+            "fromServiceTime" to fromServiceTime.toString(),
+            "fromResponseTime" to fromResponseTime.toString(),
+            "ratio" to ratio.toString(),
+            "backlog" to backlog.toString(),
+            "agrees" to agrees.toString(),
+            "samples" to samples.toString(),
+            "because" to "null",
+        ),
+    )
+
+    is Concurrency.Absent -> jsonObject(
+        depth = depth,
+        fields = listOf(
+            "observed" to "null",
+            "fromServiceTime" to "null",
+            "fromResponseTime" to "null",
+            "ratio" to "null",
+            "backlog" to "null",
+            "agrees" to "null",
+            "samples" to "null",
+            "because" to jsonString(because),
+        ),
+    )
+}
+
+/** What a fixed, target-free measurement took here, where one was taken: the machine, not the target. */
+private fun Probe?.toJson(depth: Int): String = when (this) {
+    null -> "null"
+    else -> jsonObject(depth = depth, fields = listOf("took" to took.inWholeNanoseconds.toString()))
+}
 
 private fun Plan.toJson(depth: Int): String = jsonObject(
     depth = depth,

@@ -306,12 +306,16 @@ enough to list, and long enough to matter.
   OkHttp the exporter ships with. See
   [docs/exporting.md](docs/exporting.md).
 - **A result a machine can read.** `result.json(Density.Summary)` is the run's
-  answer in under two kilobytes — the plan, the counts, the failures folded
-  together by reason, and the machine that measured them — and
+  answer in under two kilobytes — a one-word `verdict`, the plan, whether the
+  schedule held, every goal with the margin it missed by, the steady segment,
+  Little's law, the counts and the failures folded together by reason — and
   `Density.Full` adds the per-step timings, the timeline and the run's own
   lateness. `writeJson(path)` puts either on disk. Every document names its
   schema, `kestrel/run/1`, in its first field, and a reader must ignore keys it
-  does not know, so a new optional field is not a break. Durations are the
+  does not know, so a new optional field is not a break. The verdict is ordered
+  rather than scored: `behind` outranks a missed goal, because a run whose
+  generator lost its schedule did not measure the target, and a run carrying no
+  goals reads `nothingAsked` rather than `met`. Durations are the
   nanoseconds the histogram reported: the document holds the measurement and
   the reader does the formatting. In `kestrel-export`, which stays core and the
   JDK only; the JSON the HTML report inlines is a separate document with a

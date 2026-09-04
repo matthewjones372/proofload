@@ -7,9 +7,11 @@ import io.github.matthewjones372.kestrel.Outcome
 import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
+import io.github.matthewjones372.kestrel.StepName
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Threw
 import io.github.matthewjones372.kestrel.Timing
+import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.timing
 import io.kotest.assertions.withClue
@@ -109,6 +111,9 @@ class RunJsonTest {
                 scenario = "checkout",
                 steps = listOf("pay"),
                 profile = InjectionProfile.ConstantRate(50.perSecond.perSecond, 1.minutes),
+                // A goal the run misses, so the golden carries the shape a
+                // reader is actually going to parse rather than an empty list.
+                goals = listOf(p99(StepName("pay")) under 200.milliseconds),
             ),
             hiccups = Histogram().apply { repeat(2) { record(4.milliseconds) } }.timing(),
             machine = here,

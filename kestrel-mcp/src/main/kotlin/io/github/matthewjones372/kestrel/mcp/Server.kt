@@ -6,6 +6,7 @@ import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.PrintStream
 import java.io.Writer
+import java.nio.file.Path
 
 /**
  * The server, as a function over lines.
@@ -53,6 +54,9 @@ fun main() {
 /** The runs this process has started. One server, one registry, lost with the process. */
 internal val RUNS = Registry()
 
+/** Where a page a person opens is written. Beside the build, like every other report. */
+internal val REPORTS: Path = Path.of("build", "reports", "kestrel", "mcp")
+
 internal fun answer(call: Call): String = when (call.method) {
     "initialize" -> replyTo(call.id, initialised())
     "tools/list" -> replyTo(call.id, toolsAsJson())
@@ -68,6 +72,10 @@ private fun called(call: Call): String = when (call.tool) {
     "trace" -> trace(call.arguments, Allowance.fromFile())
     "run" -> onThePlan(call.arguments) { plan -> RUNS.start(plan, Allowance.fromFile()) }
     "status" -> RUNS.status(call.arguments["runId"] as? String)
+    "explain" -> explain(RUNS, call.arguments["runId"] as? String)
+    "report" -> report(RUNS, call.arguments["runId"] as? String, REPORTS)
+    "list_runs" -> listRuns(RUNS)
+    "compare" -> compare(RUNS, call.arguments["runId"] as? String, call.arguments["against"] as? String)
     "from_openapi" -> fromOpenApi(call.arguments)
     else -> content("no tool `${call.tool}`", failed = true)
 }

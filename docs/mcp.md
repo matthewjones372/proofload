@@ -57,6 +57,10 @@ directory, not yours.
 | `trace` | walks one user and says what each step sent and what came back | one journey |
 | `run` | starts the run, returns a `runId`, does not wait | **the load the plan asks for** |
 | `status` | what a run is doing, or the verdict and remedy of a finished one | nothing |
+| `explain` | the full document for a finished run — every step, the timeline | nothing |
+| `report` | writes the run's self-contained HTML page, returns its path | nothing |
+| `list_runs` | every run this server started, newest first | nothing |
+| `compare` | one finished run against another: better, worse, or cannot tell | nothing |
 
 **Ask `plan_schema` first.** It is the tool the others depend on: a caller who
 can ask for the format writes a valid plan on the first attempt rather than a
@@ -111,7 +115,13 @@ Runs live in the server's memory and are lost when it stops. That is the honest
 scope for a server a client starts and stops; anything meant to survive goes to
 disk, which is what `report` will be for.
 
-## Not here yet
+## Two readers, two artefacts
 
-`explain`, `report`, `list_runs` and `compare` are specified in
-[0092](../specs/0092-kestrel-over-mcp.md) and not built.
+`explain` returns JSON and `report` returns a path. That split is the point: an
+agent reads the document, and a person opens the page. Handing a model the
+page's bytes would be handing it inlined SVG to no purpose, and handing a person
+the JSON would be handing them the thing the charts were made from.
+
+`compare` answers in three, not two. "Cannot tell" is the one that matters: a
+comparison that only ever says better or worse will say one of them about noise,
+and a caller acting on that chases a regression nobody introduced.

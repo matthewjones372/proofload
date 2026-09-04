@@ -35,6 +35,8 @@ internal data class Argument(
         """${name.asJsonString()}:{"type":${type.asJsonString()},"description":${describes.asJsonString()}}"""
 }
 
+private val RUN_ID = Argument("runId", "The id `run` returned.", required = true)
+
 private val PLAN = Argument("plan", "The plan, as a plan/1 document. Ask plan_schema what one looks like.", true)
 
 internal val TOOLS: List<Tool> = listOf(
@@ -80,6 +82,30 @@ internal val TOOLS: List<Tool> = listOf(
         describes = "What a run is doing, or the verdict and remedy of a finished one.",
         sends = "nothing",
         arguments = listOf(Argument("runId", "The id `run` returned.", required = true)),
+    ),
+    Tool(
+        name = "explain",
+        describes = "The full document for a finished run: every step, the timeline, the lateness.",
+        sends = "nothing",
+        arguments = listOf(RUN_ID),
+    ),
+    Tool(
+        name = "report",
+        describes = "Writes the run's self-contained HTML page and returns its path, for a person to open.",
+        sends = "nothing",
+        arguments = listOf(RUN_ID),
+    ),
+    Tool(
+        name = "list_runs",
+        describes = "Every run this server has started, newest first.",
+        sends = "nothing",
+        arguments = emptyList(),
+    ),
+    Tool(
+        name = "compare",
+        describes = "One finished run against another: better, worse, or cannot tell.",
+        sends = "nothing",
+        arguments = listOf(RUN_ID, Argument("against", "The runId to compare against.", required = true)),
     ),
     Tool(
         name = "from_openapi",

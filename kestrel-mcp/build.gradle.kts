@@ -33,6 +33,9 @@ dependencies {
     // `status` answers a finished run with 0087's summary, which is this
     // module's document rather than one the command line lends it.
     implementation(project(":kestrel-export"))
+    // `report` writes the page a person opens. An agent reads the JSON
+    // above; nobody gains from a model reading inlined SVG.
+    implementation(project(":kestrel-report-html"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

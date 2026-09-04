@@ -27,6 +27,7 @@ class NoThirdPartyDependenciesTest {
         "kestrel-export",
         "kestrel-openapi",
         "kestrel-cli",
+        "kestrel-report-html",
         "snakeyaml-engine",
     )
 

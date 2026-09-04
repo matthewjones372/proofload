@@ -65,6 +65,7 @@ internal fun answer(call: Call): String = when (call.method) {
 }
 
 private fun called(call: Call): String = when (call.tool) {
+    "benchmark" -> benchmark(call.arguments, Allowance.fromFile())
     "plan_schema" -> content(PLAN_SCHEMA)
     "validate" -> validate(call.arguments)
     "preview" -> preview(call.arguments, Allowance.fromFile())

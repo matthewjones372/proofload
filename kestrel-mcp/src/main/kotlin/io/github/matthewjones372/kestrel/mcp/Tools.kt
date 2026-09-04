@@ -41,6 +41,17 @@ private val PLAN = Argument("plan", "The plan, as a plan/1 document. Ask plan_sc
 
 internal val TOOLS: List<Tool> = listOf(
     Tool(
+        name = "benchmark",
+        describes = "Start here. Takes an OpenAPI document, a plan, or just a baseUrl, and hands back a plan " +
+            "with what running it would send and what one request per step already found. Then call `run`.",
+        sends = "one request per step, and no load",
+        arguments = listOf(
+            Argument("document", "An OpenAPI document, as YAML or JSON."),
+            Argument("plan", "A plan/1 document, if you already have one."),
+            Argument("baseUrl", "Where to send it. On its own, benchmarks GET /."),
+        ),
+    ),
+    Tool(
         name = "plan_schema",
         describes = "The shape of a plan/1 document, with two worked examples. Read this before writing one.",
         sends = "nothing",

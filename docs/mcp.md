@@ -49,6 +49,7 @@ directory, not yours.
 
 | Tool | Does | Sends |
 |---|---|---|
+| `benchmark` | **start here** — a target in, a plan out, previewed and smoked | one request per step |
 | `plan_schema` | the shape of a `plan/1` document, with two worked plans | nothing |
 | `validate` | parses a plan, resolves its steps and goals, names the line of anything wrong | nothing |
 | `preview` | what the plan would send — users, requests, window, peak rate, hosts | nothing |
@@ -62,7 +63,45 @@ directory, not yours.
 | `list_runs` | every run this server started, newest first | nothing |
 | `compare` | one finished run against another: better, worse, or cannot tell | nothing |
 
-**Ask `plan_schema` first.** It is the tool the others depend on: a caller who
+**Start with `benchmark`.** Everything else in this table is a verb on
+Kestrel's own model, which is the shape a library has rather than the shape a
+question has. Nobody asks to validate a plan; they ask whether their service
+holds up. `benchmark` takes a target — an OpenAPI document, a plan you already
+have, or just a base URL — and does the whole safe half in one call: writes the
+plan, validates it, previews it against the allowance, and sends one request per
+step.
+
+```
+benchmark {"baseUrl": "http://localhost:8731"}
+```
+
+```
+kestrel:  plan/1
+baseUrl:  http://localhost:8731
+scenario: smoke
+steps:
+  - name: root
+    get: /
+load:
+  rate: 1/s
+  over: 10s
+
+Running this would send 10 requests over 10s
+peaking at 1.0/s
+to localhost.
+
+One request per step, already sent:
+1 requests, 1 ok, 0 failed
+  root: 1 sent
+
+Nothing above sent load. Call `run` with this plan to do that.
+```
+
+Edit the plan, raise the rate on purpose, and pass it to `run`. The load is
+never sent by the tool that prepared it, so the gate the allowance exists to
+create is the only way through rather than a step you have to remember.
+
+**Ask `plan_schema`** when you want to write a plan by hand. It is the tool the others depend on: a caller who
 can ask for the format writes a valid plan on the first attempt rather than a
 plausible one, and what comes back is the shape the parser enforces rather than
 documentation about it.

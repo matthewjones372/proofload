@@ -20,6 +20,16 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+- **`benchmark`, the tool a request actually arrives as.** The rest of the MCP
+  table is a verb per step of Kestrel's own model — the shape a library has, not
+  the shape a question has. Nobody asks to validate a plan; they ask whether
+  their service holds up, and answering that took seven calls in an order the
+  caller had to infer. `benchmark` takes an OpenAPI document, a plan, or just a
+  base URL, and answers with the plan, what running it would send, and what one
+  request per step already found. It sends the smoke and no load: `run` still
+  does that, which makes the allowance's gate the only way through rather than a
+  step a caller remembers. A refused plan is still handed back, because a caller
+  told only that a host is barred cannot see what it was about to send there.
 - **Kestrel over MCP.** `kestrel-mcp` is a stdio server whose every tool is a
   call `kestrel-cli` already makes, so what a program can do is what a person at
   a terminal can do and there is no second behaviour to keep in step. The

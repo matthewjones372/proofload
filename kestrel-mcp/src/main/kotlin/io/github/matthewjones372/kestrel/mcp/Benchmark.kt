@@ -24,7 +24,7 @@ import io.github.matthewjones372.kestrel.preview
  * way through rather than a step a caller has to remember.
  */
 internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): String {
-    val plan = try {
+    val (plan, from) = try {
         arguments.asPlan() ?: return content(WANTED, failed = true)
     } catch (unreadable: IllegalArgumentException) {
         return content(unreadable.message.orEmpty(), failed = true)
@@ -56,7 +56,17 @@ internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): Stri
             appendLine("One request per step, already sent:")
             appendLine(smoked.textOnly())
             appendLine()
-            appendLine("Nothing above sent load. Call `run` with this plan to do that.")
+
+            // Before the call to action rather than after it: a caller already
+            // told what to do next has stopped reading.
+            val asking = plan.questions(from, smoked)
+            if (asking.isNotEmpty()) {
+                appendLine("This plan is guessing. Ask whoever wants the benchmark:")
+                asking.forEach { appendLine("  - $it") }
+                appendLine()
+            }
+
+            appendLine("Nothing above sent load. Edit the plan with the answers, then call `run` with it.")
         }.trimEnd(),
         // A smoke that failed is the answer, not a footnote: a plan whose steps
         // 404 once will 404 three thousand times.
@@ -71,9 +81,11 @@ internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): Stri
  * and a bare URL is the smallest thing somebody can type — it makes a plan with
  * a single `GET /`, which is a real answer to "is anything there".
  */
-private fun Map<String, Any?>.asPlan(): Declaration? {
-    (this["plan"] as? String)?.let { return readPlan(it) }
-    (this["document"] as? String)?.let { return planFromDocument(it, this["baseUrl"] as? String) }
+private fun Map<String, Any?>.asPlan(): Pair<Declaration, Source>? {
+    (this["plan"] as? String)?.let { return readPlan(it) to Source.Written }
+    (this["document"] as? String)?.let {
+        return planFromDocument(it, this["baseUrl"] as? String) to Source.Document
+    }
 
     return (this["baseUrl"] as? String)?.let { url ->
         readPlan(
@@ -88,7 +100,7 @@ private fun Map<String, Any?>.asPlan(): Declaration? {
               rate: 1/s
               over: 10s
             """.trimIndent(),
-        )
+        ) to Source.BareUrl
     }
 }
 

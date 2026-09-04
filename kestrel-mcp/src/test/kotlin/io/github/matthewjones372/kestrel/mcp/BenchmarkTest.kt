@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Allowance
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -136,6 +137,72 @@ class BenchmarkTest {
 
         withClue("a plan whose steps 404 once will 404 three thousand times") {
             benchmark(mapOf("document" to missing), Allowance.none) shouldContain """"isError":true"""
+        }
+    }
+
+    @Test
+    fun `a bare url is asked which paths actually matter`() {
+        val answered = benchmark(mapOf("baseUrl" to where), Allowance.none)
+
+        withClue(answered) {
+            answered shouldContain "This plan is guessing"
+            answered shouldContain "Which paths actually matter"
+        }
+    }
+
+    @Test
+    fun `a placeholder rate and a placeholder goal are both asked about`() {
+        val answered = benchmark(mapOf("document" to document()), Allowance.none)
+
+        withClue(answered) {
+            answered shouldContain "The rate is a placeholder"
+            answered shouldContain "What p99 counts as too slow"
+        }
+    }
+
+    @Test
+    fun `a plan somebody wrote is not asked what it meant`() {
+        val mine = """
+            kestrel:  plan/1
+            baseUrl:  $where
+            scenario: mine
+            steps:
+              - name: orders
+                get:  /orders
+            load:
+              rate: 200/s
+              over: 5m
+            goals:
+              - step: orders
+                p99:  150ms
+        """.trimIndent()
+
+        withClue("a rate and a goal somebody chose are not guesses to query") {
+            benchmark(mapOf("plan" to mine), Allowance.none) shouldNotContain "This plan is guessing"
+        }
+    }
+
+    @Test
+    fun `the credential question is asked because the target said so`() {
+        server.createContext("/locked") { exchange ->
+            arrived.incrementAndGet()
+            exchange.sendResponseHeaders(401, -1)
+            exchange.close()
+        }
+        val locked = document().replace("/orders", "/locked")
+
+        val answered = benchmark(mapOf("document" to locked), Allowance.none)
+
+        withClue(answered) {
+            answered shouldContain "refused the smoke as unauthorised"
+            answered shouldContain "What credential"
+        }
+    }
+
+    @Test
+    fun `no credential question where nothing was refused`() {
+        withClue("a fixed list would ask about auth on a plan that authenticated fine") {
+            benchmark(mapOf("document" to document()), Allowance.none) shouldNotContain "What credential"
         }
     }
 

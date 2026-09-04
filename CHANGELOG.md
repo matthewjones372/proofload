@@ -30,6 +30,13 @@ enough to list, and long enough to matter.
   does that, which makes the allowance's gate the only way through rather than a
   step a caller remembers. A refused plan is still handed back, because a caller
   told only that a host is barred cannot see what it was about to send there.
+  It also states what it is guessing and asks about it: a generated plan sends
+  one request a second and asserts a goal of one second, and handing that over as
+  a benchmark is a number nobody chose reported as though somebody had. The
+  questions are derived from the plan and the smoke rather than read off a list —
+  a credential is asked about because the target answered 401, paths because a
+  bare URL was all it was given — and a plan somebody wrote themselves is asked
+  nothing.
 - **Kestrel over MCP.** `kestrel-mcp` is a stdio server whose every tool is a
   call `kestrel-cli` already makes, so what a program can do is what a person at
   a terminal can do and there is no second behaviour to keep in step. The

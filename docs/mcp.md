@@ -97,7 +97,24 @@ One request per step, already sent:
 Nothing above sent load. Call `run` with this plan to do that.
 ```
 
-Edit the plan, raise the rate on purpose, and pass it to `run`. The load is
+It also says what it is guessing, and asks:
+
+```
+This plan is guessing. Ask whoever wants the benchmark:
+  - This only sends `GET /`, because a base URL is all it was given. Which paths
+    actually matter — a journey, a hot endpoint, a slow one?
+  - The rate is a placeholder — one a second, because nothing said otherwise.
+    What does this see at peak, and over how long?
+```
+
+Every question is derived from that plan and that smoke, not read off a list. A
+credential is asked about because the target answered 401, not because targets
+often need one; paths are asked about because a bare URL was all it got. A plan
+somebody wrote themselves, with a rate and a goal they chose, is asked nothing —
+a fixed list would query a decision that has already been made, and get ignored
+on the plan where it mattered.
+
+Edit the plan with the answers, raise the rate on purpose, and pass it to `run`. The load is
 never sent by the tool that prepared it, so the gate the allowance exists to
 create is the only way through rather than a step you have to remember.
 

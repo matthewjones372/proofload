@@ -110,6 +110,7 @@ than from a person with a compiler.
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure — the half of its cost 0011 gave itself 2g to avoid |
 | [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
 | [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
+| [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 
 They stack in that order; only 0092 needs all of them.
 

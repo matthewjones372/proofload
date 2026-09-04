@@ -98,13 +98,31 @@ private fun RunResult.summaryFields(density: Density): List<Pair<String, String>
         jsonObject(depth = 2, fields = listOf("reason" to jsonString(reason), "count" to seen.toString()))
     },
     "arrivals" to arrivals.toJson(depth = 1),
+    // The number a caller measuring a baseline is asking for, which is the case
+    // with no goals on it. Response time, because a service time a generator
+    // never sent the load for is not what anyone means by "how fast is it".
+    "steps" to steps.values.jsonArray(depth = 1) { it.headline(depth = 2) },
     "machine" to machine.toJson(depth = 1),
+)
+
+/** Enough of a step to answer "how fast is it", and no more. `Full` carries the rest. */
+private fun StepStats.headline(depth: Int): String = jsonObject(
+    depth = depth,
+    fields = listOf(
+        "name" to jsonString(name),
+        "count" to count.toString(),
+        "failed" to failed.count.toString(),
+        "p50" to responseTime.p50.inWholeNanoseconds.toString(),
+        "p99" to responseTime.p99.inWholeNanoseconds.toString(),
+    ),
 )
 
 private fun RunResult.fullFields(): List<Pair<String, String>> = listOf(
     "behind" to behind.toJson(depth = 1),
     "hiccups" to hiccups.toJson(depth = 1),
-    "steps" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
+    // Every step again, in full. The summary's `steps` carries two percentiles;
+    // this carries both clocks, both outcomes and every reason.
+    "stepDetail" to steps.values.jsonArray(depth = 1) { it.toJson(depth = 2) },
     "timeline" to timeline.jsonArray(depth = 1) { it.toJson(depth = 2) },
     "latePerSecond" to latePerSecond.jsonArray(depth = 1) { it.toJson(depth = 2) },
 )

@@ -231,6 +231,30 @@
         }
       }
     },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "p50": {
+            "type": "integer"
+          },
+          "p99": {
+            "type": "integer"
+          }
+        }
+      }
+    },
     "machine": {
       "type": "object",
       "additionalProperties": false,
@@ -297,7 +321,7 @@
         }
       }
     },
-    "steps": {
+    "stepDetail": {
       "type": "array",
       "items": {
         "type": "object",

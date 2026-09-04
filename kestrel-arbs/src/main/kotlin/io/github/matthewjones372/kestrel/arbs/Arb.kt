@@ -1,16 +1,6 @@
 package io.github.matthewjones372.kestrel.arbs
 
-/**
- * What a generator draws, in words, and the seed it drew from.
- *
- * A run's numbers mean something different at one cardinality than at another,
- * so this is what a page can state beside them, and what a comparison against
- * a baseline can refuse to reason across.
- */
-data class Shape(val description: String, val seed: Long) {
-
-    override fun toString(): String = "$description, seed $seed"
-}
+import io.github.matthewjones372.kestrel.Shape
 
 /**
  * A value worked out from a virtual user's number.

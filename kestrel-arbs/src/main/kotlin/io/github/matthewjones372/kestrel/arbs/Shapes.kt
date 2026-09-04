@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.arbs
 
+import io.github.matthewjones372.kestrel.Shape
 import java.util.UUID
 import kotlin.math.exp
 import kotlin.math.expm1

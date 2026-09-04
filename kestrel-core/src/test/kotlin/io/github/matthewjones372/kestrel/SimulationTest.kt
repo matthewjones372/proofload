@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -73,5 +74,18 @@ class SimulationTest {
         refusal.message shouldContain "browse"
         refusal.message shouldContain "checkout"
         refusal.message shouldContain "rival"
+    }
+
+    @Test
+    fun `a run says what its data was drawn from, and every arm carries it`() {
+        val shapes = arrayOf(Shape("zipf(keys=1000000, skew=1.1)", seed = 4L), Shape("uuids()", seed = 5L))
+        val mixed = checkout.at(50.perSecond, over = 1.minutes) + search.at(8.perSecond, over = 2.minutes)
+
+        mixed.drawing(*shapes).arms.map { it.drawn } shouldBe listOf(shapes.toList(), shapes.toList())
+    }
+
+    @Test
+    fun `a run nobody told what it drew from claims nothing`() {
+        checkout.at(50.perSecond, over = 1.minutes).arms.single().drawn.shouldBeEmpty()
     }
 }

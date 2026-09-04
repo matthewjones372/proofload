@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.arbs
 
 import com.sun.management.ThreadMXBean
+import io.github.matthewjones372.kestrel.Shape
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.longs.shouldBeLessThan

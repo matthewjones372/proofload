@@ -200,6 +200,14 @@ enough to list, and long enough to matter.
   no table at all. `uniform` is the flat keyspace beside it, `digits` and
   `uuids` are ids of a fixed shape, and `weighted` is a traffic mix stated as
   proportions.
+- **A run says what its data was made up from.** `Simulation.drawing(shapes)`
+  puts a generator's `Shape` on every arm, beside `fedBy`, and `plan()` carries
+  it into `PlannedArm.drawn` and out with the result. A `Feeder` is a function
+  of the user's number and nothing else, so nothing downstream could work out
+  the cardinality and skew a run was measured under by looking at it — the
+  caller says it here or the page has nothing to state. `Shape` lives in
+  `kestrel-core` rather than in `kestrel-arbs` for that: a plan is a core value,
+  and a leaf module cannot put a type of its own into one.
 
 ### Changed
 

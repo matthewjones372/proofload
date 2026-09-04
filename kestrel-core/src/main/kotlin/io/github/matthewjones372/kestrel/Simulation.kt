@@ -36,6 +36,14 @@ data class Arm(
      * arrivals to.
      */
     val thinkSeed: Long? = null,
+    /**
+     * What this arm's feeder made its data up from, where the caller said so.
+     *
+     * Empty is a run that declared nothing rather than a run that drew
+     * nothing: a feeder is a bare function, so nothing here can tell the two
+     * apart, and a comparison is told to treat the absence as no claim.
+     */
+    val drawn: List<Shape> = emptyList(),
 )
 
 /** The arms sent together, what they have to achieve and the sink they are drained into: a run, as one value. */
@@ -135,6 +143,7 @@ fun Simulation.plan(): Plan = Plan(
             pauses = arm.scenario.pauses,
             thinkTimes = arm.scenario.thinkTimes,
             thinkSeed = arm.thinkSeed,
+            drawn = arm.drawn,
         )
     },
     goals = goals,
@@ -186,6 +195,18 @@ fun Simulation.thinkingFrom(seed: Long): Simulation =
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })
+
+/**
+ * The same run, saying that its feeder made its data up in [shapes].
+ *
+ * A `Feeder` is a function of the user's number and nothing else, so a run
+ * cannot work out what its data was drawn from by looking: this is where a
+ * caller says it, beside `fedBy`, and it is what the page states and what a
+ * comparison refuses to reason across. Every arm of a mix carries it, as they
+ * carry the feeder.
+ */
+fun Simulation.drawing(vararg shapes: Shape): Simulation =
+    copy(arms = arms.map { it.copy(drawn = shapes.toList()) })
 
 /** Gatling's `setUp` / `inject` / `protocols`, in one call. */
 fun Scenario.at(rate: Rate, over: Duration): Simulation = Simulation(this, constantRate(rate, over))

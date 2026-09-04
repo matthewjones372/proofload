@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.arbs
 
+import io.github.matthewjones372.kestrel.Shape
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.doubles.shouldBeLessThan

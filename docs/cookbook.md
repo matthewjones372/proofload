@@ -2014,6 +2014,27 @@ Off Actions that writes nothing and answers `StepSummary.NotOnActions` rather
 than throwing. The same call runs on a laptop, and a load test that dies because
 it is not in CI is one people stop running locally.
 
+## Bound what a run on this machine may do
+
+A rate arrives from somewhere — a person, a script, or a plan file a program
+wrote. `kestrel.toml` beside the build says what this machine permits, and
+`preview` says what a plan would do before it does any of it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Allowance
+import io.github.matthewjones372.kestrel.Preview
+import io.github.matthewjones372.kestrel.preview
+
+when (val asked = checkout.at(50.perSecond, over = 1.minutes).preview(Allowance.fromFile())) {
+    is Preview.Allowed -> println("${asked.users} users to ${asked.hosts}")
+    is Preview.Refused -> println(asked.reason.described)
+}
+```
+
+`Kestrel().runWithin(allowance, plan)` returns `Ran.Refused` instead of
+departing. It is a fence rather than a sandbox, and
+[allowance.md](allowance.md) says where that stops.
+
 ## Do not gate a merge on latency
 
 On a shared runner, gate on failures and errors. Do not gate on latency.

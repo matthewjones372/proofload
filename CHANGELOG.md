@@ -183,6 +183,15 @@ enough to list, and long enough to matter.
   share it. Every recording path asks the recorder rather than keeping an
   origin of its own, so a transport built before the run can no longer count
   seconds from its own construction.
+- **`kestrel-arbs`** — data a run makes up rather than reads from a file, so a
+  thousand-row CSV cycled for a million users stops deciding the target's hit
+  rate. An `Arb<T>` answers `at(userNumber)` and nothing else: a pure function
+  over a mixing hash, so a run replays, user 8,412 is re-derivable, and fifty
+  thousand virtual threads share no source to contend on and allocate nothing
+  per draw. `oneOf` picks from a list, `map` puts the draw in the caller's own
+  keyspace, and `Shape` says what was drawn and from what seed. Core and the
+  JDK only — kotest's `Arb` leans towards edge cases because it is hunting
+  bugs, which is the wrong bias for traffic.
 
 ### Changed
 

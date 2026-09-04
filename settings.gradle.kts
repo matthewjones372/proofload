@@ -1,6 +1,7 @@
 rootProject.name = "kestrel"
 
 include(
+    "kestrel-arbs",
     "kestrel-baseline",
     "kestrel-core",
     "kestrel-engine",

@@ -209,7 +209,10 @@ enough to list, and long enough to matter.
   `kestrel-core` rather than in `kestrel-arbs` for that: a plan is a core value,
   and a leaf module cannot put a type of its own into one. A baseline keeps it
   at format version 9; a version 8 file reads as it always did and claims
-  nothing, since every stored baseline predates the field.
+  nothing, since every stored baseline predates the field. Two runs that both
+  named a shape and named different ones are refused rather than compared, and
+  the HTML page and the job summary state it beside the arrival process — a run
+  that named none says nothing and reads exactly as before.
 
 ### Changed
 

@@ -178,9 +178,27 @@ private fun RunResult.arrivalLine(): String? {
 
     val thinking = plan.thinking()
     val warmed = plan.warmed()
-    if (arrivals.count < 2L) return asked + thinking + warmed
+    val data = plan.drawnFrom()
+    if (arrivals.count < 2L) return asked + thinking + warmed + data
     return "$asked Measured ${arrivals.mean.report()} between departures, coefficient of variation " +
-        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}.$thinking$warmed"
+        "${String.format(Locale.ROOT, "%.2f", arrivals.cov)}.$thinking$warmed$data"
+}
+
+/**
+ * What the run's data was made up from, where it said so.
+ *
+ * A p99 measured over a million keys at skew 1.1 is a different number from the
+ * same run over a thousand cycled ones, and nothing else here says which. Empty
+ * where the run named nothing, as the warm-up sentence is: a feeder is a
+ * function of the user's number and nothing else, so silence is a run that
+ * declared none rather than a run that drew none.
+ *
+ * Once per generator: every arm of a mix carries the run's shapes, so the list
+ * as it stands would repeat them arm for arm.
+ */
+private fun Plan.drawnFrom(): String {
+    val shapes = drawn.distinct().ifEmpty { return "" }
+    return " Data: ${shapes.joinToString(separator = "; ") { it.toString().escapeMarkdown() }}."
 }
 
 /**

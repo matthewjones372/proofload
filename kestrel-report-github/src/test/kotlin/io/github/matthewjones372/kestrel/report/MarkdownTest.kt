@@ -19,6 +19,7 @@ import io.github.matthewjones372.kestrel.RunRecorder
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.Said
 import io.github.matthewjones372.kestrel.Second
+import io.github.matthewjones372.kestrel.Shape
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
 import io.github.matthewjones372.kestrel.WarmUp
@@ -437,6 +438,26 @@ class MarkdownTest {
             .let { it.copy(plan = it.plan.copy(warmUp = WarmUp(5.seconds))) }
 
         result.markdown() shouldContain "Warmed for 5.00s at 200/s, not counted."
+    }
+
+    @Test
+    fun `the summary says what the run's data was drawn from, once per generator`() {
+        val keys = Shape("zipf(keys=1000000, skew=1.1)", seed = 4L)
+        val ids = Shape("uuids()", seed = 5L)
+        val result = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+            .let { run ->
+                val arms = run.plan.arms.map { it.copy(drawn = listOf(keys, ids, keys)) }
+                run.copy(plan = run.plan.copy(arms = arms))
+            }
+
+        result.markdown() shouldContain "Data: zipf(keys=1000000, skew=1.1), seed 4; uuids(), seed 5."
+    }
+
+    @Test
+    fun `a summary of a run that named no generator says nothing about its data`() {
+        val result = ran(hold(200.perSecond, over = 10.seconds), Arrivals(2000L, 5.milliseconds, 0.0))
+
+        result.markdown() shouldNotContain "Data:"
     }
 
     @Test

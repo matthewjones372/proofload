@@ -736,10 +736,11 @@ checkout.at(50.perSecond, over = 1.minutes)
     .drawing(customerId.shape, basket.shape)
 ```
 
-The shapes travel with the result and into a baseline file, and a comparison
-refuses two runs that named different ones rather than reporting the cache hit
-rate one of them bought as a regression. A run that named none compares exactly
-as it did before — every baseline written so far has no shape in it, so the
+The shapes travel with the result, onto the report — `Data: zipf(keys=1000000,
+skew=1.1), seed 0.` beside the arrival process, on the HTML page and in the job
+summary — and into a baseline file. A comparison refuses two runs that named
+different ones rather than reporting the cache hit rate one of them bought as a
+regression. A run that named none compares exactly as it did before — every baseline written so far has no shape in it, so the
 strict reading would refuse them all. The cost of that is stated rather than
 hidden: moving a CSV-fed run onto a generator is a change no comparison flags.
 

@@ -20,6 +20,11 @@ tasks.test {
         .withPropertyName("theModuleLayoutAndItsDocumentation")
     systemProperty("kestrel.repoRoot", rootProject.projectDir.path)
 
+    // `LlmsTxtTest` reads the root file a model is handed and checks every
+    // coordinate, link and line of Kotlin in it against this build, so editing
+    // it re-runs the test rather than being told the task is up to date.
+    inputs.files(rootProject.file("llms.txt")).withPropertyName("theFileAModelIsHanded")
+
     // `smoke/` is a separate Gradle build, so this one has no project object to
     // ask what it depends on. `SmokeProjectTest` reads the two files instead.
     val settings = rootProject.layout.projectDirectory.file("settings.gradle.kts")

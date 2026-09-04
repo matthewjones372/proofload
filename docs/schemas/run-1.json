@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://matthewjones372.github.io/kestrel/schemas/run-1.json",
+  "title": "A Kestrel run",
+  "description": "What one finished run concluded. `additionalProperties` is false because this is the producer's contract: a field Kestrel emits and has not declared here is a build failure. It is not the reader's rule \u2014 a reader must ignore fields it does not know, so that a new optional key is not a breaking change. The identity a document carries is the `schema` string, not this URL: a hostname in every run's output is a hostname somebody has to keep alive.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "density",
+    "startedAt",
+    "durationUnit",
+    "verdict"
+  ],
+  "properties": {
+    "schema": {
+      "const": "kestrel/run/1",
+      "description": "The version of this document's shape."
+    },
+    "density": {
+      "enum": [
+        "summary",
+        "full"
+      ],
+      "description": "How much of the run this document carries."
+    },
+    "startedAt": {
+      "type": "string"
+    },
+    "durationUnit": {
+      "const": "nanoseconds",
+      "description": "Every duration in this document, including zero."
+    },
+    "precision": {
+      "type": "number"
+    },
+    "verdict": {
+      "enum": [
+        "behind",
+        "nothingAsked",
+        "missed",
+        "cannotTell",
+        "met"
+      ],
+      "description": "What the run concluded, ordered rather than scored. `behind` outranks a missed goal: a generator that lost its own schedule measured a queue it built, so the latencies are not the target's. `nothingAsked` is a run with no goals, which met nothing."
+    },
+    "remedy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "One sentence saying what to do, or null where there is nothing to do."
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scenario": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "plannedUsers": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kept": {
+          "type": "boolean"
+        },
+        "heldFor": {
+          "type": "null"
+        },
+        "lostGround": {
+          "type": "boolean"
+        },
+        "behindP99": {
+          "type": "integer"
+        },
+        "plannedInterval": {
+          "type": "integer"
+        },
+        "remedy": {
+          "type": "null"
+        }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "asked": {
+            "type": "string"
+          },
+          "met": {
+            "type": "boolean"
+          },
+          "measured": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "took": {
+                "type": "integer"
+              },
+              "percent": {
+                "type": "null"
+              },
+              "because": {
+                "type": "null"
+              }
+            }
+          },
+          "overBy": {
+            "type": "number"
+          },
+          "stage": {
+            "type": "null"
+          },
+          "cannotTell": {
+            "type": "null"
+          },
+          "remedy": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "steadyState": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tolerance": {
+          "type": "number"
+        },
+        "settledAfter": {
+          "type": "null"
+        },
+        "why": {
+          "type": "string"
+        }
+      }
+    },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observed": {
+          "type": "null"
+        },
+        "fromServiceTime": {
+          "type": "null"
+        },
+        "fromResponseTime": {
+          "type": "null"
+        },
+        "ratio": {
+          "type": "null"
+        },
+        "backlog": {
+          "type": "null"
+        },
+        "agrees": {
+          "type": "null"
+        },
+        "samples": {
+          "type": "null"
+        },
+        "because": {
+          "type": "string"
+        }
+      }
+    },
+    "probe": {
+      "type": "null"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "ok": {
+      "type": "integer"
+    },
+    "failed": {
+      "type": "integer"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "arrivals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "mean": {
+          "type": "integer"
+        },
+        "cov": {
+          "type": "number"
+        }
+      }
+    },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cores": {
+          "type": "integer"
+        },
+        "jdk": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        }
+      }
+    },
+    "behind": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "p50": {
+          "type": "integer"
+        },
+        "p95": {
+          "type": "integer"
+        },
+        "p99": {
+          "type": "integer"
+        },
+        "p999": {
+          "type": "null"
+        },
+        "max": {
+          "type": "integer"
+        }
+      }
+    },
+    "hiccups": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "p50": {
+          "type": "integer"
+        },
+        "p95": {
+          "type": "integer"
+        },
+        "p99": {
+          "type": "integer"
+        },
+        "p999": {
+          "type": "null"
+        },
+        "max": {
+          "type": "integer"
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "reached": {
+            "type": "integer"
+          },
+          "serviceTime": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "p50": {
+                "type": "integer"
+              },
+              "p95": {
+                "type": "integer"
+              },
+              "p99": {
+                "type": "integer"
+              },
+              "p999": {
+                "type": "null"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          },
+          "responseTime": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "p50": {
+                "type": "integer"
+              },
+              "p95": {
+                "type": "integer"
+              },
+              "p99": {
+                "type": "integer"
+              },
+              "p999": {
+                "type": "null"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          },
+          "ok": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "serviceTime": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "p50": {
+                    "type": "integer"
+                  },
+                  "p95": {
+                    "type": "integer"
+                  },
+                  "p99": {
+                    "type": "integer"
+                  },
+                  "p999": {
+                    "type": "null"
+                  },
+                  "max": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "responseTime": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "p50": {
+                    "type": "integer"
+                  },
+                  "p95": {
+                    "type": "integer"
+                  },
+                  "p99": {
+                    "type": "integer"
+                  },
+                  "p999": {
+                    "type": "null"
+                  },
+                  "max": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "failed": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "serviceTime": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "p50": {
+                    "type": "integer"
+                  },
+                  "p95": {
+                    "type": "integer"
+                  },
+                  "p99": {
+                    "type": "integer"
+                  },
+                  "p999": {
+                    "type": "null"
+                  },
+                  "max": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "responseTime": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "p50": {
+                    "type": "integer"
+                  },
+                  "p95": {
+                    "type": "integer"
+                  },
+                  "p99": {
+                    "type": "integer"
+                  },
+                  "p999": {
+                    "type": "null"
+                  },
+                  "max": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "array"
+    },
+    "latePerSecond": {
+      "type": "array"
+    }
+  }
+}

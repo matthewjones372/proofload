@@ -75,6 +75,12 @@ Every document names its schema in its first field, and a reader must ignore
 fields it does not know: a new optional key is not a breaking change, and the
 version only moves when an existing one changes meaning.
 
+The shape is written down in [docs/schemas/run-1.json](schemas/run-1.json), and
+both documents above are validated against it on every build. It forbids
+undeclared properties, which is the producer's half of the promise — a field
+Kestrel emits without declaring is a build failure. That is not the reader's
+rule, which stays "ignore what you do not know".
+
 **Why the rule above does not reach here.** The rule exists because a
 time-series backend strips the sentence off a number. `kestrel_behind_seconds`
 scraped into Prometheus and alerted on has lost "and therefore the tail below is

@@ -321,7 +321,11 @@ enough to list, and long enough to matter.
   verdict was refused rather than writing a second answer beside it. No remedy
   names a rate nothing measured — "try 38 a second" would be an estimate
   printed as advice. The summary carries the sentence once; `Density.Full`
-  repeats it per goal. Durations are the
+  repeats it per goal. The shape is written down in `docs/schemas/run-1.json`
+  and both densities are validated against it on every build, with undeclared
+  properties refused: emitting a field without declaring it fails the build,
+  while a reader is still told to ignore keys it does not know. Durations are
+  the
   nanoseconds the histogram reported: the document holds the measurement and
   the reader does the formatting. In `kestrel-export`, which stays core and the
   JDK only; the JSON the HTML report inlines is a separate document with a

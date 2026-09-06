@@ -135,11 +135,25 @@ class RunResultTest {
             plan = planAt(20.perSecond),
         )
 
-        withClue("the backlog is above the histogram's error bar on a 267 ms p99, so the footer says so") {
-            measured.fellBehind() shouldBe true
+        withClue("10.3 ms is under four percent of a 267 ms p99, which is not a tail worth distrusting") {
+            measured.fellBehind() shouldBe false
         }
         withClue("10.3 ms is a fifth of the 50 ms between departures, so the schedule was kept") {
             measured.lostGround() shouldBe false
+        }
+    }
+
+    @Test
+    fun `lateness that is a material share of the tail does void the run`() {
+        val measured = RunResult(
+            startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+            steps = mapOf("pay" to pay.copy(responseTime = timingOf(listOf(100.milliseconds)))),
+            behind = timingOf(listOf(20.milliseconds)),
+            plan = planAt(20.perSecond),
+        )
+
+        withClue("a fifth of the tail is the tool's queue showing in the target's numbers") {
+            measured.fellBehind() shouldBe true
         }
     }
 

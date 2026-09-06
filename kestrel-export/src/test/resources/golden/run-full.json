@@ -1,0 +1,171 @@
+{
+  "schema": "kestrel/run/1",
+  "density": "full",
+  "startedAt": "2026-09-02T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "verdict": "missed",
+  "remedy": "pay was slower than 200ms at p99. Look at pay's distribution and its failures before changing the load: a tail is usually one of the two.",
+  "plan": {
+    "arms": [
+      {
+        "scenario": "checkout",
+        "steps": [
+          "pay"
+        ],
+        "plannedUsers": 3000
+      }
+    ]
+  },
+  "schedule": {
+    "kept": true,
+    "heldFor": null,
+    "lostGround": false,
+    "behindP99": 120319,
+    "plannedInterval": 20000000,
+    "remedy": null
+  },
+  "goals": [
+    {
+      "asked": "pay p99 under 200ms",
+      "met": false,
+      "measured": {
+        "took": 901775359,
+        "percent": null,
+        "because": null
+      },
+      "overBy": 350.8876795,
+      "stage": null,
+      "cannotTell": null,
+      "remedy": "pay was slower than 200ms at p99. Look at pay's distribution and its failures before changing the load: a tail is usually one of the two."
+    }
+  ],
+  "steadyState": {
+    "tolerance": 0.125,
+    "settledAfter": null,
+    "why": "nothing was recorded second by second, so there was no shape to look at"
+  },
+  "concurrency": {
+    "observed": null,
+    "fromServiceTime": null,
+    "fromResponseTime": null,
+    "ratio": null,
+    "backlog": null,
+    "agrees": null,
+    "samples": null,
+    "because": "nothing was recorded second by second, so there is no window"
+  },
+  "probe": null,
+  "count": 7,
+  "ok": 4,
+  "failed": 3,
+  "failures": [
+    {
+      "reason": "status 503",
+      "count": 2
+    },
+    {
+      "reason": "ConnectException",
+      "count": 1
+    }
+  ],
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
+  "steps": [
+    {
+      "name": "pay",
+      "count": 7,
+      "failed": 3,
+      "p50": 21102591,
+      "p99": 901775359
+    }
+  ],
+  "machine": {
+    "cores": 4,
+    "jdk": "21.0.2+13",
+    "os": "Linux",
+    "arch": "aarch64"
+  },
+  "behind": {
+    "count": 3,
+    "p50": 120319,
+    "p95": 120319,
+    "p99": 120319,
+    "p999": null,
+    "max": 120319
+  },
+  "hiccups": {
+    "count": 2,
+    "p50": 4014079,
+    "p95": 4014079,
+    "p99": 4014079,
+    "p999": null,
+    "max": 4014079
+  },
+  "stepDetail": [
+    {
+      "name": "pay",
+      "count": 7,
+      "reached": 0,
+      "serviceTime": {
+        "count": 7,
+        "p50": 21102591,
+        "p95": 901775359,
+        "p99": 901775359,
+        "p999": null,
+        "max": 901775359
+      },
+      "responseTime": {
+        "count": 7,
+        "p50": 21102591,
+        "p95": 901775359,
+        "p99": 901775359,
+        "p999": null,
+        "max": 901775359
+      },
+      "ok": {
+        "count": 4,
+        "serviceTime": {
+          "count": 4,
+          "p50": 1105919,
+          "p95": 21102591,
+          "p99": 21102591,
+          "p999": null,
+          "max": 21102591
+        },
+        "responseTime": {
+          "count": 4,
+          "p50": 1155071,
+          "p95": 21102591,
+          "p99": 21102591,
+          "p999": null,
+          "max": 21102591
+        }
+      },
+      "failed": {
+        "count": 3,
+        "serviceTime": {
+          "count": 3,
+          "p50": 310378495,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        },
+        "responseTime": {
+          "count": 3,
+          "p50": 310378495,
+          "p95": 901775359,
+          "p99": 901775359,
+          "p999": null,
+          "max": 901775359
+        }
+      }
+    }
+  ],
+  "timeline": [],
+  "latePerSecond": []
+}

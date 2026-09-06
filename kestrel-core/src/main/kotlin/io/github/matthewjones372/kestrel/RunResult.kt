@@ -639,8 +639,27 @@ val RunResult.inFlight: Long get() = steps.values.sumOf { it.inFlight }
  */
 fun RunResult.fellBehind(): Boolean {
     val worst = steps.values.maxOfOrNull { it.responseTime.p99 } ?: return false
-    return behind.p99 > worst * Histogram.PRECISION
+    return behind.p99 > worst * MATERIAL
 }
+
+/**
+ * How much of a tail the injector's own lateness has to be before it is worth
+ * distrusting the tail.
+ *
+ * A judgement, and written here so it can be argued with. It was
+ * [Histogram.PRECISION] — a bucket width, which says how small a difference this
+ * tool can *see* and nothing at all about whether a difference matters. At
+ * 0.78% a run whose lateness was a flat five milliseconds against a 356 ms tail
+ * was called behind, while its own timeline was flat end to end, its concurrency
+ * matched Little's law and it never lost ground. A verdict that fires on
+ * one and a half percent is one people learn to route around, and this is the
+ * verdict the tool exists to deliver.
+ *
+ * A twentieth of the tail is a tail worth distrusting. Where a run measured a
+ * floor, [Floor] bounds this from below as well: lateness under what the machine
+ * can resolve is not evidence of anything.
+ */
+const val MATERIAL: Double = 0.05
 
 /**
  * How long the run kept the schedule it promised, before the first second

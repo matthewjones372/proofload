@@ -2,6 +2,8 @@ rootProject.name = "kestrel"
 
 include(
     "kestrel-baseline",
+    "kestrel-cli",
+    "kestrel-contract",
     "kestrel-core",
     "kestrel-engine",
     "kestrel-export",
@@ -12,6 +14,9 @@ include(
     "kestrel-kafka",
     "kestrel-kotest",
     "kestrel-otel",
+    "kestrel-openapi",
+    "kestrel-mcp",
+    "kestrel-plan",
     "kestrel-pelican",
     "kestrel-record",
     "kestrel-report-github",

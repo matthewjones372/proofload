@@ -20,6 +20,112 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+- **`benchmark`, the tool a request actually arrives as.** The rest of the MCP
+  table is a verb per step of Kestrel's own model — the shape a library has, not
+  the shape a question has. Nobody asks to validate a plan; they ask whether
+  their service holds up, and answering that took seven calls in an order the
+  caller had to infer. `benchmark` takes an OpenAPI document, a plan, or just a
+  base URL, and answers with the plan, what running it would send, and what one
+  request per step already found. It sends the smoke and no load: `run` still
+  does that, which makes the allowance's gate the only way through rather than a
+  step a caller remembers. A refused plan is still handed back, because a caller
+  told only that a host is barred cannot see what it was about to send there.
+  It also states what it is guessing and asks about it: a generated plan sends
+  one request a second and asserts a goal of one second, and handing that over as
+  a benchmark is a number nobody chose reported as though somebody had. The
+  questions are derived from the plan and the smoke rather than read off a list —
+  a credential is asked about because the target answered 401, paths because a
+  bare URL was all it was given — and a plan somebody wrote themselves is asked
+  nothing.
+- **Kestrel over MCP.** `kestrel-mcp` is a stdio server whose every tool is a
+  call `kestrel-cli` already makes, so what a program can do is what a person at
+  a terminal can do and there is no second behaviour to keep in step. The
+  framing is line-delimited JSON-RPC written here rather than taken from a
+  library — a notification is not answered, a method nobody serves is a JSON-RPC
+  error rather than a tool result, and an unreadable line does not stop the
+  server. `plan_schema` is the tool that makes the rest work: a caller who can
+  ask for the format writes a valid plan first time instead of a plausible one,
+  and a test parses both of the worked plans it hands back, because a schema
+  whose own examples do not parse is worse than no schema. Every tool's
+  description states what it sends before a caller has to find out.
+- **The MCP tools that send nothing.** `validate` parses a plan and resolves its
+  steps and goals; `preview` says what it would send and sends none of it,
+  refusing what the machine's `Allowance` refuses; `from_openapi` reads a
+  document and hands back a plan. Each refuses with the sentence the library
+  already writes — the line, and the keys that were allowed — because that
+  sentence is what a caller correcting itself acts on, and a stack trace buries
+  it. A test drives all three against a counting `HttpServer` and asserts it saw
+  nothing: a tool a caller is told is free has to be free.
+- **The MCP debug loop.** `smoke` sends one request per step and `trace` walks a
+  single user, both bounded by the plan's shape rather than its rate — a plan
+  asking for five thousand a second still sends one of each. A plan answering
+  400s produces a run full of them and the run says only that they were 400s;
+  these are how a caller finds out why without sending load to do it. The
+  machine's `Allowance` still refuses a host it does not permit, because that is
+  true whether a plan would send one request or a million.
+
+  The server also takes stdout for the protocol and points everything else at
+  stderr before a single tool runs. `trace` narrates to stdout and `Kestrel`'s
+  default progress prints to it too; either landing mid-message would end the
+  session. Cheaper than auditing every call for prints, and it stays true for
+  calls nobody has written yet.
+- **Running one over MCP.** `run` starts a run and returns a `runId` with what
+  it is about to send; `status` answers with how much of the window is left, or
+  with 0087's summary once it is done. Split because a ten-minute run inside one
+  tool call is a dead connection, a retry, and a second ten-minute run against
+  the same target. One at a time: a second `run` while one is sending is refused
+  by name rather than handed an id for a run that never started, which is
+  something a caller can poll forever. The `Allowance` refuses before the run
+  begins, so a refused run departs nothing. Runs are held in memory and lost
+  with the process — the honest scope for a server a client starts and stops.
+- **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
+  reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
+  named by the operation the contract named and keyed on the path template, so
+  `/orders/{id}` is one step rather than one per id. Read methods only unless
+  another is asked for — a generated `DELETE` loop against staging is somebody's
+  evening — and asking for a method the contract does not serve says which ones
+  it does. The load it generates is one a second for ten seconds, because a
+  generated artefact should never be the thing that hurt something; the caller
+  raises it on purpose, under an `Allowance`. Every step carries a goal against
+  a placeholder limit, so a generated plan cannot validate green while asserting
+  nothing. Its own module rather than a generator inside `kestrel-pelican`,
+  whose dependency test promises a consumer nothing but core and `pelican-core`.
+- **Values a contract already calls legal.** A generated step's path is filled
+  from the constraints on its own inputs — `between(1, 100)` is both the rule
+  that refuses a request and the schema's `minimum`/`maximum`, so a value drawn
+  inside it exercises the endpoint rather than its validation. Seeded, so the
+  same contract yields the same plan twice and a generated file is reviewable.
+  This is not a nicety: `{id}` in a path is read from the session key of that
+  name and fails the step when nothing is there, and a plan has no feeder to put
+  one there, so a generated step that kept its braces would fail every request
+  it made. One value, the same for every user — a generated plan is a smoke at
+  one a second, and per-user variety is what `kestrel emit` and a feeder are
+  for.
+- **A declared failure is not a defect.** `HttpAction.declaring(404, 409)` names
+  the statuses an endpoint is documented to answer with. They still fail the
+  step — a declared `404` did not do what was asked, and counting it a success
+  would inflate the goodput of a run against a service returning nothing but
+  declared errors — but they fail as `DeclaredStatus` rather than `HttpStatus`,
+  so a report separates a service working as written from one doing something
+  nobody wrote down. `plan/1` carries a `declared:` list per step, `kestrel
+  emit` prints it, and `planFrom` fills it from the endpoint's own `orFail`
+  declarations. Every other load tool has to be told this by hand, per step, and
+  mostly is not.
+- **A plan from an OpenAPI document.** `kestrel from-openapi orders.yaml` reads
+  a document and writes the plan it describes: a step per read operation, the
+  path filled from the schema its own parameters declare, and every other
+  documented status carried as `declared:`. `$ref` into `components` is
+  followed, and YAML 1.2 being a superset of JSON means a `.json` document reads
+  through the same parser. `Declaration.asYaml()` writes a plan back out, and
+  `readPlan(plan.asYaml())` is the same declaration — a generator whose output
+  nobody can read back is a generator nobody can use.
+
+  In `kestrel-openapi`, apart from `kestrel-contract`, so that reading a
+  document costs nothing from Pelican: most people with a document do not have a
+  Pelican service, and the command line would otherwise install `pelican-core`
+  for a feature that never touches it. The two share the half that turns a
+  schema's facets into a value the service will accept, because a `minimum` in a
+  document and a `between(1, 100)` on an input are the same constraint.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body
@@ -287,6 +393,83 @@ enough to list, and long enough to matter.
   `firstAnswer` is refused rather than reporting the round trip as a gap.
   `grpc-api` and `grpc-stub` only: no transport, no protobuf runtime, no
   coroutines, so the thread model stays the caller's.
+- **A run nothing fires by accident.** `Allowance` is what a machine permits a
+  run to do, read from a `kestrel.toml` a human commits: `hosts`, `maxRate`,
+  `maxDuration` and `maxRequests`, any of them absent meaning unbounded. A
+  hand-read `key = value` subset rather than a TOML dependency in core — four
+  keys do not earn one, and the thing this has to get right is the message,
+  which names the line. An absent file is `Allowance.none` and bounds nothing,
+  because a tool that fails closed on an unconfigured machine is one people
+  delete the configuration to use. `Refusal` is a sealed type carrying what was
+  asked beside what is allowed, so a refusal names the number to come down to.
+  It is a fence and not a sandbox, and the documentation says so. Not to be
+  confused with `Limits`, which is the other direction: what the injector ran
+  into while measuring.
+- **Answers before you fire.** `simulation.preview(allowance)` says what a plan
+  would do without doing any of it: users, window, the tallest rate it reaches,
+  the fewest requests it can send, and every host it would touch — or a
+  `Refusal` naming what was asked beside what is allowed. The peak is the
+  tallest stage rather than the mean, because a fence that averaged a ramp
+  would allow a peak nobody agreed to, and a closed run states no rate at all,
+  because its departures are the target's to decide. `requestsBounded` says
+  whether the count has an upper bound; a scenario looping on `during` or
+  `doIf` has none, and is refused against a request cap rather than allowed on
+  its lower bound — a fence that cannot count cannot fence. Hosts come through
+  a new `Targeted` interface core declares and `kestrel-http` answers, read off
+  the base URL rather than resolved: a DNS lookup would be the first thing this
+  tool did to a host nobody agreed it may touch. A step whose target cannot be
+  read is counted as `untargeted` rather than as safe.
+- **`runWithin`.** `kestrel.runWithin(allowance, simulation)` returns `Ran.Result`
+  or `Ran.Refused`, taking the same `preview` a caller can take itself, so what
+  a run is refused for is what it was shown. It sits beside `run` rather than
+  replacing it: a library call somebody wrote by hand is that person's decision,
+  and widening `run` to a sum type would delete a line from a published `.api`
+  file for every caller that never asked for a fence. A refused run departs
+  nothing, which the engine's own test proves by counting what the action was
+  asked to do rather than by believing the runner.
+- **A plan as a value.** `kestrel-plan` holds `Declaration` — a plan somebody
+  wrote down — and `asSimulation()`, which lowers it into the values the Kotlin
+  DSL already builds, so the two cannot describe different runs. Deliberately a
+  strict subset: everything needing a lambda, a capture or a condition is absent
+  rather than spelled with a string key, because a file that grew those would be
+  a worse language for the same job. Everything a plan can get wrong is refused
+  before anything departs — an unknown version, no steps, a verb nobody serves,
+  a goal naming a step that was never declared. The model and the lowering live
+  here rather than in core because lowering a path into a step needs an HTTP
+  client, and core declares an `Action` without a protocol type.
+- **A plan read from a file.** `readPlan(text)` and `readPlan(path)` read a
+  `plan/1` document, on snakeyaml-engine and nothing more: YAML 1.2 is a
+  superset of JSON, so one parser reads a plan a person hand-edited with
+  comments in it and a plan a program generated, and there is no second reader
+  to disagree with the first. It composes to nodes rather than loading to maps
+  so that every failure names the line it came from — an undeclared key is
+  refused with the line and the list of keys that were allowed, which is what a
+  caller working from the schema needs in order to fix it. `Rate.parse` moves
+  into core so that `"500/s"` in a plan and `"500/s"` in a `kestrel.toml` cannot
+  come to mean different things.
+- **A command line.** `kestrel validate <plan>`, `kestrel preview <plan>` and
+  `kestrel run <plan> [--json]`, in `kestrel-cli`. The exit code is the verdict
+  — 0 met, 1 missed a goal, 2 the generator fell behind, 3 refused by the
+  allowance, 4 the plan does not read — so a shell branches on it without a JSON
+  reader in sight, and `behind` outranks a missed goal there for the reason it
+  does everywhere else. Arguments parse into a `Command` value and every command
+  returns a `Finished` value, so what a shell would see is asserted without
+  spawning one. `--json` prints 0087's summary; without it the same verdict is
+  printed in words, off the same goals and the same remedy, so a caller cannot
+  be told two things. A plan that does not read exits with the parser's own
+  sentence — the line and what was allowed — rather than a stack trace.
+- **The way out of the file.** `kestrel emit <plan>` prints the plan as the
+  Kotlin it was equivalent to — step handles, the scenario, the profile and the
+  goals — so the moment a plan needs a capture, a condition or a body per user
+  the caller carries on in the language rather than asking for another key in
+  the file. That is what stops `plan/1` growing into a worse DSL. The emitted
+  source is checked in under `examples`, so the build compiles it and a test
+  keeps it identical to what the emitter writes: a golden can show the text is
+  unchanged and only a compiler can show it is Kotlin. `kestrel-record` emits
+  Kotlin too and is deliberately not reused — its output is a scenario where
+  this is a whole load test, and its header describes a browser recording with
+  the credentials stripped out, which would be a false account of where a plan
+  came from.
 - **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.
@@ -298,12 +481,38 @@ enough to list, and long enough to matter.
   `writeOpenMetrics(path)` write a Prometheus/OpenMetrics exposition, cumulative
   buckets on the histogram's own boundaries, no `_sum` because nothing here adds
   latencies up. `sendOtlp(endpoint)` pushes the same measurements as one delta
-  export and answers `Accepted` or `Refused` rather than throwing. The exports
-  carry measurements only — the plan, the goals, the verdicts, the intervals and
-  every "cannot tell" stay in the report. `kestrel-export` is core and the JDK
+  export and answers `Accepted` or `Refused` rather than throwing. These three
+  metrics formats carry measurements only — the plan, the goals, the verdicts,
+  the intervals and every "cannot tell" stay in the report, and in the run
+  document below, which is read whole rather than scraped. `kestrel-export` is core and the JDK
   only; `kestrel-otel` carries the SDK, over `java.net.http` rather than the
   OkHttp the exporter ships with. See
   [docs/exporting.md](docs/exporting.md).
+- **A result a machine can read.** `result.json(Density.Summary)` is the run's
+  answer in under two kilobytes — a one-word `verdict`, the plan, whether the
+  schedule held, every goal with the margin it missed by, the steady segment,
+  Little's law, the counts and the failures folded together by reason — and
+  `Density.Full` adds the per-step timings, the timeline and the run's own
+  lateness. `writeJson(path)` puts either on disk. Every document names its
+  schema, `kestrel/run/1`, in its first field, and a reader must ignore keys it
+  does not know, so a new optional field is not a break. The verdict is ordered
+  rather than scored: `behind` outranks a missed goal, because a run whose
+  generator lost its schedule did not measure the target, and a run carrying no
+  goals reads `nothingAsked` rather than `met`. Beside the verdict is a
+  `remedy`: `Verdict.remedy` and `RunResult.scheduleRemedy` in core say what to
+  do about a run in a sentence, taking `Tell.CannotTell.wouldChangeIt` where a
+  verdict was refused rather than writing a second answer beside it. No remedy
+  names a rate nothing measured — "try 38 a second" would be an estimate
+  printed as advice. The summary carries the sentence once; `Density.Full`
+  repeats it per goal. The shape is written down in `docs/schemas/run-1.json`
+  and both densities are validated against it on every build, with undeclared
+  properties refused: emitting a field without declaring it fails the build,
+  while a reader is still told to ignore keys it does not know. Durations are
+  the
+  nanoseconds the histogram reported: the document holds the measurement and
+  the reader does the formatting. In `kestrel-export`, which stays core and the
+  JDK only; the JSON the HTML report inlines is a separate document with a
+  separate job and is unchanged.
 - **A precision that travels with the number.** `Timing.precision` carries the
   width of the bucket its percentiles were read off, set at the freeze from the
   histogram behind it, and `List<Timing>.merged()` refuses across unlike widths

@@ -1,0 +1,17 @@
+# The plan the checked-in Kotlin beside this file was written from.
+kestrel:  plan/1
+baseUrl:  https://orders.internal
+scenario: checkout
+steps:
+  - name: browse
+    get:  /products
+  - name: place order
+    post: /orders
+    body: '{"cart":"1 anvil"}'
+    expecting: 201
+load:
+  rate: 50/s
+  over: 1m
+goals:
+  - step: place order
+    p99:  200ms

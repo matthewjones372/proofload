@@ -137,6 +137,7 @@ a note on why it is those lines and not the obvious alternative:
 
 | | |
 |---|---|
+| **[The vocabulary](docs/concepts.md)** | what a p99 is and why not an average; why lateness is a verdict; what Little's law catches |
 | **Shaping load** | flat, ramped and staged profiles; Poisson arrivals; think time; a mix of journeys in one run |
 | **Per-user data** | feeders as a function of the user number; CSV; a token refreshed off the measured path |
 | **The requests** | captures, body checks, bodies filled per user or streamed from disk, cookies across redirects, W3C trace ids, WebSocket and SSE streams, gRPC, Kafka, work that finishes on another topic |

@@ -29,6 +29,11 @@ test that quietly asserts about a step nobody runs.
 [know how long it will take](#know-how-long-it-will-take) ·
 [quieten the progress lines](#quieten-the-progress-lines)
 
+**The vocabulary** — [what a p99 is](concepts.md#what-a-percentile-is-and-why-not-an-average) ·
+[why being late is a verdict](concepts.md#why-being-late-matters-enough-to-be-a-verdict) ·
+[what Little's law catches](concepts.md#littles-law-and-what-it-catches) ·
+[the two clocks](concepts.md#two-clocks-and-why-one-of-them-is-the-honest-one)
+
 **Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
 [fifty users, looping](#fifty-users-looping) ·
 [stop sending on a metronome](#stop-sending-on-a-metronome) ·
@@ -399,7 +404,7 @@ What a closed run does not report, because it never promised a departure:
   order, and a population has none.
 
 What it does report is the rate it achieved, which is the only rate it has, and
-[Little's law](#read-only-the-part-that-settled) — which needs no promised
+[Little's law](concepts.md#littles-law-and-what-it-catches) — which needs no promised
 departure and is the one check a fixed population makes better than an open
 run, because the concurrency it predicts is a number you chose.
 
@@ -2013,6 +2018,27 @@ result.appendToStepSummary(comparison = comparison, floor = floor)
 Off Actions that writes nothing and answers `StepSummary.NotOnActions` rather
 than throwing. The same call runs on a laptop, and a load test that dies because
 it is not in CI is one people stop running locally.
+
+## Bound what a run on this machine may do
+
+A rate arrives from somewhere — a person, a script, or a plan file a program
+wrote. `kestrel.toml` beside the build says what this machine permits, and
+`preview` says what a plan would do before it does any of it:
+
+```kotlin
+import io.github.matthewjones372.kestrel.Allowance
+import io.github.matthewjones372.kestrel.Preview
+import io.github.matthewjones372.kestrel.preview
+
+when (val asked = checkout.at(50.perSecond, over = 1.minutes).preview(Allowance.fromFile())) {
+    is Preview.Allowed -> println("${asked.users} users to ${asked.hosts}")
+    is Preview.Refused -> println(asked.reason.described)
+}
+```
+
+`Kestrel().runWithin(allowance, plan)` returns `Ran.Refused` instead of
+departing. It is a fence rather than a sandbox, and
+[allowance.md](allowance.md) says where that stops.
 
 ## Do not gate a merge on latency
 

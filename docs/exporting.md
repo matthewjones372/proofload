@@ -7,14 +7,23 @@ backend or `HistogramLogAnalyzer` a team already runs, so the comparison that
 matters — what the client observed against what the server recorded — gets done
 by eye across two tabs.
 
+A fourth export answers a different question. The three metrics formats hand a
+run's numbers to a system that already draws them; the run document hands the
+run's *answer* to a program that has to decide something.
+
 Three exports fix that. All of them read a frozen `RunResult` after the run is
 over: nothing is scraped or pushed while requests are departing, because a
 serialisation pass and a reader's lock on the injector would move the thing
 being measured.
 
-## The one rule
+## The one rule, and where it stops
 
-**The export carries measurements. The report carries judgement.**
+**A metrics export carries measurements. Judgement travels only in a document
+somebody reads whole.**
+
+This governs the three exports below — the histogram log, the OpenMetrics
+exposition and the OTLP push. It does not govern the run document, which is a
+different shape with a different reader; the section on it says why.
 
 What travels: the latency histograms, per step, per outcome, per clock; the
 run's own lateness; what the injector's JVM stalled for; requests and failures
@@ -25,6 +34,60 @@ the steady segment, the machine's floor, and every "cannot tell". Those are
 readings *about* the numbers, and a series meaning "this might be noise" is a
 series that gets alerted on as though it were not. They stay on the page, where
 the sentence next to them survives.
+
+## The run itself, as a document
+
+```kotlin
+import io.github.matthewjones372.kestrel.export.Density
+import io.github.matthewjones372.kestrel.export.json
+import io.github.matthewjones372.kestrel.export.writeJson
+
+println(result.json(Density.Summary))            // the answer, under two kilobytes
+result.writeJson(Path.of("build/run.json"))      // Density.Full, every step
+```
+
+`Summary` is what the run concluded and nothing else: a one-word `verdict`, the
+plan, whether the schedule held, every goal with what it measured and the margin
+it missed by, the steady segment, [Little's law](concepts.md#littles-law-and-what-it-catches), the counts, and the failures
+folded together by reason. `Full` adds the per-step timings and the timeline.
+Durations are the nanoseconds the histogram reported — the document holds the
+measurement, the reader does the formatting.
+
+The `verdict` is ordered rather than scored, and the order is the claim:
+
+| | |
+|---|---|
+| `behind` | the generator lost its own schedule, so the numbers are not the target's — this outranks everything, including a goal that also missed |
+| `nothingAsked` | the run carried no goals. Not `met`: a run asked nothing met nothing |
+| `missed` | a goal missed, and `goals[].overBy` says by how much |
+| `cannotTell` | nothing missed, but something could not be judged at the resolution available; `cannotTell.wouldChangeIt` says what would fix that |
+| `met` | every goal asked was met |
+
+Beside the verdict is a **`remedy`**: one sentence saying what to do, chosen in
+the same order the verdict is — the schedule's if the generator lost it, then
+the first goal that definitely missed. A refused goal's remedy is its own
+`wouldChangeIt` rather than a second sentence written beside it. No remedy
+names a rate nobody measured: a suggested number would be an estimate printed
+as advice. `Density.Full` repeats the sentence on each goal; the summary states
+it once.
+
+Every document names its schema in its first field, and a reader must ignore
+fields it does not know: a new optional key is not a breaking change, and the
+version only moves when an existing one changes meaning.
+
+The shape is written down in [docs/schemas/run-1.json](schemas/run-1.json), and
+both documents above are validated against it on every build. It forbids
+undeclared properties, which is the producer's half of the promise — a field
+Kestrel emits without declaring is a build failure. That is not the reader's
+rule, which stays "ignore what you do not know".
+
+**Why the rule above does not reach here.** The rule exists because a
+time-series backend strips the sentence off a number. `kestrel_behind_seconds`
+scraped into Prometheus and alerted on has lost "and therefore the tail below is
+not the target's" — so the caveat has to stay where the caveat is readable. A
+document is read whole, by one reader, with the caveat in the field beside the
+number. Splitting the verdict away from it there would not be caution; it would
+just be a document that cannot answer the question it was fetched for.
 
 ## An HdrHistogram log
 

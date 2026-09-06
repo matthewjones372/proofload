@@ -1,0 +1,144 @@
+public final class io/github/matthewjones372/kestrel/plan/Declaration {
+	public static final field Companion Lio/github/matthewjones372/kestrel/plan/Declaration$Companion;
+	public static final field VERSION Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getGoals ()Ljava/util/List;
+	public final fun getLoad ()Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;
+	public final fun getScenario ()Ljava/lang/String;
+	public final fun getSteps ()Ljava/util/List;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/Declaration$Companion {
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclarationKt {
+	public static final fun asSimulation (Lio/github/matthewjones372/kestrel/plan/Declaration;)Lio/github/matthewjones372/kestrel/Simulation;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/plan/DeclaredGoal {
+	public abstract fun getStep ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredGoal$FailureRate : io/github/matthewjones372/kestrel/plan/DeclaredGoal {
+	public fun <init> (Ljava/lang/String;D)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()D
+	public final fun copy (Ljava/lang/String;D)Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$FailureRate;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$FailureRate;Ljava/lang/String;DILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$FailureRate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getStep ()Ljava/lang/String;
+	public final fun getUnder ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredGoal$Percentile : io/github/matthewjones372/kestrel/plan/DeclaredGoal {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-SxA4cEA (Ljava/lang/String;Ljava/lang/String;J)Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$Percentile;
+	public static synthetic fun copy-SxA4cEA$default (Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$Percentile;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredGoal$Percentile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPercentile ()Ljava/lang/String;
+	public fun getStep ()Ljava/lang/String;
+	public final fun getUnder-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/plan/DeclaredLoad {
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredLoad$Constant : io/github/matthewjones372/kestrel/plan/DeclaredLoad {
+	public synthetic fun <init> (DJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-JlLZVlU ()D
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-kfZY7pg (DJ)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Constant;
+	public static synthetic fun copy-kfZY7pg$default (Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Constant;DJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Constant;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOver-UwyO8pc ()J
+	public final fun getRate-JlLZVlU ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredLoad$Ramp : io/github/matthewjones372/kestrel/plan/DeclaredLoad {
+	public synthetic fun <init> (DDJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-JlLZVlU ()D
+	public final fun component2-JlLZVlU ()D
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-AlzetgU (DDJ)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Ramp;
+	public static synthetic fun copy-AlzetgU$default (Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Ramp;DDJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Ramp;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom-JlLZVlU ()D
+	public final fun getOver-UwyO8pc ()J
+	public final fun getTo-JlLZVlU ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredLoad$Staged : io/github/matthewjones372/kestrel/plan/DeclaredLoad {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Staged;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Staged;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredLoad$Staged;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStages ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredStep {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()I
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8-FghU774 ()Lkotlin/time/Duration;
+	public final fun copy-bAucREo (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;)Lio/github/matthewjones372/kestrel/plan/DeclaredStep;
+	public static synthetic fun copy-bAucREo$default (Lio/github/matthewjones372/kestrel/plan/DeclaredStep;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredStep;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getDeclared ()Ljava/util/List;
+	public final fun getExpecting ()I
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPauseAfter-FghU774 ()Lkotlin/time/Duration;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/EmittingKt {
+	public static final fun asKotlin (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/ReadingKt {
+	public static final fun readPlan (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static final fun readPlan (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/WritingKt {
+	public static final fun asYaml (Lio/github/matthewjones372/kestrel/plan/Declaration;)Ljava/lang/String;
+}
+

@@ -1,0 +1,9 @@
+# What a run on this machine may do. Widen it on purpose.
+#
+# Without this file nothing is bounded, which is fine for a person typing a
+# rate and less fine for a program writing one. See docs/allowance.md — and the
+# paragraph there about this being a fence rather than a sandbox.
+hosts       = ["localhost", "127.0.0.1"]
+maxRate     = "200/s"
+maxDuration = "2m"
+maxRequests = 100_000

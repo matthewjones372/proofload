@@ -158,9 +158,24 @@ internal fun Plan.unlike(other: Plan): List<String> {
         mine.keys.intersect(theirs.keys).flatMap { arm -> mine.getValue(arm).unlike(theirs.getValue(arm)) }
 }
 
+/**
+ * The same arm asked for differently, including the data it drew: a cardinality
+ * and a skew decide how much of the target's cache a run gets, so two runs
+ * drawn differently measured different work.
+ *
+ * The shapes are compared only where both sides named one. An absent shape is
+ * an arm that declared nothing rather than one that drew nothing — a `Feeder`
+ * is a function of the user's number and nothing else, and every baseline
+ * written before there was a field for this carries none — so the strict
+ * reading would refuse every stored comparison the day somebody adopts a
+ * generator. The cost of that, accepted: moving a CSV-fed run onto a generator
+ * is a change nothing here flags.
+ */
 private fun PlannedArm.unlike(other: PlannedArm): List<String> = listOfNotNull(
     "arm \"$scenario\" steps".difference(other.steps, steps),
     "arm \"$scenario\" profile".difference(other.profile, profile),
+    if (drawn.isEmpty() || other.drawn.isEmpty()) null
+    else "arm \"$scenario\" drawn data".difference(other.drawn, drawn),
 )
 
 private fun String.difference(before: Any?, now: Any?): String? =

@@ -14,7 +14,7 @@ one.
 
 ## [0.1.0] — unreleased
 
-The first release. Sixteen modules, published together and versioned together.
+The first release. Seventeen modules, published together and versioned together.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
@@ -300,6 +300,36 @@ enough to list, and long enough to matter.
   share it. Every recording path asks the recorder rather than keeping an
   origin of its own, so a transport built before the run can no longer count
   seconds from its own construction.
+- **`kestrel-arbs`** — data a run makes up rather than reads from a file, so a
+  thousand-row CSV cycled for a million users stops deciding the target's hit
+  rate. An `Arb<T>` answers `at(userNumber)` and nothing else: a pure function
+  over a mixing hash, so a run replays, user 8,412 is re-derivable, and fifty
+  thousand virtual threads share no source to contend on and allocate nothing
+  per draw. `oneOf` picks from a list, `map` puts the draw in the caller's own
+  keyspace, and `Shape` says what was drawn and from what seed. Core and the
+  JDK only — kotest's `Arb` leans towards edge cases because it is hunting
+  bugs, which is the wrong bias for traffic.
+- **Cardinality and skew, said out loud.** `zipf(keys, skew)` is the generator
+  the module was written for: the exponent is the parameter that moves a p99,
+  and until now nothing in the tool named it. It answers a rank rather than a
+  key, so nothing has guessed the target's id scheme, and it is sampled by
+  rejection-inversion rather than off a cumulative table — a million keys cost
+  no table at all. `uniform` is the flat keyspace beside it, `digits` and
+  `uuids` are ids of a fixed shape, and `weighted` is a traffic mix stated as
+  proportions.
+- **A run says what its data was made up from.** `Simulation.drawing(shapes)`
+  puts a generator's `Shape` on every arm, beside `fedBy`, and `plan()` carries
+  it into `PlannedArm.drawn` and out with the result. A `Feeder` is a function
+  of the user's number and nothing else, so nothing downstream could work out
+  the cardinality and skew a run was measured under by looking at it — the
+  caller says it here or the page has nothing to state. `Shape` lives in
+  `kestrel-core` rather than in `kestrel-arbs` for that: a plan is a core value,
+  and a leaf module cannot put a type of its own into one. A baseline keeps it
+  at format version 9; a version 8 file reads as it always did and claims
+  nothing, since every stored baseline predates the field. Two runs that both
+  named a shape and named different ones are refused rather than compared, and
+  the HTML page and the job summary state it beside the arrival process — a run
+  that named none says nothing and reads exactly as before.
 
 ### Changed
 

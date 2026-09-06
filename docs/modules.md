@@ -17,6 +17,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-java` | the same values built from Java: static factories over `Rate`, `StepName` and `Share`, a builder where Kotlin has a lambda, and `java.time.Duration` throughout | core, engine, http |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
+| `kestrel-arbs` | generators shaped like traffic — cardinality and skew, as a function of the user's number | core |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
 | `kestrel-export` | a run's measurements in the formats other tools already read | core |
 | `kestrel-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
@@ -67,6 +68,7 @@ dependencies {
 
     // As you need them.
     implementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-arbs:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
@@ -95,6 +97,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-java` | [NoThirdPartyDependenciesTest](../kestrel-java/src/test/kotlin/io/github/matthewjones372/kestrel/java/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
+| `kestrel-arbs` | [NoThirdPartyDependenciesTest](../kestrel-arbs/src/test/kotlin/io/github/matthewjones372/kestrel/arbs/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |
 | `kestrel-export` | [NoThirdPartyDependenciesTest](../kestrel-export/src/test/kotlin/io/github/matthewjones372/kestrel/export/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-plan` | [NoThirdPartyDependenciesTest](../kestrel-plan/src/test/kotlin/io/github/matthewjones372/kestrel/plan/NoThirdPartyDependenciesTest.kt) |

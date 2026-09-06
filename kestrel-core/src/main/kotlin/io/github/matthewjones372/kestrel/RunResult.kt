@@ -400,6 +400,8 @@ data class PlannedArm(
     val thinkTimes: List<ThinkTime> = emptyList(),
     /** What its drawn waits came from, where it draws any. */
     val thinkSeed: Long? = null,
+    /** What its feeder made its data up from, where the run said so. */
+    val drawn: List<Shape> = emptyList(),
 ) {
 
     val plannedUsers: Long get() = profile?.userCount() ?: 0L
@@ -437,6 +439,9 @@ data class Plan(
 
     /** The first arm's rate line, likewise. */
     val profile: InjectionProfile? get() = arms.first().profile
+
+    /** Every shape the run said it drew its data from, every arm counted. */
+    val drawn: List<Shape> get() = arms.flatMap { it.drawn }
 
     val plannedUsers: Long get() = arms.sumOf { it.plannedUsers }
 

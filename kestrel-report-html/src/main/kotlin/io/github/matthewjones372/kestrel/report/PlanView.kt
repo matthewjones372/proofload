@@ -22,7 +22,7 @@ internal fun RunResult.planLines(): List<String> {
             "${"user".plural(plan.plannedUsers)}, ${plan.plannedRequests.grouped()} " +
             "${"request".plural(plan.plannedRequests)}.</p>",
         """    <p class="arrivals">${plan.arrivalProcess()}${arrivals.achieved()}${plan.warmed()}</p>""",
-    ) + plan.thinkingLines() + listOf("""    <p class="note">${plan.rateMeans()}</p>""") +
+    ) + plan.thinkingLines() + plan.drawnLines() + listOf("""    <p class="note">${plan.rateMeans()}</p>""") +
         mixLines() + plan.shapeCharts() + listOf("  </section>")
 }
 
@@ -57,6 +57,24 @@ private fun Plan.thinkingLines(): List<String> {
         " Drawn from ${if (drawn.size == 1) "seed" else "seeds"} ${drawn.joinToString(", ")}."
     }
     return listOf("""    <p class="note">Think time: $described.$from</p>""")
+}
+
+/**
+ * What the run's data was made up from, where it said so.
+ *
+ * A p99 measured over a million keys at skew 1.1 is a different number from the
+ * same run over a thousand cycled ones, and nothing else on the page says
+ * which. Absent where the run named nothing, as the warm-up line is: a feeder
+ * is a function of the user's number and nothing else, so silence here is a run
+ * that declared none rather than a run that drew none.
+ *
+ * Once per generator: every arm of a mix carries the run's shapes, so the
+ * undistincted list would repeat them arm for arm.
+ */
+private fun Plan.drawnLines(): List<String> {
+    val shapes = drawn.distinct().ifEmpty { return emptyList() }
+    val described = shapes.joinToString(separator = "; ") { it.toString().escapedForHtml() }
+    return listOf("""    <p class="note">Data: $described.</p>""")
 }
 
 private fun ThinkTime.described(): String = when (this) {

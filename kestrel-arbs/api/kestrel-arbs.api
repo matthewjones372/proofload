@@ -1,0 +1,28 @@
+public abstract interface class io/github/matthewjones372/kestrel/arbs/Arb {
+	public abstract fun at (J)Ljava/lang/Object;
+	public abstract fun getShape ()Lio/github/matthewjones372/kestrel/Shape;
+}
+
+public final class io/github/matthewjones372/kestrel/arbs/ArbKt {
+	public static final fun map (Lio/github/matthewjones372/kestrel/arbs/Arb;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun oneOf (Ljava/util/List;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun oneOf ([Ljava/lang/Object;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun oneOf$default (Ljava/util/List;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun oneOf$default ([Ljava/lang/Object;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+}
+
+public final class io/github/matthewjones372/kestrel/arbs/ShapesKt {
+	public static final fun digits (IJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun digits$default (IJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun uniform (JJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun uniform$default (JJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun uuids (J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun uuids$default (JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun weighted (Ljava/util/List;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun weighted ([Lkotlin/Pair;J)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun weighted$default (Ljava/util/List;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun weighted$default ([Lkotlin/Pair;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static final fun zipf (JDJ)Lio/github/matthewjones372/kestrel/arbs/Arb;
+	public static synthetic fun zipf$default (JDJILjava/lang/Object;)Lio/github/matthewjones372/kestrel/arbs/Arb;
+}
+

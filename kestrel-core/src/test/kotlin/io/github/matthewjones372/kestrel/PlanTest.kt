@@ -120,4 +120,21 @@ class PlanTest {
         result.plan.plannedRequests shouldBe 4L
         result.count shouldBe 0L
     }
+
+    @Test
+    fun `the shapes a run drew its data from reach the plan, arm by arm and all together`() {
+        val keys = Shape("zipf(keys=1000000, skew=1.1)", seed = 4L)
+        val ids = Shape("uuids()", seed = 5L)
+        val mixed = checkout.at(50.perSecond, over = 1.minutes) + browsing.at(10.perSecond, over = 1.minutes)
+
+        val plan = mixed.drawing(keys, ids).plan()
+
+        plan.arms.map { it.drawn } shouldBe listOf(listOf(keys, ids), listOf(keys, ids))
+        plan.drawn shouldBe listOf(keys, ids, keys, ids)
+    }
+
+    @Test
+    fun `a plan for a run that drew nothing claims nothing`() {
+        checkout.at(50.perSecond, over = 1.minutes).plan().drawn.shouldBeEmpty()
+    }
 }

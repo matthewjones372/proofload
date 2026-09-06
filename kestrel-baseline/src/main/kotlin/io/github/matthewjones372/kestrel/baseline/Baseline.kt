@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.Plan
 import io.github.matthewjones372.kestrel.PlannedArm
 import io.github.matthewjones372.kestrel.Probe
 import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.kestrel.Shape
 import io.github.matthewjones372.kestrel.Shard
 import io.github.matthewjones372.kestrel.StepStats
 import io.github.matthewjones372.kestrel.Timing
@@ -86,6 +87,10 @@ private fun Plan.lines(): List<String> =
         // Absent where nothing was warmed, as the probe line is.
         warmUp?.let { listOf("warmup\t${it.over.inWholeNanoseconds}") }.orEmpty() +
         steps.map { "planned\t${it.escaped()}" } +
+        // Absent where the run declared none, which a version 8 file could not
+        // do either — so a stored baseline and a run that named no generator
+        // read the same, and the comparison treats both as no claim.
+        drawn.map { "drawn\t${it.description.escaped()}\t${it.seed}" } +
         profile.postfix().map { "profile\t$it" }
 
 /**
@@ -233,10 +238,17 @@ private fun List<String>.asPlan(): Plan = Plan(
             scenario = first { it.startsWith("plan$SEPARATOR") }.split(SEPARATOR)[1].unescaped(),
             steps = filter { it.startsWith("planned$SEPARATOR") }.map { it.split(SEPARATOR)[1].unescaped() },
             profile = filter { it.startsWith("profile$SEPARATOR") }.map { it.split(SEPARATOR) }.asProfile(),
+            drawn = asDrawn(),
         ),
     ),
     warmUp = asWarmUp(),
 )
+
+/** Empty in a version 8 file, which had no field for it, and in any run that named no generator. */
+private fun List<String>.asDrawn(): List<Shape> =
+    filter { it.startsWith("drawn$SEPARATOR") }
+        .map { it.split(SEPARATOR) }
+        .map { (_, description, seed) -> Shape(description.unescaped(), seed.toLong()) }
 
 /** Absent in a version 4 file, and in any run that warmed nothing. */
 private fun List<String>.asWarmUp(): WarmUp? =
@@ -345,15 +357,17 @@ private fun String.unescaped(): String = replace("\\t", "\t").replace("\\n", "\n
 private val SIDES = setOf("ok-service", "ok-response", "failed-service", "failed-response")
 
 private const val MARKER = "kestrel-baseline"
-private const val VERSION = "8"
+private const val VERSION = "9"
 
 // Each older version is this one missing a line, so a file written before
 // there was one still answers every question a comparison asks of it except
 // the one that line carries: 3 has no probe, 4 no warm-up, 5 no lateness,
 // stalls or shard, 6 no closed population — which nothing could write, since
 // there was no closed model to write one from — and 7 no hold on its shard
-// line, so a merge of files that old cannot see a clock that disagreed.
-private val READABLE = listOf("3", "4", "5", "6", "7", VERSION)
+// line, so a merge of files that old cannot see a clock that disagreed, and 8
+// no shape, so a file that old says nothing about the cardinality and skew its
+// data was drawn at rather than saying it drew from nothing.
+private val READABLE = listOf("3", "4", "5", "6", "7", "8", VERSION)
 private const val SEPARATOR = "\t"
 private const val HALF = 0.5
 private const val NINETY_FIVE = 0.95

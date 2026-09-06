@@ -48,7 +48,7 @@ result.writeJson(Path.of("build/run.json"))      // Density.Full, every step
 
 `Summary` is what the run concluded and nothing else: a one-word `verdict`, the
 plan, whether the schedule held, every goal with what it measured and the margin
-it missed by, the steady segment, Little's law, the counts, and the failures
+it missed by, the steady segment, [Little's law](concepts.md#littles-law-and-what-it-catches), the counts, and the failures
 folded together by reason. `Full` adds the per-step timings and the timeline.
 Durations are the nanoseconds the histogram reported — the document holds the
 measurement, the reader does the formatting.

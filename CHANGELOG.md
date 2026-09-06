@@ -333,6 +333,23 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **An answer on another topic, declared beside the step it answers.** A plan
+  step carrying `completes`, `on`, `by` and `within` is the other half of the
+  produce step it names: what it records is the round trip, as its own row
+  rather than folded into the publish. `within` has no default, because a run
+  that waits forever for an answer that never comes reports no failure and no
+  number. A plan declaring two answers is refused naming both — a run is
+  drained into one sink — and a `completes` naming a step nobody produces is
+  refused before anything is built.
+
+  The correlation is the user's number, which is unique per departure in an open
+  model and is the only value a plan has without a lambda; the lowering supplies
+  the feeder that puts it there. `Lowering` accordingly returns a `Lowered`
+  rather than a list of steps: a step answered somewhere else needs a sink and a
+  value per departure, and both belong to the run rather than to a position in
+  the scenario. `emit --kotlin` prints the `emit`/`completing` pair, with the
+  correlation header on both topics.
+
 - **`kestrel-plan-kafka`, the module that lowers a produce step.** `KafkaSteps`
   is the `Lowering` `asSimulation` wants for a plan with topics in it, and it
   builds the step through `kestrel-kafka`'s own DSL rather than assembling one —

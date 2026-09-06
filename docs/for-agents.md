@@ -1548,6 +1548,14 @@ class DeclaredLoad.Staged : DeclaredLoad
 interface DeclaredStep
     val name: String
     val pauseAfter: Duration
+class DeclaredStep.Completes : DeclaredStep
+    val by: String
+    val completes: String
+    val group: String
+    val name: String
+    val on: String
+    val pauseAfter: Duration
+    val within: Long
 class DeclaredStep.Produce : DeclaredStep
     val body: String
     val key: String
@@ -1566,8 +1574,14 @@ class DeclaredStep.Request : DeclaredStep
     val pauseAfter: Duration
 top-level in EmittingKt
     fun asKotlin(Declaration, String, String): String
+class Lowered
+    constructor()
+    constructor(List, Feeder, Completing)
+    val completing: Completing
+    val feeder: Feeder
+    val steps: List
 interface Lowering
-    fun lower(DeclaredStep, Declaration): List
+    fun lower(DeclaredStep, Declaration): Lowered
 top-level in ReadingKt
     fun readPlan(String): Declaration
     fun readPlan(Path): Declaration
@@ -1580,8 +1594,8 @@ top-level in WritingKt
 ```text
 class KafkaSteps : Lowering
     constructor()
-    constructor(Kafka)
-    fun lower(DeclaredStep, Declaration): List
+    constructor(Kafka, Consumer)
+    fun lower(DeclaredStep, Declaration): Lowered
 ```
 
 ### `io.github.matthewjones372:kestrel-record`

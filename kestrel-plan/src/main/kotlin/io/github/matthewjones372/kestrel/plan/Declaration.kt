@@ -1,5 +1,8 @@
 package io.github.matthewjones372.kestrel.plan
 
+import io.github.matthewjones372.kestrel.Arm
+import io.github.matthewjones372.kestrel.Completing
+import io.github.matthewjones372.kestrel.Feeder
 import io.github.matthewjones372.kestrel.Goal
 import io.github.matthewjones372.kestrel.InjectionProfile
 import io.github.matthewjones372.kestrel.Rate
@@ -17,6 +20,7 @@ import io.github.matthewjones372.kestrel.p95
 import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.p999
 import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.kestrel.plus
 import kotlin.time.Duration
 
 /**
@@ -97,6 +101,29 @@ sealed interface DeclaredStep {
         val settings: Map<String, String> = emptyMap(),
         override val pauseAfter: Duration? = null,
     ) : DeclaredStep
+
+    /**
+     * The answer to a [Produce] step, arriving somewhere else.
+     *
+     * What this records is the round trip: the record left under [completes]
+     * and came back on [on], matched by the id both carry in the [by] header.
+     * That is the number anybody benchmarking a queue is asking for, and it is
+     * a row of its own rather than folded into the publish — folding them would
+     * report a round trip as though it were a write.
+     *
+     * [within] has no default. A run that waits forever for an answer that
+     * never comes reports no failure and no number, and a wait chosen here
+     * would decide for the caller whether a record was lost or merely late.
+     */
+    data class Completes(
+        override val name: String,
+        val completes: String,
+        val on: String,
+        val by: String,
+        val within: Duration,
+        val group: String? = null,
+        override val pauseAfter: Duration? = null,
+    ) : DeclaredStep
 }
 
 /**
@@ -109,9 +136,26 @@ sealed interface DeclaredStep {
  */
 fun interface Lowering {
 
-    /** The steps [step] becomes, or null where this does not know that step. */
-    fun lower(step: DeclaredStep, plan: Declaration): List<Step>?
+    /** What [step] becomes, or null where this does not know that step. */
+    fun lower(step: DeclaredStep, plan: Declaration): Lowered?
 }
+
+/**
+ * What one declared step becomes.
+ *
+ * More than a list of steps, because a step whose answer arrives somewhere else
+ * is not only a step: it needs a sink the run is drained into, and a value per
+ * departure to match an answer back to the record that asked for it. Both
+ * belong to the run rather than to a position in the scenario, so they are
+ * carried out here rather than smuggled into a step.
+ */
+data class Lowered(
+    val steps: List<Step> = emptyList(),
+    /** What each user starts with, where lowering needs a value per departure. */
+    val feeder: Feeder? = null,
+    /** The sink the run is drained into, where this step is answered elsewhere. */
+    val completing: Completing? = null,
+)
 
 /** The shape of the load, in the three forms a file can state without a lambda. */
 sealed interface DeclaredLoad {
@@ -163,43 +207,77 @@ fun Declaration.asSimulation(lowerings: List<Lowering> = emptyList()): Simulatio
             "a goal names the step `$named`, which is not one of ${declared.joinToString { "`$it`" }}"
         }
     }
+    steps.filterIsInstance<DeclaredStep.Completes>().forEach { answer ->
+        require(steps.any { it is DeclaredStep.Produce && it.name == answer.completes }) {
+            "the step `${answer.name}` completes `${answer.completes}`, which is not a produce step in this plan"
+        }
+    }
 
     val api = baseUrl?.let { http.baseUrl(it) }
+    val lowered = steps.map { it.lower(this, api, lowerings) }
     return Simulation(
-        scenario = Scenario(scenario, steps.flatMap { it.asSteps(this, api, lowerings) }),
-        profile = load.asProfile(),
+        arms = listOf(
+            Arm(
+                scenario = Scenario(scenario, lowered.flatMap { it.steps }),
+                profile = load.asProfile(),
+                feeder = lowered.mapNotNull { it.feeder }.fold(Feeder.empty) { all, next -> all + next },
+            ),
+        ),
         goals = goals.map { it.asGoal() },
+        completing = lowered.sinks(),
     )
 }
 
 /**
- * The steps one declared step becomes: the one this module knows, or whatever a
- * caller's [Lowering] makes of it.
+ * The one sink this run is drained into.
+ *
+ * A run has a single [Completing], so a plan declaring two answers is refused
+ * by name rather than quietly measuring one of them: two sinks would need two
+ * drains and a departure could be answered by either.
+ */
+private fun List<Lowered>.sinks(): Completing? {
+    val drained = mapNotNull { it.completing }
+    require(drained.size <= 1) {
+        "a run is drained into one sink, and this plan declares " +
+            drained.joinToString { "`${it.step}`" }
+    }
+    return drained.firstOrNull()
+}
+
+/**
+ * What one declared step becomes: the request this module knows, or whatever a
+ * caller's [Lowering] makes of the rest.
  *
  * The lowerings are asked in the order they were given, and the first that
  * answers wins, so a caller can replace a lowering by putting theirs in front
  * rather than by there being a registry to unregister from.
  */
-private fun DeclaredStep.asSteps(plan: Declaration, api: Http?, lowerings: List<Lowering>): List<Step> {
+private fun DeclaredStep.lower(plan: Declaration, api: Http?, lowerings: List<Lowering>): Lowered {
     val sent = when (this) {
         is DeclaredStep.Request -> {
             requireNotNull(api) {
                 "the step `$name` sends `${method.lowercase()}: $path`, and the plan names no baseUrl"
             }
-            listOf(Step.Exec(name, asAction(api)))
+            Lowered(steps = listOf(Step.Exec(name, asAction(api))))
         }
 
-        is DeclaredStep.Produce -> {
-            requireNotNull(plan.brokers) { "the step `$name` produces to `$topic`, and the plan names no brokers" }
-            lowerings.firstNotNullOfOrNull { it.lower(this, plan) }
-                ?: throw IllegalArgumentException(
-                    "nothing here lowers the produce step `$name`: " +
-                        "add `kestrel-plan-kafka` and pass its lowering to asSimulation",
-                )
-        }
+        is DeclaredStep.Produce -> plan.lowered(this, lowerings, "produces to `$topic`")
+
+        is DeclaredStep.Completes -> plan.lowered(this, lowerings, "answers `$completes` on `$on`")
     }
 
-    return sent + listOfNotNull(pauseAfter?.let { Step.Pause(ThinkTime.Constant(it)) })
+    val pause = pauseAfter?.let { Step.Pause(ThinkTime.Constant(it)) } ?: return sent
+    return sent.copy(steps = sent.steps + pause)
+}
+
+/** The first lowering that knows [step], or a refusal naming the module that supplies one. */
+private fun Declaration.lowered(step: DeclaredStep, lowerings: List<Lowering>, what: String): Lowered {
+    requireNotNull(brokers) { "the step `${step.name}` $what, and the plan names no brokers" }
+    return lowerings.firstNotNullOfOrNull { it.lower(step, this) }
+        ?: throw IllegalArgumentException(
+            "nothing here lowers the step `${step.name}`, which $what: " +
+                "add `kestrel-plan-kafka` and pass its lowering to asSimulation",
+        )
 }
 
 private fun DeclaredStep.Request.asAction(api: Http): HttpAction {

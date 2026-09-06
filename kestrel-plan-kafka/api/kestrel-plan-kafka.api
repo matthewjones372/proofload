@@ -1,7 +1,7 @@
 public final class io/github/matthewjones372/kestrel/plan/kafka/KafkaSteps : io/github/matthewjones372/kestrel/plan/Lowering {
 	public fun <init> ()V
-	public fun <init> (Lio/github/matthewjones372/kestrel/kafka/Kafka;)V
-	public synthetic fun <init> (Lio/github/matthewjones372/kestrel/kafka/Kafka;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun lower (Lio/github/matthewjones372/kestrel/plan/DeclaredStep;Lio/github/matthewjones372/kestrel/plan/Declaration;)Ljava/util/List;
+	public fun <init> (Lio/github/matthewjones372/kestrel/kafka/Kafka;Lorg/apache/kafka/clients/consumer/Consumer;)V
+	public synthetic fun <init> (Lio/github/matthewjones372/kestrel/kafka/Kafka;Lorg/apache/kafka/clients/consumer/Consumer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun lower (Lio/github/matthewjones372/kestrel/plan/DeclaredStep;Lio/github/matthewjones372/kestrel/plan/Declaration;)Lio/github/matthewjones372/kestrel/plan/Lowered;
 }
 

@@ -6,6 +6,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The emitted source has to compile, which a golden cannot prove. The proof is
@@ -82,6 +83,38 @@ class EmittingTest {
             withClue("a plan of nothing but topics names no HTTP client and imports none") {
                 emitted shouldNotContain "http.baseUrl"
                 emitted shouldNotContain "import io.github.matthewjones372.kestrel.http.http"
+            }
+        }
+    }
+
+    @Test
+    fun `an answered produce step emits the emit-completing pair, not two unrelated steps`() {
+        val emitted = Declaration(
+            version = Declaration.VERSION,
+            brokers = "localhost:9092",
+            scenario = "orders",
+            steps = listOf(
+                DeclaredStep.Produce(name = "place order", topic = "orders", body = "{}"),
+                DeclaredStep.Completes(
+                    name = "confirmed",
+                    completes = "place order",
+                    on = "order-confirmations",
+                    by = "correlation-id",
+                    within = 30.seconds,
+                ),
+            ),
+            load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+        ).asKotlin(packageName = "io.github.matthewjones372.kestrel.examples", from = "orders.yaml")
+
+        withClue(emitted) {
+            emitted shouldContain """.correlatedBy(Header("correlation-id"))"""
+            emitted shouldContain "emit(placeOrder, ordersTopic"
+            emitted shouldContain "keyedBy = byUser"
+            emitted shouldContain ".completing(confirmed, from = orderConfirmationsTopic.completions()"
+            emitted shouldContain "drainingFor = 30.seconds"
+            withClue("the answer is drained by the run, so it is not a second send inside the scenario") {
+                emitted shouldNotContain "produce(confirmed"
+                emitted shouldNotContain "exec(confirmed"
             }
         }
     }

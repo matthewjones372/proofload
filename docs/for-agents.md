@@ -1444,6 +1444,7 @@ class NothingToSend : Reason
     val described: String
 top-level in ProduceKt
     fun emit(ScenarioBuilder, String, Topic, Correlation)
+    fun produce(ScenarioBuilder, String, Topic)
 class Topic
     fun correlatedBy(String): Topic
     val name: String
@@ -1511,8 +1512,9 @@ class Status : Reason
 ```text
 class Declaration
     val VERSION: String
-    constructor(String, String, String, List, DeclaredLoad, List)
+    constructor(String, String, String, String, List, DeclaredLoad, List)
     val baseUrl: String
+    val brokers: String
     val goals: List
     val load: DeclaredLoad
     val scenario: String
@@ -1520,7 +1522,8 @@ class Declaration
     val version: String
 class Declaration.Companion
 top-level in DeclarationKt
-    fun asSimulation(Declaration): Simulation
+    fun asSimulation(Declaration, List): Simulation
+    fun requests(Declaration): List
 interface DeclaredGoal
     val step: String
 class DeclaredGoal.FailureRate : DeclaredGoal
@@ -1542,7 +1545,17 @@ class DeclaredLoad.Ramp : DeclaredLoad
 class DeclaredLoad.Staged : DeclaredLoad
     constructor(List)
     val stages: List
-class DeclaredStep
+interface DeclaredStep
+    val name: String
+    val pauseAfter: Duration
+class DeclaredStep.Produce : DeclaredStep
+    val body: String
+    val key: String
+    val name: String
+    val pauseAfter: Duration
+    val settings: Map
+    val topic: String
+class DeclaredStep.Request : DeclaredStep
     val body: String
     val declared: List
     val expecting: Int
@@ -1553,6 +1566,8 @@ class DeclaredStep
     val pauseAfter: Duration
 top-level in EmittingKt
     fun asKotlin(Declaration, String, String): String
+interface Lowering
+    fun lower(DeclaredStep, Declaration): List
 top-level in ReadingKt
     fun readPlan(String): Declaration
     fun readPlan(Path): Declaration

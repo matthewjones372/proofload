@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.fellBehind
 import io.github.matthewjones372.kestrel.lostGround
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
+import io.github.matthewjones372.kestrel.plan.DeclaredStep
 import io.github.matthewjones372.kestrel.plan.asYaml
 import io.github.matthewjones372.kestrel.scheduleRemedy
 import java.nio.file.Files
@@ -53,7 +54,7 @@ private fun RunResult.asBenchmark(plan: Declaration, why: String?): String = bui
     appendLine()
     appendLine("## What this measures")
     appendLine()
-    appendLine("${plan.steps.joinToString { "`${it.method} ${it.path}`" }} against `${plan.baseUrl}`,")
+    appendLine("${plan.steps.joinToString { it.described() }} against `${plan.against()}`,")
     appendLine("at ${plan.load.described()}.")
     appendLine()
     appendLine("## Why these numbers")
@@ -103,10 +104,19 @@ private fun RunResult.asBenchmark(plan: Declaration, why: String?): String = bui
     plan.notCovered().forEach { appendLine("- $it") }
 }
 
+/** What one step sends, in the words its own protocol uses for it. */
+private fun DeclaredStep.described(): String = when (this) {
+    is DeclaredStep.Request -> "`$method $path`"
+    is DeclaredStep.Produce -> "`produce $topic`"
+}
+
+/** Where the load goes, which is the host for requests and the cluster for records. */
+private fun Declaration.against(): String = baseUrl ?: brokers ?: "nowhere named"
+
 /** Said plainly, because a benchmark read as covering more than it does is worse than a narrow one. */
 private fun Declaration.notCovered(): List<String> = buildList {
-    add("Anything that writes — every step here is a read.")
-    if (steps.any { it.declared.contains(UNAUTHORISED) }) {
+    if (steps.none { it is DeclaredStep.Produce }) add("Anything that writes — every step here is a read.")
+    if (steps.filterIsInstance<DeclaredStep.Request>().any { it.declared.contains(UNAUTHORISED) }) {
         add("Authentication: a step declares 401 and no credential was supplied.")
     }
     add("Any journey. These steps run in the order written, and nothing here says that is the order users take.")

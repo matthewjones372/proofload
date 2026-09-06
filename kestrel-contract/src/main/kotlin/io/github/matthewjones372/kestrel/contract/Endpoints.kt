@@ -60,7 +60,7 @@ fun planFrom(
  * the same one every user sends: this is a smoke at one a second, and per-user
  * variety is what `kestrel emit` and a feeder are for.
  */
-private fun Endpoint<*, *>.asStep(seed: Long): DeclaredStep = DeclaredStep(
+private fun Endpoint<*, *>.asStep(seed: Long): DeclaredStep.Request = DeclaredStep.Request(
     name = operationId?.takeIf { it.isNotBlank() } ?: "${method.name.lowercase()} ${pathSpec.template}",
     method = method.name,
     path = filledPath(seed),

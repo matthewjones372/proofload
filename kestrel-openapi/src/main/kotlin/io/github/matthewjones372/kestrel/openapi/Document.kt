@@ -72,11 +72,11 @@ private fun Map<String, Any?>.asStep(
     verb: String,
     components: Map<String, Any?>,
     seed: Long,
-): DeclaredStep {
+): DeclaredStep.Request {
     val responses = this["responses"].asMap().orEmpty().keys.mapNotNull { it.toIntOrNull() }
     val success = responses.firstOrNull { it in SUCCESS } ?: OK
 
-    return DeclaredStep(
+    return DeclaredStep.Request(
         // The operation id where the document gives one, as its own tooling
         // names the row; the verb and template otherwise.
         name = (this["operationId"] as? String)?.takeIf { it.isNotBlank() } ?: "${verb.lowercase()} $path",

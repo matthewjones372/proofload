@@ -62,6 +62,8 @@ public final class io/github/matthewjones372/kestrel/kafka/NothingToSend : io/gi
 public final class io/github/matthewjones372/kestrel/kafka/ProduceKt {
 	public static final fun emit (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/kestrel/kafka/Topic;Lio/github/matthewjones372/kestrel/Correlation;)V
 	public static final fun emit-iTDoCcE (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/kestrel/kafka/Topic;Lio/github/matthewjones372/kestrel/Correlation;)V
+	public static final fun produce (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/kestrel/kafka/Topic;)V
+	public static final fun produce-ZV9k6rk (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/kestrel/kafka/Topic;)V
 }
 
 public final class io/github/matthewjones372/kestrel/kafka/Topic {

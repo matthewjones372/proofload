@@ -32,6 +32,32 @@ fun ScenarioBuilder.emit(name: String, topic: Topic, keyedBy: Correlation) {
     emit(name, Action { scope -> scope.produce(topic, keyedBy) }, keyedBy)
 }
 
+/**
+ * Produces one record to [topic] with nothing answering for it.
+ *
+ * The publish on its own: what the broker took to acknowledge, and no round
+ * trip to a consumer. [emit] is the step to reach for where a second topic
+ * carries the answer — this one is for a plan, or a scenario, that only
+ * measures the write.
+ */
+fun ScenarioBuilder.produce(name: StepName, topic: Topic) {
+    exec(name, Action { scope -> scope.produce(topic, UNANSWERED) })
+}
+
+/** The same, for a step named by a string rather than a handle. */
+fun ScenarioBuilder.produce(name: String, topic: Topic) {
+    exec(name, Action { scope -> scope.produce(topic, UNANSWERED) })
+}
+
+/**
+ * The id a record carries when nothing is going to answer for it.
+ *
+ * Only ever read where a topic named a correlation header, which a produce step
+ * with no completion has no reason to do — so this is a value that goes nowhere
+ * rather than an id two steps could collide on.
+ */
+private val UNANSWERED = Correlation { 0L }
+
 private fun StepScope.produce(topic: Topic, keyedBy: Correlation) {
     // The caller's own lambdas, on the departure thread: whatever
     // serialization costs is visible as this step's latency rather than hidden

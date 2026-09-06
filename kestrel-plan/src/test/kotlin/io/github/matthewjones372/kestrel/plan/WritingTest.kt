@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.perSecond
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -20,8 +21,8 @@ class WritingTest {
         baseUrl = "https://orders.internal",
         scenario = "checkout",
         steps = listOf(
-            DeclaredStep(name = "browse", method = "GET", path = "/products"),
-            DeclaredStep(
+            DeclaredStep.Request(name = "browse", method = "GET", path = "/products"),
+            DeclaredStep.Request(
                 name = "place order",
                 method = "POST",
                 path = "/orders",
@@ -62,11 +63,40 @@ class WritingTest {
     @Test
     fun `a body with punctuation in it survives being written`() {
         val awkward = plan.copy(
-            steps = listOf(DeclaredStep("odd", "POST", "/x", body = """{"a": "b: c", "d": "it's"}""")),
+            steps = listOf(DeclaredStep.Request("odd", "POST", "/x", body = """{"a": "b: c", "d": "it's"}""")),
             goals = emptyList(),
         )
 
         readPlan(awkward.asYaml()) shouldBe awkward
+    }
+
+    @Test
+    fun `a produce step is written in Kafka's own words`() {
+        val topics = Declaration(
+            version = Declaration.VERSION,
+            brokers = "localhost:9092",
+            scenario = "orders",
+            steps = listOf(
+                DeclaredStep.Produce(
+                    name = "place order",
+                    topic = "orders",
+                    body = """{"cart":"1 anvil"}""",
+                    key = "anvil-1",
+                    settings = mapOf("acks" to "all"),
+                ),
+            ),
+            load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+        )
+
+        withClue(topics.asYaml()) {
+            topics.asYaml() shouldContain "brokers:  localhost:9092"
+            topics.asYaml() shouldContain "    produce: orders"
+            topics.asYaml() shouldContain "    key: anvil-1"
+            topics.asYaml() shouldContain "      acks: all"
+            withClue("a plan of nothing but topics has no baseUrl to write") {
+                topics.asYaml() shouldNotContain "baseUrl"
+            }
+        }
     }
 
     @Test

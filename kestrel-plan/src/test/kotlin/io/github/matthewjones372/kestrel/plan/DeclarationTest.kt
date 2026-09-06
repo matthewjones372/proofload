@@ -99,17 +99,74 @@ class DeclarationTest {
         shouldThrow<IllegalArgumentException> { declaration(steps = emptyList()).asSimulation() }
     }
 
+    @Test
+    fun `a produce step is refused by a reader with nothing that lowers one`() {
+        val thrown = shouldThrow<IllegalArgumentException> { produced().asSimulation() }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "place order"
+            thrown.message.orEmpty() shouldContain "kestrel-plan-kafka"
+        }
+    }
+
+    @Test
+    fun `a produce step with no brokers is refused before the module that lowers it is missed`() {
+        val thrown = shouldThrow<IllegalArgumentException> { produced(brokers = null).asSimulation() }
+
+        withClue(thrown.message.orEmpty()) { thrown.message.orEmpty() shouldContain "brokers" }
+    }
+
+    @Test
+    fun `an http step with no baseUrl is refused`() {
+        val thrown = shouldThrow<IllegalArgumentException> { declaration(baseUrl = null).asSimulation() }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "baseUrl"
+            thrown.message.orEmpty() shouldContain "browse"
+        }
+    }
+
+    @Test
+    fun `a goal may name a produce step`() {
+        val thrown = shouldThrow<IllegalArgumentException> {
+            produced(goals = listOf(DeclaredGoal.Percentile("place order", "p99", 2.seconds))).asSimulation()
+        }
+
+        withClue("a goal on a declared produce step is not the mistake here") {
+            thrown.message.orEmpty() shouldContain "kestrel-plan-kafka"
+        }
+    }
+
+    private fun produced(
+        brokers: String? = "localhost:9092",
+        goals: List<DeclaredGoal> = emptyList(),
+    ) = Declaration(
+        version = Declaration.VERSION,
+        brokers = brokers,
+        scenario = "orders",
+        steps = listOf(DeclaredStep.Produce(name = "place order", topic = "orders", body = """{"cart":"1 anvil"}""")),
+        load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+        goals = goals,
+    )
+
     private fun declaration(
         version: String = Declaration.VERSION,
+        baseUrl: String? = "https://orders.internal",
         steps: List<DeclaredStep> = listOf(
-            DeclaredStep(name = "browse", method = "GET", path = "/products"),
-            DeclaredStep(name = "place order", method = "POST", path = "/orders", body = "{}", expecting = 201),
+            DeclaredStep.Request(name = "browse", method = "GET", path = "/products"),
+            DeclaredStep.Request(
+                name = "place order",
+                method = "POST",
+                path = "/orders",
+                body = "{}",
+                expecting = 201,
+            ),
         ),
         load: DeclaredLoad = DeclaredLoad.Constant(50.perSecond, 1.minutes),
         goals: List<DeclaredGoal> = emptyList(),
     ) = Declaration(
         version = version,
-        baseUrl = "https://orders.internal",
+        baseUrl = baseUrl,
         scenario = "checkout",
         steps = steps,
         load = load,

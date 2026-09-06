@@ -13,7 +13,8 @@ import kotlin.time.Duration
 fun Declaration.asYaml(): String = buildString {
     appendLine("# Read from a contract. Edit it, commit it, raise the rate on purpose.")
     appendLine("kestrel:  $version")
-    appendLine("baseUrl:  $baseUrl")
+    baseUrl?.let { appendLine("baseUrl:  $it") }
+    brokers?.let { appendLine("brokers:  $it") }
     appendLine("scenario: $scenario")
     appendLine("steps:")
     steps.forEach { appendLine(it.written()) }
@@ -27,6 +28,14 @@ fun Declaration.asYaml(): String = buildString {
 
 private fun DeclaredStep.written(): String = buildString {
     appendLine("  - name: ${name.quoted()}")
+    when (val step = this@written) {
+        is DeclaredStep.Request -> append(step.body())
+        is DeclaredStep.Produce -> append(step.body())
+    }
+    pauseAfter?.let { appendLine("    pauseAfter: ${it.written()}") }
+}.trimEnd()
+
+private fun DeclaredStep.Request.body(): String = buildString {
     appendLine("    ${method.lowercase()}: ${path.quoted()}")
     if (headers.isNotEmpty()) {
         appendLine("    headers:")
@@ -35,8 +44,17 @@ private fun DeclaredStep.written(): String = buildString {
     body?.let { appendLine("    body: ${it.quoted()}") }
     if (expecting != OK) appendLine("    expecting: $expecting")
     if (declared.isNotEmpty()) appendLine("    declared: [${declared.joinToString()}]")
-    pauseAfter?.let { appendLine("    pauseAfter: ${it.written()}") }
-}.trimEnd()
+}
+
+private fun DeclaredStep.Produce.body(): String = buildString {
+    appendLine("    produce: ${topic.quoted()}")
+    key?.let { appendLine("    key: ${it.quoted()}") }
+    appendLine("    body: ${body.quoted()}")
+    if (settings.isNotEmpty()) {
+        appendLine("    settings:")
+        settings.forEach { (key, value) -> appendLine("      ${key.quoted()}: ${value.quoted()}") }
+    }
+}
 
 private fun DeclaredLoad.written(indent: String = "  "): String = when (this) {
     is DeclaredLoad.Constant -> "${indent}rate: ${rate.perSecond.trimmed()}/s\n${indent}over: ${over.written()}\n"

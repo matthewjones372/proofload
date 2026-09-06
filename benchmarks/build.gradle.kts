@@ -39,6 +39,19 @@ tasks.register<JavaExec>("kafkaCeiling") {
     jvmArgs("-Xmx2g")
 }
 
+tasks.register<JavaExec>("footprint") {
+    // A footprint measured while something else held the machine is a
+    // measurement of the neighbours, exactly as a ceiling is.
+    systemProperty("kestrel.exclusive", "false")
+    group = "verification"
+    description = "Measures what a run retains, and what it allocates per departure."
+    mainClass.set("io.github.matthewjones372.kestrel.benchmarks.FootprintKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    // Deliberately not -Xmx2g. The ceiling harness gives itself room so it can
+    // find where the schedule breaks rather than where the heap does; this one
+    // is asking what the heap actually holds, so it takes the JVM's default.
+}
+
 tasks.register<JavaExec>("timelineCost") {
     // A benchmark measures this machine, so it must not queue behind a test
     // run and must not make one queue behind it: a ceiling taken while

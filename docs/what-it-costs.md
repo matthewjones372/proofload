@@ -315,6 +315,48 @@ answer. Only the non-empty buckets survive the freeze, so a second holds one
 per distinct latency it saw rather than the 672 slots the coarse table
 reserves, and the counter tables go with the recorder that owned them.
 
+## What a run holds
+
+```bash
+./gradlew :benchmarks:footprint
+```
+
+The other half of what this tool costs. The ceiling sweeps ask where the
+schedule breaks and hand the JVM `-Xmx2g` so they never have to ask where the
+heap does; this asks the second question and takes the JVM's default.
+
+| users | retained | per user | per sample | allocated/departure | peak heap | kept schedule |
+|---|---|---|---|---|---|---|
+| 1,000 | 108.0 KB | 110 B | 110 B | 8.2 KB | 5.3 MB | **no** |
+| 10,000 | 82.5 KB | 8 B | 8 B | 1.1 KB | 5.5 MB | yes |
+| 50,000 | 137.6 KB | 2 B | 2 B | 508 B | 46.9 MB | yes |
+
+8 cores, JDK 21.0.9+10-LTS, macOS aarch64, a step that touches no socket.
+
+**Retained does not grow with the run.** Fifty times the users left the same
+hundred kilobytes or so behind, and the per-user column falling from 110 B to
+2 B is that number being fixed rather than per-user. It is close enough to the
+noise that the honest reading is "too small to measure this way", which is
+itself the answer: nothing in a result grows per sample, because a histogram is
+a counter table and not a list. That was [0003](../specs/0003-what-a-run-measured.md)'s
+argument, and it had never been checked.
+
+**Allocation per departure falls as the rate climbs**, from 8.2 KB to 508 B.
+[0093](../specs/0093-what-a-run-holds.md) expected it flat within a few percent
+and it is not: what these rows mostly measure is the fixed allocation of
+starting a run, spread over more departures each time. The marginal cost of one
+departure is somewhere below the smallest figure here, and pinning it needs a
+longer window rather than a wider one.
+
+**The thousand-user row did not keep its schedule** and its numbers are
+therefore about a backlog. Two seconds of warm-up at a hundred a second is two
+hundred departures, which is not enough to have finished compiling; the row is
+left in rather than tuned away, because a table that quietly dropped the
+inconvenient rung would be worth less than one that shows it.
+
+**Peak heap is what an operator provisions**: 47 MB at fifty thousand users,
+against the 2 GB the ceiling harness gives itself.
+
 ## Comparing two runs
 
 A baseline taken from a cold JVM will make the next release look like an
@@ -395,6 +437,10 @@ reads like it does.
   accumulator, the batching and the sender thread — the parts most likely to
   decide what a Kafka run can drive. Measuring those needs a broker on a
   socket, and there is not one in this build.
+- **A footprint measured while something else held the machine.** The live-set
+  reading is a difference between two heap readings around a forced collection,
+  so a neighbour allocating during the window lands in the figure. The same rule
+  as the ceiling sweeps: run it on a quiet machine or do not quote it.
 - **Nothing is in `./gradlew build`.** The sweeps are benchmarks, they want a
   machine to themselves, and `AGENTS.md` keeps a benchmark of the tool out of
   the tests of the tool and out of the coverage denominator. Run them on

@@ -64,9 +64,15 @@ class Histogram private constructor(private val subBucketMagnitude: Int) {
      * The same, remembering [trace] as this bucket's exemplar where one is
      * given.
      *
-     * One id per bucket rather than per request: per request is a memory
-     * profile, and per bucket lands a reader on a real request at the latency
-     * they asked about, which is the whole question.
+     * One id per bucket rather than per request: per bucket lands a reader on a
+     * real request at the latency they asked about, which is the whole
+     * question, and does it in a fixed number of references.
+     *
+     * The alternative was called a memory profile before anybody had measured
+     * one. `:benchmarks:footprint` has now: a run's live set is flat in the
+     * hundred-kilobyte range whether it sends a thousand users or fifty
+     * thousand, because nothing here grows per sample. An id per request would
+     * have been the first thing that did.
      */
     fun record(value: Duration, trace: String?) {
         val nanos = value.inWholeNanoseconds

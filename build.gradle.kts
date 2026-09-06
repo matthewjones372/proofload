@@ -79,6 +79,7 @@ val moduleDescriptions = mapOf(
     "kestrel-kotest" to "Load tests that are ordinary Kotest specs.",
     "kestrel-otel" to "A run's measurements sent to an OpenTelemetry collector.",
     "kestrel-pelican" to "Load tests driven by Pelican endpoint descriptions.",
+    "kestrel-plan-kafka" to "Lowers a plan's produce steps onto a Kafka cluster.",
     "kestrel-record" to "A HAR recording read into a Kestrel scenario you edit and commit.",
     "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",

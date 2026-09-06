@@ -1575,6 +1575,15 @@ top-level in WritingKt
     fun asYaml(Declaration): String
 ```
 
+### `io.github.matthewjones372:kestrel-plan-kafka`
+
+```text
+class KafkaSteps : Lowering
+    constructor()
+    constructor(Kafka)
+    fun lower(DeclaredStep, Declaration): List
+```
+
 ### `io.github.matthewjones372:kestrel-record`
 
 ```text

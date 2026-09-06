@@ -2,6 +2,11 @@ plugins {
     // So the dependency on core is exported: this module's public signatures
     // are made of core's types and Kafka's.
     `java-library`
+    // The fake broker is a fixture rather than a test source: `kestrel-plan-kafka`
+    // proves it lowered a plan onto a topic by producing to the same socket, and
+    // a second hand-rolled broker would be a second thing to keep in step with
+    // `kafka-clients`' own wire versions.
+    `java-test-fixtures`
 }
 
 // `kafka-clients` and nothing else of anyone's.
@@ -24,6 +29,16 @@ dependencies {
     // An engine to run the scenarios these tests build, and nothing that is a
     // broker: whether a cluster is sized right needs the caller's cluster.
     testImplementation(project(":kestrel-engine"))
+}
+
+// The fixture is for this repository's own modules, not for consumers: without
+// this, `java-test-fixtures` adds two variants to the published component and a
+// `-test-fixtures` jar goes to Maven Central beside the library.
+afterEvaluate {
+    listOf("testFixturesApiElements", "testFixturesRuntimeElements").forEach { variant ->
+        (components["java"] as AdhocComponentWithVariants)
+            .withVariantsFromConfiguration(configurations[variant]) { skip() }
+    }
 }
 
 tasks.test {

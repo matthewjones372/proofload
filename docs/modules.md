@@ -23,6 +23,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
 | `kestrel-record` | a HAR recording read into a Kotlin scenario you edit and commit | core, `kotlinx-serialization-json` |
 | `kestrel-plan` | a plan written down, read and lowered into the values the DSL builds, and printed back as Kotlin | core, http, `snakeyaml-engine` |
+| `kestrel-plan-kafka` | lowers a plan's produce steps onto a cluster, so `kestrel-plan` carries no broker | core, plan, kafka |
 | `kestrel-cli` | `validate`, `preview`, `run` and `emit` from a shell, with the verdict as the exit code | core, plan, engine, export |
 | `kestrel-mcp` | the same calls over MCP, for a caller that is a program | core, cli, `snakeyaml-engine` |
 | `kestrel-openapi` | an OpenAPI document read into a plan you edit and commit | core, plan, `snakeyaml-engine` |
@@ -101,6 +102,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |
 | `kestrel-export` | [NoThirdPartyDependenciesTest](../kestrel-export/src/test/kotlin/io/github/matthewjones372/kestrel/export/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-plan` | [NoThirdPartyDependenciesTest](../kestrel-plan/src/test/kotlin/io/github/matthewjones372/kestrel/plan/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-plan-kafka` | [NoThirdPartyDependenciesTest](../kestrel-plan-kafka/src/test/kotlin/io/github/matthewjones372/kestrel/plan/kafka/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-openapi` | [NoThirdPartyDependenciesTest](../kestrel-openapi/src/test/kotlin/io/github/matthewjones372/kestrel/openapi/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-contract` | [NoThirdPartyDependenciesTest](../kestrel-contract/src/test/kotlin/io/github/matthewjones372/kestrel/contract/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-cli` | [NoThirdPartyDependenciesTest](../kestrel-cli/src/test/kotlin/io/github/matthewjones372/kestrel/cli/NoThirdPartyDependenciesTest.kt) |

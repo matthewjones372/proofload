@@ -19,6 +19,7 @@ include(
     "kestrel-openapi",
     "kestrel-mcp",
     "kestrel-plan",
+    "kestrel-plan-kafka",
     "kestrel-pelican",
     "kestrel-record",
     "kestrel-report-github",

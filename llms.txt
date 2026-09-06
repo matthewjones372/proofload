@@ -1,0 +1,99 @@
+# Kestrel
+
+> Load testing for Kotlin. A scenario is an ordinary Kotlin value, and the run
+> times every request from the moment it was *meant* to depart — so the tail it
+> reports is the target's, not a queue the generator made. Every run states
+> whether the generator kept its own schedule, so one that fell behind is not
+> quietly green. No base class, no registration, no XML, no container: a load
+> test is an ordinary JUnit 5 or Kotest test.
+
+Facts worth having before anything else:
+
+- Kotlin 2.4, JVM 21+, Apache 2.0. Virtual threads on the JDK's own HTTP client.
+- Nothing is on Maven Central yet; `./gradlew publishToMavenLocal` is how to get
+  it today. Coordinates are `io.github.matthewjones372:kestrel-core` and its
+  siblings — `kestrel-http`, `kestrel-junit5`, `kestrel-report-html` and the rest
+  under Docs below. `kestrel-core` depends on the Kotlin standard library and
+  nothing else, and a test enforces it; every client, broker, test framework and
+  report format is a leaf module beside it.
+- A step is named once. `step("place order")` gives a `StepName`, and the same
+  handle indexes the result — `result[placeOrder]` — so a rename is a compile
+  error rather than an assertion about a step nobody runs. Session values are
+  named the same way: `sessionKey<String>("orderId")` goes in through `capture`
+  and comes back out of `get` as a `String`.
+- Checks belong on the request — `expecting(201)`, `checking("has an id") { }` —
+  and a failed step is counted rather than thrown, with the `Reason` that failed
+  it: `result[placeOrder].failed.count`, `failedWith(HttpStatus(503))`.
+- A step that is not one request is a body — `exec(pay) { send(...) }` — and what
+  you call in it is timed like any other step. A simulation is a value, so
+  `checkout.at(50.perSecond, over = 1.minutes).userCount()` answers before it runs.
+
+## The shape of a test
+
+`@LoadTest` is `@Test` with a `Kestrel` parameter, here against a JDK `HttpServer`.
+
+```kotlin
+import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.engine.Kestrel
+import io.github.matthewjones372.kestrel.fedBy
+import io.github.matthewjones372.kestrel.feed
+import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.kestrel.junit5.LoadTest
+import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.kestrel.step
+import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.seconds
+
+private val orderId = sessionKey<String>("orderId")
+private val customer = sessionKey<String>("customer")
+
+private val browse = step("browse")
+private val placeOrder = step("place order")
+
+class CheckoutLoadTest {
+
+    @LoadTest
+    fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
+        val api = http.baseUrl("http://localhost:${server.address.port}")
+
+        val checkout = scenario("checkout") {
+            exec(browse, api.get("/products/{customer}"))
+            exec(
+                placeOrder,
+                api.post("/orders")
+                    .body("""{"cart":"1 anvil"}""")
+                    .expecting(201)
+                    .capture(orderId) { response -> response.header("location") },
+            )
+        }
+
+        val result = kestrel.run(
+            checkout.at(50.perSecond, over = 1.seconds)
+                .fedBy(feed(customer) { user -> "customer-$user" }),
+        )
+
+        result[browse].count shouldBe 50L
+        result[placeOrder].failed.count shouldBe 0L
+    }
+}
+```
+
+## What it will not do
+
+- No `Thread.sleep` in library code: pacing is scheduled, not parked, and detekt
+  fails the build on it. Think time is `pause(200.milliseconds)` in the scenario.
+- No smoothing and no interpolation: a percentile is the top of the bucket a
+  sample landed in, and a number on a report was measured or it is not there.
+- No registry, nothing to run at startup, and no `main` of its own.
+
+## Docs
+
+- [README](https://github.com/matthewjones372/kestrel/blob/main/README.md): what it is, and the smallest test that runs.
+- [Cookbook](https://github.com/matthewjones372/kestrel/blob/main/docs/cookbook.md):
+  profiles, feeders, captures, goals, gRPC, Kafka, JDBC, WebSockets, baselines and reports. Start here for code.
+- [For agents](https://github.com/matthewjones372/kestrel/blob/main/docs/for-agents.md): every public signature, rendered from the `.api` dumps, and the mistakes to avoid.
+- [Modules](https://github.com/matthewjones372/kestrel/blob/main/docs/modules.md): each module, and what it depends on.
+- [What it costs](https://github.com/matthewjones372/kestrel/blob/main/docs/what-it-costs.md): the tool's own measured overhead.
+- [AGENTS.md](https://github.com/matthewjones372/kestrel/blob/main/AGENTS.md): for working *on* Kestrel, not with it.

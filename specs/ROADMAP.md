@@ -93,6 +93,7 @@ built. Each row links the spec that argued for it.
 | [0086](0086-more-than-one-injector-started-together.md) | the hold each injector computed against the instant it was given, and a merge that refuses clocks which disagree — the coordinator argued against and not built |
 | [0080](0080-a-scenario-from-traffic-you-already-have.md) | `kestrel-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
 | [0085](0085-an-api-that-is-written-down.md) | a checked-in `.api` dump per published module, and `apiCheck` from `check`, so a break is a diff rather than a memory |
+| [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
 
 ## Drafted, not built
 
@@ -104,7 +105,6 @@ than from a person with a compiler.
 | [0087](0087-a-result-a-machine-can-read.md) | the run's judgement as a document, in two densities, with a remedy on every verdict |
 | [0088](0088-a-run-nothing-fires-by-accident.md) | a ceiling a human commits, and a plan you can ask what it would send |
 | [0089](0089-a-plan-without-a-compiler.md) | a plan as a file, validated in milliseconds, emitted back as DSL to grow into |
-| [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
 | [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
 | [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure — the half of its cost 0011 gave itself 2g to avoid |

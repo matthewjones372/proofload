@@ -73,14 +73,14 @@ or it looks nowhere.
 
 ## Stack
 
-- [ ] **`spec-0090-llms-txt`** — the root file, hand-written, under 100 lines.
+- [x] **`spec-0090-llms-txt`** — the root file, hand-written, under 100 lines.
       Done when: a test asserts every coordinate it names resolves and every
       snippet it holds appears verbatim in a tested source file.
-- [ ] **`spec-0090-api-render`** — a Gradle task rendering the `.api` dumps to
+- [x] **`spec-0090-api-render`** — a Gradle task rendering the `.api` dumps to
       the signature section of `docs/for-agents.md`.
       Done when: the task is wired into `check` and a stale section fails the
       build the way a stale `.api` dump does.
-- [ ] **`spec-0090-mistakes`** — the written-wrong/written-right table.
+- [x] **`spec-0090-mistakes`** — the written-wrong/written-right table.
       Done when: each "right" column compiles in `examples`.
 
 ## Acceptance

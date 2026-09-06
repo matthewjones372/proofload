@@ -18,14 +18,21 @@ class SearchingTest {
     private val serve = step("serve")
 
     /**
-     * Twenty thousand a second from one scheduler thread is a rate no injector
-     * offers, so every rung of this is the generator's own ceiling rather than
-     * anything the target did.
+     * Two hundred thousand a second from one scheduler thread is a rate no
+     * injector offers, so every rung of this is the generator's own ceiling
+     * rather than anything the target did.
+     *
+     * It was twenty thousand, over ten times the window. That is a rate this
+     * machine *does* offer once the JVM is warm, so the first rung was void on
+     * a cold JVM and not on a warm one — which meant the test passed alone and
+     * failed inside a full build, for a reason that had nothing to do with what
+     * it was testing. The rung still books the same two thousand departures;
+     * only the rate it books them at has moved out of reach.
      */
     private val beyondTheInjector = scenario("target") { exec(serve) { } }
         .sustainable(
-            upTo = 200_000.perSecond,
-            holding = 100.milliseconds,
+            upTo = 2_000_000.perSecond,
+            holding = 10.milliseconds,
             expecting = listOf(failureRate under 1.percent),
         )
 
@@ -33,7 +40,7 @@ class SearchingTest {
     fun `each rung of a search is a real run at its own rate`() {
         val capacity = beyondTheInjector.run()
 
-        capacity.curve.first().rate shouldBe 20_000.perSecond
+        capacity.curve.first().rate shouldBe 200_000.perSecond
         withClue("the rung sent what its own rate asked for over the window it held") {
             capacity.curve.first().result.count shouldBe 2_000L
         }

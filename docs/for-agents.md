@@ -41,6 +41,25 @@ shown without the mangling.
 
 <!-- Rendered from the .api dumps by ./gradlew apiDocDump. Do not edit below. -->
 
+### `io.github.matthewjones372:kestrel-arbs`
+
+```text
+interface Arb
+    fun at(Long): Object
+    val shape: Shape
+top-level in ArbKt
+    fun map(Arb, Function1): Arb
+    fun oneOf(List, Long): Arb
+    fun oneOf(Array<Object>, Long): Arb
+top-level in ShapesKt
+    fun digits(Int, Long): Arb
+    fun uniform(Long, Long): Arb
+    fun uuids(Long): Arb
+    fun weighted(List, Long): Arb
+    fun weighted(Array<Pair>, Long): Arb
+    fun zipf(Long, Double, Long): Arb
+```
+
 ### `io.github.matthewjones372:kestrel-baseline`
 
 ```text
@@ -55,6 +74,59 @@ top-level in ManyRunsKt
     fun writeInto(RunResult, Path): Path
 ```
 
+### `io.github.matthewjones372:kestrel-cli`
+
+```text
+top-level in CliKt
+    fun main(Array<String>)
+    fun obey(Command, Allowance, Function0): Finished
+class Code : Enum
+    val Behind: Code
+    val Met: Code
+    val Missed: Code
+    val Refused: Code
+    val Unusable: Code
+    val entries: EnumEntries
+    val number: Int
+    fun valueOf(String): Code
+    fun values(): Array<Code>
+interface Command
+    val plan: Path
+class Command.Emit : Command
+    constructor(Path, String)
+    val packageName: String
+    val plan: Path
+class Command.FromOpenApi : Command
+    constructor(Path, String)
+    val baseUrl: String
+    val plan: Path
+class Command.Preview : Command
+    constructor(Path)
+    val plan: Path
+class Command.Run : Command
+    constructor(Path, Boolean)
+    val json: Boolean
+    val plan: Path
+class Command.Validate : Command
+    constructor(Path)
+    val plan: Path
+top-level in CommandKt
+    val usage: String
+    fun parse(List): Command
+class Finished
+    constructor(String, String, Code)
+    val code: Code
+    val error: String
+    val out: String
+```
+
+### `io.github.matthewjones372:kestrel-contract`
+
+```text
+top-level in EndpointsKt
+    fun planFrom(List, String, String, Set, Long): Declaration
+```
+
 ### `io.github.matthewjones372:kestrel-core`
 
 ```text
@@ -63,8 +135,19 @@ interface Action
     fun run(StepScope)
 top-level in ActionKt
     fun action(Function1): Action
+class Allowance
+    fun allows(String): Boolean
+    val hosts: List
+    val maxDuration: Duration
+    val maxRate: Rate
+    val maxRequests: Long
+class Allowance.Companion
+    fun fromFile(Path): Allowance
+    val none: Allowance
+    fun read(String): Allowance
 class Arm
-    constructor(Scenario, InjectionProfile, Feeder, Long)
+    constructor(Scenario, InjectionProfile, Feeder, Long, List)
+    val drawn: List
     val feeder: Feeder
     val profile: InjectionProfile
     val scenario: Scenario
@@ -468,6 +551,7 @@ class Plan
     constructor(List, List, WarmUp)
     val arms: List
     val closed: Boolean
+    val drawn: List
     val goals: List
     val pauses: Boolean
     val plannedInterval: Long
@@ -481,7 +565,8 @@ class Plan
 class Plan.Companion
     val none: Plan
 class PlannedArm
-    constructor(String, List, InjectionProfile, Boolean, List, Long)
+    constructor(String, List, InjectionProfile, Boolean, List, Long, List)
+    val drawn: List
     val pauses: Boolean
     val plannedUsers: Long
     val profile: InjectionProfile
@@ -489,6 +574,20 @@ class PlannedArm
     val steps: List
     val thinkSeed: Long
     val thinkTimes: List
+interface Preview
+class Preview.Allowed : Preview
+    val hosts: List
+    val over: Long
+    val peakRate: Rate
+    val requestsAtLeast: Long
+    val requestsBounded: Boolean
+    val untargeted: Int
+    val users: Long
+class Preview.Refused : Preview
+    constructor(Refusal)
+    val reason: Refusal
+top-level in PreviewKt
+    fun preview(Simulation, Allowance): Preview
 class Probe
     val MATERIAL: Double
     val took: Long
@@ -510,9 +609,17 @@ class Progress.Companion
 top-level in ProgressKt
     fun and(Progress, Progress): Progress
     fun throttled(Progress, Long): Progress
+interface Ran
+class Ran.Refused : Ran
+    constructor(Refusal)
+    val reason: Refusal
+class Ran.Result : Ran
+    constructor(RunResult)
+    val result: RunResult
 class Rate
     val perSecond: Double
 class Rate.Companion
+    fun parse(String): Rate
 interface Reason
     val described: String
 class Refreshing
@@ -524,6 +631,29 @@ class Refreshing.Companion
     fun fixed(Object): Refreshing
 top-level in RefreshingKt
     fun refreshing(Long, Function0): Refreshing
+interface Refusal
+    val described: String
+class Refusal.HostNotAllowed : Refusal
+    constructor(String, List)
+    val allowed: List
+    val described: String
+    val host: String
+class Refusal.OverDuration : Refusal
+    val allowed: Long
+    val asked: Long
+    val described: String
+class Refusal.OverRate : Refusal
+    val allowed: Double
+    val asked: Double
+    val described: String
+class Refusal.OverRequests : Refusal
+    constructor(Long, Long)
+    val allowed: Long
+    val asked: Long
+    val described: String
+top-level in RemedyKt
+    fun getRemedy(Verdict): String
+    fun getScheduleRemedy(RunResult): String
 class RunRecorder
     val MAX_REASONS_PER_STEP: Int
     constructor(Instant, Long, Boolean)
@@ -561,6 +691,7 @@ class RunResult
     val verdicts: List
     fun ran(String): Boolean
 top-level in RunResultKt
+    val MATERIAL: Double
     fun fellBehind(RunResult): Boolean
     fun getHeldScheduleFor(RunResult): Duration
     fun getInFlight(RunResult): Long
@@ -665,6 +796,12 @@ class SessionKey
     constructor(String, KClass)
     val name: String
     val type: KClass
+top-level in SessionKt
+    fun sessionKey(String, KClass): SessionKey
+class Shape
+    constructor(String, Long)
+    val description: String
+    val seed: Long
 class Shard
     val heldFor: Duration
     val index: Int
@@ -701,6 +838,7 @@ top-level in SimulationKt
     fun at(Scenario, InjectionProfile.ClosedUsers): Simulation
     fun at(Scenario, Double, Long): Simulation
     fun completing(Simulation, String, Completions, Long): Simulation
+    fun drawing(Simulation, Array<Shape>): Simulation
     fun expecting(Simulation, Array<Goal>): Simulation
     fun fedBy(Simulation, Feeder): Simulation
     fun getClosed(Simulation): Boolean
@@ -853,6 +991,8 @@ class Tail.Absent : Tail
     val because: String
 class Tail.Measured : Tail
     val duration: Long
+interface Targeted
+    val host: String
 interface Tell
 class Tell.Better : Tell
 class Tell.CannotTell : Tell
@@ -964,6 +1104,8 @@ class Kestrel
     fun run(Simulation): RunResult
     fun summary(): String
     fun trace(Scenario, Feeder)
+top-level in RunWithinKt
+    fun runWithin(Kestrel, Allowance, Simulation): Ran
 top-level in TraceKt
     fun trace(Scenario, Feeder)
 class VirtualThreads : Engine
@@ -978,12 +1120,21 @@ top-level in VirtualThreadsKt
 ### `io.github.matthewjones372:kestrel-export`
 
 ```text
+class Density : Enum
+    val Full: Density
+    val Summary: Density
+    val entries: EnumEntries
+    fun valueOf(String): Density
+    fun values(): Array<Density>
 top-level in HistogramLogKt
     fun histogramLog(RunResult): String
     fun writeHistogramLog(RunResult, Path): Path
 top-level in OpenMetricsKt
     fun openMetrics(RunResult, String): String
     fun writeOpenMetrics(RunResult, Path, String): Path
+top-level in RunJsonKt
+    fun json(RunResult, Density): String
+    fun writeJson(RunResult, Path, Density): Path
 ```
 
 ### `io.github.matthewjones372:kestrel-grpc`
@@ -1061,6 +1212,10 @@ class CheckFailed : Reason
     constructor(String)
     val check: String
     val described: String
+class DeclaredStatus : Reason
+    constructor(Int)
+    val code: Int
+    val described: String
 class EventStream
     val delivered: Long
     val heartbeats: Long
@@ -1088,14 +1243,16 @@ class Http
     fun put(String): HttpAction
     fun traced(): Http
     fun withCookies(): Http
-class HttpAction : Action
+class HttpAction : Action, Targeted
     fun body(String): HttpAction
     fun bodyFrom(Long, Function0): HttpAction
     fun capture(SessionKey, Function1): HttpAction
     fun checking(String, Function1): HttpAction
+    fun declaring(Array<Int>): HttpAction
     fun discardingBody(): HttpAction
     fun expecting(Int): HttpAction
     fun following(Int): HttpAction
+    val host: String
     val name: String
     fun header(String, String): HttpAction
     fun retrying(Int, Function1, Long): HttpAction
@@ -1155,6 +1312,65 @@ class UnfilledPath : Reason
     constructor(String)
     val described: String
     val placeholder: String
+```
+
+### `io.github.matthewjones372:kestrel-java`
+
+```text
+class Actions
+    fun of(Consumer): Action
+class Goals
+    fun failureRateUnder(Double): Goal
+    fun failureRateUnder(StepName, Double): Goal
+    fun goodputAtLeast(StepName, Duration, Double): Goal
+    fun goodputAtLeast(StepName, Duration, Double, Clock): Goal
+    fun p50Under(StepName, Duration): Goal
+    fun p50Under(StepName, Duration, Clock): Goal
+    fun p95Under(StepName, Duration): Goal
+    fun p95Under(StepName, Duration, Clock): Goal
+    fun p999Under(StepName, Duration): Goal
+    fun p999Under(StepName, Duration, Clock): Goal
+    fun p99Under(StepName, Duration): Goal
+    fun p99Under(StepName, Duration, Clock): Goal
+class Https
+    fun baseUrl(String): Http
+    fun capturing(HttpAction, SessionKey, Function): HttpAction
+    fun checking(HttpAction, String, Function): HttpAction
+class Kestrel
+    fun create(): Kestrel
+class Rates
+    fun perMinute(Double): Rate
+    fun perSecond(Double): Rate
+class Results
+    fun count(RunResult, StepName): Long
+    fun failed(RunResult, StepName): Long
+    fun max(RunResult, StepName): Duration
+    fun max(RunResult, StepName, Clock): Duration
+    fun ok(RunResult, StepName): Long
+    fun p50(RunResult, StepName): Duration
+    fun p50(RunResult, StepName, Clock): Duration
+    fun p95(RunResult, StepName): Duration
+    fun p95(RunResult, StepName, Clock): Duration
+    fun p99(RunResult, StepName): Duration
+    fun p99(RunResult, StepName, Clock): Duration
+    fun ran(RunResult, StepName): Boolean
+    fun verdicts(RunResult): List
+class Scenarios
+    fun named(String): Scenarios.Builder
+class Scenarios.Builder
+    fun build(): Scenario
+    fun exec(StepName, Action): Scenarios.Builder
+    fun exec(String, Action): Scenarios.Builder
+    fun pause(Duration): Scenarios.Builder
+class SessionKeys
+    fun of(Class, String): SessionKey
+class Shares
+    fun percent(Double): Share
+class Simulations
+    fun at(Scenario, Rate, Duration): Simulation
+    fun at(Scenario, Rate, Duration, Array<Goal>): Simulation
+class Steps
+    fun named(String): StepName
 ```
 
 ### `io.github.matthewjones372:kestrel-jdbc`
@@ -1247,6 +1463,23 @@ class NotWorseThan : Matcher
     fun test(Difference): MatcherResult
 ```
 
+### `io.github.matthewjones372:kestrel-mcp`
+
+```text
+top-level in ServerKt
+    fun main()
+```
+
+### `io.github.matthewjones372:kestrel-openapi`
+
+```text
+top-level in DocumentKt
+    fun planFromDocument(String, String, String, Set, Long): Declaration
+    fun planFromDocument(Path, String): Declaration
+top-level in LegalKt
+    fun legalFor(Map, String, Object, Long): String
+```
+
 ### `io.github.matthewjones372:kestrel-otel`
 
 ```text
@@ -1271,6 +1504,60 @@ class Status : Reason
     constructor(Int)
     val code: Int
     val described: String
+```
+
+### `io.github.matthewjones372:kestrel-plan`
+
+```text
+class Declaration
+    val VERSION: String
+    constructor(String, String, String, List, DeclaredLoad, List)
+    val baseUrl: String
+    val goals: List
+    val load: DeclaredLoad
+    val scenario: String
+    val steps: List
+    val version: String
+class Declaration.Companion
+top-level in DeclarationKt
+    fun asSimulation(Declaration): Simulation
+interface DeclaredGoal
+    val step: String
+class DeclaredGoal.FailureRate : DeclaredGoal
+    constructor(String, Double)
+    val step: String
+    val under: Double
+class DeclaredGoal.Percentile : DeclaredGoal
+    val percentile: String
+    val step: String
+    val under: Long
+interface DeclaredLoad
+class DeclaredLoad.Constant : DeclaredLoad
+    val over: Long
+    val rate: Double
+class DeclaredLoad.Ramp : DeclaredLoad
+    val from: Double
+    val over: Long
+    val to: Double
+class DeclaredLoad.Staged : DeclaredLoad
+    constructor(List)
+    val stages: List
+class DeclaredStep
+    val body: String
+    val declared: List
+    val expecting: Int
+    val headers: Map
+    val method: String
+    val name: String
+    val path: String
+    val pauseAfter: Duration
+top-level in EmittingKt
+    fun asKotlin(Declaration, String, String): String
+top-level in ReadingKt
+    fun readPlan(String): Declaration
+    fun readPlan(Path): Declaration
+top-level in WritingKt
+    fun asYaml(Declaration): String
 ```
 
 ### `io.github.matthewjones372:kestrel-record`

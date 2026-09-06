@@ -1570,6 +1570,10 @@ public final class io/github/matthewjones372/kestrel/SessionKey {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/matthewjones372/kestrel/SessionKt {
+	public static final fun sessionKey (Ljava/lang/String;Lkotlin/reflect/KClass;)Lio/github/matthewjones372/kestrel/SessionKey;
+}
+
 public final class io/github/matthewjones372/kestrel/Shard {
 	public synthetic fun <init> (IILjava/time/Instant;Lkotlin/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (IILjava/time/Instant;Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V

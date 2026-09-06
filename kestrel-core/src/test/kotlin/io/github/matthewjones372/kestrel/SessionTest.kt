@@ -63,4 +63,9 @@ class SessionTest {
         result shouldBe StepResult.Failed(Session.empty.set(orderId, 1L), Said("status 503"))
         result.session[orderId] shouldBe 1L
     }
+
+    @Test
+    fun `a key built from a runtime type is the key the reified form declares`() {
+        sessionKey("orderId", Long::class) shouldBe sessionKey<Long>("orderId")
+    }
 }

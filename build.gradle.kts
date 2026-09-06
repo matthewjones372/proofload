@@ -71,6 +71,7 @@ val moduleDescriptions = mapOf(
     "kestrel-export" to "A run's measurements in formats other tools read. No dependencies.",
     "kestrel-grpc" to "gRPC steps over a caller's own stubs and channel.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
+    "kestrel-java" to "Kestrel from Java: static factories and builders over the same values Kotlin builds.",
     "kestrel-jdbc" to "Database steps over a caller's own DataSource, with the pool wait counted apart.",
     "kestrel-junit5" to "Load tests that are ordinary JUnit 5 tests.",
     "kestrel-kafka" to "Kafka produce steps, and completions read off another topic.",
@@ -141,12 +142,12 @@ gradle.taskGraph.whenReady {
 }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name } - "examples" - "benchmarks"
+val publishedModules = subprojects.map { it.name } - "examples" - "examples-java" - "benchmarks"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no
-// record of what it promised. `examples` and `benchmarks` are not libraries and
-// their surface is nobody's business.
+// record of what it promised. `examples`, `examples-java` and `benchmarks` are
+// not libraries and their surface is nobody's business.
 apiValidation {
     ignoredProjects.addAll(subprojects.map { it.name } - publishedModules.toSet())
 }

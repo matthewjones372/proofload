@@ -45,7 +45,7 @@ class ModulesDocTest {
 
     @Test
     fun `every published module names the test that proves what it depends on`() {
-        val published = includedModules() - setOf("examples", "benchmarks")
+        val published = includedModules() - NOT_PUBLISHED
         val unproven = published.filterNot { module -> testsNamed().any { it.startsWith("$module/") } }
 
         withClue("docs/modules.md claims a classpath it does not name a test for: $unproven") {
@@ -58,5 +58,11 @@ class ModulesDocTest {
         val missing = testsNamed().filterNot { repoRoot.resolve(it).isFile }
 
         withClue("docs/modules.md links to tests that do not exist: $missing") { missing.shouldBeEmpty() }
+    }
+
+    private companion object {
+
+        /** The subprojects the root build keeps out of `publishedModules`. */
+        val NOT_PUBLISHED = setOf("examples", "examples-java", "benchmarks")
     }
 }

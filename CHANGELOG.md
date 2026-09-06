@@ -126,6 +126,17 @@ enough to list, and long enough to matter.
   for a feature that never touches it. The two share the half that turns a
   schema's facets into a value the service will accept, because a `minimum` in a
   document and a `between(1, 100)` on an input are the same constraint.
+- **Goals from Java.** `Goals.p99Under`, `p95Under`, `p50Under`, `p999Under`,
+  `failureRateUnder` and `goodputAtLeast` build core's own `Goal` values, and
+  `Simulations.at(scenario, rate, over, goals...)` attaches them.
+  `Results.verdicts(result)` reads back what each one measured and the margin it
+  missed by. Kotlin writes these infix — `p99(placeOrder) under
+  200.milliseconds` — which has no Java spelling, and every call that builds one
+  takes a `StepName` or a `Share`, whose names mangle; so these are Java sources
+  over an `internal` Kotlin layer, the same split the rest of the facade uses.
+  There is deliberately no Java `assertNotWorseThan`: `Difference` is a
+  baselines type, and wrapping it would put JUnit on the classpath of every
+  project that takes the facade.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
   `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body
@@ -621,6 +632,41 @@ enough to list, and long enough to matter.
   `Scenario`, because a recording is a first draft and a file re-read on every
   run is one nobody edits. It carries a JSON parser, which is why it is a module
   of its own and on nobody else's classpath.
+
+- **`kestrel-java`** — the same values, built from Java. `Rates.perSecond(50)`,
+  `Steps.named("pay")` and `Shares.percent(1)` hand back core's own `Rate`,
+  `StepName` and `Share` rather than a copy of them, and `SessionKeys.of(
+  String.class, "orderId")` reaches the key that `sessionKey<T>` cannot give a
+  caller with no reified `T`. The factories are Java sources over a Kotlin
+  bridge: a Kotlin function returning a `@JvmInline` value compiles to a mangled
+  name returning the `String` or `double` underneath it, so no Kotlin signature
+  can hand one to Java at all. `sessionKey(name, type)` is the new function in
+  core those keys come from, and
+  [docs/from-java.md](docs/from-java.md) is the page — every Java line on it is
+  a line of the source set the build compiles, which `FromJavaDocTest` fails on.
+
+- **A Java scenario is a Kotlin scenario.** `Scenarios.named("checkout")
+  .exec(placeOrder, action).pause(Duration.ofSeconds(1)).build()` accumulates
+  core's own `Step`s and freezes them into core's own `Scenario`, so the value a
+  Java caller hands the engine compares equal to the one `scenario { }` builds
+  for the same steps — which is a test rather than a claim. `Actions.of` takes
+  the step body as a `Consumer<StepScope>`, since a lambda with a receiver is
+  the one shape Java has nothing for.
+
+- **A Java caller runs the thing and reads what it measured.**
+  `Kestrel.create().run(Simulations.at(checkout, Rates.perSecond(50),
+  Duration.ofMinutes(1)))` hands back core's own `RunResult`, and `Results.p99(
+  result, placeOrder)` reads a percentile off it as a `java.time.Duration` —
+  there is no parallel result tree, only accessors that convert. `Https.baseUrl`
+  reaches the HTTP steps, with `capturing` and `checking` for the two calls
+  Kotlin states as a lambda.
+
+- **The Java surface is gated by a Java compiler.** `examples-java` is a module
+  whose whole content is one load test written in Java, compiled by
+  `./gradlew build`. `apiCheck` records the Kotlin surface and cannot see
+  whether it is *callable* from Java; deleting a facade method fails here
+  instead of in a consumer's project. `kestrel-java` is in `smoke/` beside the
+  other published modules.
 
 - **The public API is recorded, and a break is a diff.**
   `binary-compatibility-validator` is applied to every published module and

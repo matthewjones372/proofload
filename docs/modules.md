@@ -14,6 +14,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
 | `kestrel-jdbc` | database steps over a caller's own `DataSource`, the pool wait counted apart from the query | core |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
+| `kestrel-java` | the same values built from Java: static factories over `Rate`, `StepName` and `Share`, a builder where Kotlin has a lambda, and `java.time.Duration` throughout | core, engine, http |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
@@ -33,9 +34,12 @@ Kotest is `compileOnly` in `kestrel-kotest`: a spec that uses the matchers
 already has Kotest, and one that does not should not be handed twenty jars by a
 load-testing library.
 
-Two more directories are in the build and are not published. `examples` is
+Three more directories are in the build and are not published. `examples` is
 where every module meets, so that they compose is a test rather than a README
-paragraph. `benchmarks` measures what this tool costs, and is kept out of the
+paragraph. `examples-java` is one load test written in Java: `apiCheck` records
+`kestrel-java`'s Kotlin surface and cannot see whether that surface is callable
+from Java, and only a Java compiler knows — [from-java.md](from-java.md) is the
+page it backs. `benchmarks` measures what this tool costs, and is kept out of the
 coverage aggregation because measuring the tool is not testing it —
 [what-it-costs.md](what-it-costs.md) is what it produces.
 
@@ -62,6 +66,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-kotest:$kestrelVersion")
 
     // As you need them.
+    implementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
@@ -87,6 +92,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-jdbc` | [NoThirdPartyDependenciesTest](../kestrel-jdbc/src/test/kotlin/io/github/matthewjones372/kestrel/jdbc/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-record` | [NoThirdPartyDependenciesTest](../kestrel-record/src/test/kotlin/io/github/matthewjones372/kestrel/record/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-java` | [NoThirdPartyDependenciesTest](../kestrel-java/src/test/kotlin/io/github/matthewjones372/kestrel/java/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |

@@ -94,6 +94,47 @@ class CliTest {
         }
     }
 
+    /**
+     * Found by piping it. `--json` exists for a program, and the engine's
+     * progress lines were going to the same stdout as the document, so
+     * `kestrel run plan.yaml --json | jq` was parsing a run's commentary.
+     * `Progress.silent` already names this caller in its own KDoc.
+     */
+    @Test
+    fun `asked for json, nothing is written beside the document`(@TempDir dir: Path) {
+        var finished: Finished? = null
+        val alsoPrinted = capturingStdout {
+            obey(Command.Run(planFile(dir), json = true), Allowance.none).also { finished = it }
+        }
+
+        withClue("`main` prints the document, so anything else on stdout is in the same stream as it") {
+            alsoPrinted shouldBe ""
+        }
+        finished!!.out.trim().startsWith("{") shouldBe true
+    }
+
+    @Test
+    fun `without json the run still says what it is doing`(@TempDir dir: Path) {
+        val printed = capturingStdout { obey(Command.Run(planFile(dir), json = false), Allowance.none) }
+
+        withClue("silencing every run would take the countdown from the person watching one") {
+            printed shouldContain "kestrel:"
+        }
+    }
+
+    /** What the engine wrote to stdout while [running], which is where progress goes. */
+    private fun capturingStdout(running: () -> Finished): String {
+        val was = System.out
+        val caught = java.io.ByteArrayOutputStream()
+        System.setOut(java.io.PrintStream(caught, true, Charsets.UTF_8))
+        try {
+            running()
+        } finally {
+            System.setOut(was)
+        }
+        return caught.toString(Charsets.UTF_8)
+    }
+
     @Test
     fun `run without json prints the same verdict in words`(@TempDir dir: Path) {
         val finished = obey(Command.Run(planFile(dir), json = false), Allowance.none)

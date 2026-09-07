@@ -79,7 +79,7 @@ top-level in ManyRunsKt
 ```text
 top-level in CliKt
     fun main(Array<String>)
-    fun obey(Command, Allowance, Function0): Finished
+    fun obey(Command, Allowance, Function1): Finished
 class Code : Enum
     val Behind: Code
     val Met: Code

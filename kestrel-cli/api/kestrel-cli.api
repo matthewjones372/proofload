@@ -1,7 +1,7 @@
 public final class io/github/matthewjones372/kestrel/cli/CliKt {
 	public static final fun main ([Ljava/lang/String;)V
-	public static final fun obey (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/kestrel/cli/Finished;
-	public static synthetic fun obey$default (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Finished;
+	public static final fun obey (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kestrel/cli/Finished;
+	public static synthetic fun obey$default (Lio/github/matthewjones372/kestrel/cli/Command;Lio/github/matthewjones372/kestrel/Allowance;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/cli/Finished;
 }
 
 public final class io/github/matthewjones372/kestrel/cli/Code : java/lang/Enum {

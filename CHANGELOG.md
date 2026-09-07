@@ -333,6 +333,16 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`produce`, `completes` and their keys in `readPlan`.** A step names which
+  protocol it is by which key it carries — a verb, or `produce`, or `completes` —
+  and a plan may mix them, so a team whose journey is a request and then a
+  record writes one file. `baseUrl` and `brokers` are read as optional for the
+  same reason. A key nobody declared is still named as the key it is, and
+  `readPlan(plan.asYaml())` round-trips a topic plan, which is what makes the
+  writer usable. `kestrel emit` on such a plan is checked in under `examples`
+  and compiled by the build, beside the HTTP one: a `Topic` value per produce
+  step carrying what that step sends, one call to a line.
+
 - **An answer on another topic, declared beside the step it answers.** A plan
   step carrying `completes`, `on`, `by` and `within` is the other half of the
   produce step it names: what it records is the round trip, as its own row

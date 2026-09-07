@@ -1,0 +1,24 @@
+# A hot path that is a topic rather than an endpoint: the record leaves on one
+# and the answer arrives on another, so what is measured is the round trip.
+kestrel:  plan/1
+brokers:  localhost:9092
+scenario: orders
+steps:
+  - name: place order
+    produce: orders
+    key: anvil-1
+    body: '{"cart":"1 anvil"}'
+    settings:
+      acks: all
+  - name: confirmed
+    completes: place order
+    on: order-confirmations
+    by: correlation-id
+    group: kestrel-bench
+    within: 30s
+load:
+  rate: 500/s
+  over: 1m
+goals:
+  - step: confirmed
+    p99: 2s

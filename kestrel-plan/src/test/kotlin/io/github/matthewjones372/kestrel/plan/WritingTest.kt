@@ -129,6 +129,47 @@ class WritingTest {
     }
 
     @Test
+    fun `a Kafka plan round-trips, which is what makes the writer usable`() {
+        val topics = Declaration(
+            version = Declaration.VERSION,
+            brokers = "localhost:9092",
+            scenario = "orders",
+            steps = listOf(
+                DeclaredStep.Produce(
+                    name = "place order",
+                    topic = "orders",
+                    body = """{"cart":"1 anvil"}""",
+                    key = "anvil-1",
+                    settings = mapOf("acks" to "all"),
+                    pauseAfter = 2.seconds,
+                ),
+                DeclaredStep.Completes(
+                    name = "confirmed",
+                    completes = "place order",
+                    on = "order-confirmations",
+                    by = "correlation-id",
+                    group = "kestrel-bench",
+                    within = 30.seconds,
+                ),
+            ),
+            load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+            goals = listOf(DeclaredGoal.Percentile("confirmed", "p99", 2.seconds)),
+        )
+
+        withClue(topics.asYaml()) { readPlan(topics.asYaml()) shouldBe topics }
+    }
+
+    @Test
+    fun `a plan that mixes a request and a topic round-trips as both`() {
+        val mixed = plan.copy(
+            brokers = "localhost:9092",
+            steps = plan.steps + DeclaredStep.Produce(name = "publish", topic = "orders", body = "{}"),
+        )
+
+        withClue(mixed.asYaml()) { readPlan(mixed.asYaml()) shouldBe mixed }
+    }
+
+    @Test
     fun `it reads as a file a person would edit`() {
         withClue(plan.asYaml()) {
             plan.asYaml() shouldContain "kestrel:  plan/1"

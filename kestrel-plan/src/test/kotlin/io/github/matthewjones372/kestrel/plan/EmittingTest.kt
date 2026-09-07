@@ -78,8 +78,10 @@ class EmittingTest {
 
         withClue(emitted) {
             emitted shouldContain """val cluster = kafka.brokers("localhost:9092")"""
-            emitted shouldContain """val ordersTopic = cluster.setting("acks", "all").topic("orders")"""
-            emitted shouldContain "produce(placeOrder, ordersTopic.value {"
+            emitted shouldContain """val placeOrderTopic = cluster"""
+            emitted shouldContain """    .setting("acks", "all")"""
+            emitted shouldContain """    .topic("orders")"""
+            emitted shouldContain "produce(placeOrder, placeOrderTopic)"
             withClue("a plan of nothing but topics names no HTTP client and imports none") {
                 emitted shouldNotContain "http.baseUrl"
                 emitted shouldNotContain "import io.github.matthewjones372.kestrel.http.http"
@@ -107,11 +109,10 @@ class EmittingTest {
         ).asKotlin(packageName = "io.github.matthewjones372.kestrel.examples", from = "orders.yaml")
 
         withClue(emitted) {
-            emitted shouldContain """.correlatedBy(Header("correlation-id"))"""
-            emitted shouldContain "emit(placeOrder, ordersTopic"
-            emitted shouldContain "keyedBy = byUser"
-            emitted shouldContain ".completing(confirmed, from = orderConfirmationsTopic.completions()"
-            emitted shouldContain "drainingFor = 30.seconds"
+            emitted shouldContain """    .correlatedBy(Header("correlation-id"))"""
+            emitted shouldContain "emit(placeOrder, placeOrderTopic, keyedBy = byUser)"
+            emitted shouldContain "        from = confirmedTopic.completions(),"
+            emitted shouldContain "        drainingFor = 30.seconds,"
             withClue("the answer is drained by the run, so it is not a second send inside the scenario") {
                 emitted shouldNotContain "produce(confirmed"
                 emitted shouldNotContain "exec(confirmed"

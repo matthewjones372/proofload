@@ -110,4 +110,48 @@ class AskingTest {
 
         http.questions(Source.Written, smoked = "").filter { it.contains("partition") }.shouldBeEmpty()
     }
+
+    @Test
+    fun `a path carrying a fixed id is asked whether that is one row on purpose`() {
+        val fixed = readPlan(
+            """
+            kestrel:  plan/1
+            baseUrl:  https://orders.internal
+            scenario: checkout
+            steps:
+              - name: open product
+                get: /products/2
+            load:
+              rate: 50/s
+              over: 1m
+            """.trimIndent(),
+        )
+
+        val asking = fixed.questions(Source.Document, smoked = "")
+
+        withClue(asking.joinToString("\n")) {
+            asking.single { it.contains("one cache line") } shouldContain "open product"
+        }
+    }
+
+    @Test
+    fun `a plan that draws is asked nothing about it`() {
+        val drawn = readPlan(
+            """
+            kestrel:  plan/1
+            baseUrl:  https://orders.internal
+            scenario: checkout
+            draw:
+              sku: {uniform: {from: 1, to: 500}}
+            steps:
+              - name: open product
+                get: '/products/{sku}'
+            load:
+              rate: 50/s
+              over: 1m
+            """.trimIndent(),
+        )
+
+        drawn.questions(Source.Document, smoked = "").filter { it.contains("one cache line") }.shouldBeEmpty()
+    }
 }

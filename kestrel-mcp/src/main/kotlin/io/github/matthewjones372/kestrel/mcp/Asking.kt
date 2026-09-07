@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.DeclaredGoal
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
 import io.github.matthewjones372.kestrel.plan.DeclaredStep
+import io.github.matthewjones372.kestrel.plan.requests
 
 /**
  * What this plan is guessing, put as questions somebody can answer.
@@ -64,6 +65,26 @@ internal fun Declaration.questions(from: Source, smoked: String): List<String> =
     }
 
     addAll(topicQuestions())
+    addAll(literalQuestions())
+}
+
+/**
+ * A path carrying an id nobody drew.
+ *
+ * Asked because this plan has one, not because plans often do — a plan that
+ * draws is asked nothing. One id repeated is a measurement of one row and one
+ * cache line, and where that is deliberate it is worth saying so.
+ */
+private fun Declaration.literalQuestions(): List<String> = buildList {
+    val fixed = requests()
+        .filter { step -> step.path.split('/').any { it.isNotEmpty() && it.none(Char::isLetter) } }
+        .filter { step -> step.path.none { it == '{' } }
+    if (fixed.isEmpty()) return@buildList
+
+    add(
+        "${fixed.joinToString { "`${it.name}`" }} sends the same id every time, so every user asks for one " +
+            "row and one cache line. Is that on purpose, or should it draw — and over how many keys?",
+    )
 }
 
 /**

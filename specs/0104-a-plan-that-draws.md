@@ -108,7 +108,7 @@ and it currently teaches the opposite of 0096.
       plan that both draws and correlates needs one call and not two; and the
       seed has to be written out, or the source draws different data from the
       plan it says it equals. A test in `examples` compares the two.
-- [ ] **`spec-0104-taught`** — `plan_schema`, `docs/cookbook.md`, and the
+- [x] **`spec-0104-taught`** — `plan_schema`, `docs/cookbook.md`, and the
       question `benchmark` should ask about a literal id.
       Done when: a plan whose path carries a bare id is asked whether that is
       one row on purpose.
@@ -121,9 +121,10 @@ and it currently teaches the opposite of 0096.
 
 ## Open questions
 
-- **Does `from_openapi` draw by default?** Recommend yes — the default is what
-  gets read, and one substituted id is the anti-pattern 0096 named. It changes
-  every generated plan, so it wants saying out loud rather than discovering.
+- **Answered: `from_openapi` draws by default**, on the recommendation. Every
+  generated plan changed, which is the point and is said in the changelog, the
+  cookbook and `plan_schema` rather than left to be discovered. A parameter the
+  document does not bound is still substituted.
 - **Is the seed per key or per plan?** Recommend a plan-level `seed:` with each
   key seeded from it and its own name. Two keys sharing a seed and a shape draw
   the *same* values, which is a bug nobody would see: customer 41 always buying

@@ -749,6 +749,51 @@ regression. A run that named none compares exactly as it did before — every ba
 strict reading would refuse them all. The cost of that is stated rather than
 hidden: moving a CSV-fed run onto a generator is a change no comparison flags.
 
+### The same thing in a plan
+
+A plan file draws too, so a generated plan is not ten thousand requests for one
+row. `draw` names a session key and a generator, and `{name}` in a path or a
+body reads it:
+
+```yaml
+kestrel:  plan/1
+baseUrl:  https://shop.internal
+scenario: catalogue
+seed: 7
+draw:
+  sku:    {zipf: {keys: 1000000, skew: 1.1}}
+  page:   {uniform: {from: 1, to: 20}}
+  region: {oneOf: [emea, apac, amer]}
+steps:
+  - name: open product
+    get: '/regions/{region}/products/{sku}'
+    declared: [404]
+load:
+  rate: 200/s
+  over: 1m
+```
+
+`{uniform: 500}` draws `0` to `499`; the `from`/`to` form draws the inclusive
+range a contract states. Every drawn value arrives as a string, because that is
+what a path reads. Each key is seeded from `seed` and its own name, so two keys
+never draw in step with one another — without that, customer 41 would always
+buy item 41 and nothing in the report would show it.
+
+`kestrel from-openapi` writes the draw itself where the document bounds a
+parameter: `minimum: 1, maximum: 500` becomes `{uniform: {from: 1, to: 500}}`,
+and an `enum` becomes every value it lists. Where the document bounds nothing,
+one legal value is substituted as before — inventing a range it never stated
+would be inventing the cardinality this section is about.
+
+`kestrel emit` prints the Kotlin above, seeds included, so the file and the
+source draw the same data.
+
+```groovy
+dependencies {
+    testImplementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
+}
+```
+
 ## A token that expires mid-run
 
 Fetching a token inside a step puts that round trip in one request out of a few

@@ -21,6 +21,13 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **The plan format teaches drawing rather than the opposite.** `plan_schema`
+  documents `draw` and `seed`, lists every generator, carries a fourth worked
+  plan, and no longer claims a path may not contain braces — which stopped
+  being true. `docs/cookbook.md` gains the plan form beside the Kotlin one.
+  `benchmark` asks about a path that carries a fixed id — one row and one cache
+  line — and asks a plan that draws nothing about it.
+
 - **`emit` prints the generators.** A drawn plan becomes the `sessionKey`, the
   `uniform`/`zipf`/`oneOf` and the `fedBy`/`drawing` pair the cookbook writes by
   hand, checked in under `examples` where the build compiles it. Two things

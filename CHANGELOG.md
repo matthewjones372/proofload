@@ -333,6 +333,19 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`kestrel-plan-kafka`, the module that lowers a produce step.** `KafkaSteps`
+  is the `Lowering` `asSimulation` wants for a plan with topics in it, and it
+  builds the step through `kestrel-kafka`'s own DSL rather than assembling one —
+  so a plan cannot describe a step the language could not have. It takes a
+  `Kafka` to lower onto, defaulting to the one the plan's brokers name, so a
+  caller with a producer of their own passes `kafka.over(it)`. Kafka's own
+  producer settings pass through by their own names, `acks` included.
+
+  `kestrel-kafka`'s fake broker moved to test fixtures, since proving a lowered
+  plan produces what the equivalent Kotlin produces wants the same socket a real
+  `KafkaProducer` connects to. The fixture variants are kept out of the
+  published component, so nothing new goes to Maven Central beside the library.
+
 - **A declared step is a sealed type, and a plan can name a topic.**
   `DeclaredStep` was one data class describing a request; it is now a sealed
   interface with `DeclaredStep.Request` — the same fields under a new name — and

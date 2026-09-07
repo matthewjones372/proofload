@@ -39,13 +39,18 @@ import java.util.concurrent.atomic.AtomicLong
  * a consumer would need `ListOffsets` and `Fetch` on top, and a record batch
  * to hand back.
  *
+ * A test fixture rather than a test source, because the module that lowers a
+ * plan onto a topic needs the same socket to prove it lowered one — and a
+ * second hand-rolled broker would be a second thing to keep in step with the
+ * client's own wire versions.
+ *
  * The response header is written by hand because `AbstractResponse`'s own
  * `serializeWithHeader` is package-private. The version of that header is
  * `ApiKeys.responseHeaderVersion(apiVersion)`, which is public and is what
  * decides whether tagged fields follow it — getting that wrong is silent and
  * looks like a corrupt frame much further along.
  */
-internal class FakeBroker : AutoCloseable {
+class FakeBroker : AutoCloseable {
 
     private val socket = ServerSocket(0)
 

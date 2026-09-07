@@ -71,6 +71,7 @@ val moduleDescriptions = mapOf(
     "kestrel-engine" to "Runs a Kestrel simulation on virtual threads. Depends on kestrel-core.",
     "kestrel-export" to "A run's measurements in formats other tools read. No dependencies.",
     "kestrel-grpc" to "gRPC steps over a caller's own stubs and channel.",
+    "kestrel-grpc-dynamic" to "gRPC steps from a descriptor set, for a caller with no generated stubs.",
     "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
     "kestrel-java" to "Kestrel from Java: static factories and builders over the same values Kotlin builds.",
     "kestrel-jdbc" to "Database steps over a caller's own DataSource, with the pool wait counted apart.",

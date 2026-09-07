@@ -333,6 +333,19 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`kestrel-grpc-dynamic`, and a descriptor set read into methods.** A method
+  is found by the name gRPC puts on the wire — `shop.Orders/PlaceOrder`, what a
+  plan writes and what `grpcurl` takes — and a name nobody declared is answered
+  with the ones there are rather than with a null. A set whose files import one
+  another is linked across them, and one missing an import it declares is
+  refused naming both files, because the fix is a `protoc` flag and not a
+  change to the plan.
+
+  Beside `kestrel-grpc` rather than inside it: the typed path carries `grpc-api`
+  and a caller's own stubs, and protobuf's runtime is a stack nobody wanting
+  that path should inherit. No transport here either, for the reason
+  `kestrel-grpc` names none.
+
 - **A broker is a host a fence can see.** `Targeted` gained a `hosts` beside its
   `host`, defaulting to the one, because a bootstrap list is several and a fence
   shown the first of them is a fence with a hole in the shape of the rest. The

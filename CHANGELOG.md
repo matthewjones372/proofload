@@ -333,6 +333,15 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **JSON to a message, refused by name where it does not fit.** A plan's body
+  becomes the message the method declares, merged a field at a time so a
+  refusal says which key caused it — protobuf's own "Not an int32 value" is
+  unanswerable in a document with thirty keys in it. A field nobody declared is
+  refused rather than dropped, which is the opposite of protobuf's usual
+  generosity and is deliberate: a plan buys convenience with the guarantee the
+  typed path was written for, so a renamed field is as loud as a file can make
+  it. An answer comes back as one line of JSON, which is what a `trace` prints.
+
 - **`kestrel-grpc-dynamic`, and a descriptor set read into methods.** A method
   is found by the name gRPC puts on the wire — `shop.Orders/PlaceOrder`, what a
   plan writes and what `grpcurl` takes — and a name nobody declared is answered

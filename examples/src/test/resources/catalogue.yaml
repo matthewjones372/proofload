@@ -1,0 +1,22 @@
+# A catalogue browsed the way one really is: a long tail of products, a few
+# asked for constantly, and a region drawn from the three the contract lists.
+kestrel:  plan/1
+baseUrl:  https://shop.internal
+scenario: catalogue
+seed: 7
+draw:
+  sku:    {zipf: {keys: 1000000, skew: 1.1}}
+  page:   {uniform: {from: 1, to: 20}}
+  region: {oneOf: [emea, apac, amer]}
+steps:
+  - name: browse
+    get: '/regions/{region}/products?page={page}'
+  - name: open product
+    get: '/products/{sku}'
+    declared: [404]
+load:
+  rate: 200/s
+  over: 1m
+goals:
+  - step: open product
+    p99: 150ms

@@ -316,7 +316,7 @@ private fun Map<String, Arb<String>>.feeders(): List<Feeder> =
  * of the same plan draws the same values tomorrow. `String.hashCode` is
  * specified by Java, so this is stable across machines and versions.
  */
-private fun Declaration.seedFor(key: String): Long = seed + key.hashCode()
+internal fun Declaration.seedFor(key: String): Long = seed + key.hashCode()
 
 /**
  * The one sink this run is drained into.

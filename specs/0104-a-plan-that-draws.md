@@ -101,9 +101,13 @@ and it currently teaches the opposite of 0096.
       below. An `enum` draws every value it lists rather than the first, and a
       parameter the contract does not bound at both ends is substituted as
       before — inventing a range is inventing a cardinality.
-- [ ] **`spec-0104-emit`** — the emitter printing the arbs the cookbook writes.
+- [x] **`spec-0104-emit`** — the emitter printing the arbs the cookbook writes.
       Done when: an emitted drawn plan compiles in `examples` and names
       `kestrel-arbs` in its imports.
+      Two things building it found: `fedBy` replaces rather than adds, so a
+      plan that both draws and correlates needs one call and not two; and the
+      seed has to be written out, or the source draws different data from the
+      plan it says it equals. A test in `examples` compares the two.
 - [ ] **`spec-0104-taught`** — `plan_schema`, `docs/cookbook.md`, and the
       question `benchmark` should ask about a literal id.
       Done when: a plan whose path carries a bare id is asked whether that is

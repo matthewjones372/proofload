@@ -21,6 +21,17 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **`emit` prints the generators.** A drawn plan becomes the `sessionKey`, the
+  `uniform`/`zipf`/`oneOf` and the `fedBy`/`drawing` pair the cookbook writes by
+  hand, checked in under `examples` where the build compiles it. Two things
+  needed care: `fedBy` *replaces* an arm's feeder rather than adding to it, so a
+  plan that both draws and correlates emits one call and not two — two would
+  silently drop the draws and fail every step on an unfilled path; and each
+  generator's seed is written out, because the plan derives it from the key's
+  own name and source that let it default would draw different data from the
+  plan it claims to be. A test compares what the file draws against what the
+  emitted source draws, for five hundred users.
+
 - **A generated plan draws instead of substituting.** `from_openapi` and
   `planFrom` keep the `{sku}` template and write the draw the contract implies:
   a number bounded at both ends becomes `{uniform: {from: 1, to: 500}}`, and an

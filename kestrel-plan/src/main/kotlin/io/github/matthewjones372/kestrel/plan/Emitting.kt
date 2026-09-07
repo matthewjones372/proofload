@@ -28,6 +28,7 @@ fun Declaration.asKotlin(packageName: String, from: String): String {
             steps.map { "val ${handles.getValue(it.name)} = step(\"${it.name}\")" } +
             listOfNotNull(baseUrl?.let { "val api = http.baseUrl(\"$it\")" }) +
             topicLines() +
+            drawLines() +
             "" +
             "val ${scenario.identifier()}: Scenario = scenario(\"$scenario\") {" +
             steps.flatMap { lines(it, handles.getValue(it.name)) }.map { "    $it" } +
@@ -35,6 +36,8 @@ fun Declaration.asKotlin(packageName: String, from: String): String {
             "" +
             "val simulation = ${scenario.identifier()}" +
             load.lines().map { "    $it" } +
+            feedingLines() +
+            drawingLines() +
             completionLines(handles) +
             goalLines(handles)
         ).joinToString(separator = "\n", postfix = "\n")
@@ -115,10 +118,66 @@ private fun Declaration.answerTo(step: DeclaredStep.Produce): DeclaredStep.Compl
  * Beside the rate rather than in the scenario, because that is where they live
  * in the language: a sink belongs to the run, not to a position in a journey.
  */
+
+/**
+ * Everything each user is given, in one call.
+ *
+ * One `.fedBy` and not one per source: it *replaces* the arm's feeder rather
+ * than adding to it, so two of them would silently drop the first — a plan
+ * that both draws and correlates would lose its draws and fail every step on
+ * an unfilled path.
+ */
+private fun Declaration.feedingLines(): List<String> {
+    val feeders = draw.keys.map { "feed($it) { ${it.identifier()}Drawn at it }" } +
+        // The correlation reads the user's number back out of the session.
+        if (steps.any { it is DeclaredStep.Completes }) listOf("feed(user) { it }") else emptyList()
+
+    if (feeders.isEmpty()) return emptyList()
+    return listOf("    .fedBy(${feeders.joinToString(" + ")})")
+}
+
+/** What the run drew from, so the page says it and a comparison can refuse a different one. */
+private fun Declaration.drawingLines(): List<String> =
+    if (draw.isEmpty()) emptyList()
+    else listOf("    .drawing(${draw.keys.joinToString { "${it.identifier()}Drawn.shape" }})")
+
+/** How many feeders the emitted `fedBy` joins: one per drawn key, and one for a correlation. */
+private fun Declaration.feederCount(): Int =
+    draw.size + if (steps.any { it is DeclaredStep.Completes }) 1 else 0
+
+/** A `sessionKey` and a generator per drawn key, named above the scenario that reads them. */
+private fun Declaration.drawLines(): List<String> = draw.flatMap { (key, drawn) ->
+    listOf(
+        "val $key = sessionKey<String>(\"$key\")",
+        "val ${key.identifier()}Drawn = ${drawn.written(seedFor(key))}",
+    )
+}
+
+/**
+ * The generator as the cookbook writes it, mapped to the string a path reads.
+ *
+ * [seed] is written out rather than left to default. The plan derives each
+ * key's seed from its own name, so source that omitted it would draw different
+ * values from the plan it claims to be the same run as — which is the one
+ * thing `emit` promises.
+ */
+private fun DeclaredDraw.written(seed: Long): String = when (this) {
+    is DeclaredDraw.Uniform ->
+        if (from == 0L) "uniform(keys = $keys, seed = $seed).map { it.toString() }"
+        else "uniform(keys = $keys, seed = $seed).map { (it + $from).toString() }"
+
+    is DeclaredDraw.Zipf -> "zipf(keys = $keys, skew = $skew, seed = $seed).map { it.toString() }"
+
+    is DeclaredDraw.OneOf -> "oneOf(${values.joinToString { "\"$it\"" }}, seed = $seed)"
+
+    is DeclaredDraw.Digits -> "digits(count = $count, seed = $seed)"
+
+    DeclaredDraw.Uuids -> "uuids(seed = $seed).map { it.toString() }"
+}
+
 private fun Declaration.completionLines(handles: Map<String, String>): List<String> =
     steps.filterIsInstance<DeclaredStep.Completes>().flatMap { answer ->
         listOf(
-            "    .fedBy(feed(user) { it })",
             "    .completing(",
             "        ${handles.getValue(answer.name)},",
             "        from = ${answer.name.identifier()}Topic.completions(),",
@@ -144,6 +203,7 @@ private fun Declaration.imports(): List<String> = buildList {
         .sorted()
         .forEach { add("import io.github.matthewjones372.kestrel.$it") }
     if (steps.any { it.pauseAfter != null }) add("import io.github.matthewjones372.kestrel.pause")
+    addAll(drawImports())
     if (goals.any { it is DeclaredGoal.FailureRate }) add("import io.github.matthewjones372.kestrel.percent")
     add("import io.github.matthewjones372.kestrel.perSecond")
     if (load is DeclaredLoad.Ramp) add("import io.github.matthewjones372.kestrel.rampRate")
@@ -152,6 +212,31 @@ private fun Declaration.imports(): List<String> = buildList {
     if (steps.any { it is DeclaredStep.Request }) add("import io.github.matthewjones372.kestrel.http.http")
     addAll(kafkaImports())
     units().forEach { add("import kotlin.time.Duration.Companion.$it") }
+}
+
+/** What the drawn half of an emitted plan names, and nothing when it draws nothing. */
+private fun Declaration.drawImports(): List<String> = buildList {
+    if (draw.isEmpty()) return@buildList
+
+    add("import io.github.matthewjones372.kestrel.drawing")
+    add("import io.github.matthewjones372.kestrel.fedBy")
+    add("import io.github.matthewjones372.kestrel.feed")
+    add("import io.github.matthewjones372.kestrel.sessionKey")
+    // Feeders are joined with `+`, which is an extension rather than a member.
+    if (feederCount() > 1) add("import io.github.matthewjones372.kestrel.plus")
+    if (draw.values.any { it !is DeclaredDraw.OneOf && it !is DeclaredDraw.Digits }) {
+        add("import io.github.matthewjones372.kestrel.arbs.map")
+    }
+    draw.values.map { it.generator() }.distinct().sorted()
+        .forEach { add("import io.github.matthewjones372.kestrel.arbs.$it") }
+}
+
+private fun DeclaredDraw.generator(): String = when (this) {
+    is DeclaredDraw.Uniform -> "uniform"
+    is DeclaredDraw.Zipf -> "zipf"
+    is DeclaredDraw.OneOf -> "oneOf"
+    is DeclaredDraw.Digits -> "digits"
+    DeclaredDraw.Uuids -> "uuids"
 }
 
 /** What the Kafka half of an emitted plan names, and nothing when it names none. */
@@ -165,9 +250,11 @@ private fun Declaration.kafkaImports(): List<String> = buildList {
 
     add("import io.github.matthewjones372.kestrel.Correlation")
     add("import io.github.matthewjones372.kestrel.completing")
-    add("import io.github.matthewjones372.kestrel.fedBy")
-    add("import io.github.matthewjones372.kestrel.feed")
-    add("import io.github.matthewjones372.kestrel.sessionKey")
+    if (draw.isEmpty()) {
+        add("import io.github.matthewjones372.kestrel.fedBy")
+        add("import io.github.matthewjones372.kestrel.feed")
+        add("import io.github.matthewjones372.kestrel.sessionKey")
+    }
     add("import io.github.matthewjones372.kestrel.kafka.Header")
     add("import io.github.matthewjones372.kestrel.kafka.completions")
     add("import io.github.matthewjones372.kestrel.kafka.emit")

@@ -49,6 +49,8 @@ fun readPlan(text: String): Declaration {
         steps = steps,
         load = plan.required("load").load(),
         goals = plan.optional("goals")?.sequence("goals")?.value.orEmpty().map { it.goal() },
+        draw = plan.optional("draw")?.mapping("draw")?.draws().orEmpty(),
+        seed = plan.optional("seed")?.number("seed") ?: 0L,
     )
 }
 
@@ -115,6 +117,40 @@ private fun MappingNode.completes(): DeclaredStep.Completes {
     )
 }
 
+/**
+ * The generators a plan names, by the session key each fills.
+ *
+ * One key names the generator and carries its arguments, which is the idiom a
+ * step already uses for its verb — and unlike a call written as text it is
+ * YAML, which `uniform(keys: 500)` is not.
+ */
+private fun MappingNode.draws(): Map<String, DeclaredDraw> =
+    value.associate { entry -> entry.keyNode.text() to entry.valueNode.draw() }
+
+private fun Node.draw(): DeclaredDraw {
+    val drawn = mapping("a draw")
+    drawn.only(DRAWS)
+
+    val named = DRAWS.firstOrNull { drawn.optional(it) != null }
+        ?: drawn.fail("a draw names one of ${DRAWS.joinToString()}")
+
+    val argument = drawn.required(named)
+    return when (named) {
+        "uniform" -> DeclaredDraw.Uniform(argument.number("uniform"))
+
+        "zipf" -> argument.mapping("zipf").let {
+            it.only(ZIPF_KEYS)
+            DeclaredDraw.Zipf(it.required("keys").number("keys"), it.required("skew").decimal("skew"))
+        }
+
+        "oneOf" -> DeclaredDraw.OneOf(argument.sequence("oneOf").value.map { it.text() })
+
+        "digits" -> DeclaredDraw.Digits(argument.number("digits").toInt())
+
+        else -> DeclaredDraw.Uuids
+    }
+}
+
 private fun Node.load(): DeclaredLoad {
     val load = mapping("load")
     load.only(LOAD_KEYS)
@@ -158,6 +194,9 @@ private fun Node.text(): String = (this as? ScalarNode)?.value ?: fail("this is 
 
 private fun Node.number(what: String): Long =
     text().toLongOrNull() ?: fail("$what is a whole number")
+
+private fun Node.decimal(what: String): Double =
+    text().toDoubleOrNull() ?: fail("$what is a number")
 
 private fun Node.rate(): Rate = Rate.parse(text()) ?: fail("`${text()}` is not a rate like \"50/s\" or \"30/m\"")
 
@@ -208,7 +247,10 @@ private fun Node.fail(said: String): Nothing {
     throw IllegalArgumentException("line $line: $said")
 }
 
-private val PLAN_KEYS = listOf("kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals")
+private val PLAN_KEYS =
+    listOf("kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals", "draw", "seed")
+private val DRAWS = listOf("uniform", "zipf", "oneOf", "digits", "uuids")
+private val ZIPF_KEYS = listOf("keys", "skew")
 private val VERBS = listOf("get", "post", "put", "patch", "delete", "head")
 private val REQUEST_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
 private val PRODUCE_KEYS = listOf("name", "produce", "body", "key", "settings", "pauseAfter")

@@ -13,6 +13,11 @@
 dependencies {
     api(project(":kestrel-core"))
     api(project(":kestrel-http"))
+    // Generators, so a plan can draw a value per user instead of sending one
+    // id ten thousand times. `kestrel-arbs` depends on core and nothing else,
+    // so this arrives with no third-party jar behind it — which is why it can
+    // live here rather than in a module of its own the way Kafka had to.
+    api(project(":kestrel-arbs"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

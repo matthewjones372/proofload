@@ -1544,18 +1544,35 @@ class Status : Reason
 ```text
 class Declaration
     val VERSION: String
-    constructor(String, String, String, String, List, DeclaredLoad, List)
+    constructor(String, String, String, String, List, DeclaredLoad, List, Map, Long)
     val baseUrl: String
     val brokers: String
+    val draw: Map
     val goals: List
     val load: DeclaredLoad
     val scenario: String
+    val seed: Long
     val steps: List
     val version: String
 class Declaration.Companion
 top-level in DeclarationKt
     fun asSimulation(Declaration, List): Simulation
     fun requests(Declaration): List
+interface DeclaredDraw
+class DeclaredDraw.Digits : DeclaredDraw
+    constructor(Int)
+    val count: Int
+class DeclaredDraw.OneOf : DeclaredDraw
+    constructor(List)
+    val values: List
+class DeclaredDraw.Uniform : DeclaredDraw
+    constructor(Long)
+    val keys: Long
+class DeclaredDraw.Uuids : DeclaredDraw
+class DeclaredDraw.Zipf : DeclaredDraw
+    constructor(Long, Double)
+    val keys: Long
+    val skew: Double
 interface DeclaredGoal
     val step: String
 class DeclaredGoal.FailureRate : DeclaredGoal

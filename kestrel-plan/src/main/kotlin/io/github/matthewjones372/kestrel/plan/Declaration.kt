@@ -11,7 +11,15 @@ import io.github.matthewjones372.kestrel.Simulation
 import io.github.matthewjones372.kestrel.Step
 import io.github.matthewjones372.kestrel.StepName
 import io.github.matthewjones372.kestrel.ThinkTime
+import io.github.matthewjones372.kestrel.arbs.Arb
+import io.github.matthewjones372.kestrel.arbs.digits
+import io.github.matthewjones372.kestrel.arbs.map
+import io.github.matthewjones372.kestrel.arbs.oneOf
+import io.github.matthewjones372.kestrel.arbs.uniform
+import io.github.matthewjones372.kestrel.arbs.uuids
+import io.github.matthewjones372.kestrel.arbs.zipf
 import io.github.matthewjones372.kestrel.failureRate
+import io.github.matthewjones372.kestrel.feed
 import io.github.matthewjones372.kestrel.http.Http
 import io.github.matthewjones372.kestrel.http.HttpAction
 import io.github.matthewjones372.kestrel.http.http
@@ -21,6 +29,7 @@ import io.github.matthewjones372.kestrel.p99
 import io.github.matthewjones372.kestrel.p999
 import io.github.matthewjones372.kestrel.percent
 import io.github.matthewjones372.kestrel.plus
+import io.github.matthewjones372.kestrel.sessionKey
 import kotlin.time.Duration
 
 /**
@@ -42,6 +51,22 @@ data class Declaration(
     val steps: List<DeclaredStep>,
     val load: DeclaredLoad,
     val goals: List<DeclaredGoal> = emptyList(),
+    /**
+     * What each user is given before it sends anything, by session key.
+     *
+     * Read by `{name}` in a path or a body, which is machinery a plan already
+     * relies on and could not previously fill.
+     */
+    val draw: Map<String, DeclaredDraw> = emptyMap(),
+    /**
+     * What every generator here is derived from, so a run replays.
+     *
+     * One number for the plan rather than one per key: each key is seeded from
+     * this and its own name, because two keys sharing a seed and a shape draw
+     * the same values — customer 41 always buying item 41, which no report
+     * would show.
+     */
+    val seed: Long = 0L,
 ) {
 
     companion object {
@@ -157,6 +182,44 @@ data class Lowered(
     val completing: Completing? = null,
 )
 
+/**
+ * A generator a plan names, in the shapes `kestrel-arbs` offers.
+ *
+ * The names are the cookbook's, so a reader graduating to `emit` finds the same
+ * vocabulary rather than a translation of it.
+ */
+sealed interface DeclaredDraw {
+
+    /** Every key asked for equally often — the right shape for an id space and the wrong one for traffic. */
+    data class Uniform(val keys: Long) : DeclaredDraw
+
+    /** The shape real traffic has: a few keys asked for constantly, a long tail asked for once. */
+    data class Zipf(val keys: Long, val skew: Double) : DeclaredDraw
+
+    /** One of these, uniformly. A handful of product names, not a keyspace. */
+    data class OneOf(val values: List<String>) : DeclaredDraw
+
+    data class Digits(val count: Int) : DeclaredDraw
+
+    data object Uuids : DeclaredDraw
+}
+
+/**
+ * The generator itself, drawing strings.
+ *
+ * Everything ends as a `String` because that is what interpolation reads: a key
+ * of the same name holding a `Long` is a throw rather than a failed step, and
+ * nobody declared it. `map` leaves the shape where it was, so a mapped
+ * `uniform` still reports as `uniform`.
+ */
+internal fun DeclaredDraw.arb(seed: Long): Arb<String> = when (this) {
+    is DeclaredDraw.Uniform -> uniform(keys, seed).map { it.toString() }
+    is DeclaredDraw.Zipf -> zipf(keys, skew, seed).map { it.toString() }
+    is DeclaredDraw.OneOf -> oneOf(values, seed)
+    is DeclaredDraw.Digits -> digits(count, seed)
+    DeclaredDraw.Uuids -> uuids(seed).map { it.toString() }
+}
+
 /** The shape of the load, in the three forms a file can state without a lambda. */
 sealed interface DeclaredLoad {
 
@@ -215,18 +278,37 @@ fun Declaration.asSimulation(lowerings: List<Lowering> = emptyList()): Simulatio
 
     val api = baseUrl?.let { http.baseUrl(it) }
     val lowered = steps.map { it.lower(this, api, lowerings) }
+    val drawing = draw.mapValues { (name, drawn) -> drawn.arb(seedFor(name)) }
     return Simulation(
         arms = listOf(
             Arm(
                 scenario = Scenario(scenario, lowered.flatMap { it.steps }),
                 profile = load.asProfile(),
-                feeder = lowered.mapNotNull { it.feeder }.fold(Feeder.empty) { all, next -> all + next },
+                feeder = (lowered.mapNotNull { it.feeder } + drawing.feeders())
+                    .fold(Feeder.empty) { all, next -> all + next },
+                drawn = drawing.values.map { it.shape },
             ),
         ),
         goals = goals.map { it.asGoal() },
         completing = lowered.sinks(),
     )
 }
+
+/**
+ * A feeder per drawn key, filling the session the way a path expects to read it.
+ */
+private fun Map<String, Arb<String>>.feeders(): List<Feeder> =
+    map { (name, arb) -> feed(sessionKey<String>(name)) { user -> arb at user } }
+
+/**
+ * What one key's generator is derived from.
+ *
+ * The plan's seed and the key's own name, so two keys of one plan draw
+ * differently without a caller having to think about it — and so the same key
+ * of the same plan draws the same values tomorrow. `String.hashCode` is
+ * specified by Java, so this is stable across machines and versions.
+ */
+private fun Declaration.seedFor(key: String): Long = seed + key.hashCode()
 
 /**
  * The one sink this run is drained into.

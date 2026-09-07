@@ -22,6 +22,9 @@ class NoThirdPartyDependenciesTest {
         "kestrel-core",
         "kestrel-http",
         "kestrel-plan",
+        // Arrives with `kestrel-plan`, which draws a value per user. Pure
+        // Kotlin over core, so no third-party jar comes with it.
+        "kestrel-arbs",
         "snakeyaml-engine",
     )
 

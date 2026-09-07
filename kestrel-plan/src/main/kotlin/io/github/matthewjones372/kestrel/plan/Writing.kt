@@ -16,6 +16,11 @@ fun Declaration.asYaml(): String = buildString {
     baseUrl?.let { appendLine("baseUrl:  $it") }
     brokers?.let { appendLine("brokers:  $it") }
     appendLine("scenario: $scenario")
+    if (seed != 0L) appendLine("seed: $seed")
+    if (draw.isNotEmpty()) {
+        appendLine("draw:")
+        draw.forEach { (key, drawn) -> appendLine("  ${key.quoted()}: ${drawn.written()}") }
+    }
     appendLine("steps:")
     steps.forEach { appendLine(it.written()) }
     appendLine("load:")
@@ -63,6 +68,14 @@ private fun DeclaredStep.Completes.body(): String = buildString {
     appendLine("    by: ${by.quoted()}")
     group?.let { appendLine("    group: ${it.quoted()}") }
     appendLine("    within: ${within.written()}")
+}
+
+private fun DeclaredDraw.written(): String = when (this) {
+    is DeclaredDraw.Uniform -> "{uniform: $keys}"
+    is DeclaredDraw.Zipf -> "{zipf: {keys: $keys, skew: $skew}}"
+    is DeclaredDraw.OneOf -> "{oneOf: [${values.joinToString { it.quoted() }}]}"
+    is DeclaredDraw.Digits -> "{digits: $count}"
+    DeclaredDraw.Uuids -> "{uuids: {}}"
 }
 
 private fun DeclaredLoad.written(indent: String = "  "): String = when (this) {

@@ -27,7 +27,7 @@ class NoThirdPartyDependenciesTest {
     fun `what is here is the plan, Kafka, and what each of them already brought`() {
         val allowed = listOf(
             "kotlin-stdlib", "annotations-",
-            "kestrel-core", "kestrel-http", "kestrel-plan", "kestrel-kafka",
+            "kestrel-core", "kestrel-http", "kestrel-plan", "kestrel-arbs", "kestrel-kafka",
             // The plan's parser and Kafka's own codecs and logging facade,
             // which arrive with those two and are not a choice made here.
             "snakeyaml-engine", "kafka-clients", "zstd-jni", "lz4-java", "snappy-java", "slf4j-api",

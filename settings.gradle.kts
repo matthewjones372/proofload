@@ -9,6 +9,7 @@ include(
     "kestrel-engine",
     "kestrel-export",
     "kestrel-grpc",
+    "kestrel-grpc-dynamic",
     "kestrel-http",
     "kestrel-java",
     "kestrel-jdbc",

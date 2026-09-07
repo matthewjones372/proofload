@@ -1198,6 +1198,17 @@ top-level in StreamsKt
     fun stream(Grpc, MethodDescriptor, Function1): GrpcStream
 ```
 
+### `io.github.matthewjones372:kestrel-grpc-dynamic`
+
+```text
+class Schema
+    val methods: List
+    fun method(String): Descriptors.MethodDescriptor
+top-level in SchemaKt
+    fun descriptorSet(Path): Schema
+    fun descriptorSet(Array<Byte>): Schema
+```
+
 ### `io.github.matthewjones372:kestrel-http`
 
 ```text

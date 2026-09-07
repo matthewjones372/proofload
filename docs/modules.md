@@ -12,6 +12,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-http` | HTTP steps on the JDK's `java.net.http` client, swappable for another, and server-sent event streams | core |
 | `kestrel-websocket` | WebSocket steps on the JDK's `java.net.http.WebSocket` | core |
 | `kestrel-grpc` | gRPC steps over a caller's own stubs, named by the method descriptor | core, `grpc-api` |
+| `kestrel-grpc-dynamic` | the same calls from a descriptor set, for a caller with no generated stubs | core, grpc, `protobuf-java` |
 | `kestrel-jdbc` | database steps over a caller's own `DataSource`, the pool wait counted apart from the query | core |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
 | `kestrel-java` | the same values built from Java: static factories over `Rate`, `StepName` and `Share`, a builder where Kotlin has a lambda, and `java.time.Duration` throughout | core, engine, http |
@@ -112,6 +113,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-pelican` | [NoPekkoTest](../kestrel-pelican/src/test/kotlin/io/github/matthewjones372/kestrel/pelican/NoPekkoTest.kt) |
 | `kestrel-otel` | [NoGrpcStackTest](../kestrel-otel/src/test/kotlin/io/github/matthewjones372/kestrel/otel/NoGrpcStackTest.kt) |
 | `kestrel-grpc` | [NoTransportTest](../kestrel-grpc/src/test/kotlin/io/github/matthewjones372/kestrel/grpc/NoTransportTest.kt) |
+| `kestrel-grpc-dynamic` | [NoStubDependenciesTest](../kestrel-grpc-dynamic/src/test/kotlin/io/github/matthewjones372/kestrel/grpc/dynamic/NoStubDependenciesTest.kt) |
 | `kestrel-kafka` | [NoBrokerDependenciesTest](../kestrel-kafka/src/test/kotlin/io/github/matthewjones372/kestrel/kafka/NoBrokerDependenciesTest.kt) |
 
 Each one reads the module's own `runtimeClasspath`, handed to the test JVM as a

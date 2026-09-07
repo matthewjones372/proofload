@@ -1,0 +1,10 @@
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/Schema {
+	public final fun getMethods ()Ljava/util/List;
+	public final fun method (Ljava/lang/String;)Lcom/google/protobuf/Descriptors$MethodDescriptor;
+}
+
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/SchemaKt {
+	public static final fun descriptorSet (Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/grpc/dynamic/Schema;
+	public static final fun descriptorSet ([B)Lio/github/matthewjones372/kestrel/grpc/dynamic/Schema;
+}
+

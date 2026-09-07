@@ -28,6 +28,7 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-plan-kafka:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-grpc:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-grpc-dynamic:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")

@@ -88,6 +88,9 @@ dependencies {
     implementation(project(":kestrel-core"))
     implementation(project(":kestrel-engine"))
     implementation(project(":kestrel-http"))
+    // The emitted Kafka source below is compiled here, which is the only thing
+    // that can show `emit` prints Kotlin rather than a plausible-looking string.
+    implementation(project(":kestrel-kafka"))
     // `AgainstTheBaseline` is a main too: the workflow's whole job is one JVM
     // invocation, and a job summary written from a test would be written by
     // whichever test ran last.

@@ -57,9 +57,17 @@ private fun Declaration.goalLines(handles: Map<String, String>): List<String> =
     }
 
 /**
- * One `Topic` value per topic a plan produces to, named once above the
- * scenario: two steps on one topic are two sends through the same producer,
- * which is what the Kotlin would have written and what the run then measures.
+ * One `Topic` value per produce step, named after the step and carrying what
+ * that step sends.
+ *
+ * Per step rather than per topic: two steps on one topic send different bodies,
+ * and a value shared between them would be a topic whose payload depends on
+ * which step wrote last. The cluster above them is shared, which is the part
+ * that is genuinely one thing — a producer is a connection pool, and one per
+ * step would build a second inside the sample.
+ *
+ * Written one call to a line so the result fits the line length its own
+ * repository lints for.
  */
 private fun Declaration.topicLines(): List<String> {
     val produced = steps.filterIsInstance<DeclaredStep.Produce>()
@@ -67,18 +75,23 @@ private fun Declaration.topicLines(): List<String> {
 
     val answers = steps.filterIsInstance<DeclaredStep.Completes>()
     return listOf("val cluster = kafka.brokers(\"$brokers\")") +
-        produced.distinctBy { it.topic }.map { step ->
-            buildString {
-                append("val ${step.topic.identifier()}Topic = cluster")
-                step.settings.forEach { (key, value) -> append(".setting(\"$key\", \"$value\")") }
-                append(".topic(\"${step.topic}\")")
-                answerTo(step)?.let { append(".correlatedBy(Header(\"${it.by}\"))") }
+        produced.flatMap { step ->
+            val calls = buildList {
+                step.settings.forEach { (key, value) -> add(".setting(\"$key\", \"$value\")") }
+                add(".topic(\"${step.topic}\")")
+                answerTo(step)?.let { add(".correlatedBy(Header(\"${it.by}\"))") }
+                step.key?.let { add(".keyed { \"\"\"$it\"\"\".toByteArray() }") }
+                add(".value { \"\"\"${step.body}\"\"\".toByteArray() }")
             }
+            listOf("val ${step.name.identifier()}Topic = cluster") + calls.map { "    $it" }
         } +
-        answers.map { answer ->
-            "val ${answer.on.identifier()}Topic = cluster" +
-                answer.group?.let { ".setting(\"group.id\", \"$it\")" }.orEmpty() +
-                ".topic(\"${answer.on}\").correlatedBy(Header(\"${answer.by}\"))"
+        answers.flatMap { answer ->
+            val calls = buildList {
+                answer.group?.let { add(".setting(\"group.id\", \"$it\")") }
+                add(".topic(\"${answer.on}\")")
+                add(".correlatedBy(Header(\"${answer.by}\"))")
+            }
+            listOf("val ${answer.name.identifier()}Topic = cluster") + calls.map { "    $it" }
         } +
         if (answers.isEmpty()) {
             emptyList()
@@ -106,10 +119,11 @@ private fun Declaration.completionLines(handles: Map<String, String>): List<Stri
     steps.filterIsInstance<DeclaredStep.Completes>().flatMap { answer ->
         listOf(
             "    .fedBy(feed(user) { it })",
-            "    .completing(" +
-                "${handles.getValue(answer.name)}, " +
-                "from = ${answer.on.identifier()}Topic.completions(), " +
-                "drainingFor = ${answer.within.written()})",
+            "    .completing(",
+            "        ${handles.getValue(answer.name)},",
+            "        from = ${answer.name.identifier()}Topic.completions(),",
+            "        drainingFor = ${answer.within.written()},",
+            "    )",
         )
     }
 
@@ -191,13 +205,12 @@ private fun Declaration.lines(step: DeclaredStep, handle: String): List<String> 
 
         is DeclaredStep.Produce -> add(
             buildString {
-                val answered = answerTo(step) != null
-                append(if (answered) "emit" else "produce")
-                append("($handle, ${step.topic.identifier()}Topic")
-                step.key?.let { append(".keyed { \"\"\"$it\"\"\".toByteArray() }") }
-                append(".value { \"\"\"${step.body}\"\"\".toByteArray() }")
-                if (answered) append(", keyedBy = byUser")
-                append(")")
+                val topic = "${step.name.identifier()}Topic"
+                if (answerTo(step) == null) {
+                    append("produce($handle, $topic)")
+                } else {
+                    append("emit($handle, $topic, keyedBy = byUser)")
+                }
             },
         )
 

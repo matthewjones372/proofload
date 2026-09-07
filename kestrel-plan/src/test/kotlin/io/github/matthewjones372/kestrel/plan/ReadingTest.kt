@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The errors are the feature. A caller iterating against a parser rather than a
@@ -36,6 +37,28 @@ class ReadingTest {
         goals:
           - step: place order
             p99:  200ms
+    """.trimIndent()
+
+    private val kafkaPlan = """
+        kestrel:  plan/1
+        brokers:  localhost:9092
+        scenario: orders
+        steps:
+          - name: place order
+            produce:   orders
+            key:       anvil-1
+            body:      '{"cart":"1 anvil"}'
+            settings:
+              acks: all
+          - name: confirmed
+            completes: place order
+            on:        order-confirmations
+            by:        correlation-id
+            group:     kestrel-bench
+            within:    30s
+        load:
+          rate: 500/s
+          over: 1m
     """.trimIndent()
 
     @Test
@@ -86,6 +109,75 @@ class ReadingTest {
             thrown.message.orEmpty() shouldContain "quickly"
             thrown.message.orEmpty() shouldContain "line"
         }
+    }
+
+    @Test
+    fun `a topic plan reads into produce and completes steps`() {
+        val read = readPlan(kafkaPlan)
+
+        read.brokers shouldBe "localhost:9092"
+        read.baseUrl shouldBe null
+        read.steps shouldBe listOf(
+            DeclaredStep.Produce(
+                name = "place order",
+                topic = "orders",
+                body = """{"cart":"1 anvil"}""",
+                key = "anvil-1",
+                settings = mapOf("acks" to "all"),
+            ),
+            DeclaredStep.Completes(
+                name = "confirmed",
+                completes = "place order",
+                on = "order-confirmations",
+                by = "correlation-id",
+                within = 30.seconds,
+                group = "kestrel-bench",
+            ),
+        )
+    }
+
+    @Test
+    fun `a completes with no window is refused, naming the key`() {
+        val thrown = shouldThrow<IllegalArgumentException> {
+            readPlan(kafkaPlan.replace("    within:    30s\n", ""))
+        }
+
+        withClue(thrown.message.orEmpty()) { thrown.message.orEmpty() shouldContain "within" }
+    }
+
+    @Test
+    fun `a step naming neither a verb nor a topic says what a step can be`() {
+        val thrown = shouldThrow<IllegalArgumentException> {
+            readPlan(kafkaPlan.replace("    produce:   orders", "    publish:   orders"))
+        }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "produce"
+            thrown.message.orEmpty() shouldContain "completes"
+        }
+    }
+
+    @Test
+    fun `a plan that mixes a request and a topic reads as both`() {
+        val mixed = readPlan(
+            """
+            kestrel:  plan/1
+            baseUrl:  https://orders.internal
+            brokers:  localhost:9092
+            scenario: checkout
+            steps:
+              - name: browse
+                get:  /products
+              - name: place order
+                produce: orders
+                body: '{}'
+            load:
+              rate: 50/s
+              over: 1m
+            """.trimIndent(),
+        )
+
+        mixed.steps.map { it::class.simpleName } shouldBe listOf("Request", "Produce")
     }
 
     @Test

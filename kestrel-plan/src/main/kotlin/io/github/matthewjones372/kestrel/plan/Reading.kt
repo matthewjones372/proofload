@@ -47,21 +47,61 @@ fun readPlan(path: Path): Declaration = readPlan(Files.readString(path, Charsets
 
 private fun Node.step(): DeclaredStep {
     val step = mapping("a step")
-    step.only(STEP_KEYS)
+    // Every key a step of any kind may carry, checked before the kind is
+    // decided, so a misspelled verb is named as the key it is rather than as a
+    // step that named no verb.
+    step.only(REQUEST_KEYS + PRODUCE_KEYS + COMPLETES_KEYS)
 
     val verb = VERBS.firstOrNull { step.optional(it) != null }
-        ?: step.fail("a step names one of ${VERBS.joinToString()} and a path")
 
+    return when {
+        verb != null -> step.request(verb)
+        step.optional("produce") != null -> step.produce()
+        step.optional("completes") != null -> step.completes()
+        else -> step.fail("a step names one of ${VERBS.joinToString()}, or `produce`, or `completes`")
+    }
+}
+
+private fun MappingNode.request(verb: String): DeclaredStep.Request {
+    only(REQUEST_KEYS)
     return DeclaredStep.Request(
-        name = step.required("name").text(),
+        name = required("name").text(),
         method = verb.uppercase(),
-        path = step.required(verb).text(),
-        headers = step.optional("headers")?.mapping("headers")?.pairs().orEmpty(),
-        body = step.optional("body")?.text(),
-        expecting = step.optional("expecting")?.number("expecting")?.toInt() ?: OK,
-        declared = step.optional("declared")?.sequence("declared")?.value.orEmpty()
+        path = required(verb).text(),
+        headers = optional("headers")?.mapping("headers")?.pairs().orEmpty(),
+        body = optional("body")?.text(),
+        expecting = optional("expecting")?.number("expecting")?.toInt() ?: OK,
+        declared = optional("declared")?.sequence("declared")?.value.orEmpty()
             .map { it.number("a declared status").toInt() },
-        pauseAfter = step.optional("pauseAfter")?.duration(),
+        pauseAfter = optional("pauseAfter")?.duration(),
+    )
+}
+
+private fun MappingNode.produce(): DeclaredStep.Produce {
+    only(PRODUCE_KEYS)
+    return DeclaredStep.Produce(
+        name = required("name").text(),
+        topic = required("produce").text(),
+        body = required("body").text(),
+        key = optional("key")?.text(),
+        settings = optional("settings")?.mapping("settings")?.pairs().orEmpty(),
+        pauseAfter = optional("pauseAfter")?.duration(),
+    )
+}
+
+private fun MappingNode.completes(): DeclaredStep.Completes {
+    only(COMPLETES_KEYS)
+    return DeclaredStep.Completes(
+        name = required("name").text(),
+        completes = required("completes").text(),
+        on = required("on").text(),
+        by = required("by").text(),
+        // Required, and said here rather than defaulted: a wait chosen for the
+        // caller turns a record the run lost into one it merely did not wait
+        // for, or the other way about.
+        within = required("within").duration(),
+        group = optional("group")?.text(),
+        pauseAfter = optional("pauseAfter")?.duration(),
     )
 }
 
@@ -150,7 +190,9 @@ private fun Node.fail(said: String): Nothing {
 
 private val PLAN_KEYS = listOf("kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals")
 private val VERBS = listOf("get", "post", "put", "patch", "delete", "head")
-private val STEP_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
+private val REQUEST_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
+private val PRODUCE_KEYS = listOf("name", "produce", "body", "key", "settings", "pauseAfter")
+private val COMPLETES_KEYS = listOf("name", "completes", "on", "by", "within", "group", "pauseAfter")
 private val LOAD_KEYS = listOf("rate", "over", "from", "to", "stages")
 private val PERCENTILES = listOf("p50", "p95", "p99", "p999")
 private val GOAL_KEYS = listOf("step", "failureRate") + PERCENTILES

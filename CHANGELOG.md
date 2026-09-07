@@ -20,6 +20,25 @@ Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
+
+- **A plan can draw a value per user.** `draw:` names a session key and a
+  generator — `{uniform: 500}`, `{zipf: {keys: 1000000, skew: 1.1}}`,
+  `{oneOf: [...]}`, `{digits: n}`, `{uuids: {}}` — and `{name}` in a path or a
+  body reads it, which is machinery a plan already relied on and could not
+  fill. Until now a generated plan substituted one id, so every user asked for
+  product 2: a measurement of one row and one cache line, which is the shape
+  0096 exists to argue against.
+
+  Everything drawn reaches the session as a `String`, because that is what
+  interpolation reads — a key of the same name holding a `Long` is a throw
+  rather than a failed step. Each key is seeded from the plan's `seed` and its
+  own name, so two keys sharing a shape do not draw the same values. The shapes
+  travel onto the result through `drawing(...)`, so the page says what the data
+  came from and a comparison refuses two runs drawn differently.
+
+  `kestrel-arbs` is pure Kotlin over core, so it arrives in `kestrel-plan` with
+  no third-party jar behind it — which is why this needed no module of its own,
+  unlike Kafka and gRPC. Five downstream dependency tests name it.
 - **`benchmark`, the tool a request actually arrives as.** The rest of the MCP
   table is a verb per step of Kestrel's own model — the shape a library has, not
   the shape a question has. Nobody asks to validate a plan; they ask whether

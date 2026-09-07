@@ -16,7 +16,8 @@ import java.io.File
  */
 class NoThirdPartyDependenciesTest {
 
-    private val allowed = listOf("kotlin-stdlib", "annotations-", "kestrel-core", "kestrel-http", "snakeyaml-engine")
+    private val allowed =
+        listOf("kotlin-stdlib", "annotations-", "kestrel-core", "kestrel-http", "kestrel-arbs", "snakeyaml-engine")
 
     @Test
     fun `the main runtime classpath is the standard library, kestrel and one yaml parser`() {

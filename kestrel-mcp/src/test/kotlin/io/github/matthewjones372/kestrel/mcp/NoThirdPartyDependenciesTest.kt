@@ -22,6 +22,9 @@ class NoThirdPartyDependenciesTest {
         "annotations-",
         "kestrel-core",
         "kestrel-plan",
+        // Arrives with `kestrel-plan`, which draws a value per user. Pure
+        // Kotlin over core, so no third-party jar comes with it.
+        "kestrel-arbs",
         // A plan may name a topic, so a tool that reads plans carries the
         // module that lowers one and the client it brings. A library consumer
         // taking `kestrel-plan` alone still gets neither.

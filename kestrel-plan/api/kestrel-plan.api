@@ -1,8 +1,8 @@
 public final class io/github/matthewjones372/kestrel/plan/Declaration {
 	public static final field Companion Lio/github/matthewjones372/kestrel/plan/Declaration$Companion;
 	public static final field VERSION Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
@@ -10,14 +10,18 @@ public final class io/github/matthewjones372/kestrel/plan/Declaration {
 	public final fun component5 ()Ljava/util/List;
 	public final fun component6 ()Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;
 	public final fun component7 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;)Lio/github/matthewjones372/kestrel/plan/Declaration;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun component9 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;J)Lio/github/matthewjones372/kestrel/plan/Declaration;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseUrl ()Ljava/lang/String;
 	public final fun getBrokers ()Ljava/lang/String;
+	public final fun getDraw ()Ljava/util/Map;
 	public final fun getGoals ()Ljava/util/List;
 	public final fun getLoad ()Lio/github/matthewjones372/kestrel/plan/DeclaredLoad;
 	public final fun getScenario ()Ljava/lang/String;
+	public final fun getSeed ()J
 	public final fun getSteps ()Ljava/util/List;
 	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -31,6 +35,62 @@ public final class io/github/matthewjones372/kestrel/plan/DeclarationKt {
 	public static final fun asSimulation (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/util/List;)Lio/github/matthewjones372/kestrel/Simulation;
 	public static synthetic fun asSimulation$default (Lio/github/matthewjones372/kestrel/plan/Declaration;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/Simulation;
 	public static final fun requests (Lio/github/matthewjones372/kestrel/plan/Declaration;)Ljava/util/List;
+}
+
+public abstract interface class io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredDraw$Digits : io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Digits;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Digits;IILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Digits;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredDraw$OneOf : io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$OneOf;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$OneOf;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$OneOf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredDraw$Uniform : io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+	public fun <init> (J)V
+	public final fun component1 ()J
+	public final fun copy (J)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Uniform;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Uniform;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Uniform;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeys ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredDraw$Uuids : io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+	public static final field INSTANCE Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Uuids;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/plan/DeclaredDraw$Zipf : io/github/matthewjones372/kestrel/plan/DeclaredDraw {
+	public fun <init> (JD)V
+	public final fun component1 ()J
+	public final fun component2 ()D
+	public final fun copy (JD)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Zipf;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Zipf;JDILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/DeclaredDraw$Zipf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeys ()J
+	public final fun getSkew ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class io/github/matthewjones372/kestrel/plan/DeclaredGoal {

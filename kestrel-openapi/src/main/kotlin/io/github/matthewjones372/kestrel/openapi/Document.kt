@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.openapi
 
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.plan.Declaration
+import io.github.matthewjones372.kestrel.plan.DeclaredDraw
 import io.github.matthewjones372.kestrel.plan.DeclaredGoal
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
 import io.github.matthewjones372.kestrel.plan.DeclaredStep
@@ -54,13 +55,23 @@ fun planFromDocument(
         "no path in the document uses ${methods.joinToString { it.uppercase() }}"
     }
 
+    // Drawn where the contract states the space, substituted where it does
+    // not. A parameter of one name declared two different ways in two
+    // operations is left to be substituted rather than drawn from whichever
+    // was read first.
+    val drawn = steps.flatMap { it.draws.entries }
+        .groupBy({ it.key }, { it.value })
+        .filterValues { it.distinct().size == 1 }
+        .mapValues { (_, only) -> only.first() }
+
     return Declaration(
         version = Declaration.VERSION,
+        draw = drawn,
         baseUrl = url.trimEnd('/'),
         scenario = scenario,
-        steps = steps,
+        steps = steps.map { it.step },
         load = DeclaredLoad.Constant(SMOKE_RATE.perSecond, SMOKE_WINDOW),
-        goals = steps.map { DeclaredGoal.Percentile(it.name, "p99", PLACEHOLDER_LIMIT) },
+        goals = steps.map { DeclaredGoal.Percentile(it.step.name, "p99", PLACEHOLDER_LIMIT) },
     )
 }
 
@@ -73,22 +84,33 @@ private fun Map<String, Any?>.asStep(
     verb: String,
     components: Map<String, Any?>,
     seed: Long,
-): DeclaredStep.Request {
+): Drawing {
     val responses = this["responses"].asMap().orEmpty().keys.mapNotNull { it.toIntOrNull() }
     val success = responses.firstOrNull { it in SUCCESS } ?: OK
 
-    return DeclaredStep.Request(
-        // The operation id where the document gives one, as its own tooling
-        // names the row; the verb and template otherwise.
-        name = (this["operationId"] as? String)?.takeIf { it.isNotBlank() } ?: "${verb.lowercase()} $path",
-        method = verb.uppercase(),
-        path = filled(path, parameters(components), seed),
-        expecting = success,
-        // Every other declared status. A document that says it answers 404 is a
-        // service working as written when it does.
-        declared = responses.filter { it != success && it in DECLARED }.distinct().sorted(),
+    val parameters = parameters(components)
+    val drawn = BRACES.findAll(path).map { it.groupValues[1] }.toList()
+        .mapNotNull { name -> drawFor(parameters[name].orEmpty())?.let { name to it } }
+        .toMap()
+
+    return Drawing(
+        draws = drawn,
+        step = DeclaredStep.Request(
+            // The operation id where the document gives one, as its own tooling
+            // names the row; the verb and template otherwise.
+            name = (this["operationId"] as? String)?.takeIf { it.isNotBlank() } ?: "${verb.lowercase()} $path",
+            method = verb.uppercase(),
+            path = filled(path, parameters, seed, keeping = drawn.keys),
+            expecting = success,
+            // Every other declared status. A document that says it answers 404 is a
+            // service working as written when it does.
+            declared = responses.filter { it != success && it in DECLARED }.distinct().sorted(),
+        ),
     )
 }
+
+/** One step, and the keys its path leaves for a draw to fill. */
+internal data class Drawing(val draws: Map<String, DeclaredDraw>, val step: DeclaredStep.Request)
 
 /**
  * The path parameters this operation declares, each with the facets its schema
@@ -113,9 +135,19 @@ private fun Map<String, Any?>.resolved(components: Map<String, Any?>): Map<Strin
     return steps.drop(1).fold(components as Any?) { at, key -> at.asMap()?.get(key) }.asMap() ?: this
 }
 
-private fun filled(path: String, parameters: Map<String, Map<String, Any?>>, seed: Long): String =
+/**
+ * Every `{name}` replaced by one legal value, except the ones [keeping] will
+ * draw — those keep their braces, which is what the session fills per user.
+ */
+private fun filled(
+    path: String,
+    parameters: Map<String, Map<String, Any?>>,
+    seed: Long,
+    keeping: Set<String>,
+): String =
     BRACES.findAll(path).map { it.groupValues[1] }.toList().foldIndexed(path) { index, filling, name ->
-        filling.replace("{$name}", legalFor(facets = parameters[name].orEmpty(), seed = seed + index))
+        if (name in keeping) filling
+        else filling.replace("{$name}", legalFor(facets = parameters[name].orEmpty(), seed = seed + index))
     }
 
 private fun Map<String, Any?>.firstServer(): String? =

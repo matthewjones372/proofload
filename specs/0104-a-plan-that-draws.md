@@ -89,14 +89,18 @@ and it currently teaches the opposite of 0096.
 
 ## Stack
 
-- [ ] **`spec-0104-drawn`** — `draw:` in the model, reader and writer, lowered
+- [x] **`spec-0104-drawn`** — `draw:` in the model, reader and writer, lowered
       to a feeder and `drawing(...)`.
       Done when: two users of a drawn plan send two different paths, the run
       records the shape, and a key nobody drew still fails as `UnfilledPath`.
-- [ ] **`spec-0104-from-a-contract`** — `from_openapi` and `planFrom` writing a
+- [x] **`spec-0104-from-a-contract`** — `from_openapi` and `planFrom` writing a
       draw bounded by the schema instead of one substituted value.
       Done when: a `{sku}` with `minimum: 1, maximum: 500` becomes
       `uniform(keys: 500)` and the template survives into the plan.
+      Written as `{uniform: {from: 1, to: 500}}`, per the answered question
+      below. An `enum` draws every value it lists rather than the first, and a
+      parameter the contract does not bound at both ends is substituted as
+      before — inventing a range is inventing a cardinality.
 - [ ] **`spec-0104-emit`** — the emitter printing the arbs the cookbook writes.
       Done when: an emitted drawn plan compiles in `examples` and names
       `kestrel-arbs` in its imports.
@@ -120,9 +124,12 @@ and it currently teaches the opposite of 0096.
   key seeded from it and its own name. Two keys sharing a seed and a shape draw
   the *same* values, which is a bug nobody would see: customer 41 always buying
   item 41.
-- **Where does the range come from — `keys` or `min`/`max`?** Recommend `keys`,
-  matching `uniform(keys = 500)` exactly. A schema's `minimum: 1` then needs a
-  `.map`, which the reader can do and a file should not have to say.
+- **Answered by building it: both.** `keys` alone cannot say what a contract
+  says. `{uniform: 500}` draws 0 to 499, and a schema stating
+  `minimum: 1, maximum: 500` means 1 to 500 — so `uniform` also takes
+  `{from: 1, to: 500}`, lowering to `uniform(keys = 500).map { it + from }`
+  with the shape left where it was. The recommendation above was wrong and is
+  left standing rather than deleted.
 - **Answered while drafting: the syntax is a nested map**, because the call
   form is not YAML. `oneOf` therefore takes a real list and a value with a
   comma in it needs no rule of its own.

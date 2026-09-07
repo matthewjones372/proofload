@@ -21,6 +21,14 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **A generated plan draws instead of substituting.** `from_openapi` and
+  `planFrom` keep the `{sku}` template and write the draw the contract implies:
+  a number bounded at both ends becomes `{uniform: {from: 1, to: 500}}`, and an
+  `enum` becomes every value it lists rather than the first one. A parameter the
+  document does not bound is substituted exactly as before — inventing a range
+  it never stated would be inventing a cardinality. Two existing tests moved
+  with the behaviour and now assert the draw rather than one filled path.
+
 - **A plan can draw a value per user.** `draw:` names a session key and a
   generator — `{uniform: 500}`, `{zipf: {keys: 1000000, skew: 1.1}}`,
   `{oneOf: [...]}`, `{digits: n}`, `{uuids: {}}` — and `{name}` in a path or a

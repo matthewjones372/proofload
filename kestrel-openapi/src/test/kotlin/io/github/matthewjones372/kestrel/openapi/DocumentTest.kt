@@ -1,6 +1,8 @@
 package io.github.matthewjones372.kestrel.openapi
 
+import io.github.matthewjones372.kestrel.plan.DeclaredDraw
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.asYaml
 import io.github.matthewjones372.kestrel.plan.requests
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -8,7 +10,6 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 
 /**
@@ -56,12 +57,15 @@ class DocumentTest {
     }
 
     @Test
-    fun `a path parameter is filled from the schema the document states`() {
-        val filled = planFromDocument(document).requests().single { it.name == "getOrder" }.path
+    fun `a path parameter bounded by the schema is drawn over it, not substituted once`() {
+        val plan = planFromDocument(document)
 
-        withClue(filled) {
-            filled shouldNotContain "{"
-            filled.substringAfterLast('/').toLong() shouldBe filled.substringAfterLast('/').toLong().coerceIn(1, 100)
+        withClue(plan.asYaml()) {
+            // 0104: the brace stays so the session can fill it per user. Before
+            // that this asserted one substituted id, which is the measurement
+            // of one row 0096 argues against.
+            plan.requests().single { it.name == "getOrder" }.path shouldBe "/orders/{id}"
+            plan.draw["id"] shouldBe DeclaredDraw.Uniform(keys = 100, from = 1)
         }
     }
 
@@ -119,7 +123,12 @@ class DocumentTest {
                     "200": {description: one order}
         """.trimIndent()
 
-        planFromDocument(referenced).requests().single().path shouldBe "/orders/5"
+        val plan = planFromDocument(referenced)
+
+        withClue("the ref is followed when its facets reach the draw, which only a resolved schema has") {
+            plan.requests().single().path shouldBe "/orders/{id}"
+            plan.draw["id"] shouldBe DeclaredDraw.Uniform(keys = 1, from = 5)
+        }
     }
 
     /**

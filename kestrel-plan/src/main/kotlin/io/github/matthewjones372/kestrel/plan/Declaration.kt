@@ -190,8 +190,16 @@ data class Lowered(
  */
 sealed interface DeclaredDraw {
 
-    /** Every key asked for equally often — the right shape for an id space and the wrong one for traffic. */
-    data class Uniform(val keys: Long) : DeclaredDraw
+    /**
+     * Every key asked for equally often — the right shape for an id space and
+     * the wrong one for traffic.
+     *
+     * [from] is where the space starts, because a contract saying
+     * `minimum: 1, maximum: 500` means 1 to 500 and `uniform(keys = 500)`
+     * alone draws 0 to 499. Zero by default, which is the keyspace `zipf` and
+     * `uniform` describe on their own.
+     */
+    data class Uniform(val keys: Long, val from: Long = 0L) : DeclaredDraw
 
     /** The shape real traffic has: a few keys asked for constantly, a long tail asked for once. */
     data class Zipf(val keys: Long, val skew: Double) : DeclaredDraw
@@ -213,7 +221,7 @@ sealed interface DeclaredDraw {
  * `uniform` still reports as `uniform`.
  */
 internal fun DeclaredDraw.arb(seed: Long): Arb<String> = when (this) {
-    is DeclaredDraw.Uniform -> uniform(keys, seed).map { it.toString() }
+    is DeclaredDraw.Uniform -> uniform(keys, seed).map { (it + from).toString() }
     is DeclaredDraw.Zipf -> zipf(keys, skew, seed).map { it.toString() }
     is DeclaredDraw.OneOf -> oneOf(values, seed)
     is DeclaredDraw.Digits -> digits(count, seed)

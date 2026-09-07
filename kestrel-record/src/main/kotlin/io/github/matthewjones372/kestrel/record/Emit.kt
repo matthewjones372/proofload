@@ -64,6 +64,9 @@ private fun DraftStep.lines(): List<String> = buildList {
         add("// The recording got no answer to this one, so 200 is a guess rather than what was seen.")
     }
     dropped.forEach { add("// The recording's $it header was dropped; the TODO below says where it went.") }
+    droppedParameters.forEach {
+        add("// The recording's `$it` query parameter was a credential and was dropped with its value.")
+    }
     maybe.distinct().forEach {
         add("// \"$it\" was also in an earlier answer. It may want a capture; it is too short to be sure.")
     }

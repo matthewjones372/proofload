@@ -20,6 +20,14 @@ data class DraftStep(
     val headers: List<Header>,
     /** The header names dropped as credentials, each of which leaves a `TODO` in the output. */
     val dropped: List<String>,
+    /**
+     * The query parameter names dropped as credentials.
+     *
+     * Apart from [dropped] because a parameter cannot hold a `TODO` the way a
+     * header can: the output says one was taken and does not invent a header
+     * that was never sent.
+     */
+    val droppedParameters: List<String> = emptyList(),
     val body: String?,
     val expecting: Int,
     val captures: List<Capture>,
@@ -90,13 +98,18 @@ fun draft(
 private fun Collapsed.asStep(base: String?): DraftStep {
     val (kept, dropped) = recorded.headers.partition { !it.isCredential() }
     val mine = base != null && recorded.origin == base
+    // A token rides in the query string as readily as in a header, and the
+    // path becomes the step's name — so one left here reaches every report and
+    // every baseline the run writes, not only this file.
+    val (safePath, droppedParameters) = path.withoutCredentialParameters()
     return DraftStep(
         method = recorded.method,
-        path = if (mine) path else recorded.origin + path,
+        path = if (mine) safePath else recorded.origin + safePath,
         absolute = !mine,
         headers = kept.filterNot { it.name.lowercase() in uninteresting },
         dropped = dropped.map { it.name }.distinct(),
-        body = body,
+        droppedParameters = droppedParameters,
+        body = body?.withoutSecrets(),
         // A request that got no answer said nothing about what to expect, so the
         // step asks for the default and the output says the recording did not
         // know. `expecting(0)` would be a step that can only fail.

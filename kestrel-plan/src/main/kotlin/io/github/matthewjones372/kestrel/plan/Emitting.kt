@@ -26,7 +26,8 @@ fun Declaration.asKotlin(packageName: String, from: String): String {
             imports().sorted() +
             "" +
             steps.map { "val ${handles.getValue(it.name)} = step(\"${it.name}\")" } +
-            "val api = http.baseUrl(\"$baseUrl\")" +
+            listOfNotNull(baseUrl?.let { "val api = http.baseUrl(\"$it\")" }) +
+            topicLines() +
             "" +
             "val ${scenario.identifier()}: Scenario = scenario(\"$scenario\") {" +
             steps.flatMap { it.lines(handles.getValue(it.name)) }.map { "    $it" } +
@@ -55,6 +56,25 @@ private fun Declaration.goalLines(handles: Map<String, String>): List<String> =
     }
 
 /**
+ * One `Topic` value per topic a plan produces to, named once above the
+ * scenario: two steps on one topic are two sends through the same producer,
+ * which is what the Kotlin would have written and what the run then measures.
+ */
+private fun Declaration.topicLines(): List<String> {
+    val produced = steps.filterIsInstance<DeclaredStep.Produce>()
+    if (produced.isEmpty()) return emptyList()
+
+    return listOf("val cluster = kafka.brokers(\"$brokers\")") +
+        produced.distinctBy { it.topic }.map { step ->
+            buildString {
+                append("val ${step.topic.identifier()}Topic = cluster")
+                step.settings.forEach { (key, value) -> append(".setting(\"$key\", \"$value\")") }
+                append(".topic(\"${step.topic}\")")
+            }
+        }
+}
+
+/**
  * Sorted by the caller, because emitted source has to satisfy the same import
  * rule as hand-written source: unordered imports are a formatter's diff waiting
  * to happen in whatever project this is pasted into.
@@ -76,7 +96,11 @@ private fun Declaration.imports(): List<String> = buildList {
     if (load is DeclaredLoad.Ramp) add("import io.github.matthewjones372.kestrel.rampRate")
     add("import io.github.matthewjones372.kestrel.scenario")
     add("import io.github.matthewjones372.kestrel.step")
-    add("import io.github.matthewjones372.kestrel.http.http")
+    if (steps.any { it is DeclaredStep.Request }) add("import io.github.matthewjones372.kestrel.http.http")
+    if (steps.any { it is DeclaredStep.Produce }) {
+        add("import io.github.matthewjones372.kestrel.kafka.kafka")
+        add("import io.github.matthewjones372.kestrel.kafka.produce")
+    }
     units().forEach { add("import kotlin.time.Duration.Companion.$it") }
 }
 
@@ -97,16 +121,27 @@ private fun DeclaredLoad.durations(): List<Duration> = when (this) {
 }
 
 private fun DeclaredStep.lines(handle: String): List<String> = buildList {
-    add(
-        buildString {
-            append("exec($handle, api.${method.lowercase()}(\"$path\")")
-            headers.forEach { (key, value) -> append(".header(\"$key\", \"$value\")") }
-            body?.let { append(".body(\"\"\"$it\"\"\")") }
-            if (expecting != OK) append(".expecting($expecting)")
-            if (declared.isNotEmpty()) append(".declaring(${declared.joinToString()})")
-            append(")")
-        },
-    )
+    when (val step = this@lines) {
+        is DeclaredStep.Request -> add(
+            buildString {
+                append("exec($handle, api.${step.method.lowercase()}(\"${step.path}\")")
+                step.headers.forEach { (key, value) -> append(".header(\"$key\", \"$value\")") }
+                step.body?.let { append(".body(\"\"\"$it\"\"\")") }
+                if (step.expecting != OK) append(".expecting(${step.expecting})")
+                if (step.declared.isNotEmpty()) append(".declaring(${step.declared.joinToString()})")
+                append(")")
+            },
+        )
+
+        is DeclaredStep.Produce -> add(
+            buildString {
+                append("produce($handle, ${step.topic.identifier()}Topic")
+                step.key?.let { append(".keyed { \"\"\"$it\"\"\".toByteArray() }") }
+                append(".value { \"\"\"${step.body}\"\"\".toByteArray() }")
+                append(")")
+            },
+        )
+    }
     pauseAfter?.let { add("pause(${it.written()})") }
 }
 

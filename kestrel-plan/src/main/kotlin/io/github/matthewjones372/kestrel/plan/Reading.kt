@@ -33,7 +33,8 @@ fun readPlan(text: String): Declaration {
     val steps = plan.required("steps").sequence("steps").value.map { it.step() }
     return Declaration(
         version = plan.required("kestrel").text(),
-        baseUrl = plan.required("baseUrl").text(),
+        baseUrl = plan.optional("baseUrl")?.text(),
+        brokers = plan.optional("brokers")?.text(),
         scenario = plan.required("scenario").text(),
         steps = steps,
         load = plan.required("load").load(),
@@ -51,7 +52,7 @@ private fun Node.step(): DeclaredStep {
     val verb = VERBS.firstOrNull { step.optional(it) != null }
         ?: step.fail("a step names one of ${VERBS.joinToString()} and a path")
 
-    return DeclaredStep(
+    return DeclaredStep.Request(
         name = step.required("name").text(),
         method = verb.uppercase(),
         path = step.required(verb).text(),
@@ -147,7 +148,7 @@ private fun Node.fail(said: String): Nothing {
     throw IllegalArgumentException("line $line: $said")
 }
 
-private val PLAN_KEYS = listOf("kestrel", "baseUrl", "scenario", "steps", "load", "goals")
+private val PLAN_KEYS = listOf("kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals")
 private val VERBS = listOf("get", "post", "put", "patch", "delete", "head")
 private val STEP_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
 private val LOAD_KEYS = listOf("rate", "over", "from", "to", "stages")

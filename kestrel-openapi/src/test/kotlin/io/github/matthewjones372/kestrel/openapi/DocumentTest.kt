@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.openapi
 
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.requests
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
@@ -56,7 +57,7 @@ class DocumentTest {
 
     @Test
     fun `a path parameter is filled from the schema the document states`() {
-        val filled = planFromDocument(document).steps.single { it.name == "getOrder" }.path
+        val filled = planFromDocument(document).requests().single { it.name == "getOrder" }.path
 
         withClue(filled) {
             filled shouldNotContain "{"
@@ -66,7 +67,7 @@ class DocumentTest {
 
     @Test
     fun `a declared response is declared rather than counted as a defect`() {
-        val step = planFromDocument(document).steps.single { it.name == "getOrder" }
+        val step = planFromDocument(document).requests().single { it.name == "getOrder" }
 
         withClue("the document says this endpoint answers 404; a run should not read that as a defect") {
             step.expecting shouldBe 200
@@ -118,6 +119,6 @@ class DocumentTest {
                     "200": {description: one order}
         """.trimIndent()
 
-        planFromDocument(referenced).steps.single().path shouldBe "/orders/5"
+        planFromDocument(referenced).requests().single().path shouldBe "/orders/5"
     }
 }

@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.contract
 
 import io.github.matthewjones372.kestrel.plan.asKotlin
+import io.github.matthewjones372.kestrel.plan.requests
 import io.github.matthewjones372.pelican.IntCodec
 import io.github.matthewjones372.pelican.between
 import io.github.matthewjones372.pelican.div
@@ -45,13 +46,13 @@ class DeclaredTest {
         val plan = planFrom(listOf(getOrder), baseUrl = "https://orders.internal")
 
         withClue("orFail put a 404 in the endpoint's own type; nothing here guessed it") {
-            plan.steps.single().declared shouldContainExactly listOf(404)
+            plan.requests().single().declared shouldContainExactly listOf(404)
         }
     }
 
     @Test
     fun `an endpoint that declares nothing declares nothing`() {
-        planFrom(listOf(listOrders), baseUrl = "https://orders.internal").steps.single().declared.shouldBeEmpty()
+        planFrom(listOf(listOrders), baseUrl = "https://orders.internal").requests().single().declared.shouldBeEmpty()
     }
 
     @Test

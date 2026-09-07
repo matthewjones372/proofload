@@ -1,9 +1,11 @@
 package io.github.matthewjones372.kestrel.plan
 
+import io.github.matthewjones372.kestrel.perSecond
 import io.kotest.assertions.withClue
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * The emitted source has to compile, which a golden cannot prove. The proof is
@@ -53,6 +55,34 @@ class EmittingTest {
 
         withClue("detekt fails the build on an unused import, so emitted source must not carry one") {
             imports.forEach { import -> body shouldContain import.substringAfterLast('.') }
+        }
+    }
+
+    @Test
+    fun `a produce step emits the topic once and a step that sends to it`() {
+        val emitted = Declaration(
+            version = Declaration.VERSION,
+            brokers = "localhost:9092",
+            scenario = "orders",
+            steps = listOf(
+                DeclaredStep.Produce(
+                    name = "place order",
+                    topic = "orders",
+                    body = """{"cart":"1 anvil"}""",
+                    settings = mapOf("acks" to "all"),
+                ),
+            ),
+            load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+        ).asKotlin(packageName = "io.github.matthewjones372.kestrel.examples", from = "orders.yaml")
+
+        withClue(emitted) {
+            emitted shouldContain """val cluster = kafka.brokers("localhost:9092")"""
+            emitted shouldContain """val ordersTopic = cluster.setting("acks", "all").topic("orders")"""
+            emitted shouldContain "produce(placeOrder, ordersTopic.value {"
+            withClue("a plan of nothing but topics names no HTTP client and imports none") {
+                emitted shouldNotContain "http.baseUrl"
+                emitted shouldNotContain "import io.github.matthewjones372.kestrel.http.http"
+            }
         }
     }
 

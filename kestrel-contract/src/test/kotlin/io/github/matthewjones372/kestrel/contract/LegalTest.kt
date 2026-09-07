@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kestrel.contract
 
+import io.github.matthewjones372.kestrel.plan.requests
 import io.github.matthewjones372.pelican.IntCodec
 import io.github.matthewjones372.pelican.StringCodec
 import io.github.matthewjones372.pelican.between
@@ -36,8 +37,8 @@ class LegalTest {
         val plan = planFrom(listOf(getOrder), baseUrl = "https://orders.internal")
 
         withClue("a path that kept its braces reads the session, finds nothing, and fails every request") {
-            plan.steps.single().path shouldNotContain "{"
-            plan.steps.single().path shouldNotContain "}"
+            plan.requests().single().path shouldNotContain "{"
+            plan.requests().single().path shouldNotContain "}"
         }
     }
 
@@ -45,7 +46,7 @@ class LegalTest {
     fun `a bounded parameter never leaves its bounds, whatever the seed`() {
         val drawn = (0L until 1_000L).map { seed ->
             planFrom(listOf(getOrder), baseUrl = "https://orders.internal", seed = seed)
-                .steps.single().path.substringAfterLast('/').toLong()
+                .requests().single().path.substringAfterLast('/').toLong()
         }
 
         withClue("between(1, 100) is both the check that refuses a request and the schema's bounds") {
@@ -75,7 +76,7 @@ class LegalTest {
             json<Order>()
         }
 
-        val value = planFrom(listOf(lookup), baseUrl = "https://orders.internal").steps.single()
+        val value = planFrom(listOf(lookup), baseUrl = "https://orders.internal").requests().single()
             .path.substringAfterLast('/')
 
         value.length shouldBe value.length.coerceIn(2, 4)

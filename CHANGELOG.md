@@ -333,6 +333,25 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A declared step is a sealed type, and a plan can name a topic.**
+  `DeclaredStep` was one data class describing a request; it is now a sealed
+  interface with `DeclaredStep.Request` — the same fields under a new name — and
+  `DeclaredStep.Produce`, a record on a topic. `Declaration.baseUrl` is
+  nullable beside a new `brokers`, because which host a plan needs is decided by
+  the steps it declares rather than by a key that is always there: a plan of
+  nothing but topics has no base URL to state, and one of nothing but requests
+  has no cluster. Both are refused where the steps are lowered, naming the step
+  that wanted the missing one. `Declaration.requests()` is the way back to the
+  request steps for a caller that had them typed before.
+
+  `kestrel-plan` still carries `kestrel-http` and one parser and nothing else.
+  A produce step is lowered by a `Lowering` a caller passes to `asSimulation`,
+  supplied by the module that carries the Kafka client, so a plan of nothing but
+  requests does not inherit a broker's stack; a plan with a produce step and no
+  such lowering says which module supplies one. `ScenarioBuilder.produce(name,
+  topic)` in `kestrel-kafka` is the publish measured on its own, where `emit` is
+  the publish plus the answer on a second topic.
+
 - **A step body can record more than one sample.** `Action.run` takes the
   `StepScope` the engine builds rather than a `Session`, and `StepScope.sample`
   reports an answer as the body observes it. A WebSocket `awaiting(count)` is

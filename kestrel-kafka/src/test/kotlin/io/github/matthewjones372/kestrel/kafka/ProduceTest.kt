@@ -54,6 +54,23 @@ class ProduceTest {
             .run(Progress.silent)
     }
 
+    @Test
+    fun `a produce step with nothing answering for it records the publish and no round trip`() {
+        val producer = mock()
+        val broker = kafka.brokers("nowhere:9092").over(producer)
+        val writes = scenario("writes") {
+            produce(submitted, broker.topic("trades").value { "one trade".toByteArray() })
+        }
+
+        val result = writes.at(4.perSecond, over = 250.milliseconds).run(Progress.silent)
+
+        withClue("a publish nobody answers is a step like any other, not a departure waiting for a completion") {
+            result[submitted].count shouldBe producer.history().size.toLong()
+            result[submitted].unmatched shouldBe 0L
+            result[submitted].inFlight shouldBe 0L
+        }
+    }
+
     private fun mock(): MockProducer<ByteArray, ByteArray> =
         MockProducer(true, ByteArraySerializer(), ByteArraySerializer())
 

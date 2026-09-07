@@ -3,6 +3,7 @@ package io.github.matthewjones372.kestrel.contract
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.requests
 import io.github.matthewjones372.pelican.Method
 import io.github.matthewjones372.pelican.div
 import io.github.matthewjones372.pelican.endpoint
@@ -63,8 +64,8 @@ class EndpointsTest {
             plan.steps.single().name shouldBe "getOrder"
         }
         withClue("the path is filled, because a brace left in one fails every request") {
-            plan.steps.single().path shouldStartWith "/orders/"
-            plan.steps.single().path shouldNotContain "{"
+            plan.requests().single().path shouldStartWith "/orders/"
+            plan.requests().single().path shouldNotContain "{"
         }
     }
 

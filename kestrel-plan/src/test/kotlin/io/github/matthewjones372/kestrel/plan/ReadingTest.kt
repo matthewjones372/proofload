@@ -45,8 +45,9 @@ class ReadingTest {
         read.version shouldBe "plan/1"
         read.baseUrl shouldBe "https://orders.internal"
         read.steps.map { it.name } shouldBe listOf("browse", "place order")
-        read.steps[1].expecting shouldBe 201
-        read.steps[1].headers shouldBe mapOf("content-type" to "application/json")
+        val ordered = read.steps[1].shouldBeInstanceOf<DeclaredStep.Request>()
+        ordered.expecting shouldBe 201
+        ordered.headers shouldBe mapOf("content-type" to "application/json")
         read.load shouldBe DeclaredLoad.Constant(50.perSecond, 1.minutes)
         read.goals shouldBe listOf(DeclaredGoal.Percentile("place order", "p99", 200.milliseconds))
     }
@@ -90,8 +91,22 @@ class ReadingTest {
     @Test
     fun `a missing key says which one`() {
         val thrown = shouldThrow<IllegalArgumentException> {
-            readPlan(plan.replace("baseUrl:  https://orders.internal\n", ""))
+            readPlan(plan.replace("scenario: checkout\n", ""))
         }
+
+        thrown.message.orEmpty() shouldContain "scenario"
+    }
+
+    /**
+     * Which host a plan needs is decided by the steps it declares, so a missing
+     * `baseUrl` is refused where the steps are read rather than where the keys
+     * are — a plan of nothing but topics has no baseUrl to miss.
+     */
+    @Test
+    fun `a plan with http steps and no baseUrl is refused when it lowers`() {
+        val without = readPlan(plan.replace("baseUrl:  https://orders.internal\n", ""))
+
+        val thrown = shouldThrow<IllegalArgumentException> { without.asSimulation() }
 
         thrown.message.orEmpty() shouldContain "baseUrl"
     }

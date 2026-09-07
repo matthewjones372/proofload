@@ -993,6 +993,7 @@ class Tail.Measured : Tail
     val duration: Long
 interface Targeted
     val host: String
+    val hosts: List
 interface Tell
 class Tell.Better : Tell
 class Tell.CannotTell : Tell
@@ -1596,6 +1597,8 @@ class KafkaSteps : Lowering
     constructor()
     constructor(Kafka, Consumer)
     fun lower(DeclaredStep, Declaration): Lowered
+top-level in KafkaStepsKt
+    val kafkaLowerings: List
 ```
 
 ### `io.github.matthewjones372:kestrel-record`

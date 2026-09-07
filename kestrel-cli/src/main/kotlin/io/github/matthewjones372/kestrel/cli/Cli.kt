@@ -14,6 +14,7 @@ import io.github.matthewjones372.kestrel.openapi.planFromDocument
 import io.github.matthewjones372.kestrel.plan.asKotlin
 import io.github.matthewjones372.kestrel.plan.asSimulation
 import io.github.matthewjones372.kestrel.plan.asYaml
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.github.matthewjones372.kestrel.preview
 import io.github.matthewjones372.kestrel.remedy
@@ -42,7 +43,7 @@ fun obey(command: Command, allowance: Allowance = Allowance.fromFile(), kestrel:
     }
 
     val simulation = try {
-        readPlan(command.plan).asSimulation()
+        readPlan(command.plan).asSimulation(kafkaLowerings)
     } catch (unusable: IllegalArgumentException) {
         // The message already names the line and what was allowed; wrapping it
         // in a stack trace would bury the one sentence a caller needs.

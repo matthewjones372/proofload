@@ -14,6 +14,15 @@ interface Targeted {
 
     /** The host this action sends to, as written rather than resolved. */
     val host: String
+
+    /**
+     * Every host this action may reach.
+     *
+     * [host] alone for anything that sends to one. A bootstrap list is several,
+     * and a fence shown the first of them is a fence with a hole in the shape
+     * of the ones it was not shown.
+     */
+    val hosts: List<String> get() = listOf(host)
 }
 
 /** What a plan would do, asked before it does any of it. */
@@ -141,14 +150,23 @@ private fun InjectionProfile.peakRate(): Rate? = when (this) {
 
 private fun List<Step>.targets(): List<String?> = flatMap { step ->
     when (step) {
-        is Step.Exec -> listOf((step.action as? Targeted)?.host)
-        is Step.Emit -> listOf((step.action as? Targeted)?.host)
+        is Step.Exec -> step.action.targets()
+        is Step.Emit -> step.action.targets()
         is Step.Pause -> emptyList()
         is Step.Repeat -> step.steps.targets()
         is Step.During -> step.steps.targets()
         is Step.When -> step.steps.targets()
     }
 }
+
+/**
+ * The hosts one action names, or a single null where it names none.
+ *
+ * The null is what [Preview.Allowed.untargeted] counts, so an action that names
+ * several hosts is still one step that named some.
+ */
+private fun Action.targets(): List<String?> =
+    (this as? Targeted)?.hosts?.ifEmpty { listOf(null) } ?: listOf(null)
 
 /** The fewest requests one user makes walking these steps. */
 private fun List<Step>.leastRequests(): Long = sumOf { step ->

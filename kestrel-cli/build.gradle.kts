@@ -4,6 +4,11 @@
 dependencies {
     api(project(":kestrel-core"))
     api(project(":kestrel-plan"))
+    // The command line reads plans, and a plan may name a topic. Refusing one
+    // here would leave `plan/1` half-usable from the tool it exists for, so the
+    // Kafka client arrives with this module rather than with `kestrel-plan` —
+    // which is what keeps it off a library consumer's classpath.
+    api(project(":kestrel-plan-kafka"))
     implementation(project(":kestrel-openapi"))
     implementation(project(":kestrel-engine"))
     implementation(project(":kestrel-export"))

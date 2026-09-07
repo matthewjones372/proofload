@@ -106,6 +106,15 @@ class KafkaSteps(
     }
 }
 
+/**
+ * Every lowering this module supplies.
+ *
+ * One value rather than a constructor call at each site, so a tool reading a
+ * plan names what it can lower once and grows a second protocol by adding to
+ * the list rather than by editing four calls.
+ */
+val kafkaLowerings: List<Lowering> = listOf(KafkaSteps())
+
 /** The declared answer to [step], where the plan declares one. */
 private fun Declaration.answerTo(step: DeclaredStep.Produce): DeclaredStep.Completes? =
     steps.filterIsInstance<DeclaredStep.Completes>().firstOrNull { it.completes == step.name }

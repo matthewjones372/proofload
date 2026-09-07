@@ -333,6 +333,22 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A broker is a host a fence can see.** `Targeted` gained a `hosts` beside its
+  `host`, defaulting to the one, because a bootstrap list is several and a fence
+  shown the first of them is a fence with a hole in the shape of the rest. The
+  Kafka send is a class rather than a lambda so it can answer: `preview` names
+  every entry of the list, an allowance that does not permit the cluster refuses
+  the plan the way it refuses a URL, and a produce step no longer counts as a
+  step that named no host.
+
+  `benchmark` reads a plan with brokers in it, and asks what such a plan is
+  guessing: whether that cluster may be written to and what downstream acts on
+  the records, which topic carries the answer where nothing does, and whether
+  one key for every record is the partition distribution the service really
+  sees. `plan_schema` describes all three step kinds and carries a third worked
+  plan. `kestrel-cli` and `kestrel-mcp` carry `kestrel-plan-kafka` and say so in
+  their dependency tests; `kestrel-plan` on its own still carries no broker.
+
 - **`produce`, `completes` and their keys in `readPlan`.** A step names which
   protocol it is by which key it carries — a verb, or `produce`, or `completes` —
   and a plan may mix them, so a team whose journey is a request and then a

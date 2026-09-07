@@ -5,3 +5,7 @@ public final class io/github/matthewjones372/kestrel/plan/kafka/KafkaSteps : io/
 	public fun lower (Lio/github/matthewjones372/kestrel/plan/DeclaredStep;Lio/github/matthewjones372/kestrel/plan/Declaration;)Lio/github/matthewjones372/kestrel/plan/Lowered;
 }
 
+public final class io/github/matthewjones372/kestrel/plan/kafka/KafkaStepsKt {
+	public static final fun getKafkaLowerings ()Ljava/util/List;
+}
+

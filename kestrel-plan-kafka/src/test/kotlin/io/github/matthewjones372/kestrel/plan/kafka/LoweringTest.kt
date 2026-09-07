@@ -1,5 +1,7 @@
 package io.github.matthewjones372.kestrel.plan.kafka
 
+import io.github.matthewjones372.kestrel.Allowance
+import io.github.matthewjones372.kestrel.Preview
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.at
 import io.github.matthewjones372.kestrel.engine.run
@@ -11,12 +13,14 @@ import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
 import io.github.matthewjones372.kestrel.plan.DeclaredStep
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.preview
 import io.github.matthewjones372.kestrel.scenario
 import io.github.matthewjones372.kestrel.step
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -86,6 +90,28 @@ class LoweringTest {
         withClue("a lowering that answered for every step would take the ones it does not know") {
             KafkaSteps().lower(http, declared("localhost:9092")) shouldBe null
         }
+    }
+
+    @Test
+    fun `a broker is a host a preview names, so an allowance fences a topic the way it fences a URL`() {
+        val plan = declared("one.internal:9092,two.internal:9092")
+
+        val asked = plan.asSimulation(listOf(KafkaSteps())).preview()
+
+        withClue("a fence shown one of two brokers is a fence with a hole in the shape of the other") {
+            asked.shouldBeInstanceOf<Preview.Allowed>().hosts shouldBe listOf("one.internal", "two.internal")
+            asked.untargeted shouldBe 0
+        }
+    }
+
+    @Test
+    fun `an allowance that does not name the cluster refuses the plan`() {
+        val plan = declared("orders.internal:9092")
+
+        val asked = plan.asSimulation(listOf(KafkaSteps()))
+            .preview(Allowance(hosts = listOf("staging.internal")))
+
+        asked.shouldBeInstanceOf<Preview.Refused>().reason.described shouldContain "orders.internal"
     }
 
     @Test

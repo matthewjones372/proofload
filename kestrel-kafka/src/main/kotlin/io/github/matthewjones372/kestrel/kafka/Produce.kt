@@ -5,6 +5,7 @@ import io.github.matthewjones372.kestrel.Correlation
 import io.github.matthewjones372.kestrel.ScenarioBuilder
 import io.github.matthewjones372.kestrel.StepName
 import io.github.matthewjones372.kestrel.StepScope
+import io.github.matthewjones372.kestrel.Targeted
 import io.github.matthewjones372.kestrel.TimedOut
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.errors.TimeoutException
@@ -24,12 +25,12 @@ import java.util.concurrent.ExecutionException
  * team load-testing Kafka wants; `completing` is where that number is.
  */
 fun ScenarioBuilder.emit(name: StepName, topic: Topic, keyedBy: Correlation) {
-    emit(name, Action { scope -> scope.produce(topic, keyedBy) }, keyedBy)
+    emit(name, ProduceAction(topic, keyedBy), keyedBy)
 }
 
 /** The same, for a step named by a string rather than a handle. */
 fun ScenarioBuilder.emit(name: String, topic: Topic, keyedBy: Correlation) {
-    emit(name, Action { scope -> scope.produce(topic, keyedBy) }, keyedBy)
+    emit(name, ProduceAction(topic, keyedBy), keyedBy)
 }
 
 /**
@@ -41,12 +42,38 @@ fun ScenarioBuilder.emit(name: String, topic: Topic, keyedBy: Correlation) {
  * measures the write.
  */
 fun ScenarioBuilder.produce(name: StepName, topic: Topic) {
-    exec(name, Action { scope -> scope.produce(topic, UNANSWERED) })
+    exec(name, ProduceAction(topic, UNANSWERED))
 }
 
 /** The same, for a step named by a string rather than a handle. */
 fun ScenarioBuilder.produce(name: String, topic: Topic) {
-    exec(name, Action { scope -> scope.produce(topic, UNANSWERED) })
+    exec(name, ProduceAction(topic, UNANSWERED))
+}
+
+/**
+ * The send, as an action that says where it goes.
+ *
+ * A class rather than a lambda so a preview can fence it. A broker is shared
+ * infrastructure at least as often as a URL is, and an allowance that fenced
+ * HTTP and waved a producer through would be a fence with a hole in the shape
+ * of the thing most likely to be somebody else's.
+ */
+private class ProduceAction(private val topic: Topic, private val keyedBy: Correlation) : Action, Targeted {
+
+    /**
+     * The bootstrap list, split and stripped of ports, as written rather than
+     * resolved: a preview runs before anything is sent, and a DNS lookup here
+     * would be the first thing this tool did to a cluster nobody has agreed it
+     * may touch.
+     */
+    override val hosts: List<String> = topic.origin.brokers
+        .split(',')
+        .map { it.trim().substringBefore(':') }
+        .filter { it.isNotEmpty() }
+
+    override val host: String get() = hosts.firstOrNull() ?: topic.origin.brokers
+
+    override fun run(scope: StepScope) = scope.produce(topic, keyedBy)
 }
 
 /**

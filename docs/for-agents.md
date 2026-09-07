@@ -1151,6 +1151,7 @@ class Grpc
     fun deadline(Long): Grpc
     val channel: Channel
     val managed: ManagedChannel
+    val target: String
     fun over(ManagedChannel): Grpc
     fun target(String): Grpc
     fun traced(): Grpc
@@ -1201,6 +1202,20 @@ top-level in StreamsKt
 ### `io.github.matthewjones372:kestrel-grpc-dynamic`
 
 ```text
+class DeclaredGrpcStatus : Reason
+    constructor(Status.Code)
+    val code: Status.Code
+    val described: String
+class DynamicCall : Action
+    fun declaring(Array<Status.Code>): DynamicCall
+    fun expecting(Status.Code): DynamicCall
+    val name: String
+    fun run(StepScope)
+top-level in DynamicCallKt
+    fun call(Grpc, Descriptors.MethodDescriptor, String): DynamicCall
+    fun call(Grpc, Schema, String, String): DynamicCall
+    fun exec(ScenarioBuilder, DynamicCall)
+    fun send(StepScope, DynamicCall): DynamicMessage
 top-level in MessagesKt
     fun asJson(Message): String
     fun messageFrom(Descriptors.Descriptor, String): DynamicMessage

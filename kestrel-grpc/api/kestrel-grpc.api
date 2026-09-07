@@ -11,6 +11,7 @@ public final class io/github/matthewjones372/kestrel/grpc/Grpc {
 	public final fun deadline-LRDsOJo (J)Lio/github/matthewjones372/kestrel/grpc/Grpc;
 	public final fun getChannel ()Lio/grpc/Channel;
 	public final fun getManaged ()Lio/grpc/ManagedChannel;
+	public final fun getTarget ()Ljava/lang/String;
 	public final fun over (Lio/grpc/ManagedChannel;)Lio/github/matthewjones372/kestrel/grpc/Grpc;
 	public final fun target (Ljava/lang/String;)Lio/github/matthewjones372/kestrel/grpc/Grpc;
 	public final fun traced ()Lio/github/matthewjones372/kestrel/grpc/Grpc;

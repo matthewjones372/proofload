@@ -30,6 +30,11 @@ class NoStubDependenciesTest {
             "kotlin-stdlib", "annotations-", "error_prone_annotations", "jsr305",
             "kestrel-core", "kestrel-grpc",
             "grpc-api", "grpc-stub", "grpc-context",
+            // gRPC's own protobuf marshaller, so the bytes on the wire are the
+            // ones a generated stub would put there. The `-lite` artefact: the
+            // full `grpc-protobuf` drags `Any` support and the com.google.api
+            // protos with it, and nothing here needs either.
+            "grpc-protobuf-lite",
             "protobuf-java",
             // protobuf-java-util's own JSON parser, which arrives with it. It
             // is not a second parser this module chose: nothing here calls it.

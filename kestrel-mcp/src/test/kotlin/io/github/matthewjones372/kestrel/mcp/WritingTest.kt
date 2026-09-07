@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.plan.readPlan
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,6 +31,11 @@ class WritingTest {
             val body = "[]".toByteArray()
             exchange.sendResponseHeaders(200, body.size.toLong())
             exchange.responseBody.use { it.write(body) }
+        }
+        server.createContext("/checkout") { exchange ->
+            Thread.sleep(SERVED)
+            exchange.sendResponseHeaders(201, -1)
+            exchange.close()
         }
         server.start()
     }
@@ -123,5 +129,52 @@ class WritingTest {
     private companion object {
         const val POLL = 50L
         const val SERVED = 40L
+    }
+
+    /**
+     * Found by using the tool. A plan whose hot path was `POST /checkout` was
+     * handed a benchmark saying it covered nothing that writes — a document
+     * read as covering more than it does is worse than a narrow one, which is
+     * the whole reason that section is there.
+     */
+    @Test
+    fun `a plan with a POST in it is not described as covering nothing that writes`(@TempDir dir: Path) {
+        val written = writtenFor(
+            """
+            kestrel:  plan/1
+            baseUrl:  http://localhost:${server.address.port}
+            scenario: checkout
+            steps:
+              - name: browse
+                get: /products
+              - name: place order
+                post: /checkout
+                expecting: 201
+            load:
+              rate: 20/s
+              over: 1s
+            """.trimIndent(),
+            dir,
+        )
+
+        withClue(written) { written shouldNotContain "every step here is a read" }
+    }
+
+    @Test
+    fun `a plan that only reads still says so`(@TempDir dir: Path) {
+        val written = writtenFor(plan(), dir)
+
+        withClue(written) { written shouldContain "every step here is a read" }
+    }
+
+    /** The benchmark written for [plan], run against the server above. */
+    private fun writtenFor(plan: String, dir: Path): String {
+        val registry = Registry()
+        registry.start(readPlan(plan), Allowance.none)
+        while (registry.ran("r-1") == null) Thread.sleep(POLL)
+
+        val into = dir.resolve("b.md")
+        writeSpec(registry, "r-1", into.toString(), why = null)
+        return Files.readString(into)
     }
 }

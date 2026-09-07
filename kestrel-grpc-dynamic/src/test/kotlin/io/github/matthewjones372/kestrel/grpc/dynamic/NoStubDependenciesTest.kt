@@ -35,6 +35,12 @@ class NoStubDependenciesTest {
             // full `grpc-protobuf` drags `Any` support and the com.google.api
             // protos with it, and nothing here needs either.
             "grpc-protobuf-lite",
+            // What `grpc-services` brings for the reflection stubs. It is the
+            // heaviest claim this module makes and the one worth arguing with:
+            // `grpc-core` is gRPC's runtime, and the alternative was writing
+            // its wire protocol here by hand.
+            "grpc-services", "grpc-protobuf", "grpc-core", "grpc-util",
+            "proto-google-common-protos", "protobuf-javalite", "perfmark-api", "annotations-4",
             "protobuf-java",
             // protobuf-java-util's own JSON parser, which arrives with it. It
             // is not a second parser this module chose: nothing here calls it.
@@ -50,10 +56,18 @@ class NoStubDependenciesTest {
         withClue("kestrel-grpc-dynamic grew a dependency: $unexpected") { unexpected.shouldBeEmpty() }
     }
 
+    /**
+     * `kestrel-grpc` bans `grpc-core` as well, and this module cannot: the
+     * reflection stubs arrive with `grpc-services`, which depends on it. The
+     * claim that survives is the one that was always the point — no transport,
+     * because a transport carries a thread model and the caller has already
+     * chosen one. `grpc-core` is gRPC's runtime and is on the classpath of
+     * anyone who can send a call at all, since every transport depends on it.
+     */
     @Test
-    fun `no transport, for the same reason kestrel-grpc names none`() {
+    fun `no transport, which is the half of kestrel-grpc's claim that survives here`() {
         val transports = entries.filter { entry ->
-            listOf("grpc-netty", "grpc-okhttp", "grpc-core", "netty-", "okhttp").any { entry.startsWith(it) }
+            listOf("grpc-netty", "grpc-okhttp", "netty-", "okhttp").any { entry.startsWith(it) }
         }
 
         withClue("a transport carries a thread model, and the caller has already chosen one: $transports") {

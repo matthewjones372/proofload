@@ -29,6 +29,11 @@ public final class io/github/matthewjones372/kestrel/grpc/dynamic/MessagesKt {
 	public static final fun messageFrom (Lcom/google/protobuf/Descriptors$Descriptor;Ljava/lang/String;)Lcom/google/protobuf/DynamicMessage;
 }
 
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/ReflectedKt {
+	public static final fun reflected-HG0u8IE (Lio/github/matthewjones372/kestrel/grpc/Grpc;J)Lio/github/matthewjones372/kestrel/grpc/dynamic/Schema;
+	public static synthetic fun reflected-HG0u8IE$default (Lio/github/matthewjones372/kestrel/grpc/Grpc;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/grpc/dynamic/Schema;
+}
+
 public final class io/github/matthewjones372/kestrel/grpc/dynamic/Schema {
 	public final fun getMethods ()Ljava/util/List;
 	public final fun method (Ljava/lang/String;)Lcom/google/protobuf/Descriptors$MethodDescriptor;

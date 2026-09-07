@@ -88,27 +88,27 @@ to fail when something published stops working.
 
 ## Stack
 
-- [ ] **`spec-0094-module`** — `kestrel-java`, its dependency test, `Rates`,
+- [x] **`spec-0094-module`** — `kestrel-java`, its dependency test, `Rates`,
       `Steps`, `SessionKeys` and the duration conversions.
       Done when: a Java source file constructs a rate, a step and a typed
       session key with no hash in it and no Kotlin import.
-- [ ] **`spec-0094-scenarios`** — `Scenarios`, the builder, and `exec` over an
+- [x] **`spec-0094-scenarios`** — `Scenarios`, the builder, and `exec` over an
       action or a body.
       Done when: the scenario a Java builder produces equals the one the Kotlin
       DSL produces for the same steps.
-- [ ] **`spec-0094-running`** — `Kestrel.create()`, `at`, and `Results`
+- [x] **`spec-0094-running`** — `Kestrel.create()`, `at`, and `Results`
       accessors returning `java.time.Duration`.
       Done when: a Java caller runs a scenario against a JDK `HttpServer` and
       reads a p99 without touching a mangled name.
-- [ ] **`spec-0094-goals`** — `Goals.p99Under`, `failureRateUnder`,
+- [x] **`spec-0094-goals`** — `Goals.p99Under`, `failureRateUnder`,
       `goodputAtLeast`, and a `Simulations.at(..., Goal...)` overload.
       Done when: a Java caller declares two goals and reads both verdicts off
       the result without naming a hash.
-- [ ] **`spec-0094-gate`** — a Java source set compiled by `build`, with the
+- [x] **`spec-0094-gate`** — a Java source set compiled by `build`, with the
       example above in it, plus `kestrel-java` added to `smoke`.
       Done when: deleting a facade method fails the build in the Java source
       set rather than in a consumer's project.
-- [ ] **`spec-0094-docs`** — `docs/from-java.md`, and the Java column in
+- [x] **`spec-0094-docs`** — `docs/from-java.md`, and the Java column in
       `docs/modules.md`.
       Done when: every snippet on the page is a line from the compiled source
       set rather than prose typed beside it.

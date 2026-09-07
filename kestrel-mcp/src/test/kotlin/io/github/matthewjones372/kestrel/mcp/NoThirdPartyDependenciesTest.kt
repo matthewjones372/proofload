@@ -22,6 +22,16 @@ class NoThirdPartyDependenciesTest {
         "annotations-",
         "kestrel-core",
         "kestrel-plan",
+        // A plan may name a topic, so a tool that reads plans carries the
+        // module that lowers one and the client it brings. A library consumer
+        // taking `kestrel-plan` alone still gets neither.
+        "kestrel-plan-kafka",
+        "kestrel-kafka",
+        "kafka-clients",
+        "zstd-jni",
+        "lz4-java",
+        "snappy-java",
+        "slf4j-api",
         "kestrel-http",
         "kestrel-engine",
         "kestrel-export",

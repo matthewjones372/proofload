@@ -18,27 +18,49 @@ internal val PLAN_SCHEMA: String = """
     Keys, all required unless said otherwise:
 
       kestrel   plan/1 — the version this reader accepts, and the only one
-      baseUrl   where every step is sent
       scenario  what the run is called, one row in the report
-      steps     a list; each is a name, one verb key, and options
+      steps     a list; each is a name, one key saying what it sends, and options
       load      rate + over, or from + to + over, or stages
+      baseUrl   where request steps are sent; needed only if there are any
+      brokers   the cluster topic steps reach; needed only if there are any
       goals     optional; a list of step + percentile, or failureRate
 
-    A step's verb key is one of get, post, put, patch, delete, head, and its
-    value is the path. Optional beside it:
+    A step is one of three kinds, decided by the key it carries. A plan may mix
+    them, and every kind takes an optional pauseAfter — a wait that records
+    nothing, e.g. 2s.
+
+    A request names a verb — get, post, put, patch, delete, head — whose value
+    is the path. Optional beside it:
 
       headers    a map
       body       a string
       expecting  the status that counts as success, default 200
       declared   statuses this endpoint documents; they fail under their own
                  reason rather than counting as defects
-      pauseAfter a wait that records nothing, e.g. 2s
+
+    A publish names produce, whose value is the topic:
+
+      body       a string, sent as UTF-8, required
+      key        the partition key; every record carries the same one, because
+                 a plan has no lambda to vary it
+      settings   Kafka's own producer settings by their own names, e.g. acks
+
+    An answer names completes, whose value is the produce step it answers. What
+    it records is the round trip, as a row of its own:
+
+      on         the topic the answer arrives on
+      by         the header both records carry the correlation id in
+      within     how long the run waits for an answer; required, because a run
+                 that waits forever reports no failure and no number
+      group      the consumer group to read under
+
+    A run is drained into one sink, so a plan declares at most one completes.
 
     A path may not contain {braces}: they are read from a session key of that
     name, a plan has no feeder to fill one, and the step would fail every
     request. Use a real value, or emit and add a feeder.
 
-    Two worked plans.
+    Three worked plans.
 
     ---
     kestrel:  plan/1
@@ -73,5 +95,27 @@ internal val PLAN_SCHEMA: String = """
     goals:
       - step: browse
         failureRate: "1%"
+    ---
+    kestrel:  plan/1
+    brokers:  localhost:9092
+    scenario: orders
+    steps:
+      - name: place order
+        produce: orders
+        body: '{"cart":"1 anvil"}'
+        settings:
+          acks: all
+      - name: confirmed
+        completes: place order
+        on: order-confirmations
+        by: correlation-id
+        group: kestrel-bench
+        within: 30s
+    load:
+      rate: 500/s
+      over: 1m
+    goals:
+      - step: confirmed
+        p99: 2s
     ---
 """.trimIndent()

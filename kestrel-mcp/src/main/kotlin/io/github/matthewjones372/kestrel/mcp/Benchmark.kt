@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.openapi.planFromDocument
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.asSimulation
 import io.github.matthewjones372.kestrel.plan.asYaml
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.github.matthewjones372.kestrel.preview
 
@@ -31,7 +32,7 @@ internal fun benchmark(arguments: Map<String, Any?>, allowance: Allowance): Stri
     }
 
     val asked = try {
-        plan.asSimulation().preview(allowance)
+        plan.asSimulation(kafkaLowerings).preview(allowance)
     } catch (unusable: IllegalArgumentException) {
         return content(unusable.message.orEmpty(), failed = true)
     }

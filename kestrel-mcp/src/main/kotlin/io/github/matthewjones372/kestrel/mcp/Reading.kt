@@ -6,6 +6,7 @@ import io.github.matthewjones372.kestrel.openapi.planFromDocument
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.asSimulation
 import io.github.matthewjones372.kestrel.plan.asYaml
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.github.matthewjones372.kestrel.preview
 
@@ -18,12 +19,12 @@ import io.github.matthewjones372.kestrel.preview
  * trace, because that sentence is the thing a caller acts on.
  */
 internal fun validate(arguments: Map<String, Any?>): String = onThePlan(arguments) { plan ->
-    plan.asSimulation()
+    plan.asSimulation(kafkaLowerings)
     content("the plan reads, and every goal names a step it declares")
 }
 
 internal fun preview(arguments: Map<String, Any?>, allowance: Allowance): String = onThePlan(arguments) { plan ->
-    when (val asked = plan.asSimulation().preview(allowance)) {
+    when (val asked = plan.asSimulation(kafkaLowerings).preview(allowance)) {
         is Preview.Refused -> content("refused: ${asked.reason.described}", failed = true)
 
         is Preview.Allowed -> content(

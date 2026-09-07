@@ -85,17 +85,22 @@ captures.
 
 ## Stack
 
-- [ ] **`spec-0099-model`** — `produce` and its keys in the plan model, lowering
+- [x] **`spec-0099-model`** — `produce` and its keys in the plan model, lowering
       to `kestrel-kafka`'s producer step.
       Done when: a declared produce step and the equivalent Kotlin build equal
       scenarios, against a fake broker on a socket.
-- [ ] **`spec-0099-completes`** — the answer on another topic, and `within`.
+      Built as two branches, `spec-0099-model` and `spec-0099-lowering`. The
+      lowering does not live in `kestrel-plan`: doing it as written would put
+      `kafka-clients` on the classpath of everyone reading a plan of nothing but
+      requests, so `kestrel-plan` declares a `Lowering` and `kestrel-plan-kafka`
+      supplies one. `kestrel-cli` and `kestrel-mcp` carry that module.
+- [x] **`spec-0099-completes`** — the answer on another topic, and `within`.
       Done when: a plan whose answer never arrives reports the records that
       never came rather than hanging.
-- [ ] **`spec-0099-reader`** — the keys in `readPlan`, the writer, and `emit`.
+- [x] **`spec-0099-reader`** — the keys in `readPlan`, the writer, and `emit`.
       Done when: a Kafka plan round-trips through `asYaml` and emits Kotlin that
       compiles.
-- [ ] **`spec-0099-mcp`** — `benchmark` accepting a plan with brokers in it, and
+- [x] **`spec-0099-mcp`** — `benchmark` accepting a plan with brokers in it, and
       the questions it should ask about one.
       Done when: `preview` names the broker as the host it would reach, so 0088
       fences a topic the way it fences a URL.
@@ -111,6 +116,16 @@ captures.
 - **Does `preview` treat a broker as a host?** Recommend yes, and it matters: an
   allowance that fences HTTP and waves through a producer is a fence with a
   hole in the shape of the thing most likely to be shared infrastructure.
+- **Answered: `preview` treats a broker as a host**, and every entry of the
+  bootstrap list rather than the first — which needed a `hosts` beside
+  `Targeted.host`.
+- **Unanswered by this spec and decided while building it: a plan has no
+  session interpolation.** The `key: "{orderId}"` above reads as a literal.
+  Nothing in `plan/1` substitutes a session value at run time — the contract
+  importer fills paths when it *generates* a plan — so every record from one
+  step carries the same key and the same body. Said in `plan_schema` and in
+  `docs/mcp.md`, and `emit` plus a feeder is the way out. Adding interpolation
+  would be a change to the whole format and wants a spec of its own.
 - **Is the payload a string or bytes?** Recommend a string in the file, with the
   bytes taken as UTF-8, and a `bodyFrom` naming a file for anything else. A plan
   full of base64 is a plan nobody reads.

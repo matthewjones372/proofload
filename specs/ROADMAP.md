@@ -3,6 +3,11 @@
 Not a spec: an index, so nobody has to open twenty files to find out what is
 built. Each row links the spec that argued for it.
 
+> This file went stale once already: 0087 to 0098 sat under "Drafted, not
+> built" for the whole time they were being built, which is the same failure
+> `specs/README.md` records for the boxes before 0044. Reconciled against the
+> tree on 2026-09-07. Check the tree before taking a row here as a status.
+
 ## Built
 
 | Spec | What it got |
@@ -94,29 +99,27 @@ built. Each row links the spec that argued for it.
 | [0080](0080-a-scenario-from-traffic-you-already-have.md) | `kestrel-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
 | [0085](0085-an-api-that-is-written-down.md) | a checked-in `.api` dump per published module, and `apiCheck` from `check`, so a break is a diff rather than a memory |
 | [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
-
-## Drafted, not built
-
-Six, drafted together: what it takes to drive Kestrel from a program rather
-than from a person with a compiler.
-
-| Spec | What it argues for |
-|---|---|
 | [0087](0087-a-result-a-machine-can-read.md) | the run's judgement as a document, in two densities, with a remedy on every verdict |
 | [0088](0088-a-run-nothing-fires-by-accident.md) | a ceiling a human commits, and a plan you can ask what it would send |
 | [0089](0089-a-plan-without-a-compiler.md) | a plan as a file, validated in milliseconds, emitted back as DSL to grow into |
 | [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
 | [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
-| [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure — the half of its cost 0011 gave itself 2g to avoid |
+| [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure |
 | [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
-| [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
-| [0099](0099-kafka-in-a-plan.md) | a topic as a step, and the answer on another topic as its latency |
+| [0099](0099-kafka-in-a-plan.md) | a topic as a step, the answer on another topic as its latency, and a broker a fence can see |
+
+## Drafted, not built
+
+| Spec | What it argues for |
+|---|---|
+| [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
 | [0100](0100-grpc-without-a-stub.md) | a method and a JSON body in a plan, for a caller with no generated stubs |
 
-They stack in that order; only 0092 needs all of them.
+0100 is the one piece of work with nothing in front of it. Its own spec says
+the honest ordering was Kafka first, and Kafka is now built.
 
 Every other drafted spec is built, bar the tails listed below.
 

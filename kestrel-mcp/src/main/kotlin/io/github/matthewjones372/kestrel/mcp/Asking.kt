@@ -4,6 +4,7 @@ import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.DeclaredGoal
 import io.github.matthewjones372.kestrel.plan.DeclaredLoad
+import io.github.matthewjones372.kestrel.plan.DeclaredStep
 
 /**
  * What this plan is guessing, put as questions somebody can answer.
@@ -60,6 +61,44 @@ internal fun Declaration.questions(from: Source, smoked: String): List<String> =
 
     if (smoked.contains("status 5")) {
         add("The target answered 5xx to a single request. Worth fixing before load rather than measuring under it.")
+    }
+
+    addAll(topicQuestions())
+}
+
+/**
+ * What a plan with topics in it is guessing, which is not what an HTTP plan
+ * guesses.
+ *
+ * A produce step is a write to somebody's cluster, and one nobody answers for
+ * measures the publish rather than the work — both are worth saying out loud
+ * before a rate is raised.
+ */
+private fun Declaration.topicQuestions(): List<String> = buildList {
+    val produced = steps.filterIsInstance<DeclaredStep.Produce>()
+    if (produced.isEmpty()) return@buildList
+
+    add(
+        "This produces to ${produced.joinToString { "`${it.topic}`" }} on `$brokers`. " +
+            "Is that a cluster this may write to, and is anything downstream going to act on those records?",
+    )
+
+    val unanswered = produced.filter { step ->
+        steps.filterIsInstance<DeclaredStep.Completes>().none { it.completes == step.name }
+    }
+    if (unanswered.isNotEmpty()) {
+        add(
+            "${unanswered.joinToString { "`${it.name}`" }} measures the publish, which is `acks` deep and not " +
+                "a consumer having done the work. Which topic carries the answer, and in what window?",
+        )
+    }
+
+    val same = produced.filter { it.key != null }
+    if (same.isNotEmpty()) {
+        add(
+            "Every record from ${same.joinToString { "`${it.name}`" }} carries the same key, so they all land on " +
+                "one partition. Is that the distribution this sees, or should the key vary per user?",
+        )
     }
 }
 

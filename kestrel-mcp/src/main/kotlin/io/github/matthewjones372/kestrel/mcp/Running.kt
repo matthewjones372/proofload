@@ -11,6 +11,7 @@ import io.github.matthewjones372.kestrel.export.Density
 import io.github.matthewjones372.kestrel.export.json
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.preview
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -55,7 +56,7 @@ internal class Registry(private val kestrel: () -> Kestrel = { Kestrel(progress 
      * second ten-minute run against the same target.
      */
     fun start(plan: Declaration, allowance: Allowance): String {
-        val simulation = plan.asSimulation()
+        val simulation = plan.asSimulation(kafkaLowerings)
 
         when (val asked = simulation.preview(allowance)) {
             is Preview.Refused -> return content("refused: ${asked.reason.described}", failed = true)

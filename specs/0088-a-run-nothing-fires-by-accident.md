@@ -99,19 +99,19 @@ which nobody wants to hand-edit with a comment in it.
 
 ## Stack
 
-- [ ] **`spec-0088-allowance`** — `Allowance`, the file subset, and the refusal
+- [x] **`spec-0088-allowance`** — `Allowance`, the file subset, and the refusal
       reasons as a sealed type.
       Done when: a malformed file names the bad line, and an absent file yields
       `Allowance.none`.
-- [ ] **`spec-0088-preview`** — `preview(allowance)` over a plan: hosts, request
+- [x] **`spec-0088-preview`** — `preview(allowance)` over a plan: hosts, request
       count, duration, peak rate, and the users it would need.
       Done when: a preview of a staged plan reports the peak rate of the tallest
       stage, not the mean.
-- [ ] **`spec-0088-enforcement`** — `kestrel.runWithin(allowance, plan)`
+- [x] **`spec-0088-enforcement`** — `kestrel.runWithin(allowance, plan)`
       returning `Ran.Refused` before the first departure, with `run` untouched.
       Done when: a refused run sends nothing, provable against a JDK
       `HttpServer` that counts requests.
-- [ ] **`spec-0088-docs`** — `docs/allowance.md` and the honest paragraph about
+- [x] **`spec-0088-docs`** — `docs/allowance.md` and the honest paragraph about
       what a fence is not.
       Done when: the page says "not a sandbox" in the first screen.
 

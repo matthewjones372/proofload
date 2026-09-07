@@ -50,7 +50,7 @@ directory, not yours.
 | Tool | Does | Sends |
 |---|---|---|
 | `benchmark` | **start here** — a target in, a plan out, previewed and smoked | one request per step |
-| `plan_schema` | the shape of a `plan/1` document, with two worked plans | nothing |
+| `plan_schema` | the shape of a `plan/1` document, with three worked plans | nothing |
 | `validate` | parses a plan, resolves its steps and goals, names the line of anything wrong | nothing |
 | `preview` | what the plan would send — users, requests, window, peak rate, hosts | nothing |
 | `from_openapi` | reads an OpenAPI document, writes the plan it describes | nothing |
@@ -134,6 +134,57 @@ still sends one request per step. A plan answering 400s produces a run full of
 them and the run says only that they were 400s; `trace` says what was actually
 sent. Finding a typo in a path by firing three thousand requests is the other
 half of the same mistake.
+
+## A plan whose steps are topics
+
+A step names which protocol it is by which key it carries, so a plan is not
+tied to HTTP:
+
+```yaml
+kestrel:  plan/1
+brokers:  localhost:9092
+scenario: orders
+steps:
+  - name: place order
+    produce: orders
+    body: '{"cart":"1 anvil"}'
+    settings:
+      acks: all
+  - name: confirmed
+    completes: place order
+    on: order-confirmations
+    by: correlation-id
+    group: kestrel-bench
+    within: 30s
+load:
+  rate: 500/s
+  over: 1m
+goals:
+  - step: confirmed
+    p99: 2s
+```
+
+`produce` is the publish, timed as deep as `acks` makes it. `completes` is the
+answer arriving somewhere else, and what it records is the round trip — a row
+of its own rather than folded into the publish, because folding them reports a
+round trip as though it were a write. `within` has no default: a run that waits
+forever for an answer that never comes reports no failure and no number.
+
+`baseUrl` and `brokers` are both optional, and a plan may mix requests and
+topics — a journey that is a request and then a record is one journey.
+
+The correlation is the user's number, which is unique per departure and is the
+only value a plan has without a lambda. Every record from one step carries the
+same key and the same body for the same reason; where per-user variety matters,
+`emit` prints the Kotlin and a feeder goes there.
+
+A broker is a host. `preview` names every entry of the bootstrap list, and an
+allowance that does not permit the cluster refuses the plan the way it refuses
+a URL — shared infrastructure is exactly what a fence is for.
+
+The client arrives with the module that reads plans rather than with
+`kestrel-plan` itself: a project taking `kestrel-plan` to read a plan of
+requests gets no Kafka on its classpath. [modules.md](modules.md) has the row.
 
 ## What it will refuse
 

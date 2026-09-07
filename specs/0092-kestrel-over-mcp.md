@@ -115,28 +115,28 @@ other way.
 
 ## Stack
 
-- [ ] **`spec-0092-server`** — the module, stdio framing, tool registration,
+- [x] **`spec-0092-server`** — the module, stdio framing, tool registration,
       and `plan_schema`.
       Done when: an initialise and a `tools/list` round-trip over a pipe in a
       test, with no process spawned.
-- [ ] **`spec-0092-benchmark`** — `benchmark`, over the tools below it.
+- [x] **`spec-0092-benchmark`** — `benchmark`, over the tools below it.
       Done when: one call takes an OpenAPI document and answers with a plan, its
       preview and its smoke, having sent one request per step and no load.
-- [ ] **`spec-0092-read-only`** — `validate`, `preview`, `from_openapi`.
+- [x] **`spec-0092-read-only`** — `validate`, `preview`, `from_openapi`.
       Done when: a test asserts no socket is opened by any of the three,
       against a counting `HttpServer`.
-- [ ] **`spec-0092-debugging`** — `smoke` and `trace` over 0058's walk.
+- [x] **`spec-0092-debugging`** — `smoke` and `trace` over 0058's walk.
       Done when: `smoke` on a four-step plan sends exactly four requests against
       a counting `HttpServer`, and `trace` returns the body it actually sent.
-- [ ] **`spec-0092-run`** — `run`, `status`, the run registry and the 0088
+- [x] **`spec-0092-run`** — `run`, `status`, the run registry and the 0088
       refusal path.
       Done when: a `run` over the limits returns the refusal as a result rather
       than an error, and a second concurrent `run` is refused by name.
-- [ ] **`spec-0092-results`** — `explain`, `report`, `list_runs` and `compare`.
+- [x] **`spec-0092-results`** — `explain`, `report`, `list_runs` and `compare`.
       Done when: `compare` on two runs of the same plan returns 0038's third
       answer, "cannot tell", where the intervals overlap, and `report` returns a
       path that opens.
-- [ ] **`spec-0092-docs`** — `docs/mcp.md`: the config block, the tool table,
+- [x] **`spec-0092-docs`** — `docs/mcp.md`: the config block, the tool table,
       and what the server will refuse.
       Done when: the config block is copied into a client and the tools appear.
 

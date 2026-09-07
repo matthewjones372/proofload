@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kestrel.mcp
 
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.plan.readPlan
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
@@ -62,21 +63,21 @@ class ServerTest {
 
     @Test
     fun `every plan in the schema is a plan the reader accepts`() {
-        val examples = PLAN_SCHEMA.substringAfter("Two worked plans.")
+        val examples = PLAN_SCHEMA.substringAfter("Three worked plans.")
             .split("---")
             .map { it.trim() }
             .filter { it.startsWith("kestrel:") }
 
         withClue("a schema whose own examples do not parse is worse than no schema") {
-            examples.size shouldBe 2
-            examples.forEach { readPlan(it).asSimulation() }
+            examples.size shouldBe 3
+            examples.forEach { readPlan(it).asSimulation(kafkaLowerings) }
         }
     }
 
     @Test
     fun `the schema names only keys the reader knows`() {
         val named = Regex("""^\s{6}(\w+)""", RegexOption.MULTILINE)
-            .findAll(PLAN_SCHEMA.substringBefore("Two worked plans."))
+            .findAll(PLAN_SCHEMA.substringBefore("Three worked plans."))
             .map { it.groupValues[1] }
             .toSet()
 
@@ -109,8 +110,9 @@ class ServerTest {
         const val TOOLS_LIST = """{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""
 
         val KNOWN = setOf(
-            "kestrel", "baseUrl", "scenario", "steps", "load", "goals",
+            "kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals",
             "headers", "body", "expecting", "declared", "pauseAfter",
+            "key", "settings", "on", "by", "within", "group",
         )
     }
 }

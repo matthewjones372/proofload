@@ -10,6 +10,7 @@ import io.github.matthewjones372.kestrel.http.DeclaredStatus
 import io.github.matthewjones372.kestrel.perSecond
 import io.github.matthewjones372.kestrel.plan.Declaration
 import io.github.matthewjones372.kestrel.plan.asSimulation
+import io.github.matthewjones372.kestrel.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.kestrel.preview
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -55,7 +56,11 @@ internal fun trace(arguments: Map<String, Any?>, allowance: Allowance): String =
         // `trace` narrates to stdout, which this process has already pointed at
         // stderr so it cannot corrupt the protocol. Captured here instead,
         // because the narration *is* the answer to this tool.
-        content(capturing { Kestrel(progress = Progress.silent).trace(plan.asSimulation().arms.single().scenario) })
+        content(
+            capturing {
+                Kestrel(progress = Progress.silent).trace(plan.asSimulation(kafkaLowerings).arms.single().scenario)
+            },
+        )
     }
 
 /**
@@ -66,7 +71,7 @@ internal fun trace(arguments: Map<String, Any?>, allowance: Allowance): String =
  */
 private fun onceThrough(plan: Declaration): RunResult =
     Kestrel(progress = Progress.silent)
-        .run(plan.asSimulation().arms.single().scenario.at(1.perSecond, over = 1.seconds))
+        .run(plan.asSimulation(kafkaLowerings).arms.single().scenario.at(1.perSecond, over = 1.seconds))
 
 /**
  * Reads the plan, asks the allowance about the hosts it would reach, and only
@@ -81,7 +86,7 @@ private fun sending(
     allowance: Allowance,
     send: (Declaration) -> String,
 ): String = onThePlan(arguments) { plan ->
-    when (val asked = plan.asSimulation().preview(allowance.forOneRequest())) {
+    when (val asked = plan.asSimulation(kafkaLowerings).preview(allowance.forOneRequest())) {
         is Preview.Refused -> content("refused: ${asked.reason.described}", failed = true)
         is Preview.Allowed -> send(plan)
     }

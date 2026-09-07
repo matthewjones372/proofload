@@ -78,18 +78,18 @@ generator fell behind so the answer is not the target's, 3 refused.
 
 ## Stack
 
-- [ ] **`spec-0089-model`** — the plan as a value in core, and lowering it to a
+- [x] **`spec-0089-model`** — the plan as a value in core, and lowering it to a
       `Scenario` and a plan.
       Done when: a plan value and the equivalent DSL produce equal scenarios.
-- [ ] **`spec-0089-reader`** — `kestrel-plan`, snakeyaml-engine, its dependency
+- [x] **`spec-0089-reader`** — `kestrel-plan`, snakeyaml-engine, its dependency
       test, and errors carrying a line and a key.
       Done when: an unknown key names itself and its line, and a goal on a
       missing step fails before any transport is built.
-- [ ] **`spec-0089-cli`** — `kestrel-cli`: `validate`, `preview`, `run`, the
+- [x] **`spec-0089-cli`** — `kestrel-cli`: `validate`, `preview`, `run`, the
       `--json` flag and the exit codes.
       Done when: `run` on a plan that misses a goal exits 1 and prints an 0087
       summary and nothing else on stdout.
-- [ ] **`spec-0089-emit`** — `emit --kotlin`, over `kestrel-record`'s emitter.
+- [x] **`spec-0089-emit`** — `emit --kotlin`, over `kestrel-record`'s emitter.
       Done when: the emitted source for a golden plan compiles in `examples`
       and runs.
 

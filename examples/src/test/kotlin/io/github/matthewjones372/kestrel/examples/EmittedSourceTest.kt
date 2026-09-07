@@ -37,6 +37,16 @@ class EmittedSourceTest {
         checkEmitted(plan = "orders.yaml", into = "$PACKAGE.orders", source = "orders/EmittedOrders.kt")
     }
 
+    /**
+     * The drawn half, which the compiler has the most to say about: a
+     * `sessionKey`, a generator per key, one `fedBy` combining them and a
+     * `drawing` beside it — none of which a golden could show was Kotlin.
+     */
+    @Test
+    fun `a plan that draws emits the generators the cookbook writes`() {
+        checkEmitted(plan = "catalogue.yaml", into = "$PACKAGE.catalogue", source = "catalogue/EmittedCatalogue.kt")
+    }
+
     private fun checkEmitted(plan: String, into: String, source: String) {
         val read = requireNotNull(javaClass.getResourceAsStream("/$plan")) { "no /$plan" }
             .reader(Charsets.UTF_8)

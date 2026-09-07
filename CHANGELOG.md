@@ -333,6 +333,15 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`write_spec` no longer tells a plan with a `POST` in it that it covers
+  nothing that writes.** Found by using the tool against a shop: a benchmark
+  whose hot path was `POST /checkout` was handed a "What this does not cover"
+  section claiming every step was a read. The section is judged on what the
+  steps are now — a verb that is not `GET`, `HEAD` or `OPTIONS`, or a produce
+  step — rather than on whether Kafka was involved. A document read as covering
+  more than it does is worse than a narrow one, which is the reason that
+  section exists at all.
+
 - **Descriptors fetched from the target, so nothing is needed from the caller.**
   `grpc.target(...).reflected()` asks the service to describe itself, which is
   what `grpcurl` does and what a staging service usually already allows — the

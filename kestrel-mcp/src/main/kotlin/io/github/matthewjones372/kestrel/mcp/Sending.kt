@@ -4,7 +4,8 @@ import io.github.matthewjones372.kestrel.Allowance
 import io.github.matthewjones372.kestrel.Preview
 import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.RunResult
-import io.github.matthewjones372.kestrel.at
+import io.github.matthewjones372.kestrel.Simulation
+import io.github.matthewjones372.kestrel.constantRate
 import io.github.matthewjones372.kestrel.engine.Kestrel
 import io.github.matthewjones372.kestrel.http.DeclaredStatus
 import io.github.matthewjones372.kestrel.perSecond
@@ -58,7 +59,8 @@ internal fun trace(arguments: Map<String, Any?>, allowance: Allowance): String =
         // because the narration *is* the answer to this tool.
         content(
             capturing {
-                Kestrel(progress = Progress.silent).trace(plan.asSimulation(kafkaLowerings).arms.single().scenario)
+                val arm = plan.asSimulation(kafkaLowerings).arms.single()
+                Kestrel(progress = Progress.silent).trace(arm.scenario, arm.feeder)
             },
         )
     }
@@ -68,10 +70,16 @@ internal fun trace(arguments: Map<String, Any?>, allowance: Allowance): String =
  *
  * A smoke bounded by the plan's own shape rather than by its load: the point is
  * to find a path that 404s before three thousand requests do.
+ *
+ * The arm is carried over rather than its scenario alone, so a plan that draws
+ * sends the same filled paths here as under `run`. A smoke that fails what the
+ * run sends fine sends a caller after a bug it does not have.
  */
-private fun onceThrough(plan: Declaration): RunResult =
-    Kestrel(progress = Progress.silent)
-        .run(plan.asSimulation(kafkaLowerings).arms.single().scenario.at(1.perSecond, over = 1.seconds))
+private fun onceThrough(plan: Declaration): RunResult {
+    val arm = plan.asSimulation(kafkaLowerings).arms.single()
+    return Kestrel(progress = Progress.silent)
+        .run(Simulation(listOf(arm.copy(profile = constantRate(1.perSecond, over = 1.seconds)))))
+}
 
 /**
  * Reads the plan, asks the allowance about the hosts it would reach, and only

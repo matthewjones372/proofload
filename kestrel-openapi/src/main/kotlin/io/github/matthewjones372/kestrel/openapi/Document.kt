@@ -7,6 +7,8 @@ import io.github.matthewjones372.kestrel.plan.DeclaredLoad
 import io.github.matthewjones372.kestrel.plan.DeclaredStep
 import org.snakeyaml.engine.v2.api.Load
 import org.snakeyaml.engine.v2.api.LoadSettings
+import org.snakeyaml.engine.v2.exceptions.MarkedYamlEngineException
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
@@ -30,8 +32,7 @@ fun planFromDocument(
     methods: Set<String> = setOf("get"),
     seed: Long = 0L,
 ): Declaration {
-    val root = Load(LoadSettings.builder().build()).loadFromString(document).asMap()
-        ?: throw IllegalArgumentException("the document is not a mapping, so it is not OpenAPI")
+    val root = document.asOpenApi()
 
     val paths = root["paths"].asMap()
         ?: throw IllegalArgumentException("the document names no `paths`, so there is nothing to send")
@@ -132,3 +133,28 @@ private const val OK = 200
 private const val SMOKE_RATE = 1
 private val SMOKE_WINDOW = 10.seconds
 private val PLACEHOLDER_LIMIT = 1_000.milliseconds
+
+/**
+ * The document as the mapping OpenAPI is.
+ *
+ * The parse and the shape check together, because a parse failure is the
+ * parser's own exception type and every caller of this catches
+ * `IllegalArgumentException` — so without this a document that is not YAML at
+ * all goes past all of them.
+ */
+private fun String.asOpenApi(): Map<String, Any?> {
+    val loaded = try {
+        Load(LoadSettings.builder().build()).loadFromString(this)
+    } catch (unreadable: YamlEngineException) {
+        throw IllegalArgumentException(unreadable.said(), unreadable)
+    }
+
+    return loaded.asMap() ?: throw IllegalArgumentException("the document is not a mapping, so it is not OpenAPI")
+}
+
+/** A parse failure with its line first, as `readPlan` reports one. */
+private fun YamlEngineException.said(): String {
+    val where = (this as? MarkedYamlEngineException)?.problemMark?.map { it.line + 1 }?.orElse(null)
+    val what = (this as? MarkedYamlEngineException)?.problem ?: message.orEmpty()
+    return if (where == null) "this is not YAML: ${message.orEmpty()}" else "line $where: $what"
+}

@@ -100,6 +100,36 @@ class ServerTest {
         }
     }
 
+    /**
+     * Found by sending it a document that was not one. A YAML parse failure is
+     * not an `IllegalArgumentException`, so it went past every catch that
+     * reads a plan and out of `main` — six of the thirteen tools ended the
+     * session, and every run this process was holding went with it.
+     */
+    @Test
+    fun `a tool that throws is a tool result, not the end of the session`() {
+        val calls = listOf(
+            "from_openapi" to """{"document":"not: an: openapi"}""",
+            "validate" to """{"plan":"not: an: openapi"}""",
+            "plan_schema" to "{}",
+        ).mapIndexed { at, (tool, arguments) ->
+            """{"jsonrpc":"2.0","id":${at + 1},"method":"tools/call",""" +
+                """"params":{"name":"$tool","arguments":$arguments}}"""
+        }
+
+        val answered = exchange(calls.joinToString(separator = System.lineSeparator()))
+
+        withClue(answered) {
+            withClue("every call is answered, including the two that failed") {
+                answered.lines().size shouldBe 3
+            }
+            answered shouldContain """"isError":true"""
+            withClue("the session is still usable after a tool threw") {
+                answered.lines().last() shouldContain "A plan is YAML or JSON"
+            }
+        }
+    }
+
     private fun exchange(line: String): String {
         val output = StringWriter()
         serve("$line\n".reader().buffered(), output, ::answer)

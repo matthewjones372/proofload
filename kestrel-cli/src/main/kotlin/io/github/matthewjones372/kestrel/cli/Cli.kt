@@ -2,6 +2,7 @@ package io.github.matthewjones372.kestrel.cli
 
 import io.github.matthewjones372.kestrel.Allowance
 import io.github.matthewjones372.kestrel.Preview
+import io.github.matthewjones372.kestrel.Progress
 import io.github.matthewjones372.kestrel.Ran
 import io.github.matthewjones372.kestrel.RunResult
 import io.github.matthewjones372.kestrel.engine.Kestrel
@@ -31,7 +32,11 @@ data class Finished(val out: String, val error: String = "", val code: Code = Co
  * Returns rather than prints, so the interesting half of this file is testable
  * and `main` is four lines that cannot be got wrong.
  */
-fun obey(command: Command, allowance: Allowance = Allowance.fromFile(), kestrel: () -> Kestrel = ::Kestrel): Finished {
+fun obey(
+    command: Command,
+    allowance: Allowance = Allowance.fromFile(),
+    kestrel: (Progress) -> Kestrel = { Kestrel(progress = it) },
+): Finished {
     // Read before anything else: this one takes a document, not a plan, so the
     // plan reader below has nothing to read yet.
     if (command is Command.FromOpenApi) {
@@ -62,7 +67,13 @@ fun obey(command: Command, allowance: Allowance = Allowance.fromFile(), kestrel:
             is Preview.Allowed -> Finished(out = asked.described)
         }
 
-        is Command.Run -> when (val ran = kestrel().runWithin(allowance, simulation)) {
+        // Silent under `--json`, which is the caller `Progress.silent` names in
+        // its own KDoc: the document goes to stdout, so a run's commentary on
+        // the same stream is a document nothing can parse.
+        is Command.Run -> when (
+            val ran = kestrel(if (command.json) Progress.silent else Progress.lines())
+                .runWithin(allowance, simulation)
+        ) {
             is Ran.Refused -> Finished(out = "", error = ran.reason.described, code = Code.Refused)
 
             is Ran.Result -> Finished(

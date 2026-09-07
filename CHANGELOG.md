@@ -333,6 +333,16 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`kestrel run --json` writes the document and nothing else.** The engine's
+  progress lines went to the same stdout as the run document, so
+  `kestrel run plan.yaml --json | jq` was handed a run's commentary followed by
+  JSON and parsed neither. `--json` is silent now, which is the caller
+  `Progress.silent` already names in its own KDoc — a CI step that parses
+  stdout. Without `--json` a run still says what it is doing, because
+  silencing every run would take the countdown from the person watching one.
+  `obey` accordingly takes a `(Progress) -> Kestrel` rather than a
+  `() -> Kestrel`. Found by piping it.
+
 - **`write_spec` no longer tells a plan with a `POST` in it that it covers
   nothing that writes.** Found by using the tool against a shop: a benchmark
   whose hot path was `POST /checkout` was handed a "What this does not cover"

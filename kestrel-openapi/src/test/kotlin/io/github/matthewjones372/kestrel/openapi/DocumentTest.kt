@@ -121,4 +121,16 @@ class DocumentTest {
 
         planFromDocument(referenced).requests().single().path shouldBe "/orders/5"
     }
+
+    /**
+     * Found through the MCP server, where this was the call that killed it: a
+     * parse failure is the parser's own type, so it went past the
+     * `IllegalArgumentException` every caller catches.
+     */
+    @Test
+    fun `something that is not yaml at all is refused, not thrown past the caller`() {
+        val thrown = shouldThrow<IllegalArgumentException> { planFromDocument("not: an: openapi") }
+
+        withClue(thrown.message.orEmpty()) { thrown.message.orEmpty() shouldContain "line 1" }
+    }
 }

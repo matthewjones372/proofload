@@ -64,7 +64,29 @@ internal fun answer(call: Call): String = when (call.method) {
     else -> failTo(call.id, METHOD_NOT_FOUND, "no method `${call.method}`")
 }
 
-private fun called(call: Call): String = when (call.tool) {
+/**
+ * The tool, and a tool result whatever it does.
+ *
+ * A throw used to leave `main` and end the session, taking every run this
+ * process was holding with it — and not only for a bug: a YAML parse failure
+ * is not an `IllegalArgumentException`, so a document that was not one killed
+ * the server from six of the thirteen tools. stdout is the protocol here, and
+ * the same argument that points prints at stderr applies to a stack trace.
+ *
+ * `Exception` rather than `Throwable`: an `OutOfMemoryError` is not a tool
+ * result and pretending otherwise would answer a client with a lie about a
+ * process that is no longer working.
+ */
+@Suppress("TooGenericExceptionCaught") // The point: a server boundary that only caught what it predicted
+private fun called(call: Call): String = try {
+    calling(call)
+} catch (thrown: Exception) {
+    // Named by its type, as `Threw` names a step's: a message alone leaves a
+    // caller unable to tell a plan they can fix from a bug they cannot.
+    content("`${call.tool}` failed: ${thrown.javaClass.simpleName}: ${thrown.message}", failed = true)
+}
+
+private fun calling(call: Call): String = when (call.tool) {
     "benchmark" -> benchmark(call.arguments, Allowance.fromFile())
 
     "plan_schema" -> content(PLAN_SCHEMA)

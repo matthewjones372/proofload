@@ -180,6 +180,21 @@ class ReadingTest {
         mixed.steps.map { it::class.simpleName } shouldBe listOf("Request", "Produce")
     }
 
+    /**
+     * Found by handing the MCP server a document that was not one. A YAML
+     * parse failure is a `YamlEngineException`, not an
+     * `IllegalArgumentException`, so it went past every catch that reads a
+     * plan and out of the process.
+     */
+    @Test
+    fun `something that is not yaml at all is refused like any other mistake`() {
+        val thrown = shouldThrow<IllegalArgumentException> { readPlan("not: an: openapi") }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "line 1"
+        }
+    }
+
     @Test
     fun `a missing key says which one`() {
         val thrown = shouldThrow<IllegalArgumentException> {

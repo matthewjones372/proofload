@@ -3,6 +3,8 @@ package io.github.matthewjones372.kestrel.plan
 import io.github.matthewjones372.kestrel.Rate
 import org.snakeyaml.engine.v2.api.LoadSettings
 import org.snakeyaml.engine.v2.composer.Composer
+import org.snakeyaml.engine.v2.exceptions.MarkedYamlEngineException
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.Node
 import org.snakeyaml.engine.v2.nodes.ScalarNode
@@ -23,9 +25,17 @@ import kotlin.time.Duration
  */
 fun readPlan(text: String): Declaration {
     val settings = LoadSettings.builder().build()
-    val root = Composer(settings, ParserImpl(settings, StreamReader(settings, text)))
-        .singleNode
-        .orElseThrow { IllegalArgumentException("the plan is empty") }
+    // A parse failure is the parser's own exception type, and every caller of
+    // this catches `IllegalArgumentException` — so without this a document
+    // that is not YAML at all goes past all of them and out of the process.
+    // It already knows the line; that is the half worth keeping.
+    val root = try {
+        Composer(settings, ParserImpl(settings, StreamReader(settings, text)))
+            .singleNode
+            .orElseThrow { IllegalArgumentException("the plan is empty") }
+    } catch (unreadable: YamlEngineException) {
+        throw IllegalArgumentException(unreadable.said(), unreadable)
+    }
 
     val plan = root.mapping("the plan")
     plan.only(PLAN_KEYS)
@@ -180,6 +190,16 @@ private fun MappingNode.only(keys: List<String>) {
         val key = entry.keyNode.text()
         if (key !in keys) entry.keyNode.fail("`$key` is not one of ${keys.joinToString { "`$it`" }}")
     }
+}
+
+/**
+ * A parse failure in the vocabulary every other refusal here uses: the line
+ * first, then what was wrong with it.
+ */
+private fun YamlEngineException.said(): String {
+    val where = (this as? MarkedYamlEngineException)?.problemMark?.map { it.line + 1 }?.orElse(null)
+    val what = (this as? MarkedYamlEngineException)?.problem ?: message.orEmpty()
+    return if (where == null) "this is not YAML: ${message.orEmpty()}" else "line $where: $what"
 }
 
 /** Every failure comes through here, so every failure names its line. */

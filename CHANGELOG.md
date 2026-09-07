@@ -333,6 +333,16 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A malformed document no longer kills the MCP server.** A YAML parse failure
+  is the parser's own exception type rather than an `IllegalArgumentException`,
+  so it went past every catch that reads a plan and out of `main`: six of the
+  thirteen tools ended the session on one bad document, and every run the
+  process was holding went with it. Now `readPlan` and `planFromDocument`
+  refuse it the way they refuse any other mistake — the line first, then what
+  was wrong — and the server answers a tool that throws with a tool result
+  naming the type, rather than exiting. Found by sending it a document that was
+  not one.
+
 - **`kestrel run --json` writes the document and nothing else.** The engine's
   progress lines went to the same stdout as the run document, so
   `kestrel run plan.yaml --json | jq` was handed a run's commentary followed by

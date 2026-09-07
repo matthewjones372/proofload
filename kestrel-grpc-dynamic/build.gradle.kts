@@ -16,10 +16,11 @@ dependencies {
     api(project(":kestrel-core"))
     api(project(":kestrel-grpc"))
 
-    // The descriptor types, and nothing else of protobuf's yet. The JSON
-    // printer and the reflection service arrive with the branches that need
-    // them, so each dependency claim is made where it can be argued with.
+    // The descriptor types, and the JSON printer that turns what a plan wrote
+    // into one of them. The reflection service arrives with the branch that
+    // needs it, so each dependency claim is made where it can be argued with.
     api("com.google.protobuf:protobuf-java:4.33.0")
+    api("com.google.protobuf:protobuf-java-util:4.33.0")
 }
 
 tasks.test {

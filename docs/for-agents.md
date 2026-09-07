@@ -1201,6 +1201,9 @@ top-level in StreamsKt
 ### `io.github.matthewjones372:kestrel-grpc-dynamic`
 
 ```text
+top-level in MessagesKt
+    fun asJson(Message): String
+    fun messageFrom(Descriptors.Descriptor, String): DynamicMessage
 class Schema
     val methods: List
     fun method(String): Descriptors.MethodDescriptor

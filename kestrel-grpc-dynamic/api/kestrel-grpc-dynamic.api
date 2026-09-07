@@ -1,3 +1,8 @@
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/MessagesKt {
+	public static final fun asJson (Lcom/google/protobuf/Message;)Ljava/lang/String;
+	public static final fun messageFrom (Lcom/google/protobuf/Descriptors$Descriptor;Ljava/lang/String;)Lcom/google/protobuf/DynamicMessage;
+}
+
 public final class io/github/matthewjones372/kestrel/grpc/dynamic/Schema {
 	public final fun getMethods ()Ljava/util/List;
 	public final fun method (Ljava/lang/String;)Lcom/google/protobuf/Descriptors$MethodDescriptor;

@@ -31,6 +31,9 @@ class NoStubDependenciesTest {
             "kestrel-core", "kestrel-grpc",
             "grpc-api", "grpc-stub", "grpc-context",
             "protobuf-java",
+            // protobuf-java-util's own JSON parser, which arrives with it. It
+            // is not a second parser this module chose: nothing here calls it.
+            "gson",
             // gRPC's own, which arrive with `grpc-api` and are not a choice
             // this module made.
             "guava", "failureaccess", "listenablefuture", "checker-qual", "j2objc-annotations",

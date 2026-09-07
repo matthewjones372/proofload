@@ -333,6 +333,27 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **Descriptors fetched from the target, so nothing is needed from the caller.**
+  `grpc.target(...).reflected()` asks the service to describe itself, which is
+  what `grpcurl` does and what a staging service usually already allows — the
+  way in rather than the fallback, with a descriptor set for a target that has
+  it switched off. `v1` is tried and `v1alpha` after it, because a server serves
+  one or the other and calling a `v1`-only service "reflection is off" would
+  send somebody to change a setting that is already right. A target serving
+  neither says so and names the `protoc` invocation that answers it, rather
+  than hanging on a stream nobody will answer. The reflection endpoint itself
+  is left out of the schema: a plan calling `ServerReflectionInfo` would be
+  benchmarking gRPC rather than the service.
+
+  The stubs come from `grpc-services`, which is the heaviest dependency claim in
+  the repository — `grpc-core`, `grpc-protobuf` and `proto-google-common-protos`
+  arrive with it, and `kestrel-grpc-dynamic` therefore cannot make the whole of
+  `kestrel-grpc`'s no-second-stack claim. The half that survives is stated as a
+  test: no transport. The tests judge this client against gRPC's own reflection
+  service on the other end, because a second hand-written implementation would
+  be a test that agrees with the client about a wire format they could both have
+  wrong.
+
 - **A gRPC call from a name and a JSON body.** `grpc.call(schema,
   "shop.Orders/PlaceOrder", body)` is a step reported under the name the wire
   uses, built on 0071's `Grpc` so the channel, the deadline and the

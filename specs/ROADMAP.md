@@ -110,24 +110,24 @@ built. Each row links the spec that argued for it.
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
 | [0099](0099-kafka-in-a-plan.md) | a topic as a step, the answer on another topic as its latency, and a broker a fence can see |
+| [0100](0100-grpc-without-a-stub.md) | a method and a JSON body called with no generated stub — the library half; the plan keys its own stack leaves out |
 
 ## Drafted, not built
 
 | Spec | What it argues for |
 |---|---|
 | [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
-| [0100](0100-grpc-without-a-stub.md) | a method and a JSON body in a plan, for a caller with no generated stubs |
 
-0100 is the one piece of work with nothing in front of it. Its own spec says
-the honest ordering was Kafka first, and Kafka is now built.
-
-Every other drafted spec is built, bar the tails listed below.
+Nothing else is outstanding. Every other drafted spec is built, bar the tails
+listed below.
 
 Unbuilt tails of specs otherwise landed:
 `0029-tag`, which is the release itself; `0061-containers`, which the fake
 broker made largely redundant and which cannot be verified without a Docker
 daemon; and `0086-coordinator`, the SSH orchestrator its own spec recommends
-against — with a missing shard refused by name and a wrong clock refused too,
+against; and `0100`'s plan keys, which its own stack never listed — the four
+entries there build the Kotlin and leave `plan/1` with no `call:`, so the
+caller 0100 was written for still cannot write the file in its **Shape** — with a missing shard refused by name and a wrong clock refused too,
 what is left is tedium, and tedium is the shell loop in
 `docs/more-than-one-injector.md` rather than a subsystem.
 

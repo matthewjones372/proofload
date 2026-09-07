@@ -1219,6 +1219,8 @@ top-level in DynamicCallKt
 top-level in MessagesKt
     fun asJson(Message): String
     fun messageFrom(Descriptors.Descriptor, String): DynamicMessage
+top-level in ReflectedKt
+    fun reflected(Grpc, Long): Schema
 class Schema
     val methods: List
     fun method(String): Descriptors.MethodDescriptor

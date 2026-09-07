@@ -333,6 +333,19 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A gRPC call from a name and a JSON body.** `grpc.call(schema,
+  "shop.Orders/PlaceOrder", body)` is a step reported under the name the wire
+  uses, built on 0071's `Grpc` so the channel, the deadline and the
+  `traceparent` are the ones that module already fits — there is one gRPC seam
+  here and this is not a second. `expecting` takes a status by name because
+  that is what the generated code and every log line call them, and `declaring`
+  puts a documented `NOT_FOUND` under `DeclaredGrpcStatus` rather than
+  `GrpcStatus`, the split `DeclaredStatus` already makes for HTTP.
+  `DEADLINE_EXCEEDED` is core's own `TimedOut`, so "how many timed out" has one
+  answer across every protocol. The body is checked against the schema when the
+  scenario is built, not at the first departure, and nothing is sent to
+  discover that it is wrong. `Grpc.target` is public: a narration prints it.
+
 - **JSON to a message, refused by name where it does not fit.** A plan's body
   becomes the message the method declares, merged a field at a time so a
   refusal says which key caused it — protobuf's own "Not an int32 value" is

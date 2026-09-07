@@ -1,3 +1,29 @@
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/DeclaredGrpcStatus : io/github/matthewjones372/kestrel/Reason {
+	public fun <init> (Lio/grpc/Status$Code;)V
+	public final fun component1 ()Lio/grpc/Status$Code;
+	public final fun copy (Lio/grpc/Status$Code;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DeclaredGrpcStatus;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kestrel/grpc/dynamic/DeclaredGrpcStatus;Lio/grpc/Status$Code;ILjava/lang/Object;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DeclaredGrpcStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lio/grpc/Status$Code;
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall : io/github/matthewjones372/kestrel/Action {
+	public final fun declaring ([Lio/grpc/Status$Code;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;
+	public final fun expecting (Lio/grpc/Status$Code;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;
+	public final fun getName ()Ljava/lang/String;
+	public fun run (Lio/github/matthewjones372/kestrel/StepScope;)V
+}
+
+public final class io/github/matthewjones372/kestrel/grpc/dynamic/DynamicCallKt {
+	public static final fun call (Lio/github/matthewjones372/kestrel/grpc/Grpc;Lcom/google/protobuf/Descriptors$MethodDescriptor;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;
+	public static final fun call (Lio/github/matthewjones372/kestrel/grpc/Grpc;Lio/github/matthewjones372/kestrel/grpc/dynamic/Schema;Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;
+	public static final fun exec (Lio/github/matthewjones372/kestrel/ScenarioBuilder;Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;)V
+	public static final fun send (Lio/github/matthewjones372/kestrel/StepScope;Lio/github/matthewjones372/kestrel/grpc/dynamic/DynamicCall;)Lcom/google/protobuf/DynamicMessage;
+}
+
 public final class io/github/matthewjones372/kestrel/grpc/dynamic/MessagesKt {
 	public static final fun asJson (Lcom/google/protobuf/Message;)Ljava/lang/String;
 	public static final fun messageFrom (Lcom/google/protobuf/Descriptors$Descriptor;Ljava/lang/String;)Lcom/google/protobuf/DynamicMessage;

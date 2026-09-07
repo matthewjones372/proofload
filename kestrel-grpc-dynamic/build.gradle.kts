@@ -21,6 +21,24 @@ dependencies {
     // needs it, so each dependency claim is made where it can be argued with.
     api("com.google.protobuf:protobuf-java:4.33.0")
     api("com.google.protobuf:protobuf-java-util:4.33.0")
+
+    // gRPC's own protobuf marshaller, so a dynamic call puts the same bytes on
+    // the wire a generated stub would and this module is not the author of a
+    // wire format. The `-lite` artefact rather than `grpc-protobuf`: the
+    // marshaller is all that is wanted, and the full one drags protobuf's
+    // `Any` support and the `com.google.api` protos with it.
+    api("io.grpc:grpc-protobuf-lite:1.78.0")
+}
+
+dependencies {
+    // A server these tests call, on the test classpath only. It answers with
+    // `DynamicMessage` too, so nothing here needs generated code either — which
+    // is the same claim the module makes, made twice.
+    testImplementation("io.grpc:grpc-inprocess:1.78.0")
+
+    // An engine to run the scenarios these tests build. Test-only: a module of
+    // steps does not depend on the thing that runs them.
+    testImplementation(project(":kestrel-engine"))
 }
 
 tasks.test {

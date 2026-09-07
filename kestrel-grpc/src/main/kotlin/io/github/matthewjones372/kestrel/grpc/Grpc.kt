@@ -25,7 +25,8 @@ import kotlin.time.Duration
  * and a recording.
  */
 class Grpc internal constructor(
-    internal val target: String,
+    /** Where calls go, as written rather than resolved: what a narration prints and a fence would read. */
+    val target: String,
     internal val traced: Boolean = false,
     internal val deadline: Duration? = null,
     private val opened: (Grpc) -> ManagedChannel = ::channelFor,

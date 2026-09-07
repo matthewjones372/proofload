@@ -108,6 +108,7 @@ private fun RunResult.asBenchmark(plan: Declaration, why: String?): String = bui
 private fun DeclaredStep.described(): String = when (this) {
     is DeclaredStep.Request -> "`$method $path`"
     is DeclaredStep.Produce -> "`produce $topic`"
+    is DeclaredStep.Completes -> "`$completes answered on $on`"
 }
 
 /** Where the load goes, which is the host for requests and the cluster for records. */

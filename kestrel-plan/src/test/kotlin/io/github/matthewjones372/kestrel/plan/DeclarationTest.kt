@@ -137,6 +137,26 @@ class DeclarationTest {
         }
     }
 
+    @Test
+    fun `a completes naming a step nobody produces is refused`() {
+        val orphan = produced().copy(
+            steps = produced().steps + DeclaredStep.Completes(
+                name = "confirmed",
+                completes = "pay",
+                on = "order-confirmations",
+                by = "correlation-id",
+                within = 30.seconds,
+            ),
+        )
+
+        val thrown = shouldThrow<IllegalArgumentException> { orphan.asSimulation() }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "confirmed"
+            thrown.message.orEmpty() shouldContain "pay"
+        }
+    }
+
     private fun produced(
         brokers: String? = "localhost:9092",
         goals: List<DeclaredGoal> = emptyList(),

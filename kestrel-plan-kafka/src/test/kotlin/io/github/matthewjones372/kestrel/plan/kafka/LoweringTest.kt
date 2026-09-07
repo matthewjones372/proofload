@@ -19,6 +19,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A declared produce step and the Kotlin somebody would have written have to
@@ -109,6 +110,50 @@ class LoweringTest {
             withClue("a setting nobody passed on is a producer configured differently from the file") {
                 result["place order"].failed.count shouldBe 0L
             }
+        }
+    }
+
+    @Test
+    fun `an answer that never arrives is a record that never came, not a run that hangs`() {
+        FakeBroker().use { broker ->
+            val plan = declared(broker.bootstrap).copy(
+                steps = listOf(
+                    DeclaredStep.Produce(name = "place order", topic = FakeBroker.TOPIC, body = body),
+                    DeclaredStep.Completes(
+                        name = "confirmed",
+                        completes = "place order",
+                        // A topic this broker has never heard of, so nothing
+                        // can answer and the wait is the only thing that ends it.
+                        on = "order-confirmations",
+                        by = "correlation-id",
+                        within = 1.seconds,
+                    ),
+                ),
+            )
+
+            val result = plan.asSimulation(listOf(KafkaSteps())).run(Progress.silent)
+
+            withClue("a run that waits forever reports no failure and no number") {
+                result["confirmed"].unmatched shouldBe result["place order"].count
+            }
+        }
+    }
+
+    @Test
+    fun `a plan declaring two answers is refused, because a run is drained into one sink`() {
+        val two = declared("localhost:9092").copy(
+            steps = listOf(
+                DeclaredStep.Produce(name = "place order", topic = FakeBroker.TOPIC, body = body),
+                DeclaredStep.Completes("confirmed", "place order", "one", "correlation-id", 1.seconds),
+                DeclaredStep.Completes("settled", "place order", "two", "correlation-id", 1.seconds),
+            ),
+        )
+
+        val thrown = shouldThrow<IllegalArgumentException> { two.asSimulation(listOf(KafkaSteps())) }
+
+        withClue(thrown.message.orEmpty()) {
+            thrown.message.orEmpty() shouldContain "confirmed"
+            thrown.message.orEmpty() shouldContain "settled"
         }
     }
 

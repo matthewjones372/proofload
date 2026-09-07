@@ -31,6 +31,7 @@ private fun DeclaredStep.written(): String = buildString {
     when (val step = this@written) {
         is DeclaredStep.Request -> append(step.body())
         is DeclaredStep.Produce -> append(step.body())
+        is DeclaredStep.Completes -> append(step.body())
     }
     pauseAfter?.let { appendLine("    pauseAfter: ${it.written()}") }
 }.trimEnd()
@@ -54,6 +55,14 @@ private fun DeclaredStep.Produce.body(): String = buildString {
         appendLine("    settings:")
         settings.forEach { (key, value) -> appendLine("      ${key.quoted()}: ${value.quoted()}") }
     }
+}
+
+private fun DeclaredStep.Completes.body(): String = buildString {
+    appendLine("    completes: ${completes.quoted()}")
+    appendLine("    on: ${on.quoted()}")
+    appendLine("    by: ${by.quoted()}")
+    group?.let { appendLine("    group: ${it.quoted()}") }
+    appendLine("    within: ${within.written()}")
 }
 
 private fun DeclaredLoad.written(indent: String = "  "): String = when (this) {

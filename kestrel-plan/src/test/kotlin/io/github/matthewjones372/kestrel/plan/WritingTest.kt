@@ -100,6 +100,35 @@ class WritingTest {
     }
 
     @Test
+    fun `an answer on another topic is written beside the step it answers`() {
+        val answered = Declaration(
+            version = Declaration.VERSION,
+            brokers = "localhost:9092",
+            scenario = "orders",
+            steps = listOf(
+                DeclaredStep.Produce(name = "place order", topic = "orders", body = "{}"),
+                DeclaredStep.Completes(
+                    name = "confirmed",
+                    completes = "place order",
+                    on = "order-confirmations",
+                    by = "correlation-id",
+                    group = "kestrel-bench",
+                    within = 30.seconds,
+                ),
+            ),
+            load = DeclaredLoad.Constant(500.perSecond, 1.minutes),
+        )
+
+        withClue(answered.asYaml()) {
+            answered.asYaml() shouldContain "    completes: place order"
+            answered.asYaml() shouldContain "    on: order-confirmations"
+            answered.asYaml() shouldContain "    by: correlation-id"
+            answered.asYaml() shouldContain "    group: kestrel-bench"
+            answered.asYaml() shouldContain "    within: 30s"
+        }
+    }
+
+    @Test
     fun `it reads as a file a person would edit`() {
         withClue(plan.asYaml()) {
             plan.asYaml() shouldContain "kestrel:  plan/1"

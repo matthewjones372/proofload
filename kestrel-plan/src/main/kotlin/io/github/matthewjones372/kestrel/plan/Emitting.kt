@@ -30,11 +30,12 @@ fun Declaration.asKotlin(packageName: String, from: String): String {
             topicLines() +
             "" +
             "val ${scenario.identifier()}: Scenario = scenario(\"$scenario\") {" +
-            steps.flatMap { it.lines(handles.getValue(it.name)) }.map { "    $it" } +
+            steps.flatMap { lines(it, handles.getValue(it.name)) }.map { "    $it" } +
             "}" +
             "" +
             "val simulation = ${scenario.identifier()}" +
             load.lines().map { "    $it" } +
+            completionLines(handles) +
             goalLines(handles)
         ).joinToString(separator = "\n", postfix = "\n")
 }
@@ -64,15 +65,53 @@ private fun Declaration.topicLines(): List<String> {
     val produced = steps.filterIsInstance<DeclaredStep.Produce>()
     if (produced.isEmpty()) return emptyList()
 
+    val answers = steps.filterIsInstance<DeclaredStep.Completes>()
     return listOf("val cluster = kafka.brokers(\"$brokers\")") +
         produced.distinctBy { it.topic }.map { step ->
             buildString {
                 append("val ${step.topic.identifier()}Topic = cluster")
                 step.settings.forEach { (key, value) -> append(".setting(\"$key\", \"$value\")") }
                 append(".topic(\"${step.topic}\")")
+                answerTo(step)?.let { append(".correlatedBy(Header(\"${it.by}\"))") }
             }
+        } +
+        answers.map { answer ->
+            "val ${answer.on.identifier()}Topic = cluster" +
+                answer.group?.let { ".setting(\"group.id\", \"$it\")" }.orEmpty() +
+                ".topic(\"${answer.on}\").correlatedBy(Header(\"${answer.by}\"))"
+        } +
+        if (answers.isEmpty()) {
+            emptyList()
+        } else {
+            // The id is the user's number, which is unique per departure in an
+            // open model and is the only value a plan has without a lambda.
+            listOf(
+                "val user = sessionKey<Long>(\"user\")",
+                "val byUser = Correlation { session -> session[user] ?: -1L }",
+            )
         }
 }
+
+/** The declared answer to [step], where the plan declares one. */
+private fun Declaration.answerTo(step: DeclaredStep.Produce): DeclaredStep.Completes? =
+    steps.filterIsInstance<DeclaredStep.Completes>().firstOrNull { it.completes == step.name }
+
+/**
+ * The sink the run is drained into, and the feeder the correlation reads from.
+ *
+ * Beside the rate rather than in the scenario, because that is where they live
+ * in the language: a sink belongs to the run, not to a position in a journey.
+ */
+private fun Declaration.completionLines(handles: Map<String, String>): List<String> =
+    steps.filterIsInstance<DeclaredStep.Completes>().flatMap { answer ->
+        listOf(
+            "    .fedBy(feed(user) { it })",
+            "    .completing(" +
+                "${handles.getValue(answer.name)}, " +
+                "from = ${answer.on.identifier()}Topic.completions(), " +
+                "drainingFor = ${answer.within.written()})",
+        )
+    }
 
 /**
  * Sorted by the caller, because emitted source has to satisfy the same import
@@ -97,17 +136,34 @@ private fun Declaration.imports(): List<String> = buildList {
     add("import io.github.matthewjones372.kestrel.scenario")
     add("import io.github.matthewjones372.kestrel.step")
     if (steps.any { it is DeclaredStep.Request }) add("import io.github.matthewjones372.kestrel.http.http")
-    if (steps.any { it is DeclaredStep.Produce }) {
-        add("import io.github.matthewjones372.kestrel.kafka.kafka")
-        add("import io.github.matthewjones372.kestrel.kafka.produce")
-    }
+    addAll(kafkaImports())
     units().forEach { add("import kotlin.time.Duration.Companion.$it") }
+}
+
+/** What the Kafka half of an emitted plan names, and nothing when it names none. */
+private fun Declaration.kafkaImports(): List<String> = buildList {
+    val produced = steps.filterIsInstance<DeclaredStep.Produce>()
+    if (produced.isEmpty()) return@buildList
+
+    add("import io.github.matthewjones372.kestrel.kafka.kafka")
+    if (produced.any { answerTo(it) == null }) add("import io.github.matthewjones372.kestrel.kafka.produce")
+    if (produced.none { answerTo(it) != null }) return@buildList
+
+    add("import io.github.matthewjones372.kestrel.Correlation")
+    add("import io.github.matthewjones372.kestrel.completing")
+    add("import io.github.matthewjones372.kestrel.fedBy")
+    add("import io.github.matthewjones372.kestrel.feed")
+    add("import io.github.matthewjones372.kestrel.sessionKey")
+    add("import io.github.matthewjones372.kestrel.kafka.Header")
+    add("import io.github.matthewjones372.kestrel.kafka.completions")
+    add("import io.github.matthewjones372.kestrel.kafka.emit")
 }
 
 /** Only the duration units the emitted source actually names, so no import is unused. */
 private fun Declaration.units(): List<String> {
     val durations = buildList {
         addAll(steps.mapNotNull { it.pauseAfter })
+        addAll(steps.filterIsInstance<DeclaredStep.Completes>().map { it.within })
         addAll(goals.filterIsInstance<DeclaredGoal.Percentile>().map { it.under })
         addAll(load.durations())
     }
@@ -120,8 +176,8 @@ private fun DeclaredLoad.durations(): List<Duration> = when (this) {
     is DeclaredLoad.Staged -> stages.flatMap { it.durations() }
 }
 
-private fun DeclaredStep.lines(handle: String): List<String> = buildList {
-    when (val step = this@lines) {
+private fun Declaration.lines(step: DeclaredStep, handle: String): List<String> = buildList {
+    when (step) {
         is DeclaredStep.Request -> add(
             buildString {
                 append("exec($handle, api.${step.method.lowercase()}(\"${step.path}\")")
@@ -135,14 +191,21 @@ private fun DeclaredStep.lines(handle: String): List<String> = buildList {
 
         is DeclaredStep.Produce -> add(
             buildString {
-                append("produce($handle, ${step.topic.identifier()}Topic")
+                val answered = answerTo(step) != null
+                append(if (answered) "emit" else "produce")
+                append("($handle, ${step.topic.identifier()}Topic")
                 step.key?.let { append(".keyed { \"\"\"$it\"\"\".toByteArray() }") }
                 append(".value { \"\"\"${step.body}\"\"\".toByteArray() }")
+                if (answered) append(", keyedBy = byUser")
                 append(")")
             },
         )
+
+        // Drained by the run rather than sent from inside the scenario, so it
+        // is a line under the rate and nothing here.
+        is DeclaredStep.Completes -> Unit
     }
-    pauseAfter?.let { add("pause(${it.written()})") }
+    step.pauseAfter?.let { add("pause(${it.written()})") }
 }
 
 private fun DeclaredLoad.lines(): List<String> = when (this) {

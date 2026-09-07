@@ -1685,6 +1685,7 @@ class DraftStep
     val body: String
     val captures: List
     val dropped: List
+    val droppedParameters: List
     val expecting: Int
     val headers: List
     val maybe: List
@@ -1715,8 +1716,11 @@ class Recorded
     val target: String
     val url: String
 top-level in RedactionKt
+    val REDACTED: String
     fun isCredential(Header): Boolean
     fun looksLikeAJwt(String): Boolean
+    fun withoutCredentialParameters(String): Pair
+    fun withoutSecrets(String): String
 ```
 
 ### `io.github.matthewjones372:kestrel-report-github`

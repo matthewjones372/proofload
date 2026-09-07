@@ -378,6 +378,22 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`kestrel-record` writes no credential it can recognise, not only the ones in
+  headers.** The generated file says every credential the recording carried was
+  dropped, and redaction looked at headers alone — so a HAR with
+  `?access_token=…` in the URL wrote that sentence directly above the token, and
+  a `{"password":"…"}` body went in verbatim. Worse than a file: a path becomes
+  the step's name, so a token in a query string reached every report and every
+  baseline the run went on to write.
+
+  Query parameters are now dropped by name and by JWT shape, value and all — a
+  parameter cannot hold a `TODO`, so nothing of it survives and the output says
+  which was taken rather than inventing a header that was never sent. Bodies
+  have password-ish JSON fields and any JWT-shaped run of characters replaced.
+  Deliberately eager: over-redacting a recording costs somebody a `TODO`, and
+  under-redacting it puts a live credential in a repository. Only one of those
+  is recoverable. Found by handing it a HAR with a token outside a header.
+
 - **A malformed document no longer kills the MCP server.** A YAML parse failure
   is the parser's own exception type rather than an `IllegalArgumentException`,
   so it went past every catch that reads a plan and out of `main`: six of the

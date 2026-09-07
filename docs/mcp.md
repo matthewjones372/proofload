@@ -50,7 +50,7 @@ directory, not yours.
 | Tool | Does | Sends |
 |---|---|---|
 | `benchmark` | **start here** — a target in, a plan out, previewed and smoked | one request per step |
-| `plan_schema` | the shape of a `plan/1` document, with three worked plans | nothing |
+| `plan_schema` | the shape of a `plan/1` document, with four worked plans | nothing |
 | `validate` | parses a plan, resolves its steps and goals, names the line of anything wrong | nothing |
 | `preview` | what the plan would send — users, requests, window, peak rate, hosts | nothing |
 | `from_openapi` | reads an OpenAPI document, writes the plan it describes | nothing |

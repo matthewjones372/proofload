@@ -24,6 +24,8 @@ internal val PLAN_SCHEMA: String = """
       baseUrl   where request steps are sent; needed only if there are any
       brokers   the cluster topic steps reach; needed only if there are any
       goals     optional; a list of step + percentile, or failureRate
+      draw      optional; a value per user, by session key — see below
+      seed      optional; what every draw is derived from, so a run replays
 
     A step is one of three kinds, decided by the key it carries. A plan may mix
     them, and every kind takes an optional pauseAfter — a wait that records
@@ -56,11 +58,24 @@ internal val PLAN_SCHEMA: String = """
 
     A run is drained into one sink, so a plan declares at most one completes.
 
-    A path may not contain {braces}: they are read from a session key of that
-    name, a plan has no feeder to fill one, and the step would fail every
-    request. Use a real value, or emit and add a feeder.
+    `{name}` in a path or a body is filled per user from the session key of
+    that name. Put something there with `draw`, or the step fails every request
+    under `UnfilledPath`.
 
-    Three worked plans.
+    A draw names one generator and its arguments:
+
+      uniform  {uniform: 500} draws 0 to 499; {uniform: {from: 1, to: 500}}
+               draws the inclusive range a contract states
+      zipf     {zipf: {keys: 1000000, skew: 1.1}} — the shape real traffic has,
+               a few keys asked for constantly and a long tail asked for once
+      oneOf    {oneOf: [emea, apac, amer]} — one of these, uniformly
+      digits   {digits: 8} — a string of that many digits
+      uuids    {uuids: {}}
+
+    Prefer a draw to a fixed id. One id repeated is a measurement of one row
+    and one cache line, and cardinality and skew are what move a p99.
+
+    Four worked plans.
 
     ---
     kestrel:  plan/1
@@ -117,5 +132,22 @@ internal val PLAN_SCHEMA: String = """
     goals:
       - step: confirmed
         p99: 2s
+    ---
+    kestrel:  plan/1
+    baseUrl:  https://shop.internal
+    scenario: catalogue
+    draw:
+      sku:    {zipf: {keys: 1000000, skew: 1.1}}
+      region: {oneOf: [emea, apac, amer]}
+    steps:
+      - name: open product
+        get: '/regions/{region}/products/{sku}'
+        declared: [404]
+    load:
+      rate: 200/s
+      over: 1m
+    goals:
+      - step: open product
+        p99: 150ms
     ---
 """.trimIndent()

@@ -136,7 +136,15 @@ private fun Node.draw(): DeclaredDraw {
 
     val argument = drawn.required(named)
     return when (named) {
-        "uniform" -> DeclaredDraw.Uniform(argument.number("uniform"))
+        // A bare number is the keyspace; a map is the inclusive range a
+        // contract states, which `keys` alone cannot say.
+        "uniform" -> if (argument is MappingNode) {
+            argument.only(RANGE_KEYS)
+            val from = argument.required("from").number("from")
+            DeclaredDraw.Uniform(keys = argument.required("to").number("to") - from + 1, from = from)
+        } else {
+            DeclaredDraw.Uniform(argument.number("uniform"))
+        }
 
         "zipf" -> argument.mapping("zipf").let {
             it.only(ZIPF_KEYS)
@@ -251,6 +259,7 @@ private val PLAN_KEYS =
     listOf("kestrel", "baseUrl", "brokers", "scenario", "steps", "load", "goals", "draw", "seed")
 private val DRAWS = listOf("uniform", "zipf", "oneOf", "digits", "uuids")
 private val ZIPF_KEYS = listOf("keys", "skew")
+private val RANGE_KEYS = listOf("from", "to")
 private val VERBS = listOf("get", "post", "put", "patch", "delete", "head")
 private val REQUEST_KEYS = listOf("name", "headers", "body", "expecting", "declared", "pauseAfter") + VERBS
 private val PRODUCE_KEYS = listOf("name", "produce", "body", "key", "settings", "pauseAfter")

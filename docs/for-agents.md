@@ -1566,7 +1566,8 @@ class DeclaredDraw.OneOf : DeclaredDraw
     constructor(List)
     val values: List
 class DeclaredDraw.Uniform : DeclaredDraw
-    constructor(Long)
+    constructor(Long, Long)
+    val from: Long
     val keys: Long
 class DeclaredDraw.Uuids : DeclaredDraw
 class DeclaredDraw.Zipf : DeclaredDraw

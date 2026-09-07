@@ -71,10 +71,15 @@ private fun DeclaredStep.Completes.body(): String = buildString {
 }
 
 private fun DeclaredDraw.written(): String = when (this) {
-    is DeclaredDraw.Uniform -> "{uniform: $keys}"
+    is DeclaredDraw.Uniform ->
+        if (from == 0L) "{uniform: $keys}" else "{uniform: {from: $from, to: ${from + keys - 1}}}"
+
     is DeclaredDraw.Zipf -> "{zipf: {keys: $keys, skew: $skew}}"
+
     is DeclaredDraw.OneOf -> "{oneOf: [${values.joinToString { it.quoted() }}]}"
+
     is DeclaredDraw.Digits -> "{digits: $count}"
+
     DeclaredDraw.Uuids -> "{uuids: {}}"
 }
 

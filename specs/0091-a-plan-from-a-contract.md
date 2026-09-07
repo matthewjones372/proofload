@@ -81,19 +81,19 @@ document importer is cut.
 
 ## Stack
 
-- [ ] **`spec-0091-endpoints`** — `planFrom(endpoints, baseUrl)` in
+- [x] **`spec-0091-endpoints`** — `planFrom(endpoints, baseUrl)` in
       `kestrel-pelican`: a step per endpoint, named by path template.
       Done when: six endpoints yield six steps, and a path parameter yields one
       row rather than one per value.
-- [ ] **`spec-0091-data`** — constraint-satisfying values per input, seeded, so
+- [x] **`spec-0091-data`** — constraint-satisfying values per input, seeded, so
       two runs of a generator agree.
       Done when: a `between(1, 100)` parameter never emits 0 or 101 across a
       thousand draws from a fixed seed.
-- [ ] **`spec-0091-declared`** — declared failures as expected outcomes,
+- [x] **`spec-0091-declared`** — declared failures as expected outcomes,
       undeclared statuses counted apart.
       Done when: a run against a stub returning a declared 404 and an
       undeclared 500 reports one of each, separately.
-- [ ] **`spec-0091-openapi`** — the document reader in `kestrel-contract` and
+- [x] **`spec-0091-openapi`** — the document reader in `kestrel-contract` and
       the `from-openapi` command.
       Done when: a document with fifteen paths produces a plan that `kestrel
       validate` accepts, with the auth placeholder unfilled and refusing.

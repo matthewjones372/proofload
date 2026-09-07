@@ -92,16 +92,16 @@ skew. `spec-0091-data` should produce these types rather than its own.
 
 ## Stack
 
-- [ ] **`spec-0096-module`** — `kestrel-arbs`, its dependency test, the `Arb<T>`
+- [x] **`spec-0096-module`** — `kestrel-arbs`, its dependency test, the `Arb<T>`
       value with `at`, `map` and `oneOf`, on a mixing function rather than a
       seeded `Random`.
       Done when: `arb at 7` returns the same value in two JVMs, and drawing a
       million values allocates nothing per draw that 0093's harness can see.
-- [ ] **`spec-0096-shapes`** — `zipf`, `uniform`, `digits`, `uuids`,
+- [x] **`spec-0096-shapes`** — `zipf`, `uniform`, `digits`, `uuids`,
       `weighted`.
       Done when: a million draws from `zipf(1_000_000, skew = 1.1)` put the top
       1% of keys within a few points of the share the exponent predicts.
-- [ ] **`spec-0096-recorded`** — the drawn shape and seed carried into
+- [x] **`spec-0096-recorded`** — the drawn shape and seed carried into
       `RunResult`, on the page, and refused across a baseline comparison that
       drew differently.
 
@@ -132,7 +132,7 @@ skew. `spec-0091-data` should produce these types rather than its own.
       Done when: comparing a run drawn at skew 1.1 against one drawn at 0.8 says
       so rather than reporting a regression, and comparing either against a
       baseline that declared nothing still compares.
-- [ ] **`spec-0096-kotest`** — `kestrel-arbs-kotest`: `kotest.Arb<T>.shaped()`
+- [x] **`spec-0096-kotest`** — `kestrel-arbs-kotest`: `kotest.Arb<T>.shaped()`
       for callers who want the library's generators anyway.
       Done when: the adapter is one file, and its module's dependency test shows
       the property library is on no other module's classpath.

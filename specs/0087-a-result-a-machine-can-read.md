@@ -80,19 +80,19 @@ published schema.
 
 ## Stack
 
-- [ ] **`spec-0087-writer`** — the JSON writer moved to `kestrel-export`,
+- [x] **`spec-0087-writer`** — the JSON writer moved to `kestrel-export`,
       `Density`, and the document envelope with `schema`.
       Done when: `result.json(Summary)` round-trips through a golden and
       `kestrel-export`'s dependency test still passes.
-- [ ] **`spec-0087-verdicts`** — goals, the schedule verdict, Little's law and
+- [x] **`spec-0087-verdicts`** — goals, the schedule verdict, Little's law and
       the floor, each with its structured cause.
       Done when: a run that fell behind serialises `verdict: "behind"` with the
       second it went, and a run that met every goal serialises none.
-- [ ] **`spec-0087-remedy`** — the sentence per verdict, taken from the strings
+- [x] **`spec-0087-remedy`** — the sentence per verdict, taken from the strings
       the report already prints.
       Done when: one golden holds every remedy the codebase can produce, and the
       page and the JSON read from the same place.
-- [ ] **`spec-0087-schema`** — `docs/schemas/run-1.json`, and a test validating
+- [x] **`spec-0087-schema`** — `docs/schemas/run-1.json`, and a test validating
       both goldens against it.
       Done when: adding a field without touching the schema fails the build.
 

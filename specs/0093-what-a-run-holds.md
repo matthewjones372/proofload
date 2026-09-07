@@ -78,20 +78,20 @@ answered by two numbers and a division.
 
 ## Stack
 
-- [ ] **`spec-0093-retained`** — the harness, the forced-collection reading, and
+- [x] **`spec-0093-retained`** — the harness, the forced-collection reading, and
       the per-user and per-sample columns over the ceiling's own rung ladder.
       Done when: `./gradlew :benchmarks:footprint` writes the table, and a run
       that fell behind is labelled rather than averaged in.
-- [ ] **`spec-0093-allocation`** — allocated bytes per departure off
+- [x] **`spec-0093-allocation`** — allocated bytes per departure off
       `ThreadMXBean`, across the injector's threads.
       Done when: the column is flat within a few percent across three rungs an
       order of magnitude apart, or the spec that says why it is not gets
       written.
-- [ ] **`spec-0093-claims`** — the three comments that assert a memory cost
+- [x] **`spec-0093-claims`** — the three comments that assert a memory cost
       (0003, 0028, 0073) amended to cite the measured figure or to drop the
       claim.
       Done when: no comment in the tree argues from an unmeasured footprint.
-- [ ] **`spec-0093-docs`** — `docs/what-it-costs.md` gains the table beside the
+- [x] **`spec-0093-docs`** — `docs/what-it-costs.md` gains the table beside the
       ceiling's, with the machine it was taken on.
       Done when: the page states both numbers and the JDK that produced them.
 

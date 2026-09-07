@@ -71,15 +71,15 @@ behind.
 
 ## Stack
 
-- [ ] **`spec-0097-threshold`** — the share, named as a constant with the
+- [x] **`spec-0097-threshold`** — the share, named as a constant with the
       judgement written beside it.
       Done when: the run in Problem is judged as having kept its schedule, and a
       run whose lateness is a fifth of its tail is not.
-- [ ] **`spec-0097-because`** — the comparison that fired, carried on the result
+- [x] **`spec-0097-because`** — the comparison that fired, carried on the result
       and into 0087's `schedule` block.
       Done when: a document says which of the two tests decided, and the remedy
       quotes that one's numbers.
-- [ ] **`spec-0097-law`** — Little's law as a second opinion where the two
+- [x] **`spec-0097-law`** — Little's law as a second opinion where the two
       disagree, on the page.
       Done when: a run called behind whose concurrency agrees says so.
 

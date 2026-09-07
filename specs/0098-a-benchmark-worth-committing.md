@@ -91,14 +91,14 @@ question "why is this the rate" is asked every time somebody changes it.
 
 ## Stack
 
-- [ ] **`spec-0098-write`** — `write_spec` over a finished run and its plan.
+- [x] **`spec-0098-write`** — `write_spec` over a finished run and its plan.
       Done when: a document names the run's own measured percentiles, embeds a
       plan `validate` accepts, and states what it does not cover.
-- [ ] **`spec-0098-answers`** — the answered questions carried into it, so the
+- [x] **`spec-0098-answers`** — the answered questions carried into it, so the
       prose is the caller's rather than invented.
       Done when: a spec written without answers says which questions are open
       rather than inventing a reason.
-- [ ] **`spec-0098-again`** — `run` taking a committed spec, so the file is
+- [x] **`spec-0098-again`** — `run` taking a committed spec, so the file is
       executable and not only readable.
       Done when: a spec written on one day runs unedited on another and compares
       against the baseline it records.

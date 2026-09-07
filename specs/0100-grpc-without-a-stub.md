@@ -81,21 +81,31 @@ discover.
 
 ## Stack
 
-- [ ] **`spec-0100-descriptors`** — `kestrel-grpc-dynamic`, its dependency test,
+- [x] **`spec-0100-descriptors`** — `kestrel-grpc-dynamic`, its dependency test,
       and a descriptor set read into method descriptors.
       Done when: a `.protoset` yields a method by `package.Service/Method`, and
       an unknown method names the ones it has.
-- [ ] **`spec-0100-messages`** — JSON to `DynamicMessage` and back, using the
+- [x] **`spec-0100-messages`** — JSON to `DynamicMessage` and back, using the
       declared input and output types.
       Done when: a request that does not match its schema is refused before the
       call, naming the field.
-- [ ] **`spec-0100-call`** — the step, over 0071's channel, with a gRPC status
+- [x] **`spec-0100-call`** — the step, over 0071's channel, with a gRPC status
       as the expectation and `declared` statuses beside it.
       Done when: a declared `NOT_FOUND` reports as declared and an undeclared
       `INTERNAL` does not.
-- [ ] **`spec-0100-reflection`** — descriptors fetched from the target instead.
+- [x] **`spec-0100-reflection`** — descriptors fetched from the target instead.
       Done when: a target with reflection on needs no `descriptors` key, and one
       with it off says so rather than timing out.
+
+Not in this stack and needed for the Problem above: **the plan keys**. Every
+entry here builds the Kotlin — a schema, a message, a step, and descriptors
+fetched rather than read — and `plan/1` still has no `call:`, so the caller this
+spec was written for cannot yet write the file in **Shape**. The four boxes are
+the library half. The file half is `target`, `call`, `body`, `expecting`,
+`declared` and `descriptors` in `readPlan`, a `DeclaredStep.Call` beside 0099's
+`Produce`, and a `Lowering` in a module that carries this one — which is 0099's
+own shape and about the same size as its `spec-0099-reader`. It wants a spec
+entry rather than an unannounced fifth branch.
 
 ## Acceptance
 

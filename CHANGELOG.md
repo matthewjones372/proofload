@@ -378,6 +378,21 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A run's id no longer counts, and a finished run survives a restart.** Ids
+  came from an `AtomicInteger`, so two replicas started together both answered
+  `r-1` and a caller polling one was handed the other's run — and the count
+  told every caller how busy the server was, which is nobody's business. An id
+  is now eight hex characters of a UUID. A finished run is kept as a baseline
+  file beside the reports, so a caller polling its own run after a restart is
+  not told the run never existed; `status`, `explain`, `report`, `compare` and
+  `write_spec` all read it back. `list_runs` is ordered by when each run
+  started rather than by its id, because an id that sorts is a counter.
+
+  `kestrel-mcp` carries `kestrel-baseline` for it — the format this repository
+  already writes a run in, and pure Kotlin over core, so no third-party jar
+  arrives. Failing to write does not fail the run: the measurement is in hand
+  by then, and losing it to a full disk afterwards would be the worse trade.
+
 - **`kestrel-record` writes no credential it can recognise, not only the ones in
   headers.** The generated file says every credential the recording carried was
   dropped, and redaction looked at headers alone — so a HAR with

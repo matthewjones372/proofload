@@ -16,7 +16,7 @@ import java.io.File
 class SmokeProjectTest {
 
     /** The subprojects the root build keeps out of `publishedModules`. */
-    private val notPublished = setOf("examples", "examples-java", "benchmarks")
+    private val notPublished = setOf("examples", "examples-java", "examples-scala", "benchmarks")
 
     private fun read(property: String): String {
         val path = System.getProperty(property)

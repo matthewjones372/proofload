@@ -146,7 +146,8 @@ gradle.taskGraph.whenReady {
 }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name } - "examples" - "examples-java" - "benchmarks"
+val publishedModules =
+    subprojects.map { it.name } - "examples" - "examples-java" - "examples-scala" - "benchmarks"
 
 /**
  * The published modules whose surface BCV can record, which is every one that
@@ -162,8 +163,8 @@ val surfaceRecorded = publishedModules - "kestrel-scala"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no
-// record of what it promised. `examples`, `examples-java` and `benchmarks` are
-// not libraries and their surface is nobody's business.
+// record of what it promised. The example modules and `benchmarks` are not
+// libraries and their surface is nobody's business.
 apiValidation {
     ignoredProjects.addAll(subprojects.map { it.name } - surfaceRecorded.toSet())
 }

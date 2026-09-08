@@ -43,7 +43,9 @@ where every module meets, so that they compose is a test rather than a README
 paragraph. `examples-java` is one load test written in Java: `apiCheck` records
 `kestrel-java`'s Kotlin surface and cannot see whether that surface is callable
 from Java, and only a Java compiler knows — [from-java.md](from-java.md) is the
-page it backs. `benchmarks` measures what this tool costs, and is kept out of the
+page it backs. `examples-scala` is the same gate one step further out:
+`kestrel-scala` has no `.api` dump at all, because what BCV records of a Scala
+module is compiler-generated names no caller can type. `benchmarks` measures what this tool costs, and is kept out of the
 coverage aggregation because measuring the tool is not testing it —
 [what-it-costs.md](what-it-costs.md) is what it produces.
 

@@ -65,6 +65,6 @@ class ModulesDocTest {
     private companion object {
 
         /** The subprojects the root build keeps out of `publishedModules`. */
-        val NOT_PUBLISHED = setOf("examples", "examples-java", "benchmarks")
+        val NOT_PUBLISHED = setOf("examples", "examples-java", "examples-scala", "benchmarks")
     }
 }

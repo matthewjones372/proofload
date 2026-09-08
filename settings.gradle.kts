@@ -32,6 +32,9 @@ include(
     // Not a library either: a Java compiler is the only thing that can see
     // whether kestrel-java is callable from Java.
     "examples-java",
+    // Nor this: a Scala compiler is the only thing that can see whether
+    // kestrel-scala is callable from Scala, and there is no .api dump for it.
+    "examples-scala",
     // Not a library either: what Kestrel costs, measured rather than claimed.
     "benchmarks",
 )

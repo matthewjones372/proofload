@@ -16,8 +16,10 @@ uses and inherits no stack it did not ask for.
 | `kestrel-jdbc` | database steps over a caller's own `DataSource`, the pool wait counted apart from the query | core |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
 | `kestrel-java` | the same values built from Java: static factories over `Rate`, `StepName` and `Share`, a builder where Kotlin has a lambda, and `java.time.Duration` throughout | core, engine, http |
+| `kestrel-scala` | the same values built from Scala 3: `FiniteDuration` both ways, `perSecond`, `sessionKey[T]`, and the scenario the Kotlin DSL builds | core, engine, http, java, `scala3-library` |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
+| `kestrel-zio-test` | the same again, in a zio-test spec, sent on the blocking executor rather than the pool the fiber is on | core, engine, http, java, scala |
 | `kestrel-arbs` | generators shaped like traffic — cardinality and skew, as a function of the user's number | core |
 | `kestrel-baseline` | a run kept in a file, so the next one can be compared to it | core |
 | `kestrel-export` | a run's measurements in the formats other tools already read | core |
@@ -35,14 +37,20 @@ uses and inherits no stack it did not ask for.
 
 Kotest is `compileOnly` in `kestrel-kotest`: a spec that uses the matchers
 already has Kotest, and one that does not should not be handed twenty jars by a
-load-testing library.
+load-testing library. zio-test is `compileOnly` in `kestrel-zio-test` for the
+same reason and one more — nothing there ships an effect runtime to a project
+that asked for a load test, which its dependency test states.
 
 Three more directories are in the build and are not published. `examples` is
 where every module meets, so that they compose is a test rather than a README
 paragraph. `examples-java` is one load test written in Java: `apiCheck` records
 `kestrel-java`'s Kotlin surface and cannot see whether that surface is callable
 from Java, and only a Java compiler knows — [from-java.md](from-java.md) is the
-page it backs. `benchmarks` measures what this tool costs, and is kept out of the
+page it backs. `examples-scala` is the same gate one step further out:
+`kestrel-scala` has no `.api` dump at all, because what BCV records of a Scala
+module is compiler-generated names no caller can type. It carries a zio-test
+spec beside the sample, which the build runs rather than only compiles —
+[from-scala.md](from-scala.md) is the page both back. `benchmarks` measures what this tool costs, and is kept out of the
 coverage aggregation because measuring the tool is not testing it —
 [what-it-costs.md](what-it-costs.md) is what it produces.
 
@@ -64,12 +72,14 @@ dependencies {
     implementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-websocket:$kestrelVersion")
 
-    // One of these two, for the framework you already run tests in.
+    // One of these three, for the framework you already run tests in.
     testImplementation("io.github.matthewjones372:kestrel-junit5:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-kotest:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-zio-test:$kestrelVersion")
 
     // As you need them.
     implementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-scala:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-arbs:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
@@ -97,8 +107,10 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-record` | [NoThirdPartyDependenciesTest](../kestrel-record/src/test/kotlin/io/github/matthewjones372/kestrel/record/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-java` | [NoThirdPartyDependenciesTest](../kestrel-java/src/test/kotlin/io/github/matthewjones372/kestrel/java/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-scala` | [OnlyTheScalaLibraryTest](../kestrel-scala/src/test/scala/io/github/matthewjones372/kestrel/scala/OnlyTheScalaLibraryTest.scala) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
+| `kestrel-zio-test` | [NoSecondStackTest](../kestrel-zio-test/src/test/scala/io/github/matthewjones372/kestrel/ziotest/NoSecondStackTest.scala) |
 | `kestrel-arbs` | [NoThirdPartyDependenciesTest](../kestrel-arbs/src/test/kotlin/io/github/matthewjones372/kestrel/arbs/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-baseline` | [NoDependenciesTest](../kestrel-baseline/src/test/kotlin/io/github/matthewjones372/kestrel/baseline/NoDependenciesTest.kt) |
 | `kestrel-export` | [NoThirdPartyDependenciesTest](../kestrel-export/src/test/kotlin/io/github/matthewjones372/kestrel/export/NoThirdPartyDependenciesTest.kt) |

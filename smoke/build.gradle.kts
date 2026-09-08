@@ -41,6 +41,8 @@ dependencies {
     testImplementation("io.github.matthewjones372:kestrel-record:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
     testImplementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-scala:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:kestrel-zio-test:$kestrelVersion")
 
     // What a reader of the README already has in a test project, spelled out
     // because this one starts from nothing.

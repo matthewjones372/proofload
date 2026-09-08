@@ -84,7 +84,9 @@ val moduleDescriptions = mapOf(
     "kestrel-record" to "A HAR recording read into a Kestrel scenario you edit and commit.",
     "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",
+    "kestrel-scala" to "Kestrel from Scala 3: FiniteDuration both ways, over the same values Kotlin builds.",
     "kestrel-websocket" to "WebSocket steps on the JDK client. Depends on kestrel-core and nothing else.",
+    "kestrel-zio-test" to "Load tests that are ordinary zio-test tests, run on the blocking executor.",
 )
 
 // Coverage, aggregated across the modules rather than per-module: a line in
@@ -145,14 +147,27 @@ gradle.taskGraph.whenReady {
 }
 
 /** Every module is published unless it is listed here. */
-val publishedModules = subprojects.map { it.name } - "examples" - "examples-java" - "benchmarks"
+val publishedModules =
+    subprojects.map { it.name } - "examples" - "examples-java" - "examples-scala" - "benchmarks"
+
+/**
+ * The published modules whose surface BCV can record, which is every one that
+ * is Kotlin or Java.
+ *
+ * The Scala modules are published and are not here. A dump of one is
+ * `Durations$package$`, lazy-init closures and qualified-private members that
+ * Scala emits as public bytecode: names no caller can type, moving on edits no
+ * caller can see. They are gated the way `kestrel-java` is, by a source set a
+ * compiler for that language has to accept.
+ */
+val surfaceRecorded = publishedModules - "kestrel-scala" - "kestrel-zio-test"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no
-// record of what it promised. `examples`, `examples-java` and `benchmarks` are
-// not libraries and their surface is nobody's business.
+// record of what it promised. The example modules and `benchmarks` are not
+// libraries and their surface is nobody's business.
 apiValidation {
-    ignoredProjects.addAll(subprojects.map { it.name } - publishedModules.toSet())
+    ignoredProjects.addAll(subprojects.map { it.name } - surfaceRecorded.toSet())
 }
 
 // The signature section of `docs/for-agents.md` is rendered from those same
@@ -240,7 +255,7 @@ fun renderedLines(dump: String): List<String> = dump.lines().mapNotNull { line -
     } ?: renderMember(line)?.let { "    $it" }
 }
 
-fun renderedSurface(): String = publishedModules.sorted().joinToString(separator = "\n") { module ->
+fun renderedSurface(): String = surfaceRecorded.sorted().joinToString(separator = "\n") { module ->
     val rendered = renderDump(file("$module/api/$module.api").readText()).joinToString(separator = "\n")
     "### `io.github.matthewjones372:$module`\n\n```text\n$rendered\n```\n"
 }
@@ -258,7 +273,7 @@ fun forAgentsWithSurface(): String {
 tasks.register("apiDocDump") {
     group = "documentation"
     description = "Renders the checked-in .api dumps into the signature section of docs/for-agents.md."
-    inputs.files(publishedModules.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
+    inputs.files(surfaceRecorded.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
     inputs.file(forAgents).withPropertyName("theDocumentAroundThem")
     outputs.file(forAgents)
     doLast { forAgents.writeText(forAgentsWithSurface()) }
@@ -269,7 +284,7 @@ tasks.register("apiDocDump") {
 val apiDocCheck = tasks.register("apiDocCheck") {
     group = "verification"
     description = "Fails when docs/for-agents.md no longer matches the .api dumps it is rendered from."
-    inputs.files(publishedModules.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
+    inputs.files(surfaceRecorded.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
     inputs.file(forAgents).withPropertyName("theDocumentRenderedFromThem")
     outputs.upToDateWhen { true }
     doLast {

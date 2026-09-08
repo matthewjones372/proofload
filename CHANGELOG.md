@@ -21,6 +21,43 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **A load test that is a zio-test test.** `kestrel-zio-test` is one method:
+  `ZIO.attemptBlocking` around the same silent, exclusive runner
+  `kestrel-junit5` and `kestrel-kotest` build. Blocking rather than compute,
+  because the call holds its thread for the length of the run while the engine
+  sends on virtual threads — on the compute pool that is a starved runtime, and
+  a starved runtime is a scheduler this tool would then measure and report as
+  the target's latency. A recording `Engine` names the thread the run was sent
+  from, so that is a test rather than a comment.
+
+  zio-test is `compileOnly`, so no effect runtime reaches a project that asked
+  for a load test, and nothing inside a run is a `ZIO`: a step body is an
+  `Action` and stays one. `result.metItsGoals` reads the run's own verdicts and
+  fails naming every goal that missed with the remedy each carries. There is no
+  `notWorseThan` — `Difference.notWorseThan` takes a `Share`, so its name
+  carries a value-class hash, and the facade that would fix it is the
+  Java-facing baselines module 0094 left to a spec of its own.
+
+- **Kestrel from Scala.** `kestrel-scala` puts `FiniteDuration` on both sides
+  of the boundary, `perSecond` and `perMinute` on `Int` and `Double`,
+  `sessionKey[T]` recovered from a `ClassTag` rather than handed a `Class`, and
+  `step`, `exec`, `pause` and `scenario` over `kestrel-java`'s builder — which
+  stays the one place a scenario's steps are frozen, so this is extension
+  methods over the same values and not a second way to describe a run. Compiled
+  against Scala 3.3.8, the LTS line: a published Scala library can only be read
+  by a compiler at least as new as the one that built it.
+
+  Two things had to give. There is no `.api` dump for the module: what BCV
+  records of Scala is `Durations$package$`, lazy-init closures and
+  qualified-private members that are public bytecode — names no caller can
+  type, moving on edits no caller can see — so `surfaceRecorded` names the
+  modules whose surface is checked, and `examples-scala` is this one's whole
+  gate, as `examples-java` is `kestrel-java`'s. And `result(step).responseTime
+  .p99` needed a small reader carrying the step and the clock: `Timing`'s
+  percentiles are `kotlin.time.Duration` properties, so their getters carry a
+  value-class hash and no extension method can reach them. It holds no number
+  and computes none. [docs/from-scala.md](docs/from-scala.md) is the page.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

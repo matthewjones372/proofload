@@ -14,7 +14,9 @@ import java.io.File
  */
 class ModulesDocTest {
 
-    private val testPath = Regex("""[\w.-]+/src/test/[\w./-]+Test\.kt""")
+    // `.scala` as well as `.kt`: a module's claim about its own classpath is
+    // asserted in the language that module is written in.
+    private val testPath = Regex("""[\w.-]+/src/test/[\w./-]+Test\.(kt|scala)""")
 
     private val repoRoot: File
         get() {
@@ -63,6 +65,6 @@ class ModulesDocTest {
     private companion object {
 
         /** The subprojects the root build keeps out of `publishedModules`. */
-        val NOT_PUBLISHED = setOf("examples", "examples-java", "benchmarks")
+        val NOT_PUBLISHED = setOf("examples", "examples-java", "examples-scala", "benchmarks")
     }
 }

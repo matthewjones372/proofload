@@ -81,7 +81,7 @@ checked, as it was in 0009, and it matters more here than the surface does.
       Done when: a failing run names every goal that missed and the remedy each
       carries, rather than stopping at the first.
       The `Difference` half was struck out while building; see below.
-- [ ] **`spec-0108-docs`** — the `docs/modules.md` rows, `smoke`, and a section
+- [x] **`spec-0108-docs`** — the `docs/modules.md` rows, `smoke`, and a section
       on `docs/from-scala.md` quoted from the compiled spec.
       Done when: the page's zio-test lines are lines of a spec the build runs.
 

@@ -10,6 +10,16 @@ plugins {
     scala
 }
 
+val zioVersion = "2.1.26"
+
 dependencies {
     implementation(project(":kestrel-scala"))
+
+    // The spec beside the sample is the same gate for `kestrel-zio-test`, and
+    // it runs rather than only compiling: a consumer's project is where a
+    // published module either works or does not.
+    testImplementation(project(":kestrel-zio-test"))
+    testImplementation("dev.zio:zio_3:$zioVersion")
+    testImplementation("dev.zio:zio-test_3:$zioVersion")
+    testRuntimeOnly("dev.zio:zio-test-junit-engine_3:$zioVersion")
 }

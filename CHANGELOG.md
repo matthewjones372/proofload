@@ -21,6 +21,23 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **A load test that is a zio-test test.** `kestrel-zio-test` is one method:
+  `ZIO.attemptBlocking` around the same silent, exclusive runner
+  `kestrel-junit5` and `kestrel-kotest` build. Blocking rather than compute,
+  because the call holds its thread for the length of the run while the engine
+  sends on virtual threads — on the compute pool that is a starved runtime, and
+  a starved runtime is a scheduler this tool would then measure and report as
+  the target's latency. A recording `Engine` names the thread the run was sent
+  from, so that is a test rather than a comment.
+
+  zio-test is `compileOnly`, so no effect runtime reaches a project that asked
+  for a load test, and nothing inside a run is a `ZIO`: a step body is an
+  `Action` and stays one. `result.metItsGoals` reads the run's own verdicts and
+  fails naming every goal that missed with the remedy each carries. There is no
+  `notWorseThan` — `Difference.notWorseThan` takes a `Share`, so its name
+  carries a value-class hash, and the facade that would fix it is the
+  Java-facing baselines module 0094 left to a spec of its own.
+
 - **Kestrel from Scala.** `kestrel-scala` puts `FiniteDuration` on both sides
   of the boundary, `perSecond` and `perMinute` on `Int` and `Double`,
   `sessionKey[T]` recovered from a `ClassTag` rather than handed a `Class`, and

@@ -134,7 +134,8 @@ Pekko.** An effect runtime is a scheduler, and a second scheduler inside a load
 generator means the tool measures its own queueing and reports it as the
 target's latency. A step body may call effectful code and run it itself; what
 does not happen is `kestrel-scala` handing back a `ZIO` or an `IO`. A test
-framework is a different question from a runtime, and is answered separately.
+framework is a different question from a runtime, and is answered by
+[`kestrel-zio-test`](#in-a-zio-test-spec) below.
 
 **No Scala 2.13.** Two compilers doubles the build and the cross-publishing for
 a version whose Kotlin interop is worse.
@@ -142,10 +143,83 @@ a version whose Kotlin interop is worse.
 **No `scala.collection` in any signature.** What comes back is what Java and
 Kotlin get: `Results.verdicts` hands back a `java.util.List`.
 
+## In a zio-test spec
+
+A load test is an ordinary test, in whichever framework the service is already
+tested in. `kestrel-zio-test` is the third of those, beside `kestrel-junit5`
+and `kestrel-kotest`.
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    // zio-test is compileOnly here: the spec that uses this already has it.
+    testImplementation("io.github.matthewjones372:kestrel-zio-test:$kestrelVersion")
+}
+```
+
+```scala
+import io.github.matthewjones372.kestrel.ziotest.kestrel
+import io.github.matthewjones372.kestrel.ziotest.metItsGoals
+import zio.ZIO
+import zio.test.ZIOSpecDefault
+import zio.test.assertTrue
+```
+
+```scala
+object CheckoutSpec extends ZIOSpecDefault:
+
+  def spec = suite("checkout")(
+    test("holds its failure rate at 20 a second"):
+      ZIO.scoped:
+        for
+          server <- serving
+          api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
+          browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
+          result <- kestrel.run(
+            Simulations.at(browsing, 20.perSecond, 500.millis, Goals.failureRateUnder(0.1)),
+          )
+        yield result.metItsGoals && assertTrue(
+          result(browse).count > 0,
+          result(browse).failed == 0L,
+        ),
+  )
+```
+
+`kestrel.run` is the whole module, and the argument is entirely about which
+executor it runs on. It is `ZIO.attemptBlocking` around the same silent runner
+the other two framework modules build: the call holds its thread for the length
+of the run while the engine sends on virtual threads, and on ZIO's compute pool
+that is a starved runtime — which is a scheduler this tool would then measure
+and report as the target's latency.
+
+Three things follow from that, and are worth knowing before you write one:
+
+- **`TestClock` cannot move a run, and must not.** What a run measures is the
+  wall clock. `TestClock.adjust(1.minute)` will not fast-forward a one-minute
+  simulation, and a version that let it would be reporting a number nothing
+  measured.
+- **`TestAspect.parallel` is safe.** The runner takes the machine for the
+  duration of a run, so two load tests started at once measure it one after the
+  other rather than measuring each other.
+- **Nothing inside the run is a `ZIO`.** A step body is an `Action` and stays
+  one. No fiber sits between the departure clock and the socket, which is the
+  thing this project refuses and the reason it can claim its own overhead.
+
+`result.metItsGoals` is for when several numbers decide the test: it reads the
+run's own verdicts and fails naming every goal that missed and the remedy each
+carries, rather than stopping at the first assertion that did. Where one number
+decides it, `assertTrue` on the result reads better.
+
+There is no `notWorseThan` for comparing against a baseline. `Difference
+.notWorseThan` takes a `Share`, so its JVM name carries a value-class hash and
+no Scala caller can name it; the facade that would fix that is a Java-facing
+baselines module, which is a spec of its own.
+
 ## The gate
 
 [`examples-scala`](../examples-scala) is a module whose whole content is the
-load test above, compiled by `./gradlew build`. There is no `.api` dump for
+two load tests above — one compiled by `./gradlew build`, one compiled and run
+by it. There is no `.api` dump for
 `kestrel-scala` to move: what BCV records of a Scala module is
 `Durations$package$`, lazy-init closures and qualified-private members Scala
 emits as public bytecode — names no caller can type, moving on edits no caller

@@ -48,7 +48,9 @@ paragraph. `examples-java` is one load test written in Java: `apiCheck` records
 from Java, and only a Java compiler knows — [from-java.md](from-java.md) is the
 page it backs. `examples-scala` is the same gate one step further out:
 `kestrel-scala` has no `.api` dump at all, because what BCV records of a Scala
-module is compiler-generated names no caller can type. `benchmarks` measures what this tool costs, and is kept out of the
+module is compiler-generated names no caller can type. It carries a zio-test
+spec beside the sample, which the build runs rather than only compiles —
+[from-scala.md](from-scala.md) is the page both back. `benchmarks` measures what this tool costs, and is kept out of the
 coverage aggregation because measuring the tool is not testing it —
 [what-it-costs.md](what-it-costs.md) is what it produces.
 

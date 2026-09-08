@@ -13,8 +13,10 @@ import _root_.scala.jdk.CollectionConverters.ListHasAsScala
  */
 class FromScalaDocTest:
 
-  private val gate =
-    "examples-scala/src/main/scala/io/github/matthewjones372/kestrel/examples/scala/Checkout.scala"
+  private val gates = List(
+    "examples-scala/src/main/scala/io/github/matthewjones372/kestrel/examples/scala/Checkout.scala",
+    "examples-scala/src/test/scala/io/github/matthewjones372/kestrel/examples/scala/CheckoutSpec.scala",
+  )
 
   private def repoRoot: File =
     val root = System.getProperty("kestrel.repoRoot")
@@ -36,7 +38,7 @@ class FromScalaDocTest:
 
   @Test
   def `every Scala line on the page is a line of the source set the build compiles`(): Unit =
-    val compiled = read(gate).map(_.trim).toSet
+    val compiled = gates.flatMap(read).map(_.trim).toSet
 
     val invented = snippetLines().filterNot(compiled.contains)
 

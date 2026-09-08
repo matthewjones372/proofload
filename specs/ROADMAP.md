@@ -107,6 +107,7 @@ built. Each row links the spec that argued for it.
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure |
 | [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
 | [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over that facade, and a Scala source set that fails the build when a conversion goes |
+| [0108](0108-a-load-test-that-is-a-zio-test.md) | a load test that is a zio-test test, on the blocking executor rather than the pool the fiber is on |
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |

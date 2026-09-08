@@ -71,18 +71,22 @@ checked, as it was in 0009, and it matters more here than the surface does.
 
 ## Stack
 
-- [ ] **`spec-0108-module`** — `kestrel-zio-test`, its `NoSecondStackTest`, and
+- [x] **`spec-0108-module`** — `kestrel-zio-test`, its `NoSecondStackTest`, and
       `kestrel.run` on the blocking executor.
       Done when: a `ZIOSpecDefault` runs a simulation against a JDK
       `HttpServer` under `./gradlew build`, and a test names the executor the
       run happened on.
-- [ ] **`spec-0108-assertions`** — `notWorseThan` as an `Assertion[Difference]`,
-      and `metItsGoals` over the run's own verdicts.
-      Done when: a failing comparison prints what the runs concluded rather
-      than `false was not true`.
+- [x] **`spec-0108-assertions`** — ~~`notWorseThan` as an
+      `Assertion[Difference]`, and~~ `metItsGoals` over the run's own verdicts.
+      Done when: a failing run names every goal that missed and the remedy each
+      carries, rather than stopping at the first.
+      The `Difference` half was struck out while building; see below.
 - [ ] **`spec-0108-docs`** — the `docs/modules.md` rows, `smoke`, and a section
       on `docs/from-scala.md` quoted from the compiled spec.
       Done when: the page's zio-test lines are lines of a spec the build runs.
+
+> Landed on the same branch as 0095, at the author's direction, so the entries
+> above are commits rather than pull requests.
 
 ## Acceptance
 
@@ -90,6 +94,22 @@ checked, as it was in 0009, and it matters more here than the surface does.
 ./gradlew build
 ./gradlew :kestrel-zio-test:test
 ```
+
+## Found while building
+
+- **`notWorseThan` cannot be reached from Scala at all, and this is not the
+  spec that should fix it.** `Difference.notWorseThan` and `Difference
+  .explained` are top-level extensions taking a `Share`, so their JVM names
+  carry a value-class hash — the thing `kestrel-java` exists to keep out of
+  another language's source, and it has no `Differences` facade because
+  [0094](0094-kestrel-from-java.md) reversed itself and put a Java-facing
+  baselines assertion in a spec of its own. Adding one here would be that spec,
+  written in the wrong place. So `metItsGoals` landed alone, and a zio-test
+  spec comparing against a baseline waits for the baselines facade.
+- **zio-test runs under Gradle through `zio-test-junit-engine`**, a JUnit
+  platform engine rather than the JUnit 4 runner `zio-test-junit` carries. Test
+  names come out as the sentences they were written as, which the Scala
+  backtick names in `kestrel-scala` do not.
 
 ## Open questions
 

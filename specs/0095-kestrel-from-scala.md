@@ -74,21 +74,24 @@ the Scala call reads like the Kotlin one rather than like the Java one.
 
 ## Stack
 
-- [ ] **`spec-0095-module`** — `kestrel-scala`, Scala 3, its dependency test,
+- [x] **`spec-0095-module`** — `kestrel-scala`, Scala 3, its dependency test,
       and the `FiniteDuration` conversions both ways.
       Done when: `1.minute` reaches a Kotlin signature and a `p99` comes back
       comparable to `200.millis`.
-- [ ] **`spec-0095-dsl`** — `perSecond`, `sessionKey[T]`, `step`, `scenario`,
+- [x] **`spec-0095-dsl`** — `perSecond`, `sessionKey[T]`, `step`, `scenario`,
       `exec` over the Java facade.
       Done when: the scenario the Scala layer builds equals the one the Kotlin
       DSL builds for the same steps.
-- [ ] **`spec-0095-gate`** — a compiled Scala sample module, and
+- [x] **`spec-0095-gate`** — a compiled Scala sample module, and
       `kestrel-scala` added to `smoke`.
       Done when: removing a conversion fails the build in the sample rather
       than in a consumer's project.
-- [ ] **`spec-0095-docs`** — `docs/from-scala.md`, snippets taken from the
+- [x] **`spec-0095-docs`** — `docs/from-scala.md`, snippets taken from the
       compiled sample.
       Done when: the page names the Scala version it was compiled against.
+
+> All four landed on one branch rather than four, at the author's direction,
+> so the stack entries above are commits rather than pull requests.
 
 ## Acceptance
 
@@ -96,6 +99,21 @@ the Scala call reads like the Kotlin one rather than like the Java one.
 ./gradlew build
 ./gradlew :examples-scala:compileScala
 ```
+
+## Found while building
+
+- **A Scala module has no `.api` dump worth checking.** BCV records a JVM ABI
+  as Kotlin emits it; what Scala emits is `Durations$package$`, lazy-init
+  closures and qualified-private members that are public bytecode — names no
+  caller can type, moving on edits no caller can see. `kestrel-scala` is
+  published and is not in `surfaceRecorded`, and `examples-scala` is its whole
+  gate. Same conclusion as 0094's, one step further out.
+- **`Timing`'s percentiles cannot be reached by an extension method.** `p50`,
+  `p99` and `max` are `kotlin.time.Duration` properties, so their getters carry
+  a value-class hash. The sketch above reads
+  `result(placeOrder).responseTime.p99`, and getting it needs a small reader
+  carrying the step and the clock through `Results`. It holds no number and
+  computes none, but it is a type this spec did not name.
 
 ## Open questions
 

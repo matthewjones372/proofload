@@ -26,6 +26,15 @@ dependencies {
 // arrive in Scala as static calls on a generated class and stop reading like
 // matchers at all.
 tasks.test {
+    // `FromScalaDocTest` reads the page and the source set it quotes, so both
+    // are inputs: editing either re-runs the test rather than being told the
+    // task is up to date.
+    val page = rootProject.layout.projectDirectory.file("docs/from-scala.md")
+    val gate = rootProject.layout.projectDirectory.dir("examples-scala/src")
+    inputs.files(page).withPropertyName("theScalaPage")
+    inputs.dir(gate).withPropertyName("theSourceSetItQuotes")
+    systemProperty("kestrel.repoRoot", rootProject.projectDir.path)
+
     val mainRuntime = configurations.runtimeClasspath
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(

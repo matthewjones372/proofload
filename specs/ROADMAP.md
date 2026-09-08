@@ -106,17 +106,12 @@ built. Each row links the spec that argued for it.
 | [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure |
 | [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
+| [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over that facade, and a Scala source set that fails the build when a conversion goes |
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
 | [0099](0099-kafka-in-a-plan.md) | a topic as a step, the answer on another topic as its latency, and a broker a fence can see |
 | [0100](0100-grpc-without-a-stub.md) | a method and a JSON body called with no generated stub — the library half; the plan keys its own stack leaves out |
-
-## Drafted, not built
-
-| Spec | What it argues for |
-|---|---|
-| [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over the Java facade — decided, and deliberately not built next |
 
 Nothing else is outstanding. Every other drafted spec is built, bar the tails
 listed below.

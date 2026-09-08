@@ -45,26 +45,37 @@ class ResultsTest {
           over: 200ms
     """.trimIndent()
 
-    private fun finished(): Registry {
-        val registry = Registry()
-        registry.start(readPlan(plan()), Allowance.none)
-        while (registry.finished("r-1") == null) Thread.sleep(POLL)
-        return registry
+    @TempDir
+    lateinit var kept: Path
+
+    /** A registry of this test's own, since runs are kept on disk and a shared one leaks between tests. */
+    private fun registry() = Registry(runs = kept.resolve("runs"))
+
+    /** A finished run and its id, read rather than assumed: an id is no longer a counter. */
+    private fun finished(): Pair<Registry, String> {
+        val registry = registry()
+        val id = idIn(registry.start(readPlan(plan()), Allowance.none))
+        while (registry.finished(id) == null) Thread.sleep(POLL)
+        return registry to id
     }
 
     @Test
     fun `list_runs says nothing before anything has run`() {
-        listRuns(Registry()) shouldContain "no runs yet"
+        listRuns(registry()) shouldContain "no runs yet"
     }
 
     @Test
     fun `list_runs names every run it started`() {
-        listRuns(finished()) shouldContain "r-1"
+        val (registry, id) = finished()
+
+        listRuns(registry) shouldContain id
     }
 
     @Test
     fun `explain hands back the full document, not the summary`() {
-        val answered = explain(finished(), "r-1")
+        val (registry, id) = finished()
+
+        val answered = explain(registry, id)
 
         withClue(answered) {
             answered shouldContain "kestrel/run/1"
@@ -76,25 +87,29 @@ class ResultsTest {
 
     @Test
     fun `report writes a page and returns where it went`(@TempDir dir: Path) {
-        val answered = report(finished(), "r-1", dir)
+        val (registry, id) = finished()
+
+        val answered = report(registry, id, dir)
 
         withClue(answered) {
-            answered shouldContain "r-1.html"
+            answered shouldContain "$id.html"
         }
         withClue("an agent reads the json; a person opens this") {
-            Files.exists(dir.resolve("r-1.html")) shouldBe true
-            Files.readString(dir.resolve("r-1.html")) shouldContain "<html"
+            Files.exists(dir.resolve("$id.html")) shouldBe true
+            Files.readString(dir.resolve("$id.html")) shouldContain "<html"
         }
     }
 
     @Test
     fun `compare against a run nobody has says so`() {
-        compare(finished(), "r-1", "r-99") shouldContain """"isError":true"""
+        val (registry, id) = finished()
+
+        compare(registry, id, "r-99") shouldContain """"isError":true"""
     }
 
     @Test
     fun `a run explained before it finished says to ask status`() {
-        explain(Registry(), "r-1") shouldContain "status"
+        explain(registry(), "r-1") shouldContain "status"
     }
 
     private companion object {

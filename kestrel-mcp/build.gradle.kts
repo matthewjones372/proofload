@@ -33,6 +33,11 @@ dependencies {
     // `status` answers a finished run with 0087's summary, which is this
     // module's document rather than one the command line lends it.
     implementation(project(":kestrel-export"))
+    // A finished run is kept as a file, so a caller polling its own run after a
+    // restart is not told the run never existed. `kestrel-baseline` is the
+    // format this repository already writes a run in, and it is pure Kotlin
+    // over core — no third-party jar arrives with it.
+    implementation(project(":kestrel-baseline"))
     // `report` writes the page a person opens. An agent reads the JSON
     // above; nobody gains from a model reading inlined SVG.
     implementation(project(":kestrel-report-html"))

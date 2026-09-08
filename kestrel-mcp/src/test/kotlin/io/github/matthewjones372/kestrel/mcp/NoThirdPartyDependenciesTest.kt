@@ -25,6 +25,9 @@ class NoThirdPartyDependenciesTest {
         // Arrives with `kestrel-plan`, which draws a value per user. Pure
         // Kotlin over core, so no third-party jar comes with it.
         "kestrel-arbs",
+        // A finished run is kept as a file so it survives a restart. Pure
+        // Kotlin over core, like the above.
+        "kestrel-baseline",
         // A plan may name a topic, so a tool that reads plans carries the
         // module that lowers one and the client it brings. A library consumer
         // taking `kestrel-plan` alone still gets neither.

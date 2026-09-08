@@ -55,18 +55,30 @@ class WritingTest {
           over: 1s
     """.trimIndent()
 
-    private fun finished(): Registry {
-        val registry = Registry()
-        registry.start(readPlan(plan()), Allowance.none)
-        while (registry.ran("r-1") == null) Thread.sleep(POLL)
-        return registry
+    @TempDir
+    lateinit var kept: Path
+
+    /**
+     * A finished run and its id.
+     *
+     * The id is read rather than assumed: it stopped being `r-1` when two
+     * replicas began handing the same one to two callers. The registry keeps
+     * its runs where nothing else can see them, because they are on disk now.
+     */
+    private fun finished(): Pair<Registry, String> {
+        val registry = Registry(runs = kept.resolve("runs"))
+        val id = idIn(registry.start(readPlan(plan()), Allowance.none))
+        while (registry.ran(id) == null) Thread.sleep(POLL)
+        return registry to id
     }
 
     @Test
     fun `it writes a file, and says where`(@TempDir dir: Path) {
         val into = dir.resolve("benchmarks/checkout.md")
 
-        val answered = writeSpec(finished(), "r-1", into.toString(), why = null)
+        val (registry, id) = finished()
+
+        val answered = writeSpec(registry, id, into.toString(), why = null)
 
         withClue(answered) { answered shouldContain "checkout.md" }
         Files.exists(into) shouldBe true
@@ -75,7 +87,8 @@ class WritingTest {
     @Test
     fun `it records what was measured, not what was hoped for`(@TempDir dir: Path) {
         val into = dir.resolve("b.md")
-        writeSpec(finished(), "r-1", into.toString(), why = null)
+        val (registry, id) = finished()
+        writeSpec(registry, id, into.toString(), why = null)
 
         val written = Files.readString(into)
         withClue(written) {
@@ -90,7 +103,8 @@ class WritingTest {
     @Test
     fun `the plan it embeds is one the reader accepts`(@TempDir dir: Path) {
         val into = dir.resolve("b.md")
-        writeSpec(finished(), "r-1", into.toString(), why = null)
+        val (registry, id) = finished()
+        writeSpec(registry, id, into.toString(), why = null)
 
         val embedded = Files.readString(into).substringAfter("```yaml").substringBefore("```")
 
@@ -102,7 +116,8 @@ class WritingTest {
     @Test
     fun `with nobody's answers it says the questions are open`(@TempDir dir: Path) {
         val into = dir.resolve("b.md")
-        writeSpec(finished(), "r-1", into.toString(), why = null)
+        val (registry, id) = finished()
+        writeSpec(registry, id, into.toString(), why = null)
 
         withClue("inventing a reason nobody gave is worse than saying nobody has") {
             Files.readString(into) shouldContain "Nobody has answered this yet"
@@ -112,7 +127,8 @@ class WritingTest {
     @Test
     fun `with answers it uses them`(@TempDir dir: Path) {
         val into = dir.resolve("b.md")
-        writeSpec(finished(), "r-1", into.toString(), why = "Search is the only endpoint with a distribution.")
+        val (registry, id) = finished()
+        writeSpec(registry, id, into.toString(), why = "Search is the only endpoint with a distribution.")
 
         val written = Files.readString(into)
         withClue(written) {
@@ -123,7 +139,8 @@ class WritingTest {
 
     @Test
     fun `a run nobody has cannot be written up`(@TempDir dir: Path) {
-        writeSpec(Registry(), "r-9", dir.resolve("b.md").toString(), null) shouldContain """"isError":true"""
+        writeSpec(Registry(runs = kept.resolve("none")), "r-9", dir.resolve("b.md").toString(), null) shouldContain
+            """"isError":true"""
     }
 
     private companion object {
@@ -169,12 +186,12 @@ class WritingTest {
 
     /** The benchmark written for [plan], run against the server above. */
     private fun writtenFor(plan: String, dir: Path): String {
-        val registry = Registry()
-        registry.start(readPlan(plan), Allowance.none)
-        while (registry.ran("r-1") == null) Thread.sleep(POLL)
+        val registry = Registry(runs = kept.resolve("runs"))
+        val id = idIn(registry.start(readPlan(plan), Allowance.none))
+        while (registry.ran(id) == null) Thread.sleep(POLL)
 
         val into = dir.resolve("b.md")
-        writeSpec(registry, "r-1", into.toString(), why = null)
+        writeSpec(registry, id, into.toString(), why = null)
         return Files.readString(into)
     }
 }

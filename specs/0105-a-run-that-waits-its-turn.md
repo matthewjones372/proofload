@@ -84,10 +84,15 @@ stops being anybody's commitment in particular.
 
 ## Stack
 
-- [ ] **`spec-0105-an-id-worth-having`** — ids unique across processes, and a
+- [x] **`spec-0105-an-id-worth-having`** — ids unique across processes, and a
       registry that survives a restart by reading the results it wrote.
       Done when: two servers started together hand out different ids, and a run
       finished before a restart is still readable by `status` after one.
+      Eighteen sites in the tests assumed `r-1`, which is how load-bearing a
+      counter had quietly become; they read the id now. Keeping runs on disk
+      also turned a private map into shared state, so each test keeps its own —
+      and nothing yet prunes what a long-lived server accumulates, which wants
+      an answer before this is deployed.
 - [ ] **`spec-0105-queued`** — `run` accepting and returning a position, and
       `status` answering `queued` with what is ahead.
       Done when: a second `run` gets an id it can poll rather than a refusal,

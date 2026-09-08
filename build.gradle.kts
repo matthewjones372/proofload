@@ -86,6 +86,7 @@ val moduleDescriptions = mapOf(
     "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",
     "kestrel-scala" to "Kestrel from Scala 3: FiniteDuration both ways, over the same values Kotlin builds.",
     "kestrel-websocket" to "WebSocket steps on the JDK client. Depends on kestrel-core and nothing else.",
+    "kestrel-zio-test" to "Load tests that are ordinary zio-test tests, run on the blocking executor.",
 )
 
 // Coverage, aggregated across the modules rather than per-module: a line in
@@ -153,13 +154,13 @@ val publishedModules =
  * The published modules whose surface BCV can record, which is every one that
  * is Kotlin or Java.
  *
- * `kestrel-scala` is published and is not here. A dump of it is
+ * The Scala modules are published and are not here. A dump of one is
  * `Durations$package$`, lazy-init closures and qualified-private members that
  * Scala emits as public bytecode: names no caller can type, moving on edits no
- * caller can see. It is gated the way `kestrel-java` is, by a source set a
+ * caller can see. They are gated the way `kestrel-java` is, by a source set a
  * compiler for that language has to accept.
  */
-val surfaceRecorded = publishedModules - "kestrel-scala"
+val surfaceRecorded = publishedModules - "kestrel-scala" - "kestrel-zio-test"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no

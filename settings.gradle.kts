@@ -27,6 +27,7 @@ include(
     "kestrel-report-html",
     "kestrel-scala",
     "kestrel-websocket",
+    "kestrel-zio-test",
     // Not a library: the end-to-end proof that the modules above compose.
     "examples",
     // Not a library either: a Java compiler is the only thing that can see

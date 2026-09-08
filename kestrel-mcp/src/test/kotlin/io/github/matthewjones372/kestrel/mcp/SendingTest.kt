@@ -7,6 +7,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -89,6 +90,44 @@ class SendingTest {
             answered shouldContain "browse"
             answered shouldContain "GET"
             answered shouldContain "/products"
+        }
+    }
+
+    private fun drawnPlan(): String = """
+        kestrel:  plan/1
+        baseUrl:  http://localhost:${server.address.port}
+        scenario: catalogue
+        seed: 0
+        draw:
+          sku: {uniform: 500}
+        steps:
+          - name: open product
+            get: '/products/{sku}'
+        load:
+          rate: 5000/s
+          over: 10m
+    """.trimIndent()
+
+    @Test
+    fun `smoke fills a drawn key, as the run it stands in for would`() {
+        val answered = smoke(mapOf("plan" to drawnPlan()), Allowance.none)
+
+        withClue(answered) {
+            answered shouldContain """"isError":false"""
+        }
+        withClue("a debug loop that fails what the run sends fine sends the caller after a bug it does not have") {
+            answered shouldNotContain "UnfilledPath"
+            answered shouldNotContain "missing {sku}"
+        }
+    }
+
+    @Test
+    fun `trace fills a drawn key`() {
+        val answered = trace(mapOf("plan" to drawnPlan()), Allowance.none)
+
+        withClue(answered) {
+            answered shouldNotContain "missing {sku}"
+            answered shouldContain "/products/"
         }
     }
 

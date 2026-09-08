@@ -14,7 +14,9 @@ import java.io.File
  */
 class ModulesDocTest {
 
-    private val testPath = Regex("""[\w.-]+/src/test/[\w./-]+Test\.kt""")
+    // `.scala` as well as `.kt`: a module's claim about its own classpath is
+    // asserted in the language that module is written in.
+    private val testPath = Regex("""[\w.-]+/src/test/[\w./-]+Test\.(kt|scala)""")
 
     private val repoRoot: File
         get() {

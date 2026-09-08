@@ -25,6 +25,7 @@ include(
     "kestrel-record",
     "kestrel-report-github",
     "kestrel-report-html",
+    "kestrel-scala",
     "kestrel-websocket",
     // Not a library: the end-to-end proof that the modules above compose.
     "examples",

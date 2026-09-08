@@ -16,6 +16,7 @@ uses and inherits no stack it did not ask for.
 | `kestrel-jdbc` | database steps over a caller's own `DataSource`, the pool wait counted apart from the query | core |
 | `kestrel-kafka` | produce steps, and completions read off another topic | core, `kafka-clients` |
 | `kestrel-java` | the same values built from Java: static factories over `Rate`, `StepName` and `Share`, a builder where Kotlin has a lambda, and `java.time.Duration` throughout | core, engine, http |
+| `kestrel-scala` | the same values built from Scala 3: `FiniteDuration` both ways, `perSecond`, `sessionKey[T]`, and the scenario the Kotlin DSL builds | core, engine, http, java, `scala3-library` |
 | `kestrel-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `kestrel-kotest` | the same, in a Kotest spec | core, engine |
 | `kestrel-arbs` | generators shaped like traffic — cardinality and skew, as a function of the user's number | core |
@@ -70,6 +71,7 @@ dependencies {
 
     // As you need them.
     implementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
+    implementation("io.github.matthewjones372:kestrel-scala:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-arbs:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
     implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
@@ -97,6 +99,7 @@ the Kotest module cannot quietly start needing the JUnit one.
 | `kestrel-record` | [NoThirdPartyDependenciesTest](../kestrel-record/src/test/kotlin/io/github/matthewjones372/kestrel/record/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-websocket` | [NoThirdPartyDependenciesTest](../kestrel-websocket/src/test/kotlin/io/github/matthewjones372/kestrel/websocket/NoThirdPartyDependenciesTest.kt) |
 | `kestrel-java` | [NoThirdPartyDependenciesTest](../kestrel-java/src/test/kotlin/io/github/matthewjones372/kestrel/java/NoThirdPartyDependenciesTest.kt) |
+| `kestrel-scala` | [OnlyTheScalaLibraryTest](../kestrel-scala/src/test/scala/io/github/matthewjones372/kestrel/scala/OnlyTheScalaLibraryTest.scala) |
 | `kestrel-junit5` | [NoSecondStackTest](../kestrel-junit5/src/test/kotlin/io/github/matthewjones372/kestrel/junit5/NoSecondStackTest.kt) |
 | `kestrel-kotest` | [NoSecondStackTest](../kestrel-kotest/src/test/kotlin/io/github/matthewjones372/kestrel/kotest/NoSecondStackTest.kt) |
 | `kestrel-arbs` | [NoThirdPartyDependenciesTest](../kestrel-arbs/src/test/kotlin/io/github/matthewjones372/kestrel/arbs/NoThirdPartyDependenciesTest.kt) |

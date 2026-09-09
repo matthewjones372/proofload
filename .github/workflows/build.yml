@@ -92,29 +92,35 @@ jobs:
       - name: Measure
         run: ./gradlew coverageBadge
 
-      # An orphan branch rather than a path on `main`. A job that commits to the
-      # branch that triggered it either loops or leans on a `[skip ci]` convention
-      # that one future edit forgets.
-      - name: Publish to the badges branch
+      # Written into the README rather than published for a shields endpoint to
+      # fetch. An endpoint badge reads its file anonymously, and
+      # raw.githubusercontent.com does not serve one from a private repository — so
+      # the number goes in the URL, where shields needs to fetch nothing.
+      - name: Write the number into the README
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          number=$(cat build/badges/coverage.json)
-          # Measuring runs the tests, and a test that writes into the tree leaves
-          # it dirty enough that `git switch` refuses. Nothing built here is worth
-          # keeping past this point — the number is already read into `$number`.
+          # Measuring runs the tests, and a test that writes into the tree leaves it
+          # dirty. Nothing built here is wanted past this point.
           git checkout -- .
           git clean -qfd -e build -e '*/build'
+          python3 - <<'PY'
+          import json, re, pathlib
+          number = json.load(open('build/badges/coverage.json'))
+          badge = 'https://img.shields.io/badge/coverage-%s%%25-%s' % (
+              number['message'].rstrip('%'), number['color'])
+          readme = pathlib.Path('README.md')
+          text = readme.read_text()
+          swapped = re.sub(r'https://img\.shields\.io/badge/coverage-[^)\]]*', badge, text, count=1)
+          assert swapped != text or badge in text, 'no coverage badge to rewrite'
+          readme.write_text(swapped)
+          PY
+          git diff --quiet README.md && echo "coverage unchanged at $(python3 -c "import json;print(json.load(open('build/badges/coverage.json'))['message'])")" && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin badges --depth 1 2>/dev/null && git switch badges \
-            || git switch --orphan badges
-          git rm -rq --cached . 2>/dev/null || true
-          mkdir -p .
-          printf '%s' "$number" > coverage.json
-          git add coverage.json
-          # Nothing to say where the number has not moved.
-          git diff --cached --quiet && echo "coverage unchanged" && exit 0
-          git commit -qm "coverage: $(python3 -c 'import json,sys;print(json.load(open("coverage.json"))["message"])')"
-          git push origin badges
+          # `[skip ci]` because this pushes to the branch that triggered it, and a
+          # run that regenerates the same number would otherwise be a loop.
+          git commit -qm "coverage: $(python3 -c "import json;print(json.load(open('build/badges/coverage.json'))['message'])") [skip ci]" README.md
+          # A race with another push is not a failure: the next one carries it.
+          git push origin HEAD:main || echo "main moved; the next push will carry the number"
 

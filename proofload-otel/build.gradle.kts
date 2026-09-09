@@ -7,7 +7,7 @@
 // should not inherit a metrics SDK for it.
 dependencies {
     api(project(":proofload-core"))
-    api(platform("io.opentelemetry:opentelemetry-bom:1.54.1"))
+    api(platform("io.opentelemetry:opentelemetry-bom:1.65.0"))
     api("io.opentelemetry:opentelemetry-sdk-metrics")
 
     // The OTLP exporter ships with OkHttp behind it. A load test's own process

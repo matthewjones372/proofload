@@ -24,7 +24,7 @@ plugins {
 // wrote.
 dependencies {
     api(project(":proofload-core"))
-    api("org.apache.kafka:kafka-clients:3.9.1")
+    api("org.apache.kafka:kafka-clients:4.3.1")
 
     // An engine to run the scenarios these tests build, and nothing that is a
     // broker: whether a cluster is sized right needs the caller's cluster.

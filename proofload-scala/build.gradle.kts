@@ -11,7 +11,7 @@ plugins {
 // the one that built it — TASTy is forward-compatible, not backward — so this
 // is the LTS line rather than the newest release. `docs/from-scala.md` names
 // the version, because a consumer on an older compiler needs to know.
-val scalaVersion = "3.3.8"
+val scalaVersion = "3.9.0"
 
 // Over the Java facade rather than over core: the unmangling is written once,
 // and a facade method missing from Java is missing from Scala in the same

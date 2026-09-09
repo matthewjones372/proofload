@@ -12,7 +12,7 @@ dependencies {
     // The schema is the contract this module publishes, so it is checked by a
     // real validator rather than by a reader written here — the same reason
     // HdrHistogram sits above as the oracle for the encoding.
-    testImplementation("com.networknt:json-schema-validator:1.5.8")
+    testImplementation("com.networknt:json-schema-validator:3.0.7")
 }
 
 tasks.test {

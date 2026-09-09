@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "2.4.10" apply false
-    id("com.diffplug.spotless") version "8.10.0"
+    id("com.diffplug.spotless") version "8.10.2"
     id("dev.detekt") version "2.0.0-alpha.6" apply false
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
     // The version comes from the nearest `v` tag rather than a property, so
@@ -15,13 +15,13 @@ plugins {
     // here directly.
     id("com.vanniktech.maven.publish") version "0.37.0" apply false
     // Renders the KDoc into the javadoc jar the published modules ship.
-    id("org.jetbrains.dokka") version "2.1.0" apply false
+    id("org.jetbrains.dokka") version "2.2.0" apply false
     // Writes each published module's public surface to `api/<module>.api` and
     // fails `check` where the surface moved and the file did not. It records
     // the API rather than freezing it: until 1.0 a break is allowed, and the
     // point is that it arrives as a line removed from a file a reviewer is
     // already looking at.
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.2"
 }
 
 scmVersion {

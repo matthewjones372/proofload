@@ -18,7 +18,7 @@ plugins {
 // hundred bytes of a written-down binary format; this is arbitrary JSON.
 dependencies {
     api(project(":proofload-core"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
 
 application {

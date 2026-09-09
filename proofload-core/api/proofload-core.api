@@ -13,15 +13,15 @@ public final class io/github/matthewjones372/proofload/Allowance {
 	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Rate;Lkotlin/time/Duration;Ljava/lang/Long;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun allows (Ljava/lang/String;)Z
 	public final fun component1 ()Ljava/util/List;
-	public final fun component2-fKsMbh4 ()Lio/github/matthewjones372/proofload/Rate;
+	public final fun component2-Uz8bWpM ()Lio/github/matthewjones372/proofload/Rate;
 	public final fun component3-FghU774 ()Lkotlin/time/Duration;
 	public final fun component4 ()Ljava/lang/Long;
-	public final fun copy-81gQx3U (Ljava/util/List;Lio/github/matthewjones372/proofload/Rate;Lkotlin/time/Duration;Ljava/lang/Long;)Lio/github/matthewjones372/proofload/Allowance;
-	public static synthetic fun copy-81gQx3U$default (Lio/github/matthewjones372/proofload/Allowance;Ljava/util/List;Lio/github/matthewjones372/proofload/Rate;Lkotlin/time/Duration;Ljava/lang/Long;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Allowance;
+	public final fun copy-KW5uTQM (Ljava/util/List;Lio/github/matthewjones372/proofload/Rate;Lkotlin/time/Duration;Ljava/lang/Long;)Lio/github/matthewjones372/proofload/Allowance;
+	public static synthetic fun copy-KW5uTQM$default (Lio/github/matthewjones372/proofload/Allowance;Ljava/util/List;Lio/github/matthewjones372/proofload/Rate;Lkotlin/time/Duration;Ljava/lang/Long;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Allowance;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHosts ()Ljava/util/List;
 	public final fun getMaxDuration-FghU774 ()Lkotlin/time/Duration;
-	public final fun getMaxRate-fKsMbh4 ()Lio/github/matthewjones372/proofload/Rate;
+	public final fun getMaxRate-Uz8bWpM ()Lio/github/matthewjones372/proofload/Rate;
 	public final fun getMaxRequests ()Ljava/lang/Long;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -146,7 +146,7 @@ public final class io/github/matthewjones372/proofload/Capacity {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCurve ()Ljava/util/List;
 	public final fun getLimitedBy ()Lio/github/matthewjones372/proofload/Goal;
-	public final fun getRate-fKsMbh4 ()Lio/github/matthewjones372/proofload/Rate;
+	public final fun getRate-Uz8bWpM ()Lio/github/matthewjones372/proofload/Rate;
 	public final fun getVoided ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -365,14 +365,14 @@ public final class io/github/matthewjones372/proofload/Difference {
 	public final fun component3 ()D
 	public final fun component4 ()I
 	public final fun component5 ()I
-	public final fun component6-_V-WK_A ()D
+	public final fun component6-gV7gRQg ()D
 	public final fun component7 ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun component8 ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun component9 ()Lio/github/matthewjones372/proofload/Spread;
-	public final fun copy-tSpQntI (Lio/github/matthewjones372/proofload/Statistic;DDIIDLio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Spread;Lio/github/matthewjones372/proofload/Tell$CannotTell;)Lio/github/matthewjones372/proofload/Difference;
-	public static synthetic fun copy-tSpQntI$default (Lio/github/matthewjones372/proofload/Difference;Lio/github/matthewjones372/proofload/Statistic;DDIIDLio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Spread;Lio/github/matthewjones372/proofload/Tell$CannotTell;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Difference;
+	public final fun copy-ZidMsTk (Lio/github/matthewjones372/proofload/Statistic;DDIIDLio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Spread;Lio/github/matthewjones372/proofload/Tell$CannotTell;)Lio/github/matthewjones372/proofload/Difference;
+	public static synthetic fun copy-ZidMsTk$default (Lio/github/matthewjones372/proofload/Difference;Lio/github/matthewjones372/proofload/Statistic;DDIIDLio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Spread;Lio/github/matthewjones372/proofload/Tell$CannotTell;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Difference;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAcceptable-_V-WK_A ()D
+	public final fun getAcceptable-gV7gRQg ()D
 	public final fun getBaselineMachine ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun getBaselineRuns ()I
 	public final fun getBefore ()D
@@ -386,16 +386,16 @@ public final class io/github/matthewjones372/proofload/Difference {
 	public final fun getStatistic ()Lio/github/matthewjones372/proofload/Statistic;
 	public final fun getVerdict ()Lio/github/matthewjones372/proofload/Tell;
 	public fun hashCode ()I
-	public final fun judgedAt-5rSJZU4 (D)Lio/github/matthewjones372/proofload/Tell;
+	public final fun judgedAt-0L85gxw (D)Lio/github/matthewjones372/proofload/Tell;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/proofload/DifferenceKt {
-	public static final fun against-dr2djKY (Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Statistic;DLio/github/matthewjones372/proofload/Floor;)Lio/github/matthewjones372/proofload/Difference;
-	public static synthetic fun against-dr2djKY$default (Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Statistic;DLio/github/matthewjones372/proofload/Floor;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Difference;
-	public static final fun explained-3__D3II (Lio/github/matthewjones372/proofload/Difference;D)Ljava/lang/String;
-	public static final fun notWorseThan-tz0I1MY (Lio/github/matthewjones372/proofload/Difference;DZ)Z
-	public static synthetic fun notWorseThan-tz0I1MY$default (Lio/github/matthewjones372/proofload/Difference;DZILjava/lang/Object;)Z
+	public static final fun against-Rn7Y3as (Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Statistic;DLio/github/matthewjones372/proofload/Floor;)Lio/github/matthewjones372/proofload/Difference;
+	public static synthetic fun against-Rn7Y3as$default (Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Runs;Lio/github/matthewjones372/proofload/Statistic;DLio/github/matthewjones372/proofload/Floor;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Difference;
+	public static final fun explained-bvlFktw (Lio/github/matthewjones372/proofload/Difference;D)Ljava/lang/String;
+	public static final fun notWorseThan-MVwB5ro (Lio/github/matthewjones372/proofload/Difference;DZ)Z
+	public static synthetic fun notWorseThan-MVwB5ro$default (Lio/github/matthewjones372/proofload/Difference;DZILjava/lang/Object;)Z
 }
 
 public abstract interface class io/github/matthewjones372/proofload/Engine {
@@ -450,12 +450,12 @@ public final class io/github/matthewjones372/proofload/ExclusivityKt {
 }
 
 public final class io/github/matthewjones372/proofload/FailuresOf {
-	public final fun copy-n5jdaAc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/FailuresOf;
-	public static synthetic fun copy-n5jdaAc$default (Lio/github/matthewjones372/proofload/FailuresOf;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/FailuresOf;
+	public final fun copy-Uocz4qY (Ljava/lang/String;)Lio/github/matthewjones372/proofload/FailuresOf;
+	public static synthetic fun copy-Uocz4qY$default (Lio/github/matthewjones372/proofload/FailuresOf;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/FailuresOf;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-	public final fun under-5rSJZU4 (D)Lio/github/matthewjones372/proofload/Goal;
+	public final fun under-0L85gxw (D)Lio/github/matthewjones372/proofload/Goal;
 }
 
 public abstract interface class io/github/matthewjones372/proofload/Feeder {
@@ -515,15 +515,15 @@ public abstract interface class io/github/matthewjones372/proofload/Goal {
 
 public final class io/github/matthewjones372/proofload/Goal$FailureRateUnder : io/github/matthewjones372/proofload/Goal {
 	public synthetic fun <init> (Ljava/lang/String;DLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-QHNdYsA ()Ljava/lang/String;
-	public final fun component2-_V-WK_A ()D
-	public final fun copy-6WSE_mI (Ljava/lang/String;D)Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;
-	public static synthetic fun copy-6WSE_mI$default (Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;Ljava/lang/String;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;
+	public final fun component1-t6hGft0 ()Ljava/lang/String;
+	public final fun component2-gV7gRQg ()D
+	public final fun copy-stdxVdo (Ljava/lang/String;D)Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;
+	public static synthetic fun copy-stdxVdo$default (Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;Ljava/lang/String;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$FailureRateUnder;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getDescribed ()Ljava/lang/String;
 	public fun getOverSteadySegment ()Z
-	public final fun getShare-_V-WK_A ()D
-	public final fun getStep-QHNdYsA ()Ljava/lang/String;
+	public final fun getShare-gV7gRQg ()D
+	public final fun getStep-t6hGft0 ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun judge (Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Verdict;
 	public fun toString ()Ljava/lang/String;
@@ -531,18 +531,18 @@ public final class io/github/matthewjones372/proofload/Goal$FailureRateUnder : i
 
 public final class io/github/matthewjones372/proofload/Goal$GoodputAtLeast : io/github/matthewjones372/proofload/Goal {
 	public synthetic fun <init> (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;DLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-WShkeBI ()Ljava/lang/String;
+	public final fun component1-GXK5RdY ()Ljava/lang/String;
 	public final fun component2-UwyO8pc ()J
 	public final fun component3 ()Lio/github/matthewjones372/proofload/Clock;
-	public final fun component4-_V-WK_A ()D
-	public final fun copy-9yxDlOQ (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;D)Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;
-	public static synthetic fun copy-9yxDlOQ$default (Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;
+	public final fun component4-gV7gRQg ()D
+	public final fun copy-y4Xgq3w (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;D)Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;
+	public static synthetic fun copy-y4Xgq3w$default (Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$GoodputAtLeast;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClock ()Lio/github/matthewjones372/proofload/Clock;
 	public fun getDescribed ()Ljava/lang/String;
 	public fun getOverSteadySegment ()Z
-	public final fun getShare-_V-WK_A ()D
-	public final fun getStep-WShkeBI ()Ljava/lang/String;
+	public final fun getShare-gV7gRQg ()D
+	public final fun getStep-GXK5RdY ()Ljava/lang/String;
 	public final fun getUnder-UwyO8pc ()J
 	public fun hashCode ()I
 	public fun judge (Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Verdict;
@@ -577,40 +577,40 @@ public final class io/github/matthewjones372/proofload/Goal$KeptSchedule : io/gi
 
 public final class io/github/matthewjones372/proofload/Goal$PercentileUnder : io/github/matthewjones372/proofload/Goal {
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-WShkeBI ()Ljava/lang/String;
+	public final fun component1-GXK5RdY ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lio/github/matthewjones372/proofload/Clock;
 	public final fun component4-UwyO8pc ()J
-	public final fun copy-x9GzCsQ (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;J)Lio/github/matthewjones372/proofload/Goal$PercentileUnder;
-	public static synthetic fun copy-x9GzCsQ$default (Lio/github/matthewjones372/proofload/Goal$PercentileUnder;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$PercentileUnder;
+	public final fun copy-2BLod-8 (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;J)Lio/github/matthewjones372/proofload/Goal$PercentileUnder;
+	public static synthetic fun copy-2BLod-8$default (Lio/github/matthewjones372/proofload/Goal$PercentileUnder;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/Goal$PercentileUnder;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClock ()Lio/github/matthewjones372/proofload/Clock;
 	public fun getDescribed ()Ljava/lang/String;
 	public final fun getLimit-UwyO8pc ()J
 	public fun getOverSteadySegment ()Z
 	public final fun getPercentile ()Ljava/lang/String;
-	public final fun getStep-WShkeBI ()Ljava/lang/String;
+	public final fun getStep-GXK5RdY ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun judge (Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Verdict;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/proofload/GoalKt {
-	public static final fun failureRate-Z5c0mbc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/FailuresOf;
+	public static final fun failureRate-2Z79qHc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/FailuresOf;
 	public static final fun getFailureRate ()Lio/github/matthewjones372/proofload/FailuresOf;
 	public static final fun getInEveryStage (Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Goal;
 	public static final fun getKeptSchedule ()Lio/github/matthewjones372/proofload/Goal;
 	public static final fun getPercent (Ljava/lang/Number;)D
-	public static final fun goodput-_E9U6aE (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/GoodputOf;
-	public static synthetic fun goodput-_E9U6aE$default (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/GoodputOf;
-	public static final fun p50-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static synthetic fun p50-_FgASpo$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static final fun p95-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static synthetic fun p95-_FgASpo$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static final fun p99-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static synthetic fun p99-_FgASpo$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static final fun p999-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static synthetic fun p999-_FgASpo$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static final fun goodput-pd_bxVI (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/GoodputOf;
+	public static synthetic fun goodput-pd_bxVI$default (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/GoodputOf;
+	public static final fun p50-SG4LJ-U (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static synthetic fun p50-SG4LJ-U$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static final fun p95-SG4LJ-U (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static synthetic fun p95-SG4LJ-U$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static final fun p99-SG4LJ-U (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static synthetic fun p99-SG4LJ-U$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static final fun p999-SG4LJ-U (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static synthetic fun p999-SG4LJ-U$default (Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
 }
 
 public final class io/github/matthewjones372/proofload/GoodputKt {
@@ -623,9 +623,9 @@ public final class io/github/matthewjones372/proofload/GoodputKt {
 }
 
 public final class io/github/matthewjones372/proofload/GoodputOf : io/github/matthewjones372/proofload/Statistic {
-	public final fun atLeast-5rSJZU4 (D)Lio/github/matthewjones372/proofload/Goal;
-	public final fun copy-_E9U6aE (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/GoodputOf;
-	public static synthetic fun copy-_E9U6aE$default (Lio/github/matthewjones372/proofload/GoodputOf;Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/GoodputOf;
+	public final fun atLeast-0L85gxw (D)Lio/github/matthewjones372/proofload/Goal;
+	public final fun copy-pd_bxVI (Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/GoodputOf;
+	public static synthetic fun copy-pd_bxVI$default (Lio/github/matthewjones372/proofload/GoodputOf;Ljava/lang/String;JLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/GoodputOf;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getDescribed ()Ljava/lang/String;
 	public fun getHigherIsWorse ()Z
@@ -790,18 +790,18 @@ public final class io/github/matthewjones372/proofload/InjectionProfile$Stages :
 }
 
 public final class io/github/matthewjones372/proofload/InjectionProfileKt {
-	public static final fun constantRate-kfZY7pg (DJ)Lio/github/matthewjones372/proofload/InjectionProfile$ConstantRate;
+	public static final fun constantRate-AXX7fTs (DJ)Lio/github/matthewjones372/proofload/InjectionProfile$ConstantRate;
 	public static final fun departures (Lio/github/matthewjones372/proofload/InjectionProfile;)Lkotlin/sequences/Sequence;
 	public static final fun getEndRate (Lio/github/matthewjones372/proofload/InjectionProfile;)D
 	public static final fun getSeeds (Lio/github/matthewjones372/proofload/InjectionProfile;)Ljava/util/List;
 	public static final fun getStartRate (Lio/github/matthewjones372/proofload/InjectionProfile;)D
-	public static final fun hold-kfZY7pg (DJ)Lio/github/matthewjones372/proofload/InjectionProfile$ConstantRate;
-	public static final fun rampRate-AlzetgU (DDJ)Lio/github/matthewjones372/proofload/InjectionProfile$RampRate;
+	public static final fun hold-AXX7fTs (DJ)Lio/github/matthewjones372/proofload/InjectionProfile$ConstantRate;
+	public static final fun rampRate-zY7hBPo (DDJ)Lio/github/matthewjones372/proofload/InjectionProfile$RampRate;
 	public static final fun randomized (Lio/github/matthewjones372/proofload/InjectionProfile;J)Lio/github/matthewjones372/proofload/InjectionProfile$Randomized;
 	public static final fun replaying-UREId80 (Lio/github/matthewjones372/proofload/ArrivalSeries;JLkotlin/time/Duration;D)Lio/github/matthewjones372/proofload/InjectionProfile$Replay;
 	public static synthetic fun replaying-UREId80$default (Lio/github/matthewjones372/proofload/ArrivalSeries;JLkotlin/time/Duration;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/InjectionProfile$Replay;
 	public static final fun then (Lio/github/matthewjones372/proofload/InjectionProfile;Lio/github/matthewjones372/proofload/InjectionProfile;)Lio/github/matthewjones372/proofload/InjectionProfile;
-	public static final fun thenRampTo-AEjiQCc (Lio/github/matthewjones372/proofload/InjectionProfile;DJ)Lio/github/matthewjones372/proofload/InjectionProfile;
+	public static final fun thenRampTo-0mKDrL0 (Lio/github/matthewjones372/proofload/InjectionProfile;DJ)Lio/github/matthewjones372/proofload/InjectionProfile;
 	public static final fun userCount (Lio/github/matthewjones372/proofload/InjectionProfile;)J
 	public static final fun users-HG0u8IE (IJ)Lio/github/matthewjones372/proofload/InjectionProfile$ClosedUsers;
 }
@@ -937,14 +937,14 @@ public final class io/github/matthewjones372/proofload/Met$Measured : io/github/
 
 public final class io/github/matthewjones372/proofload/Offered {
 	public synthetic fun <init> (DDJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-JlLZVlU ()D
-	public final fun component2-JlLZVlU ()D
+	public final fun component1-_3Rlgkc ()D
+	public final fun component2-_3Rlgkc ()D
 	public final fun component3-UwyO8pc ()J
-	public final fun copy-AlzetgU (DDJ)Lio/github/matthewjones372/proofload/Offered;
-	public static synthetic fun copy-AlzetgU$default (Lio/github/matthewjones372/proofload/Offered;DDJILjava/lang/Object;)Lio/github/matthewjones372/proofload/Offered;
+	public final fun copy-zY7hBPo (DDJ)Lio/github/matthewjones372/proofload/Offered;
+	public static synthetic fun copy-zY7hBPo$default (Lio/github/matthewjones372/proofload/Offered;DDJILjava/lang/Object;)Lio/github/matthewjones372/proofload/Offered;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAsked-JlLZVlU ()D
-	public final fun getLeft-JlLZVlU ()D
+	public final fun getAsked-_3Rlgkc ()D
+	public final fun getLeft-_3Rlgkc ()D
 	public final fun getOver-UwyO8pc ()J
 	public final fun getShare ()D
 	public fun hashCode ()I
@@ -1012,8 +1012,8 @@ public final class io/github/matthewjones372/proofload/Pending {
 }
 
 public final class io/github/matthewjones372/proofload/PercentileOf : io/github/matthewjones372/proofload/Statistic {
-	public final fun copy-aCaljSc (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
-	public static synthetic fun copy-aCaljSc$default (Lio/github/matthewjones372/proofload/PercentileOf;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public final fun copy-6pFY28c (Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/PercentileOf;
+	public static synthetic fun copy-6pFY28c$default (Lio/github/matthewjones372/proofload/PercentileOf;Ljava/lang/String;Ljava/lang/String;Lio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/PercentileOf;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getDescribed ()Ljava/lang/String;
 	public fun getHigherIsWorse ()Z
@@ -1094,17 +1094,17 @@ public final class io/github/matthewjones372/proofload/Preview$Allowed : io/gith
 	public synthetic fun <init> (JJLio/github/matthewjones372/proofload/Rate;JZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()J
 	public final fun component2-UwyO8pc ()J
-	public final fun component3-fKsMbh4 ()Lio/github/matthewjones372/proofload/Rate;
+	public final fun component3-Uz8bWpM ()Lio/github/matthewjones372/proofload/Rate;
 	public final fun component4 ()J
 	public final fun component5 ()Z
 	public final fun component6 ()Ljava/util/List;
 	public final fun component7 ()I
-	public final fun copy-_rhdRkI (JJLio/github/matthewjones372/proofload/Rate;JZLjava/util/List;I)Lio/github/matthewjones372/proofload/Preview$Allowed;
-	public static synthetic fun copy-_rhdRkI$default (Lio/github/matthewjones372/proofload/Preview$Allowed;JJLio/github/matthewjones372/proofload/Rate;JZLjava/util/List;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/Preview$Allowed;
+	public final fun copy-9d5Sn6E (JJLio/github/matthewjones372/proofload/Rate;JZLjava/util/List;I)Lio/github/matthewjones372/proofload/Preview$Allowed;
+	public static synthetic fun copy-9d5Sn6E$default (Lio/github/matthewjones372/proofload/Preview$Allowed;JJLio/github/matthewjones372/proofload/Rate;JZLjava/util/List;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/Preview$Allowed;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHosts ()Ljava/util/List;
 	public final fun getOver-UwyO8pc ()J
-	public final fun getPeakRate-fKsMbh4 ()Lio/github/matthewjones372/proofload/Rate;
+	public final fun getPeakRate-Uz8bWpM ()Lio/github/matthewjones372/proofload/Rate;
 	public final fun getRequestsAtLeast ()J
 	public final fun getRequestsBounded ()Z
 	public final fun getUntargeted ()I
@@ -1212,7 +1212,7 @@ public final class io/github/matthewjones372/proofload/Rate {
 }
 
 public final class io/github/matthewjones372/proofload/Rate$Companion {
-	public final fun parse-9B4ByH0 (Ljava/lang/String;)Lio/github/matthewjones372/proofload/Rate;
+	public final fun parse-d0afzWc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/Rate;
 }
 
 public abstract interface class io/github/matthewjones372/proofload/Reason {
@@ -1269,13 +1269,13 @@ public final class io/github/matthewjones372/proofload/Refusal$OverDuration : io
 
 public final class io/github/matthewjones372/proofload/Refusal$OverRate : io/github/matthewjones372/proofload/Refusal {
 	public synthetic fun <init> (DDLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-JlLZVlU ()D
-	public final fun component2-JlLZVlU ()D
-	public final fun copy-bsiocVw (DD)Lio/github/matthewjones372/proofload/Refusal$OverRate;
-	public static synthetic fun copy-bsiocVw$default (Lio/github/matthewjones372/proofload/Refusal$OverRate;DDILjava/lang/Object;)Lio/github/matthewjones372/proofload/Refusal$OverRate;
+	public final fun component1-_3Rlgkc ()D
+	public final fun component2-_3Rlgkc ()D
+	public final fun copy-To9sCnw (DD)Lio/github/matthewjones372/proofload/Refusal$OverRate;
+	public static synthetic fun copy-To9sCnw$default (Lio/github/matthewjones372/proofload/Refusal$OverRate;DDILjava/lang/Object;)Lio/github/matthewjones372/proofload/Refusal$OverRate;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAllowed-JlLZVlU ()D
-	public final fun getAsked-JlLZVlU ()D
+	public final fun getAllowed-_3Rlgkc ()D
+	public final fun getAsked-_3Rlgkc ()D
 	public fun getDescribed ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -1342,7 +1342,7 @@ public final class io/github/matthewjones372/proofload/RunResult {
 	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/RunResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (Ljava/lang/String;)Lio/github/matthewjones372/proofload/StepStats;
-	public final fun get-Z5c0mbc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/StepStats;
+	public final fun get-2Z79qHc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/StepStats;
 	public final fun getArrivals ()Lio/github/matthewjones372/proofload/Arrivals;
 	public final fun getBehind ()Lio/github/matthewjones372/proofload/Timing;
 	public final fun getCount ()J
@@ -1364,7 +1364,7 @@ public final class io/github/matthewjones372/proofload/RunResult {
 	public final fun getVerdicts ()Ljava/util/List;
 	public fun hashCode ()I
 	public final fun ran (Ljava/lang/String;)Z
-	public final fun ran-Z5c0mbc (Ljava/lang/String;)Z
+	public final fun ran-2Z79qHc (Ljava/lang/String;)Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1385,14 +1385,14 @@ public final class io/github/matthewjones372/proofload/RunResultKt {
 
 public final class io/github/matthewjones372/proofload/Rung {
 	public synthetic fun <init> (DLio/github/matthewjones372/proofload/RunResult;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-JlLZVlU ()D
+	public final fun component1-_3Rlgkc ()D
 	public final fun component2 ()Lio/github/matthewjones372/proofload/RunResult;
-	public final fun copy-jhas3NA (DLio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Rung;
-	public static synthetic fun copy-jhas3NA$default (Lio/github/matthewjones372/proofload/Rung;DLio/github/matthewjones372/proofload/RunResult;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Rung;
+	public final fun copy-34vqnL8 (DLio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Rung;
+	public static synthetic fun copy-34vqnL8$default (Lio/github/matthewjones372/proofload/Rung;DLio/github/matthewjones372/proofload/RunResult;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Rung;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getOffered-JlLZVlU ()D
+	public final fun getOffered-_3Rlgkc ()D
 	public final fun getOutcome ()Lio/github/matthewjones372/proofload/Rung$Outcome;
-	public final fun getRate-JlLZVlU ()D
+	public final fun getRate-_3Rlgkc ()D
 	public final fun getResult ()Lio/github/matthewjones372/proofload/RunResult;
 	public final fun getVerdicts ()Ljava/util/List;
 	public fun hashCode ()I
@@ -1476,11 +1476,11 @@ public final class io/github/matthewjones372/proofload/ScenarioBuilder {
 	public final fun doIf (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public final fun during-VtjQ1oo (JLkotlin/jvm/functions/Function1;)V
 	public final fun emit (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;Lio/github/matthewjones372/proofload/Correlation;)V
-	public final fun emit-aCaljSc (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;Lio/github/matthewjones372/proofload/Correlation;)V
+	public final fun emit-6pFY28c (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;Lio/github/matthewjones372/proofload/Correlation;)V
 	public final fun exec (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;)V
 	public final fun exec (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun exec-_FgASpo (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;)V
-	public final fun exec-_FgASpo (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun exec-SG4LJ-U (Ljava/lang/String;Lio/github/matthewjones372/proofload/Action;)V
+	public final fun exec-SG4LJ-U (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun pause (Lio/github/matthewjones372/proofload/ThinkTime;)V
 	public final fun pause-LRDsOJo (J)V
 	public final fun repeat (ILkotlin/jvm/functions/Function1;)V
@@ -1500,20 +1500,20 @@ public final class io/github/matthewjones372/proofload/Search {
 	public synthetic fun <init> (Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/WarmUp;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun atMostAfter-5sfh64U (I)J
 	public final fun component1 ()Lio/github/matthewjones372/proofload/Scenario;
-	public final fun component2-JlLZVlU ()D
+	public final fun component2-_3Rlgkc ()D
 	public final fun component3-UwyO8pc ()J
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Lio/github/matthewjones372/proofload/Feeder;
 	public final fun component6 ()Lio/github/matthewjones372/proofload/WarmUp;
-	public final fun copy-LHB856I (Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/WarmUp;)Lio/github/matthewjones372/proofload/Search;
-	public static synthetic fun copy-LHB856I$default (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/WarmUp;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Search;
+	public final fun copy-MFs2oEY (Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/WarmUp;)Lio/github/matthewjones372/proofload/Search;
+	public static synthetic fun copy-MFs2oEY$default (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/WarmUp;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Search;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFeeder ()Lio/github/matthewjones372/proofload/Feeder;
 	public final fun getGoals ()Ljava/util/List;
 	public final fun getHolding-UwyO8pc ()J
 	public final fun getRungs ()Ljava/util/List;
 	public final fun getScenario ()Lio/github/matthewjones372/proofload/Scenario;
-	public final fun getUpTo-JlLZVlU ()D
+	public final fun getUpTo-_3Rlgkc ()D
 	public final fun getWarmUp ()Lio/github/matthewjones372/proofload/WarmUp;
 	public final fun getWorstCase-UwyO8pc ()J
 	public fun hashCode ()I
@@ -1521,11 +1521,11 @@ public final class io/github/matthewjones372/proofload/Search {
 }
 
 public final class io/github/matthewjones372/proofload/SearchKt {
-	public static final fun at-yBtGdWo (Lio/github/matthewjones372/proofload/Search;D)Lio/github/matthewjones372/proofload/Simulation;
+	public static final fun at-zD1aNUY (Lio/github/matthewjones372/proofload/Search;D)Lio/github/matthewjones372/proofload/Simulation;
 	public static final fun fedBy (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Search;
 	public static final fun judgedBy (Lio/github/matthewjones372/proofload/Search;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/proofload/Capacity;
 	public static synthetic fun judgedBy$default (Lio/github/matthewjones372/proofload/Search;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Capacity;
-	public static final fun sustainable-BQeI-Yg (Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;)Lio/github/matthewjones372/proofload/Search;
+	public static final fun sustainable-B6_FF2g (Lio/github/matthewjones372/proofload/Scenario;DJLjava/util/List;)Lio/github/matthewjones372/proofload/Search;
 	public static final fun warmingUp-HG0u8IE (Lio/github/matthewjones372/proofload/Search;J)Lio/github/matthewjones372/proofload/Search;
 }
 
@@ -1681,8 +1681,8 @@ public final class io/github/matthewjones372/proofload/Simulation {
 
 public final class io/github/matthewjones372/proofload/SimulationKt {
 	public static final fun at (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/InjectionProfile$ClosedUsers;)Lio/github/matthewjones372/proofload/Simulation;
-	public static final fun at-AEjiQCc (Lio/github/matthewjones372/proofload/Scenario;DJ)Lio/github/matthewjones372/proofload/Simulation;
-	public static final fun completing-K1myCzc (Lio/github/matthewjones372/proofload/Simulation;Ljava/lang/String;Lio/github/matthewjones372/proofload/Completions;J)Lio/github/matthewjones372/proofload/Simulation;
+	public static final fun at-0mKDrL0 (Lio/github/matthewjones372/proofload/Scenario;DJ)Lio/github/matthewjones372/proofload/Simulation;
+	public static final fun completing-NYVWxOk (Lio/github/matthewjones372/proofload/Simulation;Ljava/lang/String;Lio/github/matthewjones372/proofload/Completions;J)Lio/github/matthewjones372/proofload/Simulation;
 	public static final fun completing-Wn2Vu4Y (Lio/github/matthewjones372/proofload/Simulation;Ljava/lang/String;Lio/github/matthewjones372/proofload/Completions;J)Lio/github/matthewjones372/proofload/Simulation;
 	public static final fun drawing (Lio/github/matthewjones372/proofload/Simulation;[Lio/github/matthewjones372/proofload/Shape;)Lio/github/matthewjones372/proofload/Simulation;
 	public static final fun expecting (Lio/github/matthewjones372/proofload/Simulation;[Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Simulation;
@@ -2228,11 +2228,11 @@ public final class io/github/matthewjones372/proofload/Trend {
 	public synthetic fun <init> (Lio/github/matthewjones372/proofload/Statistic;Ljava/util/List;DLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lio/github/matthewjones372/proofload/Statistic;
 	public final fun component2 ()Ljava/util/List;
-	public final fun component3-_V-WK_A ()D
-	public final fun copy-ukjyavQ (Lio/github/matthewjones372/proofload/Statistic;Ljava/util/List;D)Lio/github/matthewjones372/proofload/Trend;
-	public static synthetic fun copy-ukjyavQ$default (Lio/github/matthewjones372/proofload/Trend;Lio/github/matthewjones372/proofload/Statistic;Ljava/util/List;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Trend;
+	public final fun component3-gV7gRQg ()D
+	public final fun copy-0HlV-vQ (Lio/github/matthewjones372/proofload/Statistic;Ljava/util/List;D)Lio/github/matthewjones372/proofload/Trend;
+	public static synthetic fun copy-0HlV-vQ$default (Lio/github/matthewjones372/proofload/Trend;Lio/github/matthewjones372/proofload/Statistic;Ljava/util/List;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Trend;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAcceptable-_V-WK_A ()D
+	public final fun getAcceptable-gV7gRQg ()D
 	public final fun getComparisons ()I
 	public final fun getEnds ()Lio/github/matthewjones372/proofload/Difference;
 	public final fun getPairs ()Ljava/util/List;

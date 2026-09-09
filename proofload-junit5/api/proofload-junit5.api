@@ -1,6 +1,12 @@
 public final class io/github/matthewjones372/proofload/junit5/DifferencesKt {
-	public static final fun assertNotWorseThan-tz0I1MY (Lio/github/matthewjones372/proofload/Difference;DZ)V
-	public static synthetic fun assertNotWorseThan-tz0I1MY$default (Lio/github/matthewjones372/proofload/Difference;DZILjava/lang/Object;)V
+	public static final fun assertNotWorseThan-MVwB5ro (Lio/github/matthewjones372/proofload/Difference;DZ)V
+	public static synthetic fun assertNotWorseThan-MVwB5ro$default (Lio/github/matthewjones372/proofload/Difference;DZILjava/lang/Object;)V
+}
+
+public final class io/github/matthewjones372/proofload/junit5/LoadRunSummary : java/lang/RuntimeException {
+}
+
+public abstract interface annotation class io/github/matthewjones372/proofload/junit5/LoadTest : java/lang/annotation/Annotation {
 }
 
 public final class io/github/matthewjones372/proofload/junit5/ProofloadExtension : org/junit/jupiter/api/extension/ParameterResolver, org/junit/jupiter/api/extension/TestExecutionExceptionHandler {
@@ -9,12 +15,6 @@ public final class io/github/matthewjones372/proofload/junit5/ProofloadExtension
 	public fun resolveParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Lio/github/matthewjones372/proofload/engine/Proofload;
 	public synthetic fun resolveParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Ljava/lang/Object;
 	public fun supportsParameter (Lorg/junit/jupiter/api/extension/ParameterContext;Lorg/junit/jupiter/api/extension/ExtensionContext;)Z
-}
-
-public final class io/github/matthewjones372/proofload/junit5/LoadRunSummary : java/lang/RuntimeException {
-}
-
-public abstract interface annotation class io/github/matthewjones372/proofload/junit5/LoadTest : java/lang/annotation/Annotation {
 }
 
 public abstract interface class io/github/matthewjones372/proofload/junit5/RunsOn {

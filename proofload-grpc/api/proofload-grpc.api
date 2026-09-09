@@ -99,14 +99,14 @@ public final class io/github/matthewjones372/proofload/grpc/StreamEnded : io/git
 }
 
 public final class io/github/matthewjones372/proofload/grpc/StreamsKt {
-	public static final fun awaiting-K1myCzc (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
-	public static final fun cadence-K1myCzc (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
-	public static final fun done-RMTPdsE (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
-	public static final fun firstAnswer-S_JT210 (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;J)V
+	public static final fun awaiting-NYVWxOk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
+	public static final fun cadence-NYVWxOk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
+	public static final fun done-gWihuN4 (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
+	public static final fun firstAnswer-V_gnWBo (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;J)V
 	public static final fun getStreaming ()Lio/github/matthewjones372/proofload/SessionKey;
 	public static final fun open (Lio/github/matthewjones372/proofload/ScenarioBuilder;Lio/github/matthewjones372/proofload/grpc/GrpcServerStream;Ljava/lang/Object;)V
 	public static final fun open (Lio/github/matthewjones372/proofload/ScenarioBuilder;Lio/github/matthewjones372/proofload/grpc/GrpcStream;)V
-	public static final fun send-ZV9k6rk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Ljava/lang/Object;)V
+	public static final fun send-FYSgf1w (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Ljava/lang/Object;)V
 	public static final fun serverStream (Lio/github/matthewjones372/proofload/grpc/Grpc;Lio/grpc/MethodDescriptor;Lkotlin/jvm/functions/Function2;)Lio/github/matthewjones372/proofload/grpc/GrpcServerStream;
 	public static final fun stream (Lio/github/matthewjones372/proofload/grpc/Grpc;Lio/grpc/MethodDescriptor;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/proofload/grpc/GrpcStream;
 }

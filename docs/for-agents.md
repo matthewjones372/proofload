@@ -1434,13 +1434,13 @@ class SqlState : Reason
 ```text
 top-level in DifferencesKt
     fun assertNotWorseThan(Difference, Double, Boolean)
+class LoadRunSummary : RuntimeException
+interface LoadTest : Annotation
 class ProofloadExtension : ParameterResolver, TestExecutionExceptionHandler
     constructor()
     fun handleTestExecutionException(ExtensionContext, Throwable)
     fun resolveParameter(ParameterContext, ExtensionContext): Proofload
     fun supportsParameter(ParameterContext, ExtensionContext): Boolean
-class LoadRunSummary : RuntimeException
-interface LoadTest : Annotation
 interface RunsOn
     val engine: Engine
 ```
@@ -1487,13 +1487,13 @@ class Topic
 ### `io.github.matthewjones372:proofload-kotest`
 
 ```text
-top-level in ProofloadKt
-    fun proofload(Engine): Proofload
-    fun proofload(Continuation): Object
 class NotWorseThan : Matcher
     val acceptable: Double
     val orCannotTell: Boolean
     fun test(Difference): MatcherResult
+top-level in ProofloadKt
+    fun proofload(Engine): Proofload
+    fun proofload(Continuation): Object
 ```
 
 ### `io.github.matthewjones372:proofload-mcp`

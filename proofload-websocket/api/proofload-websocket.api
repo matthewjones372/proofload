@@ -5,9 +5,9 @@ public final class io/github/matthewjones372/proofload/websocket/Connection {
 }
 
 public final class io/github/matthewjones372/proofload/websocket/ConnectionKt {
-	public static final fun close-RMTPdsE (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
+	public static final fun close-gWihuN4 (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
 	public static final fun getConnection ()Lio/github/matthewjones372/proofload/SessionKey;
-	public static final fun open-ZV9k6rk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsTarget;)V
+	public static final fun open-FYSgf1w (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsTarget;)V
 }
 
 public final class io/github/matthewjones372/proofload/websocket/Disconnected : io/github/matthewjones372/proofload/Reason {
@@ -19,8 +19,8 @@ public final class io/github/matthewjones372/proofload/websocket/Disconnected : 
 }
 
 public final class io/github/matthewjones372/proofload/websocket/MessagesKt {
-	public static final fun awaiting-K1myCzc (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
-	public static final fun send-iTDoCcE (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsFrame;Lio/github/matthewjones372/proofload/Correlation;)V
+	public static final fun awaiting-NYVWxOk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
+	public static final fun send-i-24vts (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsFrame;Lio/github/matthewjones372/proofload/Correlation;)V
 }
 
 public final class io/github/matthewjones372/proofload/websocket/NotConnected : io/github/matthewjones372/proofload/Reason {

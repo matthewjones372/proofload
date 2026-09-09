@@ -133,28 +133,28 @@ public abstract interface class io/github/matthewjones372/proofload/plan/Declare
 
 public final class io/github/matthewjones372/proofload/plan/DeclaredLoad$Constant : io/github/matthewjones372/proofload/plan/DeclaredLoad {
 	public synthetic fun <init> (DJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-JlLZVlU ()D
+	public final fun component1-_3Rlgkc ()D
 	public final fun component2-UwyO8pc ()J
-	public final fun copy-kfZY7pg (DJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
-	public static synthetic fun copy-kfZY7pg$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;DJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
+	public final fun copy-AXX7fTs (DJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
+	public static synthetic fun copy-AXX7fTs$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;DJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getOver-UwyO8pc ()J
-	public final fun getRate-JlLZVlU ()D
+	public final fun getRate-_3Rlgkc ()D
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp : io/github/matthewjones372/proofload/plan/DeclaredLoad {
 	public synthetic fun <init> (DDJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-JlLZVlU ()D
-	public final fun component2-JlLZVlU ()D
+	public final fun component1-_3Rlgkc ()D
+	public final fun component2-_3Rlgkc ()D
 	public final fun component3-UwyO8pc ()J
-	public final fun copy-AlzetgU (DDJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
-	public static synthetic fun copy-AlzetgU$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;DDJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
+	public final fun copy-zY7hBPo (DDJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
+	public static synthetic fun copy-zY7hBPo$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;DDJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrom-JlLZVlU ()D
+	public final fun getFrom-_3Rlgkc ()D
 	public final fun getOver-UwyO8pc ()J
-	public final fun getTo-JlLZVlU ()D
+	public final fun getTo-_3Rlgkc ()D
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

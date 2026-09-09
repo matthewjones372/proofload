@@ -1,19 +1,19 @@
 {
   "results": [
     {
-       "name" : "test_case_77202144/a load test that is a zio-test test/sends the run on the blocking executor, not the pool the fiber is on",
+       "name" : "test_case_1893084530/a load test that is a zio-test test/sends the run on the blocking executor, not the pool the fiber is on",
        "status" : "Success",
-       "durationMillis" : "523",
+       "durationMillis" : "585",
        "annotations" : "",
-       "fullyQualifiedClassName" : "test_case_77202144",
+       "fullyQualifiedClassName" : "test_case_1893084530",
        "labels" : ["a load test that is a zio-test test", "sends the run on the blocking executor, not the pool the fiber is on"]
     },
     {
-       "name" : "test_case_77202144/a load test that is a zio-test test/runs a scenario against a target and reads what it measured",
+       "name" : "test_case_1893084530/a load test that is a zio-test test/runs a scenario against a target and reads what it measured",
        "status" : "Success",
-       "durationMillis" : "584",
+       "durationMillis" : "717",
        "annotations" : "",
-       "fullyQualifiedClassName" : "test_case_77202144",
+       "fullyQualifiedClassName" : "test_case_1893084530",
        "labels" : ["a load test that is a zio-test test", "runs a scenario against a target and reads what it measured"]
     }
   ]

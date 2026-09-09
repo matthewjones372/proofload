@@ -6,8 +6,8 @@ import io.github.matthewjones372.proofload.plan.readPlan
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -81,12 +81,25 @@ class SurvivingTest {
         }
     }
 
+    /**
+     * Two ids from one registry, because the claim is about a *sequence* and
+     * no single id can carry it. Two earlier spellings of this were flaky:
+     * `shouldNotContain "-1"` failed one run in sixteen, whenever the first
+     * hex digit was a 1; refusing anything matching `r-\d+` failed one in
+     * forty, whenever all eight digits happened to be decimal. Both tested the
+     * shape of one draw rather than the thing that matters.
+     */
     @Test
     fun `an id says nothing about how many runs came before it`(@TempDir dir: Path) {
-        val (_, id) = finishedRun(dir)
+        val registry = Registry(runs = dir.resolve("runs"))
+        val first = idIn(registry.start(plan(), Allowance.none))
+        while (registry.ran(first) == null) Thread.sleep(POLL)
+        val second = idIn(registry.start(plan(), Allowance.none))
 
         withClue("a counter tells every caller how busy the server is, which is nobody's business") {
-            id shouldNotContain "-1"
+            val counted = second.removePrefix("r-").toLong(radix = HEX) -
+                first.removePrefix("r-").toLong(radix = HEX)
+            counted shouldNotBe 1L
         }
     }
 
@@ -125,6 +138,7 @@ class SurvivingTest {
 
     private companion object {
         const val POLL = 50L
+        const val HEX = 16
         val WAIT = 30.seconds
     }
 }

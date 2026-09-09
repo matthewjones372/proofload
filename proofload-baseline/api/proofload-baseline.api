@@ -4,8 +4,8 @@ public final class io/github/matthewjones372/proofload/baseline/BaselineKt {
 }
 
 public final class io/github/matthewjones372/proofload/baseline/HistoryKt {
-	public static final fun readTrend-ukjyavQ (Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Statistic;D)Lio/github/matthewjones372/proofload/Trend;
-	public static synthetic fun readTrend-ukjyavQ$default (Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Statistic;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Trend;
+	public static final fun readTrend-0HlV-vQ (Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Statistic;D)Lio/github/matthewjones372/proofload/Trend;
+	public static synthetic fun readTrend-0HlV-vQ$default (Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Statistic;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Trend;
 }
 
 public final class io/github/matthewjones372/proofload/baseline/ManyRunsKt {

@@ -5,6 +5,7 @@ import io.github.matthewjones372.proofload.Runs
 import io.github.matthewjones372.proofload.Shards
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration
 
 /**
  * Writes this run into [directory] under a name no other invocation will take:
@@ -50,12 +51,23 @@ fun Runs.Companion.readAll(directory: Path): Runs {
  * nothing had to — each was given three scalars and the same jar, and the
  * plan lines in the files prove they ran the same thing.
  */
-fun Shards.Companion.readAll(directory: Path): Shards {
+fun Shards.Companion.readAll(directory: Path): Shards = readAll(directory, Shards.TOLERABLE_SKEW)
+
+/**
+ * The same, merged only where no two injectors held further apart than
+ * [tolerating].
+ *
+ * A separate arity rather than a default, so the one-argument call stays the
+ * signature it was. `Shards` takes the bound because a set of hosts nobody
+ * synchronises is a set somebody may still want an answer from; reading them
+ * off a directory is where they say so.
+ */
+fun Shards.Companion.readAll(directory: Path, tolerating: Duration): Shards {
     val files = runsIn(directory)
     require(files.isNotEmpty()) {
         "no injectors in $directory: each writes one there, named run-<started>-<index>of<N>-<pid>$EXTENSION"
     }
-    return Shards(files.map { readBaseline(it) }.sortedBy { it.shard?.index })
+    return Shards(files.map { readBaseline(it) }.sortedBy { it.shard?.index }, tolerating)
 }
 
 private fun runsIn(directory: Path): List<Path> {

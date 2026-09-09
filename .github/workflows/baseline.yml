@@ -39,6 +39,11 @@ jobs:
       # A pull request reads main's cache and writes only into its own scope,
       # which is what makes the comparison "against main" rather than against
       # whatever ran last anywhere.
+      #
+      # Root-relative, and `againstTheBaseline` pins `workingDir` to the root
+      # so it writes here rather than under `:examples`. The path is in
+      # `docs/cookbook.md` as a command a reader types from the root, so the
+      # task is what moves to meet it.
       - name: Restore the last baseline
         uses: actions/cache@v4
         with:

@@ -412,6 +412,12 @@ enough to list, and long enough to matter.
   named a shape and named different ones are refused rather than compared, and
   the HTML page and the job summary state it beside the arrival process — a run
   that named none says nothing and reads exactly as before.
+- **A set of shards can be read back under a stated tolerance.**
+  `Shards.readAll(directory, tolerating)` is the merge with the bound named,
+  beside the one-argument call that keeps the 100ms default. `Shards` has taken
+  `tolerating` since it existed — a set of hosts nobody synchronises is a set
+  somebody may still want an answer from — but reading them off a directory,
+  which is how a coordinator gets them, had no way to say so.
 
 ### Changed
 

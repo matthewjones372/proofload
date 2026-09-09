@@ -136,7 +136,7 @@ client, and cannot say which of those three the number belongs to.
 
 | Spec | What it would get |
 |---|---|
-| [0118](0118-a-target-that-is-not-in-the-way.md) | the target in its own JVM on its own cores, and requests per connection, so the socket ceiling is the client's number rather than the arrangement's |
+| [0118](0118-a-target-that-is-not-in-the-way.md) | the target in its own JVM on its own cores, and requests per connection, so the socket ceiling is the client's number rather than the arrangement's — **`spec-0118-apart` built**, the rest outstanding |
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
 | [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept — and shipped only if the sweep says the one it holds today was the bound |
 

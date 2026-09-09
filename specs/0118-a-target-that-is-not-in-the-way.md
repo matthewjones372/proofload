@@ -65,8 +65,9 @@ here, and it is the shape of thing 0086 declined for the same reason.
 
 ## Stack
 
-- [ ] **`spec-0118-apart`** — `LoopbackTarget` with a `main`, started and
+- [x] **`spec-0118-apart`** — `LoopbackTarget` with a `main`, started and
       stopped by the harness, reporting its served timing back through a file.
+      Landed in [#84](https://github.com/matthewjones372/proofload/pull/84).
       Done when: a sweep run against the out-of-process target produces the same
       columns as today's, and the target's own `served()` is in them.
 - [ ] **`spec-0118-cores`** — disjoint CPU sets for generator and target, named

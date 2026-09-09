@@ -131,13 +131,20 @@ needs a launcher — a download from the GitHub release (which carries a `.bat`,
 it is the Windows answer too), and a container:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD/proofload.toml:/work/proofload.toml:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
 ```
 
-The mount is not optional there: an absent allowance means no limits, which is
-fine for a tool you installed yourself and not for an image a model drives, so the
-image refuses to `run` without a fence. [docs/mcp.md](docs/mcp.md#starting-it) has
-all four routes.
+That is the whole command: `benchmark`, `plan_schema`, `validate`, `preview`,
+`smoke` and `trace` work with nothing else set up. Only `run` needs a fence — write
+a `proofload.toml` in the directory you started it from and it is picked up, because
+that directory is what the mount above hands over.
+
+**Mount the directory, not the file.** `-v "$PWD/proofload.toml:..."` looks tidier
+and creates a *directory* called `proofload.toml` in your working directory when the
+file is not there yet, which then cannot be read as an allowance. Mounting the
+directory has no such state to get wrong.
+
+[docs/mcp.md](docs/mcp.md#starting-it) has all four routes.
 
 Working on Proofload itself, or on an unreleased change, build it instead:
 

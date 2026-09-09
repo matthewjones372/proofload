@@ -140,6 +140,31 @@ client, and cannot say which of those three the number belongs to.
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
 | [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept — and shipped only if the sweep says the one it holds today was the bound |
 
+Fourteen more came out of one adversarial review of the tree, aimed at finding
+ways it could produce a plausible-looking but incorrect result. It found five.
+[HARDENING.md](HARDENING.md) is the index over them — what each settles, which
+are P0 for 1.0, and what is explicitly out of scope — and
+[0134](0134-the-statements-that-must-never-become-false.md) is the anchor: the
+sixteen statements that must never become false, and the five that do not hold
+today.
+
+| Spec | What it would get |
+|---|---|
+| [0121](0121-a-number-you-are-not-allowed-to-read-yet.md) | measurement validity as a value, and an API whose short path is the safe one |
+| [0122](0122-late-missed-or-never-asked-for.md) | one vocabulary for arrival, departure, lateness, missed, dropped and saturation — and the counts behind it |
+| [0123](0123-experiments-designed-to-break-it.md) | nine coordinated-omission experiments against an oracle, written to falsify rather than to pass |
+| [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already exist |
+| [0125](0125-correct-at-a-hundred-thousand.md) | the sharded recorder's correctness under load, independent of its speed |
+| [0126](0126-when-the-carrier-is-the-bottleneck.md) | carrier starvation and pinning, which today are reported as the target's latency |
+| [0127](0127-what-the-instruments-cost-the-measurement.md) | instrumented against uninstrumented, per departure, read at the tail |
+| [0128](0128-a-run-that-can-be-stopped.md) | the run lifecycle, cancellation, a deadline, and what becomes of in-flight work |
+| [0129](0129-a-result-that-cannot-lie-about-itself.md) | twelve result invariants, checked at every freeze, merge and read |
+| [0130](0130-what-a-hundred-a-second-means.md) | the open model's arithmetic as a 1.0 contract |
+| [0131](0131-the-bar-a-closed-model-would-have-to-clear.md) | the closed-model statement for 1.0, and the bar if it were ever to change |
+| [0132](0132-where-a-step-starts-and-stops.md) | what a step measures, made explicit and testable |
+| [0133](0133-the-documents-1-0-cannot-ship-without.md) | the documentation audit, and the seven pages 1.0 needs |
+| [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants, and which five do not hold |
+
 ## Known and unwritten
 
 Nothing. Per-stage results became [0077](0077-what-each-stage-measured.md),

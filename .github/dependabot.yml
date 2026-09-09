@@ -1,12 +1,35 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
+# Kept deliberately quiet. Every pull request Dependabot opens runs the
+# three-JDK matrix in `build.yml`, and this repository has already spent an
+# Actions allowance once; ungrouped, three ecosystems at the default limit is
+# fifteen open pull requests and forty-five jobs a week. Grouped, it is three.
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "gradle"
+    directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 2
+    groups:
+      gradle:
+        patterns: ["*"]
 
+  # `smoke/` is a build of its own with its own settings file — it resolves the
+  # published coordinates rather than the projects — so the root entry above
+  # cannot see it.
+  - package-ecosystem: "gradle"
+    directory: "/smoke"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    groups:
+      smoke:
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]

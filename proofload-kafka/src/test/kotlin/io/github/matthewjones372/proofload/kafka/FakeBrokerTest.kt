@@ -107,6 +107,64 @@ class FakeBrokerTest {
         }
     }
 
+    /**
+     * The same round trip with a flush between every record, so the log holds ten
+     * batches rather than however many the accumulator happened to make.
+     *
+     * This is the case that was broken and invisible. A client's batches all arrive
+     * claiming to start at offset zero; while there was one of them, handing it back
+     * unchanged worked. With several, a consumer past zero discarded each later batch
+     * as already seen, and the run read as a gap in the middle — records 0 to 3 and 8
+     * to 9 arriving, 4 to 7 gone. It surfaced as one JVM of three failing, because
+     * how many batches the accumulator makes is a matter of timing.
+     */
+    @Test
+    fun `a consumer reads every batch, and not only the first`() {
+        FakeBroker().use { broker ->
+            KafkaProducer(
+                Properties().apply {
+                    setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, broker.bootstrap)
+                    setProperty(ProducerConfig.ACKS_CONFIG, "all")
+                    setProperty(ProducerConfig.LINGER_MS_CONFIG, "0")
+                },
+                ByteArraySerializer(),
+                ByteArraySerializer(),
+            ).use { producer ->
+                (0 until PRODUCED).forEach { number ->
+                    producer.send(ProducerRecord(FakeBroker.TOPIC, null, "trade $number".toByteArray()))
+                    // One batch per record, which is the point.
+                    producer.flush()
+                }
+            }
+
+            val settings = Properties().apply {
+                setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, broker.bootstrap)
+                setProperty(ConsumerConfig.GROUP_ID_CONFIG, "batches")
+                setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+                setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+                setProperty(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "5000")
+                setProperty(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "10000")
+            }
+
+            val read = KafkaConsumer(settings, ByteArrayDeserializer(), ByteArrayDeserializer()).use { consumer ->
+                val partition = TopicPartition(FakeBroker.TOPIC, 0)
+                consumer.assign(listOf(partition))
+                consumer.seekToBeginning(listOf(partition))
+                val seen = mutableListOf<String>()
+                val giveUp = System.nanoTime() + PATIENCE.inWholeNanoseconds
+                while (seen.size < PRODUCED && System.nanoTime() < giveUp) {
+                    consumer.poll(java.time.Duration.ofMillis(200))
+                        .forEach { seen += it.value().decodeToString() }
+                }
+                seen
+            }
+
+            withClue("ten batches, and a gap in the middle is what a lost one looks like: $read") {
+                read shouldBe (0 until PRODUCED).map { "trade $it" }
+            }
+        }
+    }
+
     private companion object {
         const val PRODUCED = 10
 

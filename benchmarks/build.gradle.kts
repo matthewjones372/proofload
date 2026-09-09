@@ -28,6 +28,19 @@ tasks.register<JavaExec>("ceiling") {
     jvmArgs("-Xmx2g")
 }
 
+tasks.register<JavaExec>("ceilingApart") {
+    // A benchmark measures this machine, so it must not queue behind a test
+    // run and must not make one queue behind it.
+    systemProperty("proofload.exclusive", "false")
+    group = "verification"
+    description = "The over-a-socket sweep with the target in a JVM of its own."
+    mainClass.set("io.github.matthewjones372.proofload.benchmarks.CeilingApartKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    // The generator's heap only. The target gets a JVM of its own and the
+    // default heap with it, which is the point of the task.
+    jvmArgs("-Xmx2g")
+}
+
 tasks.register<JavaExec>("kafkaCeiling") {
     // A benchmark measures this machine, so it must not queue behind a test
     // run and must not make one queue behind it.

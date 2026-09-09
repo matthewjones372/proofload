@@ -72,8 +72,11 @@ private fun measureOverASocket(rate: Int): Measured {
 }
 
 /** The shipped step, unconfigured: the sweep measures what a user gets. */
-private fun hitting(target: LoopbackTarget): Scenario =
-    scenario("over a socket") { exec(http.baseUrl(target.baseUrl).get("/")) }
+private fun hitting(target: LoopbackTarget): Scenario = hitting(target.baseUrl)
+
+/** The same step at a target this process cannot see into, which is the only difference. */
+internal fun hitting(baseUrl: String): Scenario =
+    scenario("over a socket") { exec(http.baseUrl(baseUrl).get("/")) }
 
 internal class Measured(
     val rate: Int,
@@ -224,7 +227,7 @@ private fun footer(measured: List<Measured>): List<String> {
     return listOf("", "Measured on ${machine()}, under $carrying.")
 }
 
-private fun Measured.socketRow(): String =
+internal fun Measured.socketRow(): String =
     "| ${rate.grouped()} | ${result.count.grouped()} | ${result.failed.grouped()} | $whyFailed | " +
         "${result.behind.p50.readable()} | ${result.behind.p99.readable()} | ${result.behind.max.readable()} | " +
         "${served?.p50.readable()} | ${served?.p99.readable()} | $room | " +
@@ -238,12 +241,12 @@ private fun Measured.nullStepRow(): String =
 /** What the machine was carrying, so a figure taken on a busy one says so. */
 internal fun loadAverage(): Double = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
 
-private fun machine(): String =
+internal fun machine(): String =
     "${System.getProperty("os.name")} ${System.getProperty("os.arch")}, " +
         "${Runtime.getRuntime().availableProcessors()} processors, " +
         "JDK ${System.getProperty("java.version")}"
 
-private fun Double.rounded(): String = String.format(Locale.ROOT, "%.2f", this)
+internal fun Double.rounded(): String = String.format(Locale.ROOT, "%.2f", this)
 
 internal fun Duration?.readable(): String = this?.toString() ?: NOTHING
 
@@ -255,9 +258,9 @@ internal fun Number.grouped(): String =
 
 private const val THOUSAND = 3
 
-private val WARMUP: Duration = 1.seconds
+internal val WARMUP: Duration = 1.seconds
 
-private val WINDOW: Duration = 5.seconds
+internal val WINDOW: Duration = 5.seconds
 
 private val RATES = listOf(100, 250, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000)
 
@@ -266,11 +269,11 @@ private val RATES = listOf(100, 250, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 
  * connection, a handler thread and two syscalls, and a rate the loopback stack
  * cannot answer measures the queue it built rather than the generator.
  */
-private val SOCKET_RATES = listOf(100, 250, 500, 1_000, 2_500, 5_000, 10_000)
+internal val SOCKET_RATES = listOf(100, 250, 500, 1_000, 2_500, 5_000, 10_000)
 
 /**
  * How late a departure may be before the tool is inflating what it measures.
  * A millisecond is roughly the floor of what a real target's p99 moves by, so a
  * generator inside it cannot be blamed for a number a user reads.
  */
-private val BUDGET: Duration = 1.milliseconds
+internal val BUDGET: Duration = 1.milliseconds

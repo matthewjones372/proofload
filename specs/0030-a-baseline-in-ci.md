@@ -23,7 +23,7 @@ switched off within a month.
 
 ## Not doing
 
-- No storage service and no Kestrel-hosted anything. A baseline is a file, and
+- No storage service and no Proofload-hosted anything. A baseline is a file, and
   this spec explains where to keep it.
 - No GitHub Action of our own. A workflow file and a cache key.
 - No automatic gating. A comparison is reported and can be asserted on; whether
@@ -71,7 +71,7 @@ otherwise answer with a guess.
 
 ## Stack
 
-- [x] **`spec-0030-provenance`** ([#20](https://github.com/matthewjones372/kestrel/pull/20)) — the plan and the machine in the baseline
+- [x] **`spec-0030-provenance`** ([#20](https://github.com/matthewjones372/proofload/pull/20)) — the plan and the machine in the baseline
       format, and `Comparison.NotComparable`.
       Done when: two runs of different profiles refuse to compare and say why,
       and two runs of the same profile on different machines compare with a

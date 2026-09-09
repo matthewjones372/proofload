@@ -1,6 +1,6 @@
 # The ideas behind the numbers
 
-Every figure Kestrel prints answers a question, and most of them answer a
+Every figure Proofload prints answers a question, and most of them answer a
 different question from the one people assume. This page is the vocabulary —
 what a percentile is, why lateness is a verdict rather than a footnote, and what
 Little's law catches that nothing else does.
@@ -33,7 +33,7 @@ queue it created — and worse, it *stops sending* while the target is slow, so
 the slow period is under-sampled by exactly the thing that made it slow. The
 tail looks fine because the requests that would have been in it were never sent.
 
-Kestrel sends on a schedule regardless of what came back, and reports both
+Proofload sends on a schedule regardless of what came back, and reports both
 clocks. Goals judge response time by default: a goal written against service
 time can be met by a generator that never sent the load.
 
@@ -80,7 +80,7 @@ request that mostly does not happen: half the traffic is slower than the average
 and the shape of *how much* slower is the entire question. A page that takes six
 calls has a roughly one-in-six chance of containing a p99 request.
 
-Kestrel's percentiles are read off counted buckets. A bar is what was counted; a
+Proofload's percentiles are read off counted buckets. A bar is what was counted; a
 percentile is the top of the bucket the sample landed in. Nothing is
 interpolated, so a number on a page came from something measured. The cost is
 that a percentile is accurate to a bucket width, which travels with the number
@@ -105,7 +105,7 @@ L = λ × W
 It is arithmetic, not a model — true of any queue that is not growing. Which
 makes it a free consistency check on a load test, and one nothing else provides.
 
-Kestrel measures all three independently: it counts users in flight each second,
+Proofload measures all three independently: it counts users in flight each second,
 knows the rate it asked for, and has the latency from the histograms. If the
 count it *observed* disagrees with what the other two *predict*, one of the three
 is wrong.
@@ -130,7 +130,7 @@ The opening seconds of a run are not the run. Caches are cold, connections are
 being made, the JIT has not finished. A percentile over the whole window mixes
 that with the part anybody cares about.
 
-Kestrel looks for where the run settled and can judge goals over that segment
+Proofload looks for where the run settled and can judge goals over that segment
 alone. A run that never settles says so rather than reporting a number that
 describes two different systems averaged together.
 
@@ -151,7 +151,7 @@ written. A `500` nobody wrote down is a defect. Every other load tool has to be
 told which statuses are acceptable, by hand, per step — and mostly is not, so
 both land in one failure count.
 
-Where a contract exists, Kestrel reads it: a status the OpenAPI document or the
+Where a contract exists, Proofload reads it: a status the OpenAPI document or the
 Pelican endpoint declares fails under its own reason, and the run separates
 *the service behaving* from *something wrong*.
 

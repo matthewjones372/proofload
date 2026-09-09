@@ -75,7 +75,7 @@ holds every run separately for anyone who needs it.
 
 ## Stack
 
-- [x] **`spec-0046-superimposed`** ([#32](https://github.com/matthewjones372/kestrel/pull/32)) — `timeline` in `Runs.merged` and in the step
+- [x] **`spec-0046-superimposed`** ([#32](https://github.com/matthewjones372/proofload/pull/32)) — `timeline` in `Runs.merged` and in the step
       merge, second *n* against second *n*, padding to the longest run.
       Done when: ten runs of the same length merge to a timeline of that length
       whose counts sum to the merged result's count, a shorter run is padded

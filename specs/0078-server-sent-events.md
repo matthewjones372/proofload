@@ -3,9 +3,9 @@
 ## Problem
 
 A team whose product streams — a dashboard, a notification feed, an LLM
-answering token by token — has nothing here. `kestrel-http` measures one round
+answering token by token — has nothing here. `proofload-http` measures one round
 trip (`HttpAction.kt`), which for a feed is the moment the headers arrive and
-nothing after it. `kestrel-websocket` speaks a different protocol over a
+nothing after it. `proofload-websocket` speaks a different protocol over a
 different handshake, so a team on SSE cannot borrow it.
 
 What they do instead is send a plain GET at the stream endpoint and read the
@@ -108,7 +108,7 @@ somebody wants it (question 4).
 
 ## Open questions
 
-1. **Does `open` belong to `kestrel-http`'s cookie jar and `traceparent`?**
+1. **Does `open` belong to `proofload-http`'s cookie jar and `traceparent`?**
    Both are on `Http` and an SSE request is an HTTP request. Recommend yes for
    `traced`, which is the same trace a reader would follow, and leaving cookies
    until somebody has a feed behind a session.
@@ -120,7 +120,7 @@ somebody wants it (question 4).
     scenario cannot assert on what arrived. Recommend leaving it until a
     `capture`-shaped verb wants it: the shape of that verb decides whether the
     frame is kept, and guessing now costs an allocation per event for nobody.
-4. **`cadence` collides with `kestrel-grpc`'s.** Same name, same signature,
+4. **`cadence` collides with `proofload-grpc`'s.** Same name, same signature,
     same meaning, two packages — a scenario measuring both a gRPC server stream
     and an SSE feed has to alias one on import. Recommend leaving it: the names
     agree because the numbers do, and renaming one to dodge a rare import would

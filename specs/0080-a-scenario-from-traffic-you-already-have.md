@@ -3,7 +3,7 @@
 ## Problem
 
 Every scenario in this repository was typed by hand. That is the main cost of
-adopting any load tool and the one Kestrel does nothing about: a team with a
+adopting any load tool and the one Proofload does nothing about: a team with a
 working checkout flow has to read it back out of their own code, guess which
 values are per-user, and write the captures that thread them together
 (`docs/cookbook.md`, "Chain two steps with a capture"). Gatling ships a
@@ -35,7 +35,7 @@ about a lighter experiment than the one somebody meant to run.
 ## Shape
 
 ```bash
-./gradlew :kestrel-record:run --args="checkout.har --package com.acme.load --out src/test/kotlin"
+./gradlew :proofload-record:run --args="checkout.har --package com.acme.load --out src/test/kotlin"
 ```
 
 ```kotlin
@@ -83,8 +83,8 @@ does with a first draft and cannot do with a file.
 
 **A module with a JSON parser, and that is consistent.** A HAR is JSON and
 this repository takes no dependencies lightly. But the rule it actually holds
-to is *per module*: `kestrel-kafka` carries `kafka-clients`, `kestrel-otel`
-carries the OTel SDK, and `kestrel-core` carries nothing. This is another such
+to is *per module*: `proofload-kafka` carries `kafka-clients`, `proofload-otel`
+carries the OTel SDK, and `proofload-core` carries nothing. This is another such
 module, and it is further from the timed path than either — it runs before a
 run rather than during one. The `V2Encoding.kt` precedent for hand-rolling does
 not apply: that is a few hundred bytes of a written-down binary format, and
@@ -96,7 +96,7 @@ generated source names what was dropped and where to put it back.
 
 ## Stack
 
-- [x] **`spec-0080-module`** — `kestrel-record`, its parser, and a HAR read into
+- [x] **`spec-0080-module`** — `proofload-record`, its parser, and a HAR read into
       a list of recorded requests.
       Done when: a HAR exported by Chrome and one by mitmproxy both read to the
       same shape, an entry with no response reads as a request that got none,
@@ -107,7 +107,7 @@ generated source names what was dropped and where to put it back.
       on it unmodified, and a recording of the cookbook's own checkout produces
       a scenario whose `stepNames` match the hand-written one.
       The first two are gates rather than claims: the generated file is checked
-      in under `kestrel-record/src/test`, so this build compiles it, detekt
+      in under `proofload-record/src/test`, so this build compiles it, detekt
       reads it and spotless formats it, and a generator whose output was
       unformatted would move that file and fail the test that compares it. The
       names are read out of the source rather than off the generated value,
@@ -131,7 +131,7 @@ generated source names what was dropped and where to put it back.
 
 ```bash
 ./gradlew spotlessApply && ./gradlew build
-./gradlew :kestrel-record:run --args="docs/examples/checkout.har --package example --out /tmp/out"
+./gradlew :proofload-record:run --args="docs/examples/checkout.har --package example --out /tmp/out"
 ```
 
 The generated file compiles, carries no credential, and runs.
@@ -161,7 +161,7 @@ The generated file compiles, carries no credential, and runs.
     and what is worth keeping is the number and the sentence saying it is one
     person's.
 4. **Is a `main` in a published module the right shape?** It makes
-    `kestrel-record` the only module with an entry point. Recommend it, and
+    `proofload-record` the only module with an entry point. Recommend it, and
     excluding it from `publishedModules` if that reads wrong — a tool nobody
     depends on is not a library.
     **Published, with the entry point.** A second set of coordinates for one

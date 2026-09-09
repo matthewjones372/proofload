@@ -1,13 +1,13 @@
-# Kestrel from Java
+# Proofload from Java
 
-Kestrel is JVM bytecode, so a Java caller can reach all of it. What it reaches
-is not an API: `kestrel-core` publishes 245 functions whose names carry a
+Proofload is JVM bytecode, so a Java caller can reach all of it. What it reaches
+is not an API: `proofload-core` publishes 245 functions whose names carry a
 value-class hash — `p99-_FgASpo`, `goodput-_E9U6aE` — because `StepName`,
 `Share` and `Rate` are `@JvmInline`. Every duration arrives as a bare `long`
 whose unit the type no longer states, and `sessionKey<T>` is `reified inline`,
 which compiles to no method at all.
 
-`kestrel-java` is the seam. It builds core's own values and computes nothing:
+`proofload-java` is the seam. It builds core's own values and computes nothing:
 the `Scenario` a Java builder hands the engine is the `Scenario` the Kotlin DSL
 builds, and the `RunResult` that comes back is the one both languages read.
 
@@ -16,27 +16,27 @@ builds, and the `RunResult` that comes back is the one both languages read.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Brings kestrel-core, kestrel-engine and kestrel-http with it.
-    implementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
+    // Brings proofload-core, proofload-engine and proofload-http with it.
+    implementation("io.github.matthewjones372:proofload-java:$proofloadVersion")
 }
 ```
 
 ## A load test
 
 ```java
-import io.github.matthewjones372.kestrel.RunResult;
-import io.github.matthewjones372.kestrel.Scenario;
-import io.github.matthewjones372.kestrel.SessionKey;
-import io.github.matthewjones372.kestrel.StepName;
-import io.github.matthewjones372.kestrel.http.Http;
-import io.github.matthewjones372.kestrel.java.Https;
-import io.github.matthewjones372.kestrel.java.Kestrel;
-import io.github.matthewjones372.kestrel.java.Rates;
-import io.github.matthewjones372.kestrel.java.Results;
-import io.github.matthewjones372.kestrel.java.Scenarios;
-import io.github.matthewjones372.kestrel.java.SessionKeys;
-import io.github.matthewjones372.kestrel.java.Simulations;
-import io.github.matthewjones372.kestrel.java.Steps;
+import io.github.matthewjones372.proofload.RunResult;
+import io.github.matthewjones372.proofload.Scenario;
+import io.github.matthewjones372.proofload.SessionKey;
+import io.github.matthewjones372.proofload.StepName;
+import io.github.matthewjones372.proofload.http.Http;
+import io.github.matthewjones372.proofload.java.Https;
+import io.github.matthewjones372.proofload.java.Proofload;
+import io.github.matthewjones372.proofload.java.Rates;
+import io.github.matthewjones372.proofload.java.Results;
+import io.github.matthewjones372.proofload.java.Scenarios;
+import io.github.matthewjones372.proofload.java.SessionKeys;
+import io.github.matthewjones372.proofload.java.Simulations;
+import io.github.matthewjones372.proofload.java.Steps;
 import java.time.Duration;
 ```
 
@@ -58,7 +58,7 @@ Scenario checkout = Scenarios.named("checkout")
     .pause(Duration.ofSeconds(1))
     .build();
 
-RunResult result = Kestrel.create().run(
+RunResult result = Proofload.create().run(
     Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1),
         Goals.p99Under(PLACE_ORDER, Duration.ofMillis(200)),
         Goals.failureRateUnder(0.1)));
@@ -100,7 +100,7 @@ Assert when one number decides the test. Declare goals when several do, or when
 you want the report to say which one missed and by how much:
 
 ```java
-RunResult result = Kestrel.create().run(
+RunResult result = Proofload.create().run(
     Simulations.at(checkout, Rates.perSecond(50), Duration.ofMinutes(1),
         Goals.p99Under(PLACE_ORDER, Duration.ofMillis(200)),
         Goals.failureRateUnder(0.1)));
@@ -122,7 +122,7 @@ The path a load test walks: scenarios, HTTP steps, running, goals, and reading
 a result. Capacity search, baselines, sharding and the exports are reachable as
 statics later. There is deliberately no Java `assertNotWorseThan`: `Difference`
 is a baselines type, and wrapping it here would put JUnit on the classpath of
-every project that takes this module, which is what `kestrel-junit5` exists to
+every project that takes this module, which is what `proofload-junit5` exists to
 prevent. A facade that has to stay exhaustive is a facade that falls
 behind and lies about it.
 

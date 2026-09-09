@@ -85,7 +85,7 @@ implements it.
       `Response.bytes`.
       Done when: a 200 MB response is measured with a heap too small to hold
       it, `bytes` is the length the target sent, and `body` is empty.
-      The heap is the gate rather than a claim about one: `kestrel-http`'s test
+      The heap is the gate rather than a claim about one: `proofload-http`'s test
       JVM is capped at 96 MB in its own build file and the test reads 192 MB, so
       a step that held that body fails here instead of in somebody's download
       test.

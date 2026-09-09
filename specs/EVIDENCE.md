@@ -318,7 +318,7 @@ to make the README arguable, and the argument has an order:
    `[OPENCLOSED]`, latency measured from the actual send rather than the
    intended one `[CO]`, a percentile from a sketch too coarse to answer the
    question `[GATLING-PCT]`, and a peak reported as a capacity `[QUEUEING]`.
-2. **What Kestrel does about each**, tied to something the reader can open:
+2. **What Proofload does about each**, tied to something the reader can open:
    `InjectionProfile.departures()` states every offset before anything is sent;
    `responseTime` counts from the departure the profile promised; `behind` and
    `fellBehind()` make the generator's own backlog a reported number;
@@ -327,13 +327,13 @@ to make the README arguable, and the argument has an order:
 3. **A comparison table about method, not speed.** Columns are criteria:
    workload model, where the latency clock starts, percentile error, does the
    tool report its own saturation, can it say a difference is not resolvable,
-   does it detect steady state. Kestrel appears in every row including the ones
+   does it detect steady state. Proofload appears in every row including the ones
    it loses: wrk2 is more correct on coordinated omission than anything here and
    unmaintained `[WRK2-MAINT]`; Hyperfoil reports compensated and real latency
-   side by side and Kestrel does not `[HYPERFOIL]`; Gatling has a distributed
-   mode and Kestrel has none.
+   side by side and Proofload does not `[HYPERFOIL]`; Gatling has a distributed
+   mode and Proofload has none.
 4. **What this tool cannot tell you**, in the voice of spec 0011.
 
-No speed claims, ever. "Kestrel is N times faster" is the genre of statement
+No speed claims, ever. "Proofload is N times faster" is the genre of statement
 this whole design exists to argue against, and one line of it would cost more
 credibility than the table buys.

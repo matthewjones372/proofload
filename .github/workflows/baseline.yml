@@ -40,16 +40,16 @@ jobs:
       # which is what makes the comparison "against main" rather than against
       # whatever ran last anywhere.
       #
-      # `examples/build`, not `build`: the runner is the `:examples`
-      # subproject and a JavaExec resolves its arguments against its own
-      # project directory. The cookbook's `build/kestrel` is right for the
-      # single-module project a reader copies it into.
+      # Root-relative, and `againstTheBaseline` pins `workingDir` to the root
+      # so it writes here rather than under `:examples`. The path is in
+      # `docs/cookbook.md` as a command a reader types from the root, so the
+      # task is what moves to meet it.
       - name: Restore the last baseline
         uses: actions/cache@v4
         with:
-          path: examples/build/kestrel
-          key: kestrel-baseline-${{ github.run_id }}
-          restore-keys: kestrel-baseline-
+          path: build/proofload
+          key: proofload-baseline-${{ github.run_id }}
+          restore-keys: proofload-baseline-
 
       # No `continue-on-error` and no threshold: this fails only if requests
       # failed. Latency does not gate a merge on a shared runner — see the
@@ -64,7 +64,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: kestrel-baseline
-          path: examples/build/kestrel/*.kestrel
+          name: proofload-baseline
+          path: build/proofload/*.proofload
           retention-days: 90
           if-no-files-found: error

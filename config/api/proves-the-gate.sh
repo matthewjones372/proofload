@@ -10,7 +10,7 @@
 # out, whatever happens.
 set -uo pipefail
 
-FILE="kestrel-core/src/main/kotlin/io/github/matthewjones372/kestrel/Progress.kt"
+FILE="proofload-core/src/main/kotlin/io/github/matthewjones372/proofload/Progress.kt"
 GONE="fun Progress.throttled"
 BACKUP="$(mktemp)"
 

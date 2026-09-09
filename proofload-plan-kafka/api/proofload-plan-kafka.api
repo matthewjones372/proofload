@@ -1,0 +1,11 @@
+public final class io/github/matthewjones372/proofload/plan/kafka/KafkaSteps : io/github/matthewjones372/proofload/plan/Lowering {
+	public fun <init> ()V
+	public fun <init> (Lio/github/matthewjones372/proofload/kafka/Kafka;Lorg/apache/kafka/clients/consumer/Consumer;)V
+	public synthetic fun <init> (Lio/github/matthewjones372/proofload/kafka/Kafka;Lorg/apache/kafka/clients/consumer/Consumer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun lower (Lio/github/matthewjones372/proofload/plan/DeclaredStep;Lio/github/matthewjones372/proofload/plan/Declaration;)Lio/github/matthewjones372/proofload/plan/Lowered;
+}
+
+public final class io/github/matthewjones372/proofload/plan/kafka/KafkaStepsKt {
+	public static final fun getKafkaLowerings ()Ljava/util/List;
+}
+

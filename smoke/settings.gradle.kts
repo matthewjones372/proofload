@@ -1,8 +1,8 @@
 // A build of its own, deliberately: run from this directory it can see none of
-// the source tree beside it, so the only Kestrel it can compile against is one
+// the source tree beside it, so the only Proofload it can compile against is one
 // that came out of a repository. A composite build would substitute the
 // projects back in and prove nothing about what was published.
-rootProject.name = "kestrel-smoke"
+rootProject.name = "proofload-smoke"
 
 dependencyResolutionManagement {
     repositories {

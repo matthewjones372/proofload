@@ -10,7 +10,7 @@ result.steps.containsKey("confirm") shouldBe false
 ```
 
 The first builds a map to state one number, and writes the reason as a literal
-that `kestrel-http` also writes somewhere else — two copies of a string that
+that `proofload-http` also writes somewhere else — two copies of a string that
 have to agree. The second reaches past the accessor into the map behind it,
 looks the step up by name after spec 0012 gave it a handle, and states a fact
 backwards: what is meant is that the step never ran.
@@ -28,7 +28,7 @@ backwards: what is meant is that the step never ran.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.http.status
+import io.github.matthewjones372.proofload.http.status
 
 result[pay].failedWith(status(503)) shouldBe 10L
 result.ran(confirm) shouldBe false
@@ -38,7 +38,7 @@ result.ran(confirm) shouldBe false
   when none did.
 - `RunResult.ran(step): Boolean` — whether anything was recorded under it,
   taking a handle or a name.
-- `status(code)` in `kestrel-http` — the reason string the module records,
+- `status(code)` in `proofload-http` — the reason string the module records,
   written once and read from tests rather than copied into them.
 
 ## Why this shape
@@ -79,5 +79,5 @@ Answered by the architect:
     the reason is allowed to be absent.
 2. **`ran` returns false rather than throwing**, which is the whole point of
     having it beside `get`.
-3. **`status` lives in `kestrel-http`**, not core. Core has no notion of a
+3. **`status` lives in `proofload-http`**, not core. Core has no notion of a
     status code and should not grow one to make a test read better.

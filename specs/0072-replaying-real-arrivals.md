@@ -109,7 +109,7 @@ also why equality follows `CsvFile`: `Runs` prints a profile into its refusal an
 3. **Do `from` and `window` measure the capture or the run?** Recommend the
     capture, `over` falling out of the scale; the cost is dividing to get a
     five-minute run at ×2, and the page prints both.
-4. **Should Kestrel offer a synthetic bursty model** — Poisson with an on/off
+4. **Should Proofload offer a synthetic bursty model** — Poisson with an on/off
     overlay, or an MMPP — for a team with no capture? A later spec, and only if
     the parameters can be cited: numbers somebody chose look like production.
 5. **Does `EVIDENCE.md` gain a key?** `[POISSON]` carries "does not average out",

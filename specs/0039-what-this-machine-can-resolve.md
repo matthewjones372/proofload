@@ -29,7 +29,7 @@ lying with arithmetic. The tool is in a position to know that and say it.
 ## Shape
 
 ```kotlin
-val floor = kestrel.calibrate()          // a null step, a fixed schedule, repeated
+val floor = proofload.calibrate()          // a null step, a fixed schedule, repeated
 floor.resolution                          // 0.061
 floor.hiccups.p99                         // 14ms, what the injector itself stalled for
 ```
@@ -41,7 +41,7 @@ and on every report that has one:
 
 - `calibrate()` — the existing steps against a null action, no socket and no
   target, repeated enough times to give a spread. What moves is the machine and
-  Kestrel, which is exactly the floor.
+  Proofload, which is exactly the floor.
 - A **hiccup recorder** on the injector JVM: a thread that asks to sleep a
   millisecond and records what it actually got, so a stall in the measuring
   process appears beside the tail it caused rather than inside it `[HICCUP]`.
@@ -65,11 +65,11 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
 
 ## Stack
 
-- [x] **`spec-0039-hiccups`** ([#16](https://github.com/matthewjones372/kestrel/pull/16)) — the recorder on the injector JVM, and its
+- [x] **`spec-0039-hiccups`** ([#16](https://github.com/matthewjones372/proofload/pull/16)) — the recorder on the injector JVM, and its
       distribution on the result and the page.
       Done when: an injected pause in the generator shows up in the hiccup
       distribution and is visible beside the response times of that window.
-- [x] **`spec-0039-calibrate`** ([#23](https://github.com/matthewjones372/kestrel/pull/23)) — the null-step calibration and `resolution`.
+- [x] **`spec-0039-calibrate`** ([#23](https://github.com/matthewjones372/proofload/pull/23)) — the null-step calibration and `resolution`.
       Done when: repeated calibration on one machine reports a stable floor,
       repeats that landed further apart report a larger one, and the number
       lands on the report.
@@ -83,7 +83,7 @@ diagnostic in the tool: one thread, one histogram, no effect on the timed path.
       enough on a shared machine that a one-sided gate would flake. The
       mechanism is asserted deterministically instead, and the magnitude is left
       unasserted.
-- [x] **`spec-0039-consulted`** ([#37](https://github.com/matthewjones372/kestrel/pull/37)) — 0038's comparison returns `CannotTell` below
+- [x] **`spec-0039-consulted`** ([#37](https://github.com/matthewjones372/proofload/pull/37)) — 0038's comparison returns `CannotTell` below
       the floor, naming it.
       Done when: a 2% difference on a machine with a 6% floor reports cannot
       tell rather than better.

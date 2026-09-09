@@ -8,9 +8,9 @@ The README names three decisions that shape everything else. The second is:
 > interface core declares, so the description does not belong to it.
 
 Core declares no such interface. `Simulation.run()` is a top-level extension
-function in `kestrel-engine`, so an engine is selected by which `run` is
-imported; `Kestrel.run(simulation)` calls it and is therefore welded to virtual
-threads; and `kestrel-junit5` and `kestrel-kotest` both hand out that `Kestrel`.
+function in `proofload-engine`, so an engine is selected by which `run` is
+imported; `Proofload.run(simulation)` calls it and is therefore welded to virtual
+threads; and `proofload-junit5` and `proofload-kotest` both hand out that `Proofload`.
 The description does belong to the engine, and the one sentence a reader would
 check it against says otherwise.
 
@@ -45,8 +45,8 @@ and the runner takes one:
 ```kotlin
 class VirtualThreads : Engine
 
-val kestrel = Kestrel()                    // virtual threads, as today
-val kestrel = Kestrel(engine = Actors())   // whatever else implements it
+val proofload = Proofload()                    // virtual threads, as today
+val proofload = Proofload(engine = Actors())   // whatever else implements it
 ```
 
 `Search` needs nothing new: it is already `judgedBy { rung -> rung.run() }`, so
@@ -80,16 +80,16 @@ it; what this spec adds is a name for it.
 ## Stack
 
 - [x] **`spec-0051-interface`** — `Engine` in core, `VirtualThreads`
-      implementing it, `Kestrel` taking one and defaulting to it.
-      Done when: `Kestrel(engine = ...)` runs a simulation through a test
+      implementing it, `Proofload` taking one and defaulting to it.
+      Done when: `Proofload(engine = ...)` runs a simulation through a test
       double that records it, the default still runs on virtual threads, and
       `NoThirdPartyDependenciesTest` still passes.
 - [x] **`spec-0051-chosen`** — the framework modules letting a caller name one.
       Done when: a JUnit load test and a Kotest spec each run on a supplied
       engine, and neither module depends on the other to do it.
-      Landed as `RunsOn` in JUnit and a `kestrel(engine)` overload in Kotest.
+      Landed as `RunsOn` in JUnit and a `proofload(engine)` overload in Kotest.
       A `@RegisterExtension` field was tried first and rejected on evidence:
-      `@LoadTest` registers `KestrelExtension` declaratively, a field-registered
+      `@LoadTest` registers `ProofloadExtension` declaratively, a field-registered
       instance is not deduplicated against it, and the test dies with
       "Discovered multiple competing ParameterResolvers".
 
@@ -102,19 +102,19 @@ it; what this spec adds is a name for it.
 
 ## Open questions
 
-1. **Does `Kestrel` move to core?** It is the facade both framework modules
-    hand out, and it currently lives in `kestrel-engine` beside the engine it
+1. **Does `Proofload` move to core?** It is the facade both framework modules
+    hand out, and it currently lives in `proofload-engine` beside the engine it
     defaults to. Recommend leaving it: a default has to name an implementation,
     and core naming one would be the coupling this spec removes. A consumer who
     wants only the actor engine can depend on core and that module.
 2. **Is `calibrate()` the engine's or the machine's?** A floor is a property of
     the machine, but it is measured by running a null step, which needs an
-    engine. Recommend it stay on `Kestrel` and run through whichever engine it
+    engine. Recommend it stay on `Proofload` and run through whichever engine it
     holds, so a floor describes the machine as that engine will drive it.
 3. **Does the interface need a suspend variant?** No, and it would cost.
     JUnit has no continuation to supply a `suspend` test method, so a suspending
     `run` puts `runBlocking` in every JUnit user's test body or a
-    kotlinx-coroutines dependency in `kestrel-junit5`. Core could declare
+    kotlinx-coroutines dependency in `proofload-junit5`. Core could declare
     `suspend` — it is stdlib — but not `withContext` or `runBlocking`, which are
     not, so core would declare a method it cannot help anyone call. Kotest
     already blocks inside a coroutine today and works. Blocking is also the

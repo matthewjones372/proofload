@@ -1,6 +1,6 @@
 # A hot path that is a topic rather than an endpoint: the record leaves on one
 # and the answer arrives on another, so what is measured is the round trip.
-kestrel:  plan/1
+proofload:  plan/1
 brokers:  localhost:9092
 scenario: orders
 steps:
@@ -14,7 +14,7 @@ steps:
     completes: place order
     on: order-confirmations
     by: correlation-id
-    group: kestrel-bench
+    group: proofload-bench
     within: 30s
 load:
   rate: 500/s

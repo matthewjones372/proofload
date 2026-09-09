@@ -27,9 +27,9 @@ published yet, so this costs two days now and a major version after 1.0.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.scenario
-import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.scenario
+import io.github.matthewjones372.proofload.sessionKey
 import kotlin.time.Duration.Companion.minutes
 
 val cart = sessionKey<String>("cart")

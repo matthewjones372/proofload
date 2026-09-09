@@ -27,7 +27,7 @@ the name, and left it in place for steps.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.proofload.step
 
 val browse = step("browse")
 val placeOrder = step("place order")

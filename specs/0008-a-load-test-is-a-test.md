@@ -23,9 +23,9 @@ wired into CI, it already reports failures, and nobody has to learn a runner.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.junit5.Kestrel
-import io.github.matthewjones372.kestrel.junit5.LoadTest
-import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.proofload.junit5.Proofload
+import io.github.matthewjones372.proofload.junit5.LoadTest
+import io.github.matthewjones372.proofload.perSecond
 import io.kotest.matchers.comparables.shouldBeLessThan
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -33,8 +33,8 @@ import kotlin.time.Duration.Companion.minutes
 class CheckoutLoadTest {
 
     @LoadTest
-    fun `checkout holds p99 under 200ms at 50 a second`(kestrel: Kestrel) {
-        val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
+    fun `checkout holds p99 under 200ms at 50 a second`(proofload: Proofload) {
+        val result = proofload.run(checkout.at(50.perSecond, over = 1.minutes))
 
         result["pay"].responseTime.p99 shouldBeLessThan 200.milliseconds
         result.failed shouldBe 0L
@@ -42,11 +42,11 @@ class CheckoutLoadTest {
 }
 ```
 
-- `kestrel-junit5`, depending on `kestrel-core`, `kestrel-engine` and JUnit 5.
+- `proofload-junit5`, depending on `proofload-core`, `proofload-engine` and JUnit 5.
   Its dependency test asserts those and no second stack.
 - `@LoadTest` — a meta-annotation: `@Test`, plus the extension, plus a timeout
   long enough for a real run.
-- `Kestrel` — injected as a parameter. It runs a `Simulation` and keeps the
+- `Proofload` — injected as a parameter. It runs a `Simulation` and keeps the
   `RunResult` for the extension to use.
 - On failure, the extension appends a per-step count and p99 summary to the
   failure message, so a red build says which step moved without anyone opening
@@ -69,13 +69,13 @@ half — which step moved — is a string this module can build itself.
 
 ## Stack
 
-- [ ] **`spec-0008-module`** — module, wiring, dependency test, `Kestrel` and
+- [ ] **`spec-0008-module`** — module, wiring, dependency test, `Proofload` and
       the parameter resolver.
-      Done when: a `@Test` taking a `Kestrel` runs a one-user simulation and
+      Done when: a `@Test` taking a `Proofload` runs a one-user simulation and
       asserts on the result, and `./gradlew build` is green.
 - [ ] **`spec-0008-annotation`** — `@LoadTest` as a meta-annotation, with its
       timeout, and the extension registered through it rather than by hand.
-      Done when: a test annotated only `@LoadTest` runs and resolves `Kestrel`.
+      Done when: a test annotated only `@LoadTest` runs and resolves `Proofload`.
 - [ ] **`spec-0008-failure`** — the failure-message summary.
       Done when: a failing assertion's message names the step that moved and
       its p99, and a passing test adds nothing.
@@ -94,6 +94,6 @@ Answered by the architect:
     fell behind schedule. It appends the fact to the failure message and lets
     the assertions decide. A tool that fails a build for a reason the test did
     not ask about is a tool people disable.
-2. **One `Kestrel` per test method**, not per class. Two tests in a class are
+2. **One `Proofload` per test method**, not per class. Two tests in a class are
     two runs and must not share a recorder.
-3. **`Kestrel.run` is the only entry point.** No static, no global registry.
+3. **`Proofload.run` is the only entry point.** No static, no global registry.

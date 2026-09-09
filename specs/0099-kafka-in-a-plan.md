@@ -34,7 +34,7 @@ A step is a topic instead of a path, and everything else about a plan is
 unchanged:
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 brokers:  localhost:9092
 scenario: orders
 steps:
@@ -48,7 +48,7 @@ steps:
     completes: place order
     on:        order-confirmations
     by:        correlation-id
-    group:     kestrel-bench
+    group:     proofload-bench
     within:    30s
 load:
   rate: 500/s
@@ -86,14 +86,14 @@ captures.
 ## Stack
 
 - [x] **`spec-0099-model`** — `produce` and its keys in the plan model, lowering
-      to `kestrel-kafka`'s producer step.
+      to `proofload-kafka`'s producer step.
       Done when: a declared produce step and the equivalent Kotlin build equal
       scenarios, against a fake broker on a socket.
       Built as two branches, `spec-0099-model` and `spec-0099-lowering`. The
-      lowering does not live in `kestrel-plan`: doing it as written would put
+      lowering does not live in `proofload-plan`: doing it as written would put
       `kafka-clients` on the classpath of everyone reading a plan of nothing but
-      requests, so `kestrel-plan` declares a `Lowering` and `kestrel-plan-kafka`
-      supplies one. `kestrel-cli` and `kestrel-mcp` carry that module.
+      requests, so `proofload-plan` declares a `Lowering` and `proofload-plan-kafka`
+      supplies one. `proofload-cli` and `proofload-mcp` carry that module.
 - [x] **`spec-0099-completes`** — the answer on another topic, and `within`.
       Done when: a plan whose answer never arrives reports the records that
       never came rather than hanging.

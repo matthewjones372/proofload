@@ -1,14 +1,14 @@
-# Kestrel from Scala
+# Proofload from Scala
 
 Scala 3 reads Kotlin bytecode, so a Scala caller is in the position
 [from-java.md](from-java.md) describes and one step worse. The value-class
 hashes and the erased `@JvmInline` types are there identically, and on top of
 them Scala brings its own duration: a Scala codebase writes `1.minute` and
-means a `scala.concurrent.duration.FiniteDuration`, while every Kestrel
+means a `scala.concurrent.duration.FiniteDuration`, while every Proofload
 signature takes a `kotlin.time.Duration` that arrives as a bare `Long` with no
 unit attached.
 
-`kestrel-scala` sits on `kestrel-java` rather than on core. The unmangling is
+`proofload-scala` sits on `proofload-java` rather than on core. The unmangling is
 written once, and a facade method missing from Java is missing from Scala in
 the same commit rather than two months later.
 
@@ -21,30 +21,30 @@ deliberately not the newest release.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Brings kestrel-java, and kestrel-core, kestrel-engine and kestrel-http
+    // Brings proofload-java, and proofload-core, proofload-engine and proofload-http
     // with it. No Scala suffix on the coordinate while there is one supported
     // Scala version; a suffix invented early is one to keep publishing forever.
-    implementation("io.github.matthewjones372:kestrel-scala:$kestrelVersion")
+    implementation("io.github.matthewjones372:proofload-scala:$proofloadVersion")
 }
 ```
 
 ## A load test
 
 ```scala
-import io.github.matthewjones372.kestrel.java.Goals
-import io.github.matthewjones372.kestrel.java.Https
-import io.github.matthewjones372.kestrel.java.Results
-import io.github.matthewjones372.kestrel.java.Simulations
-import io.github.matthewjones372.kestrel.scala.Kestrel
-import io.github.matthewjones372.kestrel.scala.apply
-import io.github.matthewjones372.kestrel.scala.exec
-import io.github.matthewjones372.kestrel.scala.given
-import io.github.matthewjones372.kestrel.scala.http
-import io.github.matthewjones372.kestrel.scala.pause
-import io.github.matthewjones372.kestrel.scala.perSecond
-import io.github.matthewjones372.kestrel.scala.scenario
-import io.github.matthewjones372.kestrel.scala.sessionKey
-import io.github.matthewjones372.kestrel.scala.step
+import io.github.matthewjones372.proofload.java.Goals
+import io.github.matthewjones372.proofload.java.Https
+import io.github.matthewjones372.proofload.java.Results
+import io.github.matthewjones372.proofload.java.Simulations
+import io.github.matthewjones372.proofload.scala.Proofload
+import io.github.matthewjones372.proofload.scala.apply
+import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.given
+import io.github.matthewjones372.proofload.scala.http
+import io.github.matthewjones372.proofload.scala.pause
+import io.github.matthewjones372.proofload.scala.perSecond
+import io.github.matthewjones372.proofload.scala.scenario
+import io.github.matthewjones372.proofload.scala.sessionKey
+import io.github.matthewjones372.proofload.scala.step
 import _root_.scala.concurrent.duration.DurationInt
 import _root_.scala.language.implicitConversions
 ```
@@ -79,7 +79,7 @@ val checkout = scenario("checkout")(
 ```
 
 ```scala
-val result = Kestrel().run(
+val result = Proofload().run(
   Simulations.at(
     checkout,
     50.perSecond,
@@ -113,7 +113,7 @@ and no extension method can reach them.
 
 `FiniteDuration` both ways, `perSecond` and `perMinute` on `Int` and `Double`,
 `sessionKey[T]`, `step`, `exec`, `pause`, `scenario`, `http.baseUrl`,
-`Kestrel()`, `at`, and the reader above. Nothing else: everything else on
+`Proofload()`, `at`, and the reader above. Nothing else: everything else on
 `Goals`, `Https`, `Results` and `Simulations` is a Java static and is called
 directly, as the snippets here do.
 
@@ -133,9 +133,9 @@ methods over the same values, not a second way to describe a run.
 Pekko.** An effect runtime is a scheduler, and a second scheduler inside a load
 generator means the tool measures its own queueing and reports it as the
 target's latency. A step body may call effectful code and run it itself; what
-does not happen is `kestrel-scala` handing back a `ZIO` or an `IO`. A test
+does not happen is `proofload-scala` handing back a `ZIO` or an `IO`. A test
 framework is a different question from a runtime, and is answered by
-[`kestrel-zio-test`](#in-a-zio-test-spec) below.
+[`proofload-zio-test`](#in-a-zio-test-spec) below.
 
 **No Scala 2.13.** Two compilers doubles the build and the cross-publishing for
 a version whose Kotlin interop is worse.
@@ -146,20 +146,20 @@ Kotlin get: `Results.verdicts` hands back a `java.util.List`.
 ## In a zio-test spec
 
 A load test is an ordinary test, in whichever framework the service is already
-tested in. `kestrel-zio-test` is the third of those, beside `kestrel-junit5`
-and `kestrel-kotest`.
+tested in. `proofload-zio-test` is the third of those, beside `proofload-junit5`
+and `proofload-kotest`.
 
 ```kotlin
 // build.gradle.kts
 dependencies {
     // zio-test is compileOnly here: the spec that uses this already has it.
-    testImplementation("io.github.matthewjones372:kestrel-zio-test:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:proofload-zio-test:$proofloadVersion")
 }
 ```
 
 ```scala
-import io.github.matthewjones372.kestrel.ziotest.kestrel
-import io.github.matthewjones372.kestrel.ziotest.metItsGoals
+import io.github.matthewjones372.proofload.ziotest.proofload
+import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import zio.ZIO
 import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
@@ -175,7 +175,7 @@ object CheckoutSpec extends ZIOSpecDefault:
           server <- serving
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
-          result <- kestrel.run(
+          result <- proofload.run(
             Simulations.at(browsing, 20.perSecond, 500.millis, Goals.failureRateUnder(0.1)),
           )
         yield result.metItsGoals && assertTrue(
@@ -185,7 +185,7 @@ object CheckoutSpec extends ZIOSpecDefault:
   )
 ```
 
-`kestrel.run` is the whole module, and the argument is entirely about which
+`proofload.run` is the whole module, and the argument is entirely about which
 executor it runs on. It is `ZIO.attemptBlocking` around the same silent runner
 the other two framework modules build: the call holds its thread for the length
 of the run while the engine sends on virtual threads, and on ZIO's compute pool
@@ -220,7 +220,7 @@ baselines module, which is a spec of its own.
 [`examples-scala`](../examples-scala) is a module whose whole content is the
 two load tests above — one compiled by `./gradlew build`, one compiled and run
 by it. There is no `.api` dump for
-`kestrel-scala` to move: what BCV records of a Scala module is
+`proofload-scala` to move: what BCV records of a Scala module is
 `Durations$package$`, lazy-init closures and qualified-private members Scala
 emits as public bytecode — names no caller can type, moving on edits no caller
 can see. So the compiler is the gate, and `FromScalaDocTest` fails when a line

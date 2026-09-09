@@ -7,9 +7,9 @@ can … When a plan needs one, `emit` prints the Kotlin it was equivalent to and
 there." The MCP server has no `emit` tool. The document names the exit; the surface does not
 have one.
 
-`kestrel-mcp/build.gradle.kts` states the module's invariant — "every tool here is a call that
+`proofload-mcp/build.gradle.kts` states the module's invariant — "every tool here is a call that
 command line already makes, so what a model can do is what a person at a terminal can do".
-`emit` is a `kestrel-cli` command, so that invariant is already false, and false for the one
+`emit` is a `proofload-cli` command, so that invariant is already false, and false for the one
 command that exists to rescue a caller from the plan format.
 
 What happens next is the part worth fixing. Benchmarking writes that carry an `expectedVersion`
@@ -33,7 +33,7 @@ event-sourced API.
 `emit` becomes a tool, sending nothing:
 
 ```
-emit {"plan": "kestrel: plan/1\n…"}
+emit {"plan": "proofload: plan/1\n…"}
 ```
 
 ```kotlin

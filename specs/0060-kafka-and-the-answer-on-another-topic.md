@@ -14,7 +14,7 @@ Two questions get conflated here and they want different answers. **Is the
 adapter right** — does a correlation survive, does a failed send name its reason
 — is this repository's, and it needs no broker. **Is my cluster sized right** —
 do these partitions and this replication hold at fifty thousand a second — is
-the user's, and it needs *their* cluster, not one Kestrel ships. A module that
+the user's, and it needs *their* cluster, not one Proofload ships. A module that
 is correct, and whose own overhead is known, serves the second without ever
 running a broker in its own build. What that overhead is, and what proves it,
 is 0061's.
@@ -33,7 +33,7 @@ an adapter, not a design.
   force a `packages.confluent.io` declaration on every consumer of a published
   module, and would break 0029's smoke project, which resolves from
   `mavenCentral()` on purpose.
-- **No Kestrel-owned serializer.** Avro, Protobuf and JSON Schema are the
+- **No Proofload-owned serializer.** Avro, Protobuf and JSON Schema are the
   caller's choice and none of them is this tool's business.
 - No consumer-group lag monitoring. That is observing a system, not generating
   load against one.
@@ -86,7 +86,7 @@ tunes against them will ship a consumer that cannot keep up.
 
 ## Stack
 
-- [x] **`spec-0060-produce`** — `kestrel-kafka`, `kafka.brokers`, `topic`,
+- [x] **`spec-0060-produce`** — `proofload-kafka`, `kafka.brokers`, `topic`,
       `keyed`, `value`, and `emit` producing through it; a send that fails
       recorded with the broker's reason.
       Done when: a scenario produces through a `MockProducer` and every record

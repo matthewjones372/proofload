@@ -113,5 +113,5 @@ the timeline are already on the result and a stored copy could disagree.
     the steps that have a `schedulingDelay`, so `left` is what this process
     sent.
 4. **A ceiling before the run.** 0056 measures one as a benchmark; a
-    `kestrel.ceiling()` beside `calibrate()` that refuses a rate above it is
+    `proofload.ceiling()` beside `calibrate()` that refuses a rate above it is
     the remedy that stops the waste before it starts. Recommend its own spec.

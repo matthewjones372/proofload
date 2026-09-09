@@ -2,10 +2,10 @@
 
 ## Problem
 
-Kestrel's DSL is in nobody's weights. A model asked to write a Kestrel scenario
+Proofload's DSL is in nobody's weights. A model asked to write a Proofload scenario
 writes Gatling or k6 with Kotlin syntax: a base class to extend, string step
 keys, `check(status is 200)`, a `Simulation` with a `setUp`. Every one of those
-is a thing the README opens by saying Kestrel does not have, and the caller
+is a thing the README opens by saying Proofload does not have, and the caller
 finds out through a compile error it cannot map back to the right shape.
 
 The material to fix it is all in the tree and none of it is in one place. The
@@ -31,7 +31,7 @@ Pelican's format — which already exists next to this repository and is worth
 matching rather than inventing:
 
 ```
-# Kestrel
+# Proofload
 
 > Load testing for Kotlin. A scenario is a plain Kotlin value; the run reports
 > the latency measured from when each request was *meant* to depart, and every
@@ -40,7 +40,7 @@ matching rather than inventing:
 Facts worth having before anything else:
 
 - Kotlin 2.4, JVM 21+. Virtual threads on the JDK's own HTTP client.
-- Coordinates: io.github.matthewjones372:kestrel-http, -junit5, -report-html.
+- Coordinates: io.github.matthewjones372:proofload-http, -junit5, -report-html.
 - There is no base class, no string step key, and no XML.
 
 ## The shape of a test

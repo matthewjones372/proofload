@@ -62,12 +62,12 @@ share is the promise and the rate is the capacity.
 
 ## Stack
 
-- [x] **`spec-0033-share`** ([#11](https://github.com/matthewjones372/kestrel/pull/11)) — `Timing.share(under)` off the buckets, with the
+- [x] **`spec-0033-share`** ([#11](https://github.com/matthewjones372/proofload/pull/11)) — `Timing.share(under)` off the buckets, with the
       rounding direction fixed and documented.
       Done when: a timing whose samples all sit below the target reports 1.0, a
       target inside a bucket counts that bucket as missing, and an empty timing
       reports absent rather than zero.
-- [x] **`spec-0033-goodput`** ([#18](https://github.com/matthewjones372/kestrel/pull/18)) — the rate on `StepStats` and `RunResult`, and the
+- [x] **`spec-0033-goodput`** ([#18](https://github.com/matthewjones372/proofload/pull/18)) — the rate on `StepStats` and `RunResult`, and the
       `atLeast` goal.
       Done when: a run with 1% failures and 1% slow responses reports 98%, and
       the goal judges and renders like every other.

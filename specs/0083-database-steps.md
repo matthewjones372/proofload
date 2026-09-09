@@ -25,7 +25,7 @@ as the target's speed.
 
 - **No ORM, no query builder, no schema.** A statement is a string the caller
   wrote, as a path is.
-- **No driver.** `kestrel-jdbc` carries `java.sql` and nothing else; the caller
+- **No driver.** `proofload-jdbc` carries `java.sql` and nothing else; the caller
   brings PostgreSQL or MySQL, as they bring a gRPC transport (0071).
 - **No pool.** A caller hands in a `DataSource`, which is the thing their
   service uses and the thing whose limits are being measured. A pool built here
@@ -91,7 +91,7 @@ injector's own limits (0065) already report a starved carrier pool.
 
 ## Stack
 
-- [x] **`spec-0083-module`** — `kestrel-jdbc`, `jdbc.on(dataSource)`, `query`
+- [x] **`spec-0083-module`** — `proofload-jdbc`, `jdbc.on(dataSource)`, `query`
       and `update` as steps, against an in-memory database on the test
       classpath only.
       Done when: a select is one row named for the statement, an update reports

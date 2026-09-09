@@ -16,15 +16,15 @@ seeing a number means running their tooling and adopting their layout.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import io.github.matthewjones372.proofload.report.writeHtmlReport
 import java.nio.file.Path
 
 val result = simulation.run()
 
-result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"))
+result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
 ```
 
-- `kestrel-report-html`, depending on `kestrel-core` and the JDK only, with its
+- `proofload-report-html`, depending on `proofload-core` and the JDK only, with its
   own `NoThirdPartyDependenciesTest`.
 - One file. Data inlined as JSON in a `<script type="application/json">`, CSS
   and JS written by hand in the same file. It opens from a `file://` URL and

@@ -12,7 +12,7 @@ thousand keys all run keeps them in every cache it has, so the p99 on the page i
 partly a hit rate the test invented. The obvious correction — a random value per
 user — is wrong in the opposite direction and less obviously: uniformly random
 keys over a large space miss every cache, and real traffic does neither. What
-decides the number is **cardinality and skew**, and Kestrel currently gives a
+decides the number is **cardinality and skew**, and Proofload currently gives a
 user no way to say either.
 
 There are two smaller problems underneath. A value drawn inside a step body
@@ -39,13 +39,13 @@ one place this tool cannot afford a lock.
 
 ## Shape
 
-`kestrel-arbs`, core and the JDK, generators that are values:
+`proofload-arbs`, core and the JDK, generators that are values:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.arbs.digits
-import io.github.matthewjones372.kestrel.arbs.oneOf
-import io.github.matthewjones372.kestrel.arbs.uuids
-import io.github.matthewjones372.kestrel.arbs.zipf
+import io.github.matthewjones372.proofload.arbs.digits
+import io.github.matthewjones372.proofload.arbs.oneOf
+import io.github.matthewjones372.proofload.arbs.uuids
+import io.github.matthewjones372.proofload.arbs.zipf
 
 val customerId = zipf(keys = 1_000_000, skew = 1.1)   // a few keys are most of the traffic
 val basket     = oneOf("anvil", "rocket", "birdseed")
@@ -92,7 +92,7 @@ skew. `spec-0091-data` should produce these types rather than its own.
 
 ## Stack
 
-- [x] **`spec-0096-module`** — `kestrel-arbs`, its dependency test, the `Arb<T>`
+- [x] **`spec-0096-module`** — `proofload-arbs`, its dependency test, the `Arb<T>`
       value with `at`, `map` and `oneOf`, on a mixing function rather than a
       seeded `Random`.
       Done when: `arb at 7` returns the same value in two JVMs, and drawing a
@@ -132,7 +132,7 @@ skew. `spec-0091-data` should produce these types rather than its own.
       Done when: comparing a run drawn at skew 1.1 against one drawn at 0.8 says
       so rather than reporting a regression, and comparing either against a
       baseline that declared nothing still compares.
-- [x] **`spec-0096-kotest`** — `kestrel-arbs-kotest`: `kotest.Arb<T>.shaped()`
+- [x] **`spec-0096-kotest`** — `proofload-arbs-kotest`: `kotest.Arb<T>.shaped()`
       for callers who want the library's generators anyway.
       Done when: the adapter is one file, and its module's dependency test shows
       the property library is on no other module's classpath.
@@ -154,7 +154,7 @@ block naming a task nobody has written is one nobody can run.
 > reasoning is left standing rather than deleted: a decision is easier to
 > reopen when the alternative it beat is still written down.
 
-- **Where does `Shape` live?** In `kestrel-core`, not in `kestrel-arbs` — not a
+- **Where does `Shape` live?** In `proofload-core`, not in `proofload-arbs` — not a
   choice so much as the layering law answering it. The shape has to reach
   `Plan`, `Plan` is a core value, and a leaf module cannot put a type of its own
   inside one. The alternatives were a second `Shape` in core, which is two

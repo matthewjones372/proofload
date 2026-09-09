@@ -28,7 +28,7 @@ Nothing in the API changes. The engine books a window ahead of itself instead
 of the whole run:
 
 ```kotlin
-// internal to kestrel-engine
+// internal to proofload-engine
 private const val BOOKING_WINDOW = 5.seconds
 ```
 

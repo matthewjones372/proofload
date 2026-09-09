@@ -51,7 +51,7 @@ infix fun Progress.and(other: Progress): Progress
 
 - `and` composes: the terminal keeps its line, the collector gets its metric,
   and neither knows about the other.
-- `otlpEvery(interval, to)` in `kestrel-otel`, publishing what a `Snapshot`
+- `otlpEvery(interval, to)` in `proofload-otel`, publishing what a `Snapshot`
   holds as gauges and counters under the same names `sendOtlp` already uses for
   the finished run, so one dashboard reads both.
 - `Progress.throttled(every)` in core, so a reporter that costs something is
@@ -88,14 +88,14 @@ the terminal line with it.
       Done when: two reporters both see every tick, a throttled one sees at
       most one per interval and always sees the last tick of the run, and
       `Progress.silent and Progress.silent` prints nothing.
-- [x] **`spec-0081-otlp`** — `otlpEvery` in `kestrel-otel`.
+- [x] **`spec-0081-otlp`** — `otlpEvery` in `proofload-otel`.
       Done when: a run pushes departed, in-flight, requests, failed and
       `behind` under the names the finished run uses; a collector that refuses
       is a warning rather than a failed run; and nothing is pushed after the
       last tick.
       Built with one deviation, argued rather than silent: the lateness is
-      `kestrel.behind.last` rather than `kestrel.behind`. The finished export's
-      `kestrel.behind` is a histogram over every departure and a live tick has
+      `proofload.behind.last` rather than `proofload.behind`. The finished export's
+      `proofload.behind` is a histogram over every departure and a live tick has
       one sample, and a collector handed the same name as a histogram and as a
       gauge drops whichever it saw second. `requests` and `failures` keep their
       names, carry no `step` — a snapshot is the run rather than its steps — and

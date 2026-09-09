@@ -55,7 +55,7 @@ difference real that nothing in the code had caused.
 ## Shape
 
 ```kotlin
-val floor = kestrel.calibrate()
+val floor = proofload.calibrate()
 
 floor.absolute            // 61us — how far a repeat of one measurement moves here
 floor.resolution          // 1.25 — the same, as a fraction of what was measured

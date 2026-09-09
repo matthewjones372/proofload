@@ -2,7 +2,7 @@
 
 ## Problem
 
-Kestrel sends a request and waits for a response. A target whose interesting
+Proofload sends a request and waits for a response. A target whose interesting
 behaviour is a stream — a price feed, a notification channel, a match engine
 pushing fills — cannot be loaded at all, and the teams who most want an open
 model and honest tails are often the ones running exactly those.
@@ -26,8 +26,8 @@ records the run did not wait for. What is missing is a transport where the
 
 ## Shape
 
-A `kestrel-websocket` module on `java.net.http.WebSocket`, which is in the JDK,
-so it carries no dependency — the same argument that made `kestrel-http` a thin
+A `proofload-websocket` module on `java.net.http.WebSocket`, which is in the JDK,
+so it carries no dependency — the same argument that made `proofload-http` a thin
 module over `java.net.http`.
 
 ```kotlin
@@ -55,7 +55,7 @@ result[tick].unmatched            // sends nothing ever answered
 ## Why this shape
 
 The connection is one user's, so it is per user rather than pooled. That is the
-opposite of `kestrel-http`'s shared client and for the opposite reason: a stream
+opposite of `proofload-http`'s shared client and for the opposite reason: a stream
 test is *about* how many connections a target holds, so amortising the
 handshake would remove the thing being measured. The cost is that file
 descriptors bound the user count long before the scheduler does, and the module
@@ -73,7 +73,7 @@ prevent for the cost of a line.
 
 ## Stack
 
-- [x] **`spec-0059-module`** — `kestrel-websocket`, its dependency test, `ws`,
+- [x] **`spec-0059-module`** — `proofload-websocket`, its dependency test, `ws`,
       `open` and `close` as timed steps, one connection per user.
       Done when: the module asserts its own classpath, a handshake is one
       sample under the step's name, and a run closes every connection it made.

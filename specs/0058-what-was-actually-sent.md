@@ -31,7 +31,7 @@ different question of what a single request *was*.
 One user, once, printed — a run whose purpose is reading rather than measuring:
 
 ```kotlin
-kestrel.trace(checkout)          // one user, one pass, no profile, no result
+proofload.trace(checkout)          // one user, one pass, no profile, no result
 ```
 
 ```

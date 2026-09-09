@@ -2,7 +2,7 @@
 
 ## Problem
 
-A team runs Kestrel on every release and has no way to ask the only question
+A team runs Proofload on every release and has no way to ask the only question
 they actually care about: is this worse than last time? Every run is reported
 in isolation, so comparison happens by eye, across two browser tabs.
 
@@ -29,13 +29,13 @@ to differ, and the report should say exactly that.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.baseline.readBaseline
-import io.github.matthewjones372.kestrel.baseline.writeBaseline
+import io.github.matthewjones372.proofload.baseline.readBaseline
+import io.github.matthewjones372.proofload.baseline.writeBaseline
 
 val result = simulation.run()
-val comparison = result.against(readBaseline(Path.of("baseline.kestrel")))
+val comparison = result.against(readBaseline(Path.of("baseline.proofload")))
 
-result.writeBaseline(Path.of("baseline.kestrel"))
+result.writeBaseline(Path.of("baseline.proofload"))
 ```
 
 and on the page:
@@ -51,7 +51,7 @@ and on the page:
 - `Change` — a step, a percentile, then and now, and a verdict: better, worse,
   indistinguishable, new, or gone.
 - `RunResult.against(baseline)` — every step compared.
-- `kestrel-baseline` — a module that writes and reads a run in a line-oriented
+- `proofload-baseline` — a module that writes and reads a run in a line-oriented
   format of its own.
 
 ## Why this shape
@@ -80,7 +80,7 @@ runs, and that is enough.
       `RunResult.against`.
       Done when: two runs of the same distribution are indistinguishable, a run
       three times slower is worse, and a step present in only one is named.
-- [ ] **`spec-0021-baseline`** — the `kestrel-baseline` module: write a run,
+- [ ] **`spec-0021-baseline`** — the `proofload-baseline` module: write a run,
       read it back, compare.
       Done when: a run written and read back compares as indistinguishable
       from itself, and an unreadable file is an error a caller can handle.

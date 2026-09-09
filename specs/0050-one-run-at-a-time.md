@@ -4,7 +4,7 @@
 
 A load test that shares a machine measures the machine. 0041 measured it here:
 a 40 ms target read 215 ms beside eight modules' tests. Nothing in the library
-prevents it — `Kestrel.run()` will start a run while another is already going,
+prevents it — `Proofload.run()` will start a run while another is already going,
 and say nothing.
 
 The first draft of this spec hung the fix on `@LoadTest`. That ties isolation to
@@ -14,8 +14,8 @@ JUnit: Kotest's entry is a suspend function with no annotation to carry it, a
 the level 0041 was actually bitten by — so the annotation would have left the
 real case unsolved while every user still wrote build configuration.
 
-`Kestrel.run(Simulation)` is one choke point and every route reaches it: both
-framework modules already declare `api(project(":kestrel-engine"))`, and
+`Proofload.run(Simulation)` is one choke point and every route reaches it: both
+framework modules already declare `api(project(":proofload-engine"))`, and
 `run(Search)` fans out through the same call one rung at a time. Isolation
 belongs there, where it is true for whoever asked and needs nothing from the
 caller.
@@ -33,7 +33,7 @@ caller.
 The user writes what they already write, and two runs never overlap:
 
 ```kotlin
-val result = kestrel.run(checkout.at(500.perSecond, over = 2.minutes))
+val result = proofload.run(checkout.at(500.perSecond, over = 2.minutes))
 ```
 
 The protocol is a value in core, like everything else core owns — states and
@@ -55,7 +55,7 @@ machine's property and not virtual threads':
 ```kotlin
 fun Engine.exclusive(): Engine       // 0051 declares Engine
 
-val kestrel = Kestrel()              // exclusive by default
+val proofload = Proofload()              // exclusive by default
 ```
 
 Two locks underneath, in this order, because they answer different questions: a
@@ -93,7 +93,7 @@ makes you configure a lock before it will run is the setup burden this whole
 design exists to avoid.
 
 Wrapping an engine rather than living in one is what keeps this honest. A lock
-inside `kestrel-engine` would be virtual threads' lock, and two engines in one
+inside `proofload-engine` would be virtual threads' lock, and two engines in one
 process would not serialise against each other — which is the bug this spec
 exists to remove, reintroduced one layer down.
 
@@ -122,7 +122,7 @@ Stacks on 0051, which declares the `Engine` this decorates.
       the opt-out.
       Done when: two JVMs started together are shown to run one after the
       other, killing a holder frees the machine for the next,
-      `-Dkestrel.exclusive=false` lets them overlap, and a lock file that
+      `-Dproofload.exclusive=false` lets them overlap, and a lock file that
       cannot be opened downgrades the guarantee instead of failing the run.
 - [x] **`spec-0050-reported`** — the wait, where a reader sees it.
       Done when: a run that waited says how long, and a run that did not says
@@ -158,12 +158,12 @@ Stacks on 0051, which declares the `Engine` this decorates.
     it: an unreliable lock is one that fails to be taken, which is already the
     path that downgrades rather than fails.
 3. **Does `benchmarks` opt out?** It measures the tool deliberately and may want
-    several processes at once. Recommend it sets `kestrel.exclusive=false` in
+    several processes at once. Recommend it sets `proofload.exclusive=false` in
     its own build file rather than the engine special-casing it.
 4. **Should waiting have a ceiling?** An hour of queued runs looks identical to
     a deadlock. Recommend a timeout that fails loudly naming the holder, rather
     than waiting forever or proceeding unsafely.
-5. **Can this land before 0051?** Only by going inside `kestrel-engine` and
+5. **Can this land before 0051?** Only by going inside `proofload-engine` and
     moving later. Recommend not: a machine-wide lock that moved is a lock
     somebody has to re-prove, and 0051 is small.
 6. **Does this make 0041's gate redundant?** No — that gate exists to keep a

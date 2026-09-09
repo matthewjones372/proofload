@@ -2,7 +2,7 @@
 
 ## Problem
 
-Every claim in this repository rests on one unmeasured assumption: that Kestrel
+Every claim in this repository rests on one unmeasured assumption: that Proofload
 can keep the schedule it promises. `responseTime` counts from the intended
 departure precisely so a backlog cannot hide, and `fellBehind()` says when one
 is large enough to matter — but nobody has ever run the thing hard enough to
@@ -42,7 +42,7 @@ rate     users    behind p50   behind p99   behind max   kept schedule
   other question.
 - The target is an action that returns immediately without touching a socket,
   so what is measured is the generator and nothing else.
-- The output is a table, written to `build/reports/kestrel/ceiling.md`, and the
+- The output is a table, written to `build/reports/proofload/ceiling.md`, and the
   ceiling — the highest rate that kept its schedule — recorded in
   `docs/what-it-costs.md` beside the machine it was measured on.
 

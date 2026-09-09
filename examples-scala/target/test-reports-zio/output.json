@@ -1,11 +1,11 @@
 {
   "results": [
     {
-       "name" : "test_case_-2051329426/checkout/holds its failure rate at 20 a second",
+       "name" : "test_case_-386809844/checkout/holds its failure rate at 20 a second",
        "status" : "Success",
-       "durationMillis" : "3079",
+       "durationMillis" : "1720",
        "annotations" : "",
-       "fullyQualifiedClassName" : "test_case_-2051329426",
+       "fullyQualifiedClassName" : "test_case_-386809844",
        "labels" : ["checkout", "holds its failure rate at 20 a second"]
     }
   ]

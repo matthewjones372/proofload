@@ -9,7 +9,7 @@ promised and the sample a recorder took is this tool". 0060 adds a path that
 number does not cover — a serializer the caller wrote, a producer's accumulator,
 a sender thread, an ack callback — and none of it has been weighed.
 
-That matters because of who is asking. A team pointing Kestrel at their own
+That matters because of who is asking. A team pointing Proofload at their own
 cluster is asking whether *the cluster* holds at a rate. They can only believe
 the answer if the generator's own cost at that rate is known and small. Today it
 is neither known nor stated, and a Kafka run would quietly attribute the tool's
@@ -54,7 +54,7 @@ producing through a producer that reaches no broker
 and, opted into rather than required:
 
 ```bash
-./gradlew :kestrel-kafka:containerTests   # the real images, where Docker exists
+./gradlew :proofload-kafka:containerTests   # the real images, where Docker exists
 ```
 
 ## Why this shape

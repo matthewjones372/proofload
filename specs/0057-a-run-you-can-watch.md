@@ -36,12 +36,12 @@ fun interface Progress {
 ```
 
 ```
-kestrel: 00:30  departed 44,231  in flight 312  behind p99 2.1ms
-kestrel: 00:35  departed 51,678  in flight 298  behind p99 2.0ms
-kestrel: rung 400/s  passed   p99 84ms   failed 0.0%
+proofload: 00:30  departed 44,231  in flight 312  behind p99 2.1ms
+proofload: 00:35  departed 51,678  in flight 298  behind p99 2.0ms
+proofload: rung 400/s  passed   p99 84ms   failed 0.0%
 ```
 
-- `Kestrel(progress = ...)`, defaulting to `lines()`; `@LoadTest` and the
+- `Proofload(progress = ...)`, defaulting to `lines()`; `@LoadTest` and the
   Kotest module supply `silent`.
 - A search prints a line per rung, with its verdict and whether it was void.
 
@@ -102,7 +102,7 @@ ceiling did not move.
 2. **stdout or a logger?** Recommend stdout. Core has no logging dependency and
     the layering rule means it is not getting one; a caller who wants a logger
     implements the one-method interface.
-3. **On by default?** Recommend yes for `Kestrel()` and no under either test
+3. **On by default?** Recommend yes for `Proofload()` and no under either test
     framework. A load test that prints 120 lines into a JUnit report is noise,
     and a `main` that prints nothing for ten minutes is the problem.
 4. **Does a tick's snapshot go in the report?** Recommend not: the timeline

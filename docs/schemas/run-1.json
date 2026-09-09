@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://matthewjones372.github.io/kestrel/schemas/run-1.json",
-  "title": "A Kestrel run",
-  "description": "What one finished run concluded. `additionalProperties` is false because this is the producer's contract: a field Kestrel emits and has not declared here is a build failure. It is not the reader's rule \u2014 a reader must ignore fields it does not know, so that a new optional key is not a breaking change. The identity a document carries is the `schema` string, not this URL: a hostname in every run's output is a hostname somebody has to keep alive.",
+  "$id": "https://matthewjones372.github.io/proofload/schemas/run-1.json",
+  "title": "A Proofload run",
+  "description": "What one finished run concluded. `additionalProperties` is false because this is the producer's contract: a field Proofload emits and has not declared here is a build failure. It is not the reader's rule \u2014 a reader must ignore fields it does not know, so that a new optional key is not a breaking change. The identity a document carries is the `schema` string, not this URL: a hostname in every run's output is a hostname somebody has to keep alive.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +14,7 @@
   ],
   "properties": {
     "schema": {
-      "const": "kestrel/run/1",
+      "const": "proofload/run/1",
       "description": "The version of this document's shape."
     },
     "density": {

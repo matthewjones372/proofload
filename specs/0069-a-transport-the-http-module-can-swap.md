@@ -17,10 +17,10 @@ honestly is still not the rate. The JDK client is the right default, asserted by
 
 ## Not doing
 
-- **No Netty, OkHttp or Ktor in `kestrel-http` or core.** A seam, no dependency.
+- **No Netty, OkHttp or Ktor in `proofload-http` or core.** A seam, no dependency.
 - **No fast transport here.** A spec of its own: a leaf module with a
   third-party or native client. Done when: it passes this spec's contract test,
-  its classpath is core plus `kestrel-http` plus one client stack, and its
+  its classpath is core plus `proofload-http` plus one client stack, and its
   ceiling, from 0056's sweep, is on `docs/what-it-costs.md` beside the JDK one.
   **Measured before writing one, and the measurement does not justify it.**
   Pushed past its published rates the shipped path breaks between ten and
@@ -39,7 +39,7 @@ honestly is still not the rate. The JDK client is the right default, asserted by
 - No HTTP/3. Named as a question.
 - No change to what the JDK path does, measures or costs: same client, same
   `followRedirects(NEVER)`, same thirty-second default, same catch branches.
-- No change to `kestrel-pelican`, which builds a JDK client of its own.
+- No change to `proofload-pelican`, which builds a JDK client of its own.
 - No suspend or async shape. 0051 answered it: blocking is the point.
 
 ## Shape
@@ -69,7 +69,7 @@ the message, and no more.
 
 One method, because a round trip is one thing: a wider interface would describe
 the JDK client's internals rather than what a sender is, which is 0051's
-argument for `Engine`. Kestrel's own values across it make a second
+argument for `Engine`. Proofload's own values across it make a second
 implementation a leaf module carrying its own dependency — 0010's pattern for
 Pelican's `ClientTransport`, 0060's for `kafka-clients`. The failure is one of
 those values, not the `StepScope` `exchange` takes today: a transport holding
@@ -86,7 +86,7 @@ so the first request in a JVM builds it *inside a measured sample*, and two runs
 share a client neither owns.
 
 This is not 0051's seam: an `Engine` runs a simulation — schedule, threads,
-recorders, the exclusivity lock — chosen on `Kestrel` at run time, while a
+recorders, the exclusivity lock — chosen on `Proofload` at run time, while a
 `Transport` sends one request and is chosen on the `Http` value, a request being
 described before any run exists. The alternative — a module reimplementing
 `HttpAction`, the jar, the redirects and the trace headers — is 0005's forty
@@ -134,5 +134,5 @@ lines everybody writes, once per client.
 4. **Does connection-per-user land here?** Recommend a spec of its own: it is
     cheap once the seam exists, and needs the page that says what it measures.
 5. **HTTP/3?** The JDK client does not speak it, so no configuration of
-    `kestrel-http` ever will. Recommend naming it as something the seam allows
+    `proofload-http` ever will. Recommend naming it as something the seam allows
     and building nothing.

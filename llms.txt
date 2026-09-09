@@ -1,4 +1,4 @@
-# Kestrel
+# Proofload
 
 > Load testing for Kotlin. A scenario is an ordinary Kotlin value, and the run
 > times every request from the moment it was *meant* to depart — so the tail it
@@ -11,9 +11,9 @@ Facts worth having before anything else:
 
 - Kotlin 2.4, JVM 21+, Apache 2.0. Virtual threads on the JDK's own HTTP client.
 - Nothing is on Maven Central yet; `./gradlew publishToMavenLocal` is how to get
-  it today. Coordinates are `io.github.matthewjones372:kestrel-core` and its
-  siblings — `kestrel-http`, `kestrel-junit5`, `kestrel-report-html` and the rest
-  under Docs below. `kestrel-core` depends on the Kotlin standard library and
+  it today. Coordinates are `io.github.matthewjones372:proofload-core` and its
+  siblings — `proofload-http`, `proofload-junit5`, `proofload-report-html` and the rest
+  under Docs below. `proofload-core` depends on the Kotlin standard library and
   nothing else, and a test enforces it; every client, broker, test framework and
   report format is a leaf module beside it.
 - A step is named once. `step("place order")` gives a `StepName`, and the same
@@ -30,19 +30,19 @@ Facts worth having before anything else:
 
 ## The shape of a test
 
-`@LoadTest` is `@Test` with a `Kestrel` parameter, here against a JDK `HttpServer`.
+`@LoadTest` is `@Test` with a `Proofload` parameter, here against a JDK `HttpServer`.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.at
-import io.github.matthewjones372.kestrel.engine.Kestrel
-import io.github.matthewjones372.kestrel.fedBy
-import io.github.matthewjones372.kestrel.feed
-import io.github.matthewjones372.kestrel.http.http
-import io.github.matthewjones372.kestrel.junit5.LoadTest
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.scenario
-import io.github.matthewjones372.kestrel.sessionKey
-import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.proofload.at
+import io.github.matthewjones372.proofload.engine.Proofload
+import io.github.matthewjones372.proofload.fedBy
+import io.github.matthewjones372.proofload.feed
+import io.github.matthewjones372.proofload.http.http
+import io.github.matthewjones372.proofload.junit5.LoadTest
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.scenario
+import io.github.matthewjones372.proofload.sessionKey
+import io.github.matthewjones372.proofload.step
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,7 +55,7 @@ private val placeOrder = step("place order")
 class CheckoutLoadTest {
 
     @LoadTest
-    fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
+    fun `checkout holds up at fifty a second`(proofload: Proofload) {
         val api = http.baseUrl("http://localhost:${server.address.port}")
 
         val checkout = scenario("checkout") {
@@ -69,7 +69,7 @@ class CheckoutLoadTest {
             )
         }
 
-        val result = kestrel.run(
+        val result = proofload.run(
             checkout.at(50.perSecond, over = 1.seconds)
                 .fedBy(feed(customer) { user -> "customer-$user" }),
         )
@@ -90,10 +90,10 @@ class CheckoutLoadTest {
 
 ## Docs
 
-- [README](https://github.com/matthewjones372/kestrel/blob/main/README.md): what it is, and the smallest test that runs.
-- [Cookbook](https://github.com/matthewjones372/kestrel/blob/main/docs/cookbook.md):
+- [README](https://github.com/matthewjones372/proofload/blob/main/README.md): what it is, and the smallest test that runs.
+- [Cookbook](https://github.com/matthewjones372/proofload/blob/main/docs/cookbook.md):
   profiles, feeders, captures, goals, gRPC, Kafka, JDBC, WebSockets, baselines and reports. Start here for code.
-- [For agents](https://github.com/matthewjones372/kestrel/blob/main/docs/for-agents.md): every public signature, rendered from the `.api` dumps, and the mistakes to avoid.
-- [Modules](https://github.com/matthewjones372/kestrel/blob/main/docs/modules.md): each module, and what it depends on.
-- [What it costs](https://github.com/matthewjones372/kestrel/blob/main/docs/what-it-costs.md): the tool's own measured overhead.
-- [AGENTS.md](https://github.com/matthewjones372/kestrel/blob/main/AGENTS.md): for working *on* Kestrel, not with it.
+- [For agents](https://github.com/matthewjones372/proofload/blob/main/docs/for-agents.md): every public signature, rendered from the `.api` dumps, and the mistakes to avoid.
+- [Modules](https://github.com/matthewjones372/proofload/blob/main/docs/modules.md): each module, and what it depends on.
+- [What it costs](https://github.com/matthewjones372/proofload/blob/main/docs/what-it-costs.md): the tool's own measured overhead.
+- [AGENTS.md](https://github.com/matthewjones372/proofload/blob/main/AGENTS.md): for working *on* Proofload, not with it.

@@ -162,7 +162,7 @@ opening a call whose every answer it would count as unsolicited.
     Worked around here: the failed wait reports one sample of its own, timed
     from the last answer that did arrive — how long the one that never came had
     been outstanding, which is 0075's first open question answered the way it
-    recommended. **`kestrel-websocket` has the same hole** and is not fixed
+    recommended. **`proofload-websocket` has the same hole** and is not fixed
     here: 0059's `awaiting` reports its samples and calls `fail` the same way,
     so a socket that goes quiet part-way through a run reports no failure
     either. Recommend fixing it in core rather than in each module — a reason
@@ -183,7 +183,7 @@ opening a call whose every answer it would count as unsolicited.
     gap histogram. See "A server stream is two numbers" above; this also
     answers 0075's fifth open question.
 8. **Where the trace-id generator lives.** It was `internal` to
-    `kestrel-http`, which would have meant a second copy here and a third in
+    `proofload-http`, which would have meant a second copy here and a third in
     the next protocol module — two of them disagreeing about the format is the
     kind of difference nobody notices until a backend has half a run in it. It
     moved to core as `Traceparent`, beside `StepScope.traced`, which was
@@ -199,7 +199,7 @@ opening a call whose every answer it would count as unsolicited.
     shutting it down. A stub built on the raw pool gets no budget and no trace,
     which is why the intercepted one is the one named `channel`.
 4. **Is `grpc-api` `api` or `compileOnly`?** Kotest is `compileOnly` in
-    `kestrel-kotest` because a caller already has it, as one here has gRPC.
+    `proofload-kotest` because a caller already has it, as one here has gRPC.
     Recommend `api`: the signatures are `MethodDescriptor` and `ManagedChannel`.
     Built `api`. What arrives with it is guava and five annotation jars, which
     `NoTransportTest` allows by name — they are `grpc-api`'s own and not a

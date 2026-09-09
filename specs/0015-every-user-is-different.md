@@ -24,10 +24,10 @@ in it are what earlier steps put there.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.fedBy
-import io.github.matthewjones372.kestrel.feed
-import io.github.matthewjones372.kestrel.feedFrom
-import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.proofload.fedBy
+import io.github.matthewjones372.proofload.feed
+import io.github.matthewjones372.proofload.feedFrom
+import io.github.matthewjones372.proofload.sessionKey
 
 val email = sessionKey<String>("email")
 val region = sessionKey<String>("region")

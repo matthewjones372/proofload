@@ -5,7 +5,7 @@
 `fellBehind` decides whether a run's latencies are the target's or partly this
 tool's, and it is the verdict everything else rests on: 0087 puts it above every
 goal, and the README opens by saying a green run on a generator that fell behind
-is the trap Kestrel exists to close.
+is the trap Proofload exists to close.
 
 It compares the run's own lateness against the worst step's response time scaled
 by `Histogram.PRECISION` — 0.0078125. A run measured today against a target with

@@ -1,0 +1,252 @@
+public abstract interface class io/github/matthewjones372/proofload/http/Body {
+}
+
+public final class io/github/matthewjones372/proofload/http/Body$Streamed : io/github/matthewjones372/proofload/http/Body {
+	public fun <init> (Ljava/lang/Long;Lkotlin/jvm/functions/Function0;)V
+	public final fun getBytes ()Ljava/lang/Long;
+	public final fun getOpen ()Lkotlin/jvm/functions/Function0;
+}
+
+public final class io/github/matthewjones372/proofload/http/Body$Text : io/github/matthewjones372/proofload/http/Body {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/Body$Text;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/Body$Text;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/Body$Text;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/CheckFailed : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/CheckFailed;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/CheckFailed;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/CheckFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCheck ()Ljava/lang/String;
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/DeclaredStatus : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/proofload/http/DeclaredStatus;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/DeclaredStatus;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/DeclaredStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/EventStream {
+	public final fun getDelivered ()J
+	public final fun getHeartbeats ()J
+}
+
+public final class io/github/matthewjones372/proofload/http/EventsKt {
+	public static final fun cadence-NYVWxOk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
+	public static final fun firstEvent-V_gnWBo (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;J)V
+	public static final fun getEventStream ()Lio/github/matthewjones372/proofload/SessionKey;
+	public static final fun open-FYSgf1w (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/http/SseTarget;)V
+	public static final fun stopReading-gWihuN4 (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
+}
+
+public abstract interface class io/github/matthewjones372/proofload/http/Exchange {
+}
+
+public final class io/github/matthewjones372/proofload/http/Exchange$Answered : io/github/matthewjones372/proofload/http/Exchange {
+	public fun <init> (Lio/github/matthewjones372/proofload/http/Response;)V
+	public final fun component1 ()Lio/github/matthewjones372/proofload/http/Response;
+	public final fun copy (Lio/github/matthewjones372/proofload/http/Response;)Lio/github/matthewjones372/proofload/http/Exchange$Answered;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/Exchange$Answered;Lio/github/matthewjones372/proofload/http/Response;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/Exchange$Answered;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getResponse ()Lio/github/matthewjones372/proofload/http/Response;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/Exchange$Failed : io/github/matthewjones372/proofload/http/Exchange {
+	public fun <init> (Lio/github/matthewjones372/proofload/Reason;)V
+	public final fun component1 ()Lio/github/matthewjones372/proofload/Reason;
+	public final fun copy (Lio/github/matthewjones372/proofload/Reason;)Lio/github/matthewjones372/proofload/http/Exchange$Failed;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/Exchange$Failed;Lio/github/matthewjones372/proofload/Reason;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/Exchange$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lio/github/matthewjones372/proofload/Reason;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/Http {
+	public final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/Http;
+	public final fun delete (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun get (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun head (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun over (Lio/github/matthewjones372/proofload/http/Transport;)Lio/github/matthewjones372/proofload/http/Http;
+	public final fun patch (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun post (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun put (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun traced ()Lio/github/matthewjones372/proofload/http/Http;
+	public final fun withCookies ()Lio/github/matthewjones372/proofload/http/Http;
+}
+
+public final class io/github/matthewjones372/proofload/http/HttpAction : io/github/matthewjones372/proofload/Action, io/github/matthewjones372/proofload/Targeted {
+	public final fun body (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun bodyFrom (Ljava/lang/Long;Lkotlin/jvm/functions/Function0;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public static synthetic fun bodyFrom$default (Lio/github/matthewjones372/proofload/http/HttpAction;Ljava/lang/Long;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun capture (Lio/github/matthewjones372/proofload/SessionKey;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun checking (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun declaring ([I)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun discardingBody ()Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun expecting (I)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun following (I)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public static synthetic fun following$default (Lio/github/matthewjones372/proofload/http/HttpAction;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public fun getHost ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun header (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public final fun retrying-SxA4cEA (ILkotlin/jvm/functions/Function1;J)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public static synthetic fun retrying-SxA4cEA$default (Lio/github/matthewjones372/proofload/http/HttpAction;ILkotlin/jvm/functions/Function1;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/HttpAction;
+	public fun run (Lio/github/matthewjones372/proofload/StepScope;)V
+	public final fun timeout (Ljava/time/Duration;)Lio/github/matthewjones372/proofload/http/HttpAction;
+}
+
+public final class io/github/matthewjones372/proofload/http/HttpActionKt {
+	public static final fun exec (Lio/github/matthewjones372/proofload/ScenarioBuilder;Lio/github/matthewjones372/proofload/http/HttpAction;)V
+	public static final fun send (Lio/github/matthewjones372/proofload/StepScope;Lio/github/matthewjones372/proofload/http/HttpAction;)Lio/github/matthewjones372/proofload/http/Response;
+}
+
+public final class io/github/matthewjones372/proofload/http/HttpKt {
+	public static final fun getHttp ()Lio/github/matthewjones372/proofload/http/Http;
+}
+
+public final class io/github/matthewjones372/proofload/http/HttpStatus : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/proofload/http/HttpStatus;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/HttpStatus;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/HttpStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/JdkHttpClient : io/github/matthewjones372/proofload/http/Transport {
+	public fun <init> ()V
+	public fun <init> (Ljava/net/http/HttpClient;)V
+	public synthetic fun <init> (Ljava/net/http/HttpClient;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun exchange (Lio/github/matthewjones372/proofload/http/Request;)Lio/github/matthewjones372/proofload/http/Exchange;
+}
+
+public final class io/github/matthewjones372/proofload/http/NoFirstEvent : io/github/matthewjones372/proofload/Reason {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/http/NoFirstEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/NotStreaming : io/github/matthewjones372/proofload/Reason {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/http/NotStreaming;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/NothingCaptured : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/NothingCaptured;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/NothingCaptured;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/NothingCaptured;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/Request {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/net/URI;Ljava/util/Map;Lio/github/matthewjones372/proofload/http/Body;JZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/net/URI;Ljava/util/Map;Lio/github/matthewjones372/proofload/http/Body;JZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/net/URI;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Lio/github/matthewjones372/proofload/http/Body;
+	public final fun component5-UwyO8pc ()J
+	public final fun component6 ()Z
+	public final fun copy-myKFqkg (Ljava/lang/String;Ljava/net/URI;Ljava/util/Map;Lio/github/matthewjones372/proofload/http/Body;JZ)Lio/github/matthewjones372/proofload/http/Request;
+	public static synthetic fun copy-myKFqkg$default (Lio/github/matthewjones372/proofload/http/Request;Ljava/lang/String;Ljava/net/URI;Ljava/util/Map;Lio/github/matthewjones372/proofload/http/Body;JZILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/Request;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Lio/github/matthewjones372/proofload/http/Body;
+	public final fun getDiscardingBody ()Z
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getTimeout-UwyO8pc ()J
+	public final fun getUri ()Ljava/net/URI;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/Response {
+	public fun <init> (ILjava/lang/String;Ljava/util/Map;Ljava/lang/Long;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/util/Map;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILjava/util/List;Ljava/lang/String;)V
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getBytes ()J
+	public final fun getStatus ()I
+	public final fun header (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/Sse {
+	public final fun at (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/SseTarget;
+	public final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/Sse;
+	public final fun traced ()Lio/github/matthewjones372/proofload/http/Sse;
+}
+
+public final class io/github/matthewjones372/proofload/http/SseKt {
+	public static final fun getSse ()Lio/github/matthewjones372/proofload/http/Sse;
+}
+
+public final class io/github/matthewjones372/proofload/http/SseTarget {
+}
+
+public final class io/github/matthewjones372/proofload/http/StreamEnded : io/github/matthewjones372/proofload/Reason {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/http/StreamEnded;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/http/TooManyRedirects : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/proofload/http/TooManyRedirects;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/TooManyRedirects;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/TooManyRedirects;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public final fun getMax ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/http/Transport {
+	public abstract fun exchange (Lio/github/matthewjones372/proofload/http/Request;)Lio/github/matthewjones372/proofload/http/Exchange;
+}
+
+public final class io/github/matthewjones372/proofload/http/UnfilledPath : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/UnfilledPath;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/http/UnfilledPath;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/http/UnfilledPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

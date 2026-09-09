@@ -2,7 +2,7 @@
 
 ## Problem
 
-Nothing in Kestrel bounds what a run may do. `checkout.at(50000.perSecond, over
+Nothing in Proofload bounds what a run may do. `checkout.at(50000.perSecond, over
 = 8.hours)` against a hostname is a legal value, and the first thing that tells
 anyone it was wrong is the target. A typo does it; so does a caller that is not
 a person — 0089 and 0092 hand the rate and the URL to a program, and a load
@@ -31,7 +31,7 @@ has to fire a request to know what a plan would send. Nothing makes them look.
 A file a human commits, next to the build:
 
 ```toml
-# kestrel.toml — what a run on this machine may do
+# proofload.toml — what a run on this machine may do
 hosts       = ["localhost", "*.staging.internal"]
 maxRate     = "500/s"
 maxDuration = "10m"
@@ -41,8 +41,8 @@ maxRequests = 2_000_000
 And a plan you can ask before you fire it:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Allowance
-import io.github.matthewjones372.kestrel.preview
+import io.github.matthewjones372.proofload.Allowance
+import io.github.matthewjones372.proofload.preview
 
 val plan = checkout.at(50.perSecond, over = 1.minutes)
 
@@ -55,7 +55,7 @@ when (val asked = plan.preview(Allowance.fromFile())) {
 Running within one is a **second entry point**, not a changed one:
 
 ```kotlin
-when (val ran = kestrel.runWithin(Allowance.fromFile(), plan)) {
+when (val ran = proofload.runWithin(Allowance.fromFile(), plan)) {
     is Ran.Result  -> ran.result.writeHtmlReport(path)
     is Ran.Refused -> println(ran.reason)
 }
@@ -86,7 +86,7 @@ declared, is a confusion nobody would untangle twice.
 
 **`runWithin` beside `run`, rather than a `run` that changes shape.** The
 refusal has to be a value, and `run` returns a `RunResult`; widening it to a sum
-would delete lines from `kestrel-engine`'s `.api`, which is the one change
+would delete lines from `proofload-engine`'s `.api`, which is the one change
 AGENTS.md calls a pull request that breaks somebody. A second entry point costs
 one method and leaves every existing caller compiling. The alternative — `run`
 throwing on refusal — is rejected for the reason the repo already gives: a
@@ -107,7 +107,7 @@ which nobody wants to hand-edit with a comment in it.
       count, duration, peak rate, and the users it would need.
       Done when: a preview of a staged plan reports the peak rate of the tallest
       stage, not the mean.
-- [x] **`spec-0088-enforcement`** — `kestrel.runWithin(allowance, plan)`
+- [x] **`spec-0088-enforcement`** — `proofload.runWithin(allowance, plan)`
       returning `Ran.Refused` before the first departure, with `run` untouched.
       Done when: a refused run sends nothing, provable against a JDK
       `HttpServer` that counts requests.

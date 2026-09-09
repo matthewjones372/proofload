@@ -23,8 +23,8 @@ boundary, changing nothing inside it.
 ## Shape
 
 ```kotlin
-kestrel.run(soak.sharded(index = 2, of = 4, startingAt = at))   // on each host
-Shards.readAll(Path.of("build/kestrel")).merged[pay].responseTime.p99
+proofload.run(soak.sharded(index = 2, of = 4, startingAt = at))   // on each host
+Shards.readAll(Path.of("build/proofload")).merged[pay].responseTime.p99
 ```
 
 **Partition.** Injector *k* of *N* sends the departures whose user number is
@@ -119,5 +119,5 @@ unlike-plan refusal, the only thing between a user and four pooled experiments.
     apart are reported, not refused, since only the timeline smears.
 4. **Should unlike machines merge, carrying every machine?** Recommend no, per
     0037: a merged result has one `Machine`, one `Probe`, one resolution.
-5. **Where does the coordinator live?** Recommend `kestrel-baseline` beside
+5. **Where does the coordinator live?** Recommend `proofload-baseline` beside
     `readAll`; a `main` and a shell loop are the launcher, as 0037 concluded.

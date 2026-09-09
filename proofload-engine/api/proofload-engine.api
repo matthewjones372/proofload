@@ -1,0 +1,46 @@
+public final class io/github/matthewjones372/proofload/engine/CalibrationKt {
+	public static final fun calibrate-LRDsOJo (J)Lio/github/matthewjones372/proofload/Floor;
+	public static synthetic fun calibrate-LRDsOJo$default (JILjava/lang/Object;)Lio/github/matthewjones372/proofload/Floor;
+}
+
+public final class io/github/matthewjones372/proofload/engine/ExclusiveKt {
+	public static final fun exclusive (Lio/github/matthewjones372/proofload/Engine;Lio/github/matthewjones372/proofload/Progress;)Lio/github/matthewjones372/proofload/Engine;
+	public static synthetic fun exclusive$default (Lio/github/matthewjones372/proofload/Engine;Lio/github/matthewjones372/proofload/Progress;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Engine;
+}
+
+public final class io/github/matthewjones372/proofload/engine/Proofload {
+	public fun <init> ()V
+	public fun <init> (Lio/github/matthewjones372/proofload/Engine;Lio/github/matthewjones372/proofload/Progress;)V
+	public synthetic fun <init> (Lio/github/matthewjones372/proofload/Engine;Lio/github/matthewjones372/proofload/Progress;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lio/github/matthewjones372/proofload/Progress;)V
+	public final fun calibrate ()Lio/github/matthewjones372/proofload/Floor;
+	public final fun run (Lio/github/matthewjones372/proofload/Search;)Lio/github/matthewjones372/proofload/Capacity;
+	public final fun run (Lio/github/matthewjones372/proofload/Simulation;)Lio/github/matthewjones372/proofload/RunResult;
+	public final fun summary ()Ljava/lang/String;
+	public final fun trace (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Feeder;)V
+	public static synthetic fun trace$default (Lio/github/matthewjones372/proofload/engine/Proofload;Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Feeder;ILjava/lang/Object;)V
+}
+
+public final class io/github/matthewjones372/proofload/engine/RunWithinKt {
+	public static final fun runWithin (Lio/github/matthewjones372/proofload/engine/Proofload;Lio/github/matthewjones372/proofload/Allowance;Lio/github/matthewjones372/proofload/Simulation;)Lio/github/matthewjones372/proofload/Ran;
+}
+
+public final class io/github/matthewjones372/proofload/engine/TraceKt {
+	public static final fun trace (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Feeder;)V
+	public static synthetic fun trace$default (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Feeder;ILjava/lang/Object;)V
+}
+
+public final class io/github/matthewjones372/proofload/engine/VirtualThreads : io/github/matthewjones372/proofload/Engine {
+	public fun <init> ()V
+	public fun <init> (Lio/github/matthewjones372/proofload/Progress;)V
+	public synthetic fun <init> (Lio/github/matthewjones372/proofload/Progress;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun run (Lio/github/matthewjones372/proofload/Simulation;)Lio/github/matthewjones372/proofload/RunResult;
+}
+
+public final class io/github/matthewjones372/proofload/engine/VirtualThreadsKt {
+	public static final fun run (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Progress;)Lio/github/matthewjones372/proofload/Capacity;
+	public static final fun run (Lio/github/matthewjones372/proofload/Simulation;Lio/github/matthewjones372/proofload/Progress;)Lio/github/matthewjones372/proofload/RunResult;
+	public static synthetic fun run$default (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Progress;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Capacity;
+	public static synthetic fun run$default (Lio/github/matthewjones372/proofload/Simulation;Lio/github/matthewjones372/proofload/Progress;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/RunResult;
+}
+

@@ -39,11 +39,11 @@ val distribution: List<Bucket> = result["pay"].serviceTime.distribution
 // Bucket(upperBound = 128.milliseconds, count = 431)
 ```
 
-- `Bucket` — an upper bound and a count, in `kestrel-core`.
+- `Bucket` — an upper bound and a count, in `proofload-core`.
 - `Timing.distribution` — the non-empty buckets, so a report draws what was
   counted and nothing else.
 - The charts are `<svg>` elements built from those counts in
-  `kestrel-report-html`, themed with the same CSS variables as the tables.
+  `proofload-report-html`, themed with the same CSS variables as the tables.
 
 ## Why this shape
 

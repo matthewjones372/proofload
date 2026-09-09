@@ -26,12 +26,12 @@ not write their paths out again to load-test them.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.pelican.kestrelTransport
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.proofload.pelican.proofloadTransport
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.scenario
 import kotlin.time.Duration.Companion.minutes
 
-val transport = kestrelTransport("https://orders.internal")
+val transport = proofloadTransport("https://orders.internal")
 val orders = OrdersClient("https://orders.internal", JacksonCodecs, transport)
 
 val checkout = scenario("checkout") {
@@ -41,11 +41,11 @@ val checkout = scenario("checkout") {
 val simulation = checkout.at(50.perSecond, over = 1.minutes)
 ```
 
-- `kestrel-pelican`, depending on `kestrel-core`, `kestrel-http` and
+- `proofload-pelican`, depending on `proofload-core`, `proofload-http` and
   `pelican-core`. Its dependency test asserts those and no Pekko.
-- `kestrelTransport(baseUrl)` returns Pelican's `ClientTransport` —
+- `proofloadTransport(baseUrl)` returns Pelican's `ClientTransport` —
   `send(ClientRequest): CompletionStage<ClientResponse>` — implemented over the
-  same `java.net.http` client `kestrel-http` already builds.
+  same `java.net.http` client `proofload-http` already builds.
 - Every request that passes through it is **timed and recorded**, keyed by the
   endpoint's **path template** rather than the substituted URL.
 
@@ -64,7 +64,7 @@ named the way the service's own OpenAPI document names them.
 ## Stack
 
 - [ ] **`spec-0010-transport`** — module, wiring, dependency test, and
-      `kestrelTransport` sending a `ClientRequest` and returning a
+      `proofloadTransport` sending a `ClientRequest` and returning a
       `ClientResponse`.
       Done when: a request through the transport reaches a JDK `HttpServer` and
       the response is decoded, with no Pekko on the classpath.

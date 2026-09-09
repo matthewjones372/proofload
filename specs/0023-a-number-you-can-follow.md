@@ -3,7 +3,7 @@
 ## Problem
 
 The report says `/pay` took 302 ms at p99 and cannot say what those 302 ms were
-spent on. Kestrel measures from outside the service and has no view inside it,
+spent on. Proofload measures from outside the service and has no view inside it,
 so "which part of that was the database" is a question it can only answer by
 handing the reader somewhere else to look.
 
@@ -18,7 +18,7 @@ measurement, for a request that was actually slow.
 - No tracing of every request. At fifty thousand a second, full tracing changes
   what is being measured — the target spends real time exporting spans — and
   then the load test is a test of the tracing.
-- No trace analysis. Kestrel does not read traces; it points at them.
+- No trace analysis. Proofload does not read traces; it points at them.
 - No sampling policy beyond the exemplars below.
 
 ## Shape
@@ -31,7 +31,7 @@ and in the report:
 
 > `/pay` p99 **302 ms** — trace `4bf92f3577b34da6a3ce929d0e0e4736`
 
-- W3C `traceparent` on every request, generated in `kestrel-http` — a formatted
+- W3C `traceparent` on every request, generated in `proofload-http` — a formatted
   hex string, so no dependency.
 - **Exemplars**: one trace id kept per histogram bucket, not per request. That
   is a string per bucket, tens per step, and it answers "show me a request that
@@ -45,8 +45,8 @@ An exemplar is the smallest thing that answers the question. Keeping a trace id
 per request is a memory profile; keeping one per bucket costs nothing and lands
 a reader on a real request at the latency they are asking about.
 
-Kestrel's number and the trace's number will disagree, and the gap is
-informative rather than a bug: Kestrel times from the intended departure, and a
+Proofload's number and the trace's number will disagree, and the gap is
+informative rather than a bug: Proofload times from the intended departure, and a
 server span starts when the request was accepted. The difference is network
 plus the target's accept queue.
 

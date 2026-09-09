@@ -23,7 +23,7 @@ covers half of it.
   has a plan file and no stubs on the classpath.
 - **No streaming.** Unary calls only. A bidirectional stream's latency is not
   one number and 0059 is where that argument already lives.
-- **No proto compilation here.** Kestrel does not run `protoc`.
+- **No proto compilation here.** Proofload does not run `protoc`.
 - **No dynamic stub generation.** No classes are written at runtime.
 
 ## Shape
@@ -31,7 +31,7 @@ covers half of it.
 A step names a method and a payload as JSON:
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 target:   orders.internal:9090
 scenario: orders
 steps:
@@ -57,7 +57,7 @@ much as a preference and a fallback:
   `protoc --descriptor_set_out`. Deterministic, works against a target with
   reflection off, and needs a build step the caller runs.
 
-Both land in `kestrel-grpc-dynamic`, a leaf module carrying `protobuf-java`,
+Both land in `proofload-grpc-dynamic`, a leaf module carrying `protobuf-java`,
 `protobuf-java-util` for the JSON, and `grpc-services` for reflection.
 
 ## Why this shape
@@ -81,7 +81,7 @@ discover.
 
 ## Stack
 
-- [x] **`spec-0100-descriptors`** — `kestrel-grpc-dynamic`, its dependency test,
+- [x] **`spec-0100-descriptors`** — `proofload-grpc-dynamic`, its dependency test,
       and a descriptor set read into method descriptors.
       Done when: a `.protoset` yields a method by `package.Service/Method`, and
       an unknown method names the ones it has.
@@ -115,8 +115,8 @@ entry rather than an unannounced fifth branch.
 
 ## Open questions
 
-- **Does this belong in `kestrel-grpc` or beside it?** Recommend beside, as
-  `kestrel-grpc-dynamic`. `kestrel-grpc` carries `grpc-api` and a caller's own
+- **Does this belong in `proofload-grpc` or beside it?** Recommend beside, as
+  `proofload-grpc-dynamic`. `proofload-grpc` carries `grpc-api` and a caller's own
   stubs; protobuf's runtime, its JSON printer and the reflection service are a
   stack nobody wanting the typed path should inherit.
 - **What is `expecting` when a gRPC call has no status code like HTTP's?**

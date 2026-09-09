@@ -1,0 +1,46 @@
+public final class io/github/matthewjones372/proofload/grpc/dynamic/DeclaredGrpcStatus : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (Lio/grpc/Status$Code;)V
+	public final fun component1 ()Lio/grpc/Status$Code;
+	public final fun copy (Lio/grpc/Status$Code;)Lio/github/matthewjones372/proofload/grpc/dynamic/DeclaredGrpcStatus;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/grpc/dynamic/DeclaredGrpcStatus;Lio/grpc/Status$Code;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/grpc/dynamic/DeclaredGrpcStatus;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lio/grpc/Status$Code;
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/DynamicCall : io/github/matthewjones372/proofload/Action {
+	public final fun declaring ([Lio/grpc/Status$Code;)Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;
+	public final fun expecting (Lio/grpc/Status$Code;)Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;
+	public final fun getName ()Ljava/lang/String;
+	public fun run (Lio/github/matthewjones372/proofload/StepScope;)V
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/DynamicCallKt {
+	public static final fun call (Lio/github/matthewjones372/proofload/grpc/Grpc;Lcom/google/protobuf/Descriptors$MethodDescriptor;Ljava/lang/String;)Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;
+	public static final fun call (Lio/github/matthewjones372/proofload/grpc/Grpc;Lio/github/matthewjones372/proofload/grpc/dynamic/Schema;Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;
+	public static final fun exec (Lio/github/matthewjones372/proofload/ScenarioBuilder;Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;)V
+	public static final fun send (Lio/github/matthewjones372/proofload/StepScope;Lio/github/matthewjones372/proofload/grpc/dynamic/DynamicCall;)Lcom/google/protobuf/DynamicMessage;
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/MessagesKt {
+	public static final fun asJson (Lcom/google/protobuf/Message;)Ljava/lang/String;
+	public static final fun messageFrom (Lcom/google/protobuf/Descriptors$Descriptor;Ljava/lang/String;)Lcom/google/protobuf/DynamicMessage;
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/ReflectedKt {
+	public static final fun reflected-HG0u8IE (Lio/github/matthewjones372/proofload/grpc/Grpc;J)Lio/github/matthewjones372/proofload/grpc/dynamic/Schema;
+	public static synthetic fun reflected-HG0u8IE$default (Lio/github/matthewjones372/proofload/grpc/Grpc;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/grpc/dynamic/Schema;
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/Schema {
+	public final fun getMethods ()Ljava/util/List;
+	public final fun method (Ljava/lang/String;)Lcom/google/protobuf/Descriptors$MethodDescriptor;
+}
+
+public final class io/github/matthewjones372/proofload/grpc/dynamic/SchemaKt {
+	public static final fun descriptorSet (Ljava/nio/file/Path;)Lio/github/matthewjones372/proofload/grpc/dynamic/Schema;
+	public static final fun descriptorSet ([B)Lio/github/matthewjones372/proofload/grpc/dynamic/Schema;
+}
+

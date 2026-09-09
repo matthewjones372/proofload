@@ -20,8 +20,8 @@ knows how to read.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.report.appendToStepSummary
-import io.github.matthewjones372.kestrel.report.markdown
+import io.github.matthewjones372.proofload.report.appendToStepSummary
+import io.github.matthewjones372.proofload.report.markdown
 
 val result = simulation.run()
 
@@ -33,11 +33,11 @@ result.appendToStepSummary()      // no-op off GitHub Actions
 - run: ./gradlew loadTest
 - uses: actions/upload-artifact@v4
   with:
-    name: kestrel-report
-    path: build/reports/kestrel/
+    name: proofload-report
+    path: build/reports/proofload/
 ```
 
-- `kestrel-report-github`, depending on `kestrel-core` and the JDK only, with
+- `proofload-report-github`, depending on `proofload-core` and the JDK only, with
   its own `NoThirdPartyDependenciesTest`.
 - `markdown()` — a summary table, GitHub-flavoured, that also reads fine in a
   terminal or a PR body.

@@ -12,7 +12,7 @@ requests, some percentiles, no sign that a quarter of the intended load never
 left. Every latency on that page is then describing a lighter test than the one
 that was asked for.
 
-Kestrel has an advantage here that Gatling does not: a scenario is a value and a
+Proofload has an advantage here that Gatling does not: a scenario is a value and a
 profile is a value, so the description is already in hand at the end of a run.
 
 ## Not doing

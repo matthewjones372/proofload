@@ -2,7 +2,7 @@
 
 A rate is a number, and a number arrives from somewhere. Somebody types it,
 or a script computes it, or — under [0089](../specs/0089-a-plan-without-a-compiler.md)
-and [0092](../specs/0092-kestrel-over-mcp.md) — a program writes it into a plan
+and [0092](../specs/0092-proofload-over-mcp.md) — a program writes it into a plan
 file. `checkout.at(50000.perSecond, over = 8.hours)` is a legal value whichever
 of those wrote it, and without a fence the first thing that says it was wrong
 is the target.
@@ -22,7 +22,7 @@ credential the load generator does not hold.
 
 ## The file
 
-`kestrel.toml`, beside the build, committed by a person:
+`proofload.toml`, beside the build, committed by a person:
 
 ```toml
 # what a run on this machine may do
@@ -45,9 +45,9 @@ off everywhere instead of off once.
 A scenario is a value, so what a plan would do is arithmetic:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Allowance
-import io.github.matthewjones372.kestrel.Preview
-import io.github.matthewjones372.kestrel.preview
+import io.github.matthewjones372.proofload.Allowance
+import io.github.matthewjones372.proofload.Preview
+import io.github.matthewjones372.proofload.preview
 
 when (val asked = checkout.at(50.perSecond, over = 1.minutes).preview(Allowance.fromFile())) {
     is Preview.Allowed -> println("${asked.users} users, ${asked.requestsAtLeast}+ requests, ${asked.hosts}")
@@ -67,11 +67,11 @@ Four of the numbers it returns are worth knowing the shape of:
 ## Running inside one
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Ran
-import io.github.matthewjones372.kestrel.engine.runWithin
+import io.github.matthewjones372.proofload.Ran
+import io.github.matthewjones372.proofload.engine.runWithin
 
-when (val ran = Kestrel().runWithin(Allowance.fromFile(), plan)) {
-    is Ran.Result -> ran.result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"))
+when (val ran = Proofload().runWithin(Allowance.fromFile(), plan)) {
+    is Ran.Result -> ran.result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
     is Ran.Refused -> System.err.println(ran.reason.described)
 }
 ```

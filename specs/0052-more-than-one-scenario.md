@@ -36,7 +36,7 @@ val mixed = browse.at(400.perSecond, over = 10.minutes) +
     checkout.at(20.perSecond, over = 10.minutes)
 
 mixed.userCount()          // 3,000,000, before anything is sent
-kestrel.run(mixed)
+proofload.run(mixed)
 ```
 
 - `Arm(scenario, profile, feeder)`, and `Simulation(arms: List<Arm>)`.

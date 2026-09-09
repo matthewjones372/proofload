@@ -1,0 +1,166 @@
+public final class io/github/matthewjones372/proofload/record/Answer {
+	public fun <init> (ILjava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (ILjava/util/List;Ljava/lang/String;)Lio/github/matthewjones372/proofload/record/Answer;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/record/Answer;ILjava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Answer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/List;
+	public final fun getStatus ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/Arguments {
+	public fun <init> (Ljava/nio/file/Path;Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/text/Regex;Lkotlin/text/Regex;)V
+	public final fun component1 ()Ljava/nio/file/Path;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/nio/file/Path;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lkotlin/text/Regex;
+	public final fun component6 ()Lkotlin/text/Regex;
+	public final fun copy (Ljava/nio/file/Path;Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/text/Regex;Lkotlin/text/Regex;)Lio/github/matthewjones372/proofload/record/Arguments;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/record/Arguments;Ljava/nio/file/Path;Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/text/Regex;Lkotlin/text/Regex;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Arguments;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExclude ()Lkotlin/text/Regex;
+	public final fun getFile ()Ljava/nio/file/Path;
+	public final fun getHar ()Ljava/nio/file/Path;
+	public final fun getInclude ()Lkotlin/text/Regex;
+	public final fun getOut ()Ljava/nio/file/Path;
+	public final fun getPackageName ()Ljava/lang/String;
+	public final fun getScenario ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/Capture {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/proofload/record/Capture;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/record/Capture;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Capture;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/Draft {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lio/github/matthewjones372/proofload/record/Draft;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/record/Draft;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Draft;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getCaptures ()Ljava/util/List;
+	public final fun getElsewhere ()Ljava/util/List;
+	public final fun getSteps ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/DraftKt {
+	public static final fun draft (Ljava/util/List;Lkotlin/text/Regex;Lkotlin/text/Regex;)Lio/github/matthewjones372/proofload/record/Draft;
+	public static synthetic fun draft$default (Ljava/util/List;Lkotlin/text/Regex;Lkotlin/text/Regex;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Draft;
+}
+
+public final class io/github/matthewjones372/proofload/record/DraftStep {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/util/List;IJLjava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/util/List;IJLjava/util/List;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()I
+	public final fun component11-UwyO8pc ()J
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()I
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy-vXyW-Bk (Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/util/List;IJLjava/util/List;Z)Lio/github/matthewjones372/proofload/record/DraftStep;
+	public static synthetic fun copy-vXyW-Bk$default (Lio/github/matthewjones372/proofload/record/DraftStep;Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/util/List;IJLjava/util/List;ZILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/DraftStep;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAbsolute ()Z
+	public final fun getAfter-UwyO8pc ()J
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getCaptures ()Ljava/util/List;
+	public final fun getDropped ()Ljava/util/List;
+	public final fun getDroppedParameters ()Ljava/util/List;
+	public final fun getExpecting ()I
+	public final fun getHeaders ()Ljava/util/List;
+	public final fun getMaybe ()Ljava/util/List;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getStoodFor ()I
+	public final fun getUnanswered ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/EmitKt {
+	public static final fun asKotlin (Lio/github/matthewjones372/proofload/record/Draft;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/HarKt {
+	public static final fun readHar (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class io/github/matthewjones372/proofload/record/Header {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/proofload/record/Header;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/record/Header;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Header;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/MainKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class io/github/matthewjones372/proofload/record/Recorded {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lio/github/matthewjones372/proofload/record/Answer;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lio/github/matthewjones372/proofload/record/Answer;
+	public final fun component6-UwyO8pc ()J
+	public final fun copy-17CK4j0 (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lio/github/matthewjones372/proofload/record/Answer;J)Lio/github/matthewjones372/proofload/record/Recorded;
+	public static synthetic fun copy-17CK4j0$default (Lio/github/matthewjones372/proofload/record/Recorded;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lio/github/matthewjones372/proofload/record/Answer;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/record/Recorded;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnswer ()Lio/github/matthewjones372/proofload/record/Answer;
+	public final fun getAt-UwyO8pc ()J
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/List;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getNamed ()Ljava/lang/String;
+	public final fun getOrigin ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getQuery ()Ljava/lang/String;
+	public final fun getTarget ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/record/RedactionKt {
+	public static final field REDACTED Ljava/lang/String;
+	public static final fun isCredential (Lio/github/matthewjones372/proofload/record/Header;)Z
+	public static final fun looksLikeAJwt (Ljava/lang/String;)Z
+	public static final fun withoutCredentialParameters (Ljava/lang/String;)Lkotlin/Pair;
+	public static final fun withoutSecrets (Ljava/lang/String;)Ljava/lang/String;
+}
+

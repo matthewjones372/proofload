@@ -8,7 +8,7 @@ measurement of one row and one cache line, and
 [0096](0096-not-one-row-repeated.md) exists because it is the wrong shape:
 cardinality and skew are the parameters that move a p99.
 
-The plan format cannot say otherwise. `kestrel-arbs` has `uniform`, `zipf`,
+The plan format cannot say otherwise. `proofload-arbs` has `uniform`, `zipf`,
 `oneOf`, `digits` and `uuids`, the cookbook teaches them, and none of it is
 reachable from a file — so the generated plan a newcomer reads first teaches
 them to hammer one row, and the page they would need is the one they have not
@@ -21,8 +21,8 @@ a plan to put something there: a plan cannot declare a feeder.
 
 ## Not doing
 
-- **No new module.** `kestrel-arbs` depends on core and nothing else, so
-  `kestrel-plan` can carry it without a third-party jar arriving — which is
+- **No new module.** `proofload-arbs` depends on core and nothing else, so
+  `proofload-plan` can carry it without a third-party jar arriving — which is
   what forced a separate module for Kafka and gRPC and does not apply here.
 - **No generator of this file's own.** The names in a plan are the names in the
   cookbook, so a reader graduating to `emit` finds the same vocabulary.
@@ -36,7 +36,7 @@ a plan to put something there: a plan cannot declare a feeder.
 Drawn once per user, read by any step that names the key:
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 baseUrl:  http://localhost:8742
 scenario: checkout
 seed: 0
@@ -103,7 +103,7 @@ and it currently teaches the opposite of 0096.
       before — inventing a range is inventing a cardinality.
 - [x] **`spec-0104-emit`** — the emitter printing the arbs the cookbook writes.
       Done when: an emitted drawn plan compiles in `examples` and names
-      `kestrel-arbs` in its imports.
+      `proofload-arbs` in its imports.
       Two things building it found: `fedBy` replaces rather than adds, so a
       plan that both draws and correlates needs one call and not two; and the
       seed has to be written out, or the source draws different data from the

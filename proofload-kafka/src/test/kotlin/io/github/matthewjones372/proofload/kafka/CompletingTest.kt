@@ -20,7 +20,6 @@ import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.MockConsumer
-import org.apache.kafka.clients.consumer.OffsetResetStrategy
 import org.apache.kafka.clients.producer.MockProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.TopicPartition
@@ -57,7 +56,7 @@ class CompletingTest {
         private val producer: MockProducer<ByteArray, ByteArray>,
         private val answering: Int = Int.MAX_VALUE,
         private val header: String = "trade-id",
-        private val real: MockConsumer<ByteArray, ByteArray> = MockConsumer(OffsetResetStrategy.LATEST),
+        private val real: MockConsumer<ByteArray, ByteArray> = MockConsumer("latest"),
     ) : Consumer<ByteArray, ByteArray> by real {
 
         private val settlements = TopicPartition("settlements", 0)
@@ -80,7 +79,10 @@ class CompletingTest {
                     ).also { it.headers().add(RecordHeader(header, id)) }
                 }
                 .toList()
-            return ConsumerRecords(mapOf(settlements to records))
+            // The one-argument constructor is deprecated in 4.x. The second map is
+            // the next offset per partition, which a fake handing back a fixed page
+            // has none of.
+            return ConsumerRecords(mapOf(settlements to records), emptyMap())
         }
     }
 

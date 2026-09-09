@@ -77,6 +77,37 @@ internal fun answer(call: Call): String = when (call.method) {
  * result and pretending otherwise would answer a client with a lie about a
  * process that is no longer working.
  */
+
+/**
+ * Whether this server has been asked to refuse load that nothing bounds.
+ *
+ * `docs/allowance.md` is explicit that no file means no limits, and for someone
+ * who installed a load generator on purpose that is the right default. For an
+ * image a model drives it is the wrong one: a container started with nothing
+ * mounted would point anywhere, at any rate, for as long as it was asked to. The
+ * container sets this and a local install does not, so running it here is
+ * unchanged.
+ *
+ * Only `run` consults it. `benchmark`, `smoke` and `trace` are bounded by the
+ * plan's shape rather than its rate — one request per step, one journey — and
+ * refusing those would leave the image unable to do the safe half of its job.
+ */
+internal fun refusesUnfenced(asked: String? = System.getenv(REQUIRE_ALLOWANCE)): Boolean = !asked.isNullOrBlank()
+
+/** Whether an allowance bounds anything at all. A file that sets no key bounds nothing. */
+internal fun bounds(allowance: Allowance): Boolean = allowance != Allowance.none
+
+private fun unfenced(): String = content(
+    "refused: this server will not send load with nothing bounding it. $REQUIRE_ALLOWANCE is set " +
+        "and no allowance was found in ${Path.of("").toAbsolutePath()} — mount or write one, and " +
+        "docs/allowance.md says what it is called and what goes in it. " +
+        "`preview`, `smoke` and `trace` need none of this.",
+    failed = true,
+)
+
+/** Set by the container image; absent everywhere else. */
+private const val REQUIRE_ALLOWANCE = "PROOFLOAD_REQUIRE_ALLOWANCE"
+
 @Suppress("TooGenericExceptionCaught") // The point: a server boundary that only caught what it predicted
 private fun called(call: Call): String = try {
     calling(call)
@@ -99,13 +130,18 @@ private fun calling(call: Call): String = when (call.tool) {
 
     "trace" -> trace(call.arguments, Allowance.fromFile())
 
-    "run" -> onThePlan(call.arguments) { plan -> RUNS.start(plan, Allowance.fromFile()) }
+    "run" -> onThePlan(call.arguments) { plan ->
+        val allowance = Allowance.fromFile()
+        if (refusesUnfenced() && bounds(allowance).not()) unfenced() else RUNS.start(plan, allowance)
+    }
 
     "status" -> RUNS.status(call.arguments["runId"] as? String)
 
     "explain" -> explain(RUNS, call.arguments["runId"] as? String)
 
     "report" -> report(RUNS, call.arguments["runId"] as? String, REPORTS)
+
+    "summary" -> summarised(RUNS, call.arguments["runId"] as? String)
 
     "list_runs" -> listRuns(RUNS)
 

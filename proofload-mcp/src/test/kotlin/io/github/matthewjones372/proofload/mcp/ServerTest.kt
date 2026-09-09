@@ -1,5 +1,6 @@
 package io.github.matthewjones372.proofload.mcp
 
+import io.github.matthewjones372.proofload.Allowance
 import io.github.matthewjones372.proofload.plan.asSimulation
 import io.github.matthewjones372.proofload.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.proofload.plan.readPlan
@@ -16,6 +17,32 @@ import java.io.StringWriter
  * hand, which is to say not at all.
  */
 class ServerTest {
+
+    /**
+     * The container asks for this and a local install does not, so the two behave
+     * differently on purpose — which is worth a test rather than a comment.
+     */
+    @Test
+    fun `only an asked-for server refuses load that nothing bounds`() {
+        withClue("unset is how every local install runs; refusing there would change what people already have") {
+            refusesUnfenced(asked = null) shouldBe false
+        }
+        withClue("an empty value is how a shell passes a variable it did not set") {
+            refusesUnfenced(asked = "") shouldBe false
+        }
+        refusesUnfenced(asked = "1") shouldBe true
+    }
+
+    @Test
+    fun `an allowance that names nothing bounds nothing, file or no file`() {
+        withClue("no file at all") { bounds(Allowance.none) shouldBe false }
+        withClue("a file someone wrote and left empty is not a fence") {
+            bounds(Allowance.read("")) shouldBe false
+        }
+        withClue("one host named is a fence") {
+            bounds(Allowance.read("hosts = [\"orders.internal\"]")) shouldBe true
+        }
+    }
 
     @Test
     fun `it says what it is`() {

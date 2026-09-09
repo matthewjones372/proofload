@@ -7,5 +7,5 @@
 // Kotlin, compiled under conventions of their own, and mixing the two makes
 // both build files harder to read than a second small one.
 dependencies {
-    implementation(project(":kestrel-java"))
+    implementation(project(":proofload-java"))
 }

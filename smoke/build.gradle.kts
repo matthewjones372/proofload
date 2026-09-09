@@ -3,9 +3,9 @@ plugins {
 }
 
 // An untagged commit publishes `0.1.0-SNAPSHOT`, so the default matches what
-// `publishToMavenLocal` installs today; `-PkestrelVersion=0.1.0` points the
+// `publishToMavenLocal` installs today; `-PproofloadVersion=0.1.0` points the
 // same test at the released artifacts.
-val kestrelVersion: String = providers.gradleProperty("kestrelVersion").getOrElse("0.1.0-SNAPSHOT")
+val proofloadVersion: String = providers.gradleProperty("proofloadVersion").getOrElse("0.1.0-SNAPSHOT")
 
 // Java 21 is the floor the published POMs name, so a consumer on 21 is the
 // consumer this has to work for.
@@ -16,33 +16,33 @@ dependencies {
     // module with a broken POM, a missing transitive dependency or a name
     // nobody publishes fails here, at resolution, and nothing inside the source
     // tree can fail in its place.
-    testImplementation("io.github.matthewjones372:kestrel-arbs:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-core:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-engine:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-export:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-cli:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-contract:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-openapi:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-mcp:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-plan-kafka:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-grpc:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-grpc-dynamic:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-java:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-jdbc:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-websocket:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-junit5:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-kafka:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-kotest:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-otel:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-pelican:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-record:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-report-html:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-scala:$kestrelVersion")
-    testImplementation("io.github.matthewjones372:kestrel-zio-test:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:proofload-arbs:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-baseline:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-export:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-cli:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-contract:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-openapi:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-mcp:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-plan:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-plan-kafka:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-grpc:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-grpc-dynamic:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-http:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-java:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-jdbc:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-websocket:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-junit5:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-kafka:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-kotest:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-otel:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-pelican:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-record:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-report-github:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-report-html:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-scala:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-zio-test:$proofloadVersion")
 
     // What a reader of the README already has in a test project, spelled out
     // because this one starts from nothing.

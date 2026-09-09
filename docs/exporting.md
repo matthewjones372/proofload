@@ -38,9 +38,9 @@ the sentence next to them survives.
 ## The run itself, as a document
 
 ```kotlin
-import io.github.matthewjones372.kestrel.export.Density
-import io.github.matthewjones372.kestrel.export.json
-import io.github.matthewjones372.kestrel.export.writeJson
+import io.github.matthewjones372.proofload.export.Density
+import io.github.matthewjones372.proofload.export.json
+import io.github.matthewjones372.proofload.export.writeJson
 
 println(result.json(Density.Summary))            // the answer, under two kilobytes
 result.writeJson(Path.of("build/run.json"))      // Density.Full, every step
@@ -78,11 +78,11 @@ version only moves when an existing one changes meaning.
 The shape is written down in [docs/schemas/run-1.json](schemas/run-1.json), and
 both documents above are validated against it on every build. It forbids
 undeclared properties, which is the producer's half of the promise — a field
-Kestrel emits without declaring is a build failure. That is not the reader's
+Proofload emits without declaring is a build failure. That is not the reader's
 rule, which stays "ignore what you do not know".
 
 **Why the rule above does not reach here.** The rule exists because a
-time-series backend strips the sentence off a number. `kestrel_behind_seconds`
+time-series backend strips the sentence off a number. `proofload_behind_seconds`
 scraped into Prometheus and alerted on has lost "and therefore the tail below is
 not the target's" — so the caveat has to stay where the caveat is readable. A
 document is read whole, by one reader, with the caveat in the field beside the
@@ -92,9 +92,9 @@ just be a document that cannot answer the question it was fetched for.
 ## An HdrHistogram log
 
 ```kotlin
-import io.github.matthewjones372.kestrel.export.writeHistogramLog
+import io.github.matthewjones372.proofload.export.writeHistogramLog
 
-result.writeHistogramLog(Path.of("build/kestrel/run.hlog"))
+result.writeHistogramLog(Path.of("build/proofload/run.hlog"))
 ```
 
 One tagged line per step per side per clock — `pay.ok.service`,
@@ -114,19 +114,19 @@ file holding two precisions tells its reader nothing about which line is which.
 ## A Prometheus or OpenMetrics exposition
 
 ```kotlin
-import io.github.matthewjones372.kestrel.export.writeOpenMetrics
+import io.github.matthewjones372.proofload.export.writeOpenMetrics
 
-result.writeOpenMetrics(Path.of("/var/lib/node_exporter/kestrel.prom"))
+result.writeOpenMetrics(Path.of("/var/lib/node_exporter/proofload.prom"))
 ```
 
 For a Pushgateway or a textfile collector to pick up once the run is over,
 which is why there are no timestamps — both attach their own.
 
 ```
-kestrel_latency_seconds_bucket{run="…",step="pay",outcome="ok",clock="service",le="0.020971519"} 2841
-kestrel_behind_seconds_bucket{run="…",le="0.000104447"} 1750
-kestrel_failures_total{run="…",step="pay",reason="status 503"} 41
-kestrel_machine_info{cores="4",jdk="21.0.2+13",os="Linux",arch="aarch64"} 1
+proofload_latency_seconds_bucket{run="…",step="pay",outcome="ok",clock="service",le="0.020971519"} 2841
+proofload_behind_seconds_bucket{run="…",le="0.000104447"} 1750
+proofload_failures_total{run="…",step="pay",reason="status 503"} 41
+proofload_machine_info{cores="4",jdk="21.0.2+13",os="Linux",arch="aarch64"} 1
 ```
 
 **The caveat worth reading before you write a query.** These are explicit
@@ -149,8 +149,8 @@ per request.
 ## An OpenTelemetry collector
 
 ```kotlin
-import io.github.matthewjones372.kestrel.otel.Sent
-import io.github.matthewjones372.kestrel.otel.sendOtlp
+import io.github.matthewjones372.proofload.otel.Sent
+import io.github.matthewjones372.proofload.otel.sendOtlp
 
 when (val sent = result.sendOtlp("http://collector:4318/v1/metrics")) {
     Sent.Accepted -> println("the collector took them")
@@ -177,7 +177,7 @@ sent as the sum every sample would have made had each one sat at the top of its
 own bucket: an upper bound, inside the histogram's own 0.78%, and the metric
 description says which it is.
 
-`kestrel-otel` is the only module here that carries a third-party dependency
+`proofload-otel` is the only module here that carries a third-party dependency
 for its own sake. It sends OTLP over HTTP on the SDK's `java.net.http` sender
 rather than the OkHttp one the exporter ships with, and a test fails if OkHttp
 or a gRPC runtime comes back: a load test's own process is the last place to
@@ -196,7 +196,7 @@ result.writeOpenMetrics(path, run = System.getenv("GITHUB_SHA"))
 
 ## Which module
 
-`kestrel-export` is core and the JDK only — the histogram log and the
-exposition need nothing but `Deflater` and `Base64`. `kestrel-otel` carries the
+`proofload-export` is core and the JDK only — the histogram log and the
+exposition need nothing but `Deflater` and `Base64`. `proofload-otel` carries the
 SDK. Taking one does not bring the other, which is the whole point of them
 being two.

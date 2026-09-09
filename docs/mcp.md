@@ -1,16 +1,16 @@
-# Kestrel over MCP
+# Proofload over MCP
 
-A stdio server whose every tool is a call `kestrel-cli` already makes. What a
+A stdio server whose every tool is a call `proofload-cli` already makes. What a
 program can do here is what a person at a terminal can do, and there is no
 second behaviour to keep in step.
 
 ## Starting it
 
 ```bash
-./gradlew :kestrel-mcp:installDist
+./gradlew :proofload-mcp:installDist
 ```
 
-That writes `kestrel-mcp/build/install/kestrel-mcp/bin/kestrel-mcp`, a start
+That writes `proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp`, a start
 script with the jars beside it. No fat jar, so nothing has to be kept in step
 with the modules it would have shaded.
 
@@ -19,7 +19,7 @@ pipe before any client is involved:
 
 ```bash
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
-  | kestrel-mcp/build/install/kestrel-mcp/bin/kestrel-mcp
+  | proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp
 ```
 
 ## Connecting a client
@@ -27,7 +27,7 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
 Point the client's `command` at that script. For Claude Code:
 
 ```bash
-claude mcp add kestrel -- /absolute/path/to/kestrel/kestrel-mcp/build/install/kestrel-mcp/bin/kestrel-mcp
+claude mcp add proofload -- /absolute/path/to/proofload/proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp
 ```
 
 For a client configured by file, the same thing as an entry:
@@ -35,8 +35,8 @@ For a client configured by file, the same thing as an entry:
 ```json
 {
   "mcpServers": {
-    "kestrel": {
-      "command": "/absolute/path/to/kestrel/kestrel-mcp/build/install/kestrel-mcp/bin/kestrel-mcp"
+    "proofload": {
+      "command": "/absolute/path/to/proofload/proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp"
     }
   }
 }
@@ -64,7 +64,7 @@ directory, not yours.
 | `compare` | one finished run against another: better, worse, or cannot tell | nothing |
 
 **Start with `benchmark`.** Everything else in this table is a verb on
-Kestrel's own model, which is the shape a library has rather than the shape a
+Proofload's own model, which is the shape a library has rather than the shape a
 question has. Nobody asks to validate a plan; they ask whether their service
 holds up. `benchmark` takes a target — an OpenAPI document, a plan you already
 have, or just a base URL — and does the whole safe half in one call: writes the
@@ -76,7 +76,7 @@ benchmark {"baseUrl": "http://localhost:8731"}
 ```
 
 ```
-kestrel:  plan/1
+proofload:  plan/1
 baseUrl:  http://localhost:8731
 scenario: smoke
 steps:
@@ -141,7 +141,7 @@ A step names which protocol it is by which key it carries, so a plan is not
 tied to HTTP:
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 brokers:  localhost:9092
 scenario: orders
 steps:
@@ -154,7 +154,7 @@ steps:
     completes: place order
     on: order-confirmations
     by: correlation-id
-    group: kestrel-bench
+    group: proofload-bench
     within: 30s
 load:
   rate: 500/s
@@ -183,7 +183,7 @@ allowance that does not permit the cluster refuses the plan the way it refuses
 a URL — shared infrastructure is exactly what a fence is for.
 
 The client arrives with the module that reads plans rather than with
-`kestrel-plan` itself: a project taking `kestrel-plan` to read a plan of
+`proofload-plan` itself: a project taking `proofload-plan` to read a plan of
 requests gets no Kafka on its classpath. [modules.md](modules.md) has the row.
 
 ## What it will refuse
@@ -192,7 +192,7 @@ A plan that does not read comes back as a tool result with `isError` set and the
 parser's own sentence in it — the line, and the keys that were allowed. That is
 what a caller correcting itself needs; a stack trace buries it.
 
-`preview` also consults the machine's `kestrel.toml`, so a plan over the rate,
+`preview` also consults the machine's `proofload.toml`, so a plan over the rate,
 window, request count or host list this machine permits is refused before
 anything is sent. See [allowance.md](allowance.md), and read the paragraph there
 about a fence not being a sandbox.

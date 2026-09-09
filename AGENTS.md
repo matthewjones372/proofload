@@ -115,7 +115,7 @@ of this in scope.
 
 ## Layout
 
-`kestrel-core` depends on the Kotlin standard library and nothing else.
+`proofload-core` depends on the Kotlin standard library and nothing else.
 Everything with a third-party type in it is a leaf module: an HTTP client, a
 reporting format, a metrics sink.
 
@@ -234,4 +234,4 @@ Before saying it is done:
   up beside the change that added it, so the CHANGELOG entry gets written while
   the author is looking at the reason for it rather than a week later. A line
   *removed* from a `.api` file is a pull request that breaks somebody.
-- No new dependency in `kestrel-core`.
+- No new dependency in `proofload-core`.

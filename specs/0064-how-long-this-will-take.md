@@ -5,7 +5,7 @@
 A run says where it has got to and never says where it is going:
 
 ```
-kestrel: 00:35  departed 1,750  in flight 12  behind 104.499us
+proofload: 00:35  departed 1,750  in flight 12  behind 104.499us
 ```
 
 A reader watching that cannot tell a thirty-second smoke test from a four-hour
@@ -44,10 +44,10 @@ The thing that makes this awkward is that a finish time is a *prediction*, and
 A run says its shape before it departs, and counts down while it runs:
 
 ```
-kestrel: checkout — 30,000 users over 10m at 50/s
-kestrel: 00:05  departed 250  in flight 3  behind 88.033us  9m55s left
-kestrel: 00:10  departed 500  in flight 4  behind 91.621us  9m50s left
-kestrel: 10:00  departed 30,000  in flight 41  behind 96.718us  draining
+proofload: checkout — 30,000 users over 10m at 50/s
+proofload: 00:05  departed 250  in flight 3  behind 88.033us  9m55s left
+proofload: 00:10  departed 500  in flight 4  behind 91.621us  9m50s left
+proofload: 10:00  departed 30,000  in flight 41  behind 96.718us  draining
 ```
 
 `left` is the schedule's arithmetic, not a forecast; once the schedule is spent
@@ -57,10 +57,10 @@ here knows it.
 A search says its bound, and narrows it as rungs are ruled out:
 
 ```
-kestrel: capacity — at most 15 rungs of 2m, so at most 30m
-kestrel: rung 1 of at most 15 — 50/s
-kestrel: rung 4 of at most 15 — 200/s  passed
-kestrel: rung 6 — 300/s  failed, bisecting: at most 5 more, 10m
+proofload: capacity — at most 15 rungs of 2m, so at most 30m
+proofload: rung 1 of at most 15 — 50/s
+proofload: rung 4 of at most 15 — 200/s  passed
+proofload: rung 6 — 300/s  failed, bisecting: at most 5 more, 10m
 ```
 
 ## Why this shape

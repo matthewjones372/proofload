@@ -39,7 +39,7 @@ length, and `steadyState` over the measured window audits it.
 ## Shape
 
 ```kotlin
-val result = kestrel.run(
+val result = proofload.run(
     checkout.at(45.perSecond, over = 2.minutes).warmingUp(5.seconds),
 )
 result.plan.warmUp    // WarmUp(5.seconds), answerable before a request leaves

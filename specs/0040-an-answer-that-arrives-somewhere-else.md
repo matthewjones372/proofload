@@ -8,7 +8,7 @@ which is most of what people load test.
 
 It cannot describe a pipeline. Publish a record to a topic and the answer
 appears at a sink, in another process, seconds later. Today the only thing
-Kestrel could time is the publish, and that is the trap rather than a
+Proofload could time is the publish, and that is the trap rather than a
 limitation: measured from ingestion, a pipeline's latency stays flat while the
 system falls apart, and measured from the event's creation it escalates
 `[EVENTTIME]`. The metric that looks best is the one that lies, and it is the
@@ -48,7 +48,7 @@ result[settled].inFlight             // 12 still moving when the run ended
 - `Step.Emit` — a step that departs with a correlation id and its intended
   departure, and does not wait.
 - `Completions` — an interface core declares and a leaf module implements,
-  exactly as `Action` is declared in core and implemented by `kestrel-http`.
+  exactly as `Action` is declared in core and implemented by `proofload-http`.
 - Latency is the sink's observation minus the **intended** departure, which is
   the same clock `responseTime` already uses and the reason it will be honest
   under backpressure.
@@ -72,16 +72,16 @@ owning.
 
 ## Stack
 
-- [x] **`spec-0040-emit`** ([#12](https://github.com/matthewjones372/kestrel/pull/12)) — `Step.Emit`, the intended departure carried with
+- [x] **`spec-0040-emit`** ([#12](https://github.com/matthewjones372/proofload/pull/12)) — `Step.Emit`, the intended departure carried with
       it, and a result that can hold unmatched and in-flight counts.
       Done when: an emit step with an in-memory completions source records
       latency from the intended departure, and a dropped record is counted as
       unmatched rather than ignored.
-- [x] **`spec-0040-completing`** ([#17](https://github.com/matthewjones372/kestrel/pull/17)) — `completing(step, from = ...)` on a
+- [x] **`spec-0040-completing`** ([#17](https://github.com/matthewjones372/proofload/pull/17)) — `completing(step, from = ...)` on a
       simulation, and the run waiting a bounded time for stragglers at the end.
       Done when: a run whose sink lags reports the stragglers that arrived
       inside the wait and the rest as in flight.
-- [x] **`spec-0040-page`** ([#21](https://github.com/matthewjones372/kestrel/pull/21)) — unmatched and in-flight on the report, prominently.
+- [x] **`spec-0040-page`** ([#21](https://github.com/matthewjones372/proofload/pull/21)) — unmatched and in-flight on the report, prominently.
       Done when: the golden shows a run that lost records and does not bury it.
 
 ## Acceptance

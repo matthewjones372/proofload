@@ -12,7 +12,7 @@ it is timed as the target's latency.
 
 This is 0034's argument one layer in. Even spacing understates queueing at the
 same mean rate `[POISSON]`, which is why `randomized(seed)` exists; a constant
-pause puts that metronome back inside the journey. Kestrel is already partly
+pause puts that metronome back inside the journey. Proofload is already partly
 open — sessions arrive open, each closed between its own steps `[OPENCLOSED]` —
 and it draws the open half from a seed while the closed half keeps time.
 

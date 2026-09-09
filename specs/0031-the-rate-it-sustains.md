@@ -15,7 +15,7 @@ constrained maximum instead, under three names for one idea: Linear Road's
 L-rating `[LINEARROAD]`, sustainable throughput `[SUSTAINABLE]`, Theodolite's
 demand and capacity metrics `[THEODOLITE]`.
 
-Kestrel already has every value this needs. 0020 made goals values that judge a
+Proofload already has every value this needs. 0020 made goals values that judge a
 result, 0014 made a shape a value, and a scenario has been a value since 0001.
 What is missing is the loop.
 
@@ -41,7 +41,7 @@ val search = checkout.sustainable(
 search.rungs                  // the rates it will try, before anything is sent
 search.worstCase              // 34m, so nobody starts this by accident
 
-val capacity = kestrel.run(search)
+val capacity = proofload.run(search)
 capacity.rate                 // 4,800/s
 capacity.limitedBy            // the goal that stopped it
 capacity.curve                // every rung: its rate, its verdicts, its result
@@ -71,16 +71,16 @@ there so the cost is a decision rather than a surprise.
 
 ## Stack
 
-- [x] **`spec-0031-search`** ([#2](https://github.com/matthewjones372/kestrel/pull/2)) — `Search` and `Capacity` as values: rungs,
+- [x] **`spec-0031-search`** ([#2](https://github.com/matthewjones372/proofload/pull/2)) — `Search` and `Capacity` as values: rungs,
       `worstCase`, and the ladder-then-bisect strategy over a supplied judge.
       Done when: the rungs of a search are answerable without running it, and a
       synthetic judge that fails above a known rate is found within one step.
-- [x] **`spec-0031-run`** ([#15](https://github.com/matthewjones372/kestrel/pull/15)) — running a search on the engine, void rungs, and
+- [x] **`spec-0031-run`** ([#15](https://github.com/matthewjones372/proofload/pull/15)) — running a search on the engine, void rungs, and
       `limitedBy`.
       Done when: a target that fails a p99 goal above a rate reports that rate
       and names the goal, and a run where the injector fell behind reports the
       rung void rather than as the answer.
-- [x] **`spec-0031-page`** ([#7](https://github.com/matthewjones372/kestrel/pull/7)) — the curve on the report, with the operating point
+- [x] **`spec-0031-page`** ([#7](https://github.com/matthewjones372/proofload/pull/7)) — the curve on the report, with the operating point
       marked.
       Done when: the golden shows every rung, its verdict, and which one was
       chosen.

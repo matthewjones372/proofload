@@ -39,9 +39,9 @@ from resampling the runs that made them, so the spread it uses is the observed
 spread of the thing being compared:
 
 ```kotlin
-val before = Runs(List(REPEATS) { measure(kestrel) })
+val before = Runs(List(REPEATS) { measure(proofload) })
 latency.set(slow.inWholeMilliseconds)
-val after = Runs(List(REPEATS) { measure(kestrel) })
+val after = Runs(List(REPEATS) { measure(proofload) })
 
 after.against(before, p99(pay), acceptable = 20.percent).verdict   // Worse
 ```

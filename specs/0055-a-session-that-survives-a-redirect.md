@@ -8,7 +8,7 @@ followed silently becomes a timing for a page nobody asked for, filed under the
 old row's name.
 
 The consequence is that a target with a login form cannot be tested. Signing in
-sets a cookie and answers 302; Kestrel records a failure and drops the user.
+sets a cookie and answers 302; Proofload records a failure and drops the user.
 The workaround is to capture `set-cookie` into a session key and put it back as
 a header on every later request, which every project writes and which handles
 one cookie and no expiry.
@@ -41,7 +41,7 @@ val signedIn = scenario("signed in") {
 ```
 
 - `withCookies()` puts a per-user jar in the user's own session, under a key
-  `kestrel-http` reserves. Applied on send, updated from `set-cookie`.
+  `proofload-http` reserves. Applied on send, updated from `set-cookie`.
 - `following(max = 1)` follows a redirect and records **each hop as its own
   attempt**, reusing the attempts-and-requests split 0026 introduces rather
   than inventing a second one.
@@ -95,7 +95,7 @@ choose.
 
 ## Open questions
 
-1. **Where does the reserved key live?** Recommend `kestrel-http`, so core
+1. **Where does the reserved key live?** Recommend `proofload-http`, so core
     never learns that HTTP exists. It means a session can carry a value core
     cannot name, which is already true of any caller's own key.
 2. **Is expiry honoured?** Recommend not: a run shorter than a session cookie's

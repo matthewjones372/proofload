@@ -1,0 +1,56 @@
+public final class io/github/matthewjones372/proofload/websocket/Connection {
+	public final fun getMatched ()J
+	public final fun getUnsolicited ()J
+	public final fun outstanding-LRDsOJo (J)Lio/github/matthewjones372/proofload/Outstanding;
+}
+
+public final class io/github/matthewjones372/proofload/websocket/ConnectionKt {
+	public static final fun close-RMTPdsE (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;)V
+	public static final fun getConnection ()Lio/github/matthewjones372/proofload/SessionKey;
+	public static final fun open-ZV9k6rk (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsTarget;)V
+}
+
+public final class io/github/matthewjones372/proofload/websocket/Disconnected : io/github/matthewjones372/proofload/Reason {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/websocket/Disconnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/websocket/MessagesKt {
+	public static final fun awaiting-K1myCzc (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;IJ)V
+	public static final fun send-iTDoCcE (Lio/github/matthewjones372/proofload/ScenarioBuilder;Ljava/lang/String;Lio/github/matthewjones372/proofload/websocket/WsFrame;Lio/github/matthewjones372/proofload/Correlation;)V
+}
+
+public final class io/github/matthewjones372/proofload/websocket/NotConnected : io/github/matthewjones372/proofload/Reason {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/websocket/NotConnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/websocket/Ws {
+	public final fun at (Ljava/lang/String;)Lio/github/matthewjones372/proofload/websocket/WsTarget;
+	public final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/proofload/websocket/Ws;
+	public final fun binary ([B)Lio/github/matthewjones372/proofload/websocket/WsFrame;
+	public final fun text (Ljava/lang/String;)Lio/github/matthewjones372/proofload/websocket/WsFrame;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/websocket/WsFrame {
+}
+
+public final class io/github/matthewjones372/proofload/websocket/WsFrame$Binary : io/github/matthewjones372/proofload/websocket/WsFrame {
+}
+
+public final class io/github/matthewjones372/proofload/websocket/WsFrame$Text : io/github/matthewjones372/proofload/websocket/WsFrame {
+}
+
+public final class io/github/matthewjones372/proofload/websocket/WsKt {
+	public static final fun getWs ()Lio/github/matthewjones372/proofload/websocket/Ws;
+}
+
+public final class io/github/matthewjones372/proofload/websocket/WsTarget {
+}
+

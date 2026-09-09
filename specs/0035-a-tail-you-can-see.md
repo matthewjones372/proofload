@@ -27,7 +27,7 @@ cannot, and does not print it.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.p999
+import io.github.matthewjones372.proofload.p999
 
 result[pay].serviceTime.p999                  // 3s 200ms
 result[pay].serviceTime.percentile(99.95)     // anything else, from the buckets
@@ -58,11 +58,11 @@ is a number nobody measured, and printing it invites a decision it cannot carry.
 
 ## Stack
 
-- [x] **`spec-0035-percentile`** ([#3](https://github.com/matthewjones372/kestrel/pull/3)) — `Timing.percentile(Double)` off the frozen
+- [x] **`spec-0035-percentile`** ([#3](https://github.com/matthewjones372/proofload/pull/3)) — `Timing.percentile(Double)` off the frozen
       buckets, and `p999` beside `p99`.
       Done when: `percentile(99.0)` equals `p99` for the same timing, and a
       timing under a thousand samples reports `p999` absent with its reason.
-- [x] **`spec-0035-goal-and-page`** ([#8](https://github.com/matthewjones372/kestrel/pull/8)) — the `p999` goal builder, and the tail on
+- [x] **`spec-0035-goal-and-page`** ([#8](https://github.com/matthewjones372/proofload/pull/8)) — the `p999` goal builder, and the tail on
       the report with its interval.
       Done when: a `p999` goal is judged and rendered like any other, and the
       golden holds the absent case.

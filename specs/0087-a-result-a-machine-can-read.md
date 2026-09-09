@@ -22,20 +22,20 @@ computed an answer that currently only reaches a browser.
   `Runs.readAll` reads. This does not round-trip.
 - **Nothing during a run.** 0073's rule: a reader on the measured path is a
   serialisation pass the target gets billed for. This reads a frozen result.
-- **No third-party JSON library.** `kestrel-export` is core and the JDK, and
+- **No third-party JSON library.** `proofload-export` is core and the JDK, and
   its `NoThirdPartyDependenciesTest` says so.
 - **No schema for the buckets.** A histogram belongs in the hlog.
 
 ## Shape
 
-Two densities on a frozen result, in `kestrel-export`:
+Two densities on a frozen result, in `proofload-export`:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.export.json
-import io.github.matthewjones372.kestrel.export.writeJson
+import io.github.matthewjones372.proofload.export.json
+import io.github.matthewjones372.proofload.export.writeJson
 import java.nio.file.Path
 
-val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
+val result = proofload.run(checkout.at(50.perSecond, over = 1.minutes))
 
 println(result.json(Density.Summary))          // the verdict, under 2 KB
 result.writeJson(Path.of("build/run.json"))    // Density.Full, every step
@@ -49,7 +49,7 @@ law. `Full` adds per-step percentiles, the timeline and the stages.
 Every verdict carries a **`remedy`**: the sentence saying what to do about it.
 
 ```json
-{ "schema": "kestrel/run/1",
+{ "schema": "proofload/run/1",
   "verdict": "behind",
   "remedy": "The generator fell behind at second 42; tail numbers are not the target's. Reduce to 38/s or add an injector." }
 ```
@@ -72,7 +72,7 @@ the sentence, because the fields keep it honest and the sentence is what a reade
 acts on. The page already prints these sentences; this stops them being written
 twice.
 
-`kestrel-export` rather than `kestrel-report-html`: the judgement is not a
+`proofload-export` rather than `proofload-report-html`: the judgement is not a
 report format, and a caller wanting JSON should not pull in a stylesheet.
 `RunResultJson` stays where it is and keeps serving the page — it is a different
 document with a different job, and merging them would tie the page's shape to a
@@ -80,10 +80,10 @@ published schema.
 
 ## Stack
 
-- [x] **`spec-0087-writer`** — the JSON writer moved to `kestrel-export`,
+- [x] **`spec-0087-writer`** — the JSON writer moved to `proofload-export`,
       `Density`, and the document envelope with `schema`.
       Done when: `result.json(Summary)` round-trips through a golden and
-      `kestrel-export`'s dependency test still passes.
+      `proofload-export`'s dependency test still passes.
 - [x] **`spec-0087-verdicts`** — goals, the schedule verdict, Little's law and
       the floor, each with its structured cause.
       Done when: a run that fell behind serialises `verdict: "behind"` with the
@@ -120,7 +120,7 @@ published schema.
   on the response-time clock. It costs about sixty bytes a step against a two
   kilobyte budget, which was never the constraint worth protecting here.
 - **Is `schema` a version string or a URL?** Recommend the string
-  `kestrel/run/1`, with the URL in the schema file — a URL in every document is
+  `proofload/run/1`, with the URL in the schema file — a URL in every document is
   a hostname to keep alive.
 - **Does the CHANGELOG treat a new optional field as breaking?** Recommend no,
   and say so in the schema file: readers must ignore unknown fields.

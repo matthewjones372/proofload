@@ -1,5 +1,0 @@
-public final class io/github/matthewjones372/kestrel/contract/EndpointsKt {
-	public static final fun planFrom (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;J)Lio/github/matthewjones372/kestrel/plan/Declaration;
-	public static synthetic fun planFrom$default (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;JILjava/lang/Object;)Lio/github/matthewjones372/kestrel/plan/Declaration;
-}
-

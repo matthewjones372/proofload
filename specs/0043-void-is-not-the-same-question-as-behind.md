@@ -16,7 +16,7 @@ behind.p99 > worst * Histogram.PRECISION      // PRECISION is 1/128
 
 That is a good question for a page footer and the wrong question for a rung. It
 declares a rung void unless the target's p99 is roughly **128 times** the
-injector's own scheduling delay. Kestrel's per-departure cost is 0.5–10 ms, so
+injector's own scheduling delay. Proofload's per-departure cost is 0.5–10 ms, so
 a rung only counts if the target takes well over a second. Measured while 0031
 was built: a 250 ms target at 20 users a second gave a `behind.p99` of 10.3 ms
 against a response p99 of 267 ms — void, though the generator had kept its
@@ -83,12 +83,12 @@ would make voidness easier to avoid the slower the pipeline got.
 
 ## Stack
 
-- [x] **`spec-0043-gate`** ([#27](https://github.com/matthewjones372/kestrel/pull/27)) — the void gate as lateness against the promised
+- [x] **`spec-0043-gate`** ([#27](https://github.com/matthewjones372/proofload/pull/27)) — the void gate as lateness against the promised
       inter-departure interval, and `Rung.offered`.
       Done when: a rung against a fast in-process target at a rate the generator
       keeps is not void, a rung at a rate it cannot keep is void, and the
       threshold lives in one named place rather than being borrowed.
-- [x] **`spec-0043-proved`** ([#29](https://github.com/matthewjones372/kestrel/pull/29)) — an engine test that finds a real rate against a
+- [x] **`spec-0043-proved`** ([#29](https://github.com/matthewjones372/proofload/pull/29)) — an engine test that finds a real rate against a
       real target, replacing the synthetic-judge-only proof.
       Done when: a search against an in-process target that fails a p99 goal
       above a known rate reports that rate and names the goal, run end to end on

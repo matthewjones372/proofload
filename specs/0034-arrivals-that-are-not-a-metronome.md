@@ -53,17 +53,17 @@ and a ten-minute run does not sort six hundred thousand doubles at once.
 Reporting the achieved coefficient of variation is the point of the feature as
 much as producing it. The standard advice for driving a load tool this way is to
 measure the inter-arrival CoV you actually produced and confirm it is near 1.0
-`[COV]`, and Kestrel is in a position to do that for the user rather than
+`[COV]`, and Proofload is in a position to do that for the user rather than
 telling them to.
 
 ## Stack
 
-- [x] **`spec-0034-randomized`** ([#4](https://github.com/matthewjones372/kestrel/pull/4)) — the wrapper, window-at-a-time generation, and
+- [x] **`spec-0034-randomized`** ([#4](https://github.com/matthewjones372/proofload/pull/4)) — the wrapper, window-at-a-time generation, and
       `userCount` and `over` unchanged through it.
       Done when: a randomised hold departs the same number of users inside the
       same window, two runs with one seed produce identical offsets, and two
       seeds do not.
-- [x] **`spec-0034-reported`** ([#9](https://github.com/matthewjones372/kestrel/pull/9)) — the achieved mean and CoV on the result and the
+- [x] **`spec-0034-reported`** ([#9](https://github.com/matthewjones372/proofload/pull/9)) — the achieved mean and CoV on the result and the
       page.
       Done when: an even profile reports a CoV near zero, a randomised one near
       one, and the page names which was asked for.

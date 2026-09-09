@@ -29,7 +29,7 @@ is missing is a value that holds several runs and answers as one.
 ## Shape
 
 ```kotlin
-val runs = Runs.readAll(Path.of("build/kestrel"))   // one file per invocation
+val runs = Runs.readAll(Path.of("build/proofload"))   // one file per invocation
 runs.size                        // 10
 runs.merged[pay].serviceTime.p99 // the percentile of the merged population
 runs.each.map { it[pay].serviceTime.p99 }   // ten values, for anything that needs them
@@ -59,11 +59,11 @@ this.
 
 ## Stack
 
-- [x] **`spec-0037-runs`** ([#24](https://github.com/matthewjones372/kestrel/pull/24)) — `Runs`, the merge, and refusing unlike plans.
+- [x] **`spec-0037-runs`** ([#24](https://github.com/matthewjones372/proofload/pull/24)) — `Runs`, the merge, and refusing unlike plans.
       Done when: ten runs of one plan merge to a result whose count is the sum,
       whose p99 is read from the merged buckets, and whose merge with a
       different plan fails naming the difference.
-- [x] **`spec-0037-files`** ([#25](https://github.com/matthewjones372/kestrel/pull/25)) — reading a directory of results written by 0021's
+- [x] **`spec-0037-files`** ([#25](https://github.com/matthewjones372/proofload/pull/25)) — reading a directory of results written by 0021's
       format, and a `main` that runs a simulation once and writes one.
       Done when: ten JVM invocations produce ten files that read back as one
       `Runs`.
@@ -82,7 +82,7 @@ this.
 2. **Does `Runs` need its own report, or does the existing page take it?**
     Recommend the page takes a `Runs` and says how many runs it drew, since a
     percentile with ten runs behind it should not look like one with one.
-3. **Where does the forking launcher live?** Recommend `kestrel-engine`, later,
+3. **Where does the forking launcher live?** Recommend `proofload-engine`, later,
     and note that CI can do the loop today with a `main` and a shell for-loop.
     Saying that in the docs is most of the value at a fraction of the code.
 4. **Does `Runs` carry the machine?** Yes, per 0030, and refuse to merge across

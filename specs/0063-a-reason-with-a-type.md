@@ -9,7 +9,7 @@ test reads it back:
 result[placeOrder].failedWith("status 503")   // 41
 ```
 
-`kestrel-http` already knows this is wrong. Beside the helper that builds that
+`proofload-http` already knows this is wrong. Beside the helper that builds that
 string it says:
 
 > A reason is a contract between the code that writes it and the test that
@@ -25,14 +25,14 @@ saying no, and which were the socket giving up" is a reader's eye.
 
 ## Not doing
 
-- **No sealed hierarchy in core.** Reasons are produced by `kestrel-http`
+- **No sealed hierarchy in core.** Reasons are produced by `proofload-http`
   (a status, a named check, a capture that found nothing), by
-  `kestrel-websocket` (no connection, a handshake that did not answer), and by
+  `proofload-websocket` (no connection, a handshake that did not answer), and by
   any caller's own `fail` in a step this repository never sees. A sealed type
   cannot be extended outside its module, so core would have to know about HTTP
   to name a status — which is the layering this whole design exists to keep.
 - **No message in an exception reason.** `Threw` carries the class and not the
-  message, which is what `kestrel-http` already does and for the reason it
+  message, which is what `proofload-http` already does and for the reason it
   gives: a message carries a host and a port, so it is a row per request.
 - No change to the cardinality guard. `MAX_REASONS_PER_STEP` counts distinct
   reasons and a typed one is no less capable of being distinct per request.
@@ -56,7 +56,7 @@ data object TimedOut : Reason
 data object Other : Reason                        // past the cardinality guard
 ```
 
-`kestrel-http` declares its own, and `kestrel-websocket` likewise:
+`proofload-http` declares its own, and `proofload-websocket` likewise:
 
 ```kotlin
 data class HttpStatus(val code: Int) : Reason
@@ -107,8 +107,8 @@ in a wrapper still cannot do.
       and the cardinality guard still collapses the twenty-first reason into
       `Other`.
 - [x] **`spec-0063-protocols`** — `HttpStatus`, `CheckFailed`,
-      `NothingCaptured` and the unfilled-path reason in `kestrel-http`; the
-      websocket module's two; `kestrel-pelican`'s status and throw.
+      `NothingCaptured` and the unfilled-path reason in `proofload-http`; the
+      websocket module's two; `proofload-pelican`'s status and throw.
       Done when: a 503 reads back as `HttpStatus(503)` rather than as text, a
       rejected check names itself, and `NoThirdPartyDependenciesTest` still
       passes for every module that gained a type.
@@ -139,8 +139,8 @@ in a wrapper still cannot do.
 4. **What about `status(code)`?** It becomes `HttpStatus(code)` and the helper
     goes. Recommend removing it rather than leaving a function whose whole
     purpose was to stand in for the type this spec adds.
-5. **What does `kestrel-pelican` name a status?** Settled in the building: its
-    own `Status`, in its own package. It cannot depend on `kestrel-http` —
+5. **What does `proofload-pelican` name a status?** Settled in the building: its
+    own `Status`, in its own package. It cannot depend on `proofload-http` —
     `NoPekkoTest` asserts its runtime classpath is core and `pelican-core`, and
     `docs/modules.md` says so — and a run goes through one transport or the
     other, never both, so nothing is ever grouped across the two.

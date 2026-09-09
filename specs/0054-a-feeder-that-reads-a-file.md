@@ -26,7 +26,7 @@ every user's data.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.csv
+import io.github.matthewjones372.proofload.csv
 
 val customer = sessionKey<String>("customer")
 val tier = sessionKey<String>("tier")
@@ -57,11 +57,11 @@ mapping shifts by one, silently, and the run still passes — with every user
 sent the wrong tier.
 
 Where it lives is the layering question. `java.nio.file` is the JDK rather than
-a third party, so `kestrel-core` can hold this without breaking
+a third party, so `proofload-core` can hold this without breaking
 `NoThirdPartyDependenciesTest`. Recommend core, with a deliberately small
 RFC 4180 subset — quoted fields, doubled quotes inside them, no embedded
 newlines — and the subset stated on the function rather than discovered. A
-`kestrel-feeders` module for sixty lines of parsing is ceremony; a full CSV
+`proofload-feeders` module for sixty lines of parsing is ceremony; a full CSV
 library in core is a dependency the rule exists to stop.
 
 ## Stack
@@ -85,7 +85,7 @@ library in core is a dependency the rule exists to stop.
 
 1. **Core or a leaf module?** Recommend core, on the argument above. The
     counter-argument is that core has held only the shapes of the domain so
-    far and a parser is not one; if that matters more, `kestrel-feeders` on
+    far and a parser is not one; if that matters more, `proofload-feeders` on
     core is the alternative and costs a module.
 2. **What happens when there are more users than rows?** Recommend wrapping,
     matching `feedFrom`, and recommend `rows` being a value so a caller who

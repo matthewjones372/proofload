@@ -53,7 +53,7 @@ exceptions:
     # of one is a failed refresh to count and name; allowed out, it cancels the
     # schedule and every later refresh with it, so the run reads a credential
     # that expired an hour ago. See the comment on the scheduled task.
-    excludes: ['**/kestrel/engine/VirtualThreads.kt', '**/kestrel/Refreshing.kt']
+    excludes: ['**/proofload/engine/VirtualThreads.kt', '**/proofload/Refreshing.kt']
   SwallowedException:
     excludes: ['**/test/**']
 

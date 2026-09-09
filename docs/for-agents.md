@@ -1,4 +1,4 @@
-# Kestrel for agents
+# Proofload for agents
 
 The long form of [`llms.txt`](../llms.txt), for a model that has room for more
 than a screenful. It carries two things the other documents do not: the public
@@ -13,7 +13,7 @@ baselines and reports, each a few lines with the reason it is those lines.
 ## Written wrong, written right
 
 The failure here is not missing knowledge, it is confident knowledge carried in
-from a more popular tool: a model asked for a Kestrel scenario writes Gatling or
+from a more popular tool: a model asked for a Proofload scenario writes Gatling or
 k6 with Kotlin syntax, and the caller finds out through a compile error it cannot
 map back to the right shape. Each row is a shape reached for and the shape that
 compiles. Every call in the right-hand column is checked against `examples` by
@@ -21,7 +21,7 @@ compiles. Every call in the right-hand column is checked against `examples` by
 
 | Written wrong | Why it is not that | Written right |
 |---|---|---|
-| `class CheckoutSimulation : Simulation()` | Gatling's `Simulation` is a base class to extend. Kestrel's `Simulation` is the value `at` returns, and nothing extends anything. | An ordinary class — `class CheckoutLoadTest` — with `@LoadTest` on a method that is handed the runner: ``fun `checkout holds up at fifty a second`(kestrel: Kestrel)``. |
+| `class CheckoutSimulation : Simulation()` | Gatling's `Simulation` is a base class to extend. Proofload's `Simulation` is the value `at` returns, and nothing extends anything. | An ordinary class — `class CheckoutLoadTest` — with `@LoadTest` on a method that is handed the runner: ``fun `checkout holds up at fifty a second`(proofload: Proofload)``. |
 | `setUp(scn.inject(constantUsersPerSec(50).during(60)))` | There is no `setUp`, no `inject`, no registry and nothing to run at startup. A profile is applied to a scenario, and the result is a value. | `checkout.at(50.perSecond, over = 1.minutes)`, which answers before it runs: `userCount()` is `3000` with nothing sent. |
 | `exec(http("place order").post("/orders"))`, and then `result["place order"]` elsewhere | The name is written twice, so a rename compiles and leaves an assertion about a step nobody ran. k6's `group("place order")` is the same shape. | `val placeOrder = step("place order")` once, then `exec(browse, api.get("/products"))` beside it and `result[placeOrder].failed.count` after. A `String` overload is there for a step nothing later asks about. |
 | `.check(status is 200)`, or k6's `check(res, { 'is 200': r => r.status === 200 })` | There is no check DSL and no `status` receiver to compare against. The status a request expects is declared on the request; anything else is a named predicate over the `Response`. | `.expecting(201)` for the status, and `.checking("has an id") { it.body.contains("\"id\"") }` for the body. A failed check is a failed step carrying the check's name as its reason. |
@@ -41,7 +41,7 @@ shown without the mangling.
 
 <!-- Rendered from the .api dumps by ./gradlew apiDocDump. Do not edit below. -->
 
-### `io.github.matthewjones372:kestrel-arbs`
+### `io.github.matthewjones372:proofload-arbs`
 
 ```text
 interface Arb
@@ -60,7 +60,7 @@ top-level in ShapesKt
     fun zipf(Long, Double, Long): Arb
 ```
 
-### `io.github.matthewjones372:kestrel-baseline`
+### `io.github.matthewjones372:proofload-baseline`
 
 ```text
 top-level in BaselineKt
@@ -74,7 +74,7 @@ top-level in ManyRunsKt
     fun writeInto(RunResult, Path): Path
 ```
 
-### `io.github.matthewjones372:kestrel-cli`
+### `io.github.matthewjones372:proofload-cli`
 
 ```text
 top-level in CliKt
@@ -120,14 +120,14 @@ class Finished
     val out: String
 ```
 
-### `io.github.matthewjones372:kestrel-contract`
+### `io.github.matthewjones372:proofload-contract`
 
 ```text
 top-level in EndpointsKt
     fun planFrom(List, String, String, Set, Long): Declaration
 ```
 
-### `io.github.matthewjones372:kestrel-core`
+### `io.github.matthewjones372:proofload-core`
 
 ```text
 interface Action
@@ -1089,14 +1089,14 @@ class WarmUp
     val over: Long
 ```
 
-### `io.github.matthewjones372:kestrel-engine`
+### `io.github.matthewjones372:proofload-engine`
 
 ```text
 top-level in CalibrationKt
     fun calibrate(Long): Floor
 top-level in ExclusiveKt
     fun exclusive(Engine, Progress): Engine
-class Kestrel
+class Proofload
     constructor()
     constructor(Engine, Progress)
     constructor(Progress)
@@ -1106,7 +1106,7 @@ class Kestrel
     fun summary(): String
     fun trace(Scenario, Feeder)
 top-level in RunWithinKt
-    fun runWithin(Kestrel, Allowance, Simulation): Ran
+    fun runWithin(Proofload, Allowance, Simulation): Ran
 top-level in TraceKt
     fun trace(Scenario, Feeder)
 class VirtualThreads : Engine
@@ -1118,7 +1118,7 @@ top-level in VirtualThreadsKt
     fun run(Simulation, Progress): RunResult
 ```
 
-### `io.github.matthewjones372:kestrel-export`
+### `io.github.matthewjones372:proofload-export`
 
 ```text
 class Density : Enum
@@ -1138,7 +1138,7 @@ top-level in RunJsonKt
     fun writeJson(RunResult, Path, Density): Path
 ```
 
-### `io.github.matthewjones372:kestrel-grpc`
+### `io.github.matthewjones372:proofload-grpc`
 
 ```text
 class Answers : StreamObserver
@@ -1199,7 +1199,7 @@ top-level in StreamsKt
     fun stream(Grpc, MethodDescriptor, Function1): GrpcStream
 ```
 
-### `io.github.matthewjones372:kestrel-grpc-dynamic`
+### `io.github.matthewjones372:proofload-grpc-dynamic`
 
 ```text
 class DeclaredGrpcStatus : Reason
@@ -1229,7 +1229,7 @@ top-level in SchemaKt
     fun descriptorSet(Array<Byte>): Schema
 ```
 
-### `io.github.matthewjones372:kestrel-http`
+### `io.github.matthewjones372:proofload-http`
 
 ```text
 interface Body
@@ -1346,7 +1346,7 @@ class UnfilledPath : Reason
     val placeholder: String
 ```
 
-### `io.github.matthewjones372:kestrel-java`
+### `io.github.matthewjones372:proofload-java`
 
 ```text
 class Actions
@@ -1368,8 +1368,8 @@ class Https
     fun baseUrl(String): Http
     fun capturing(HttpAction, SessionKey, Function): HttpAction
     fun checking(HttpAction, String, Function): HttpAction
-class Kestrel
-    fun create(): Kestrel
+class Proofload
+    fun create(): Proofload
 class Rates
     fun perMinute(Double): Rate
     fun perSecond(Double): Rate
@@ -1405,7 +1405,7 @@ class Steps
     fun named(String): StepName
 ```
 
-### `io.github.matthewjones372:kestrel-jdbc`
+### `io.github.matthewjones372:proofload-jdbc`
 
 ```text
 class Database
@@ -1429,15 +1429,15 @@ class SqlState : Reason
     val described: String
 ```
 
-### `io.github.matthewjones372:kestrel-junit5`
+### `io.github.matthewjones372:proofload-junit5`
 
 ```text
 top-level in DifferencesKt
     fun assertNotWorseThan(Difference, Double, Boolean)
-class KestrelExtension : ParameterResolver, TestExecutionExceptionHandler
+class ProofloadExtension : ParameterResolver, TestExecutionExceptionHandler
     constructor()
     fun handleTestExecutionException(ExtensionContext, Throwable)
-    fun resolveParameter(ParameterContext, ExtensionContext): Kestrel
+    fun resolveParameter(ParameterContext, ExtensionContext): Proofload
     fun supportsParameter(ParameterContext, ExtensionContext): Boolean
 class LoadRunSummary : RuntimeException
 interface LoadTest : Annotation
@@ -1445,7 +1445,7 @@ interface RunsOn
     val engine: Engine
 ```
 
-### `io.github.matthewjones372:kestrel-kafka`
+### `io.github.matthewjones372:proofload-kafka`
 
 ```text
 class Acks : Enum
@@ -1484,26 +1484,26 @@ class Topic
     fun value(Function1): Topic
 ```
 
-### `io.github.matthewjones372:kestrel-kotest`
+### `io.github.matthewjones372:proofload-kotest`
 
 ```text
-top-level in KestrelKt
-    fun kestrel(Engine): Kestrel
-    fun kestrel(Continuation): Object
+top-level in ProofloadKt
+    fun proofload(Engine): Proofload
+    fun proofload(Continuation): Object
 class NotWorseThan : Matcher
     val acceptable: Double
     val orCannotTell: Boolean
     fun test(Difference): MatcherResult
 ```
 
-### `io.github.matthewjones372:kestrel-mcp`
+### `io.github.matthewjones372:proofload-mcp`
 
 ```text
 top-level in ServerKt
     fun main()
 ```
 
-### `io.github.matthewjones372:kestrel-openapi`
+### `io.github.matthewjones372:proofload-openapi`
 
 ```text
 top-level in DocumentKt
@@ -1513,7 +1513,7 @@ top-level in LegalKt
     fun legalFor(Map, String, Object, Long): String
 ```
 
-### `io.github.matthewjones372:kestrel-otel`
+### `io.github.matthewjones372:proofload-otel`
 
 ```text
 top-level in LiveKt
@@ -1528,18 +1528,18 @@ class Sent.Refused : Sent
     val why: String
 ```
 
-### `io.github.matthewjones372:kestrel-pelican`
+### `io.github.matthewjones372:proofload-pelican`
 
 ```text
-top-level in KestrelTransportKt
-    fun kestrelTransport(RunRecorder, List, Duration): ClientTransport
+top-level in ProofloadTransportKt
+    fun proofloadTransport(RunRecorder, List, Duration): ClientTransport
 class Status : Reason
     constructor(Int)
     val code: Int
     val described: String
 ```
 
-### `io.github.matthewjones372:kestrel-plan`
+### `io.github.matthewjones372:proofload-plan`
 
 ```text
 class Declaration
@@ -1639,7 +1639,7 @@ top-level in WritingKt
     fun asYaml(Declaration): String
 ```
 
-### `io.github.matthewjones372:kestrel-plan-kafka`
+### `io.github.matthewjones372:proofload-plan-kafka`
 
 ```text
 class KafkaSteps : Lowering
@@ -1650,7 +1650,7 @@ top-level in KafkaStepsKt
     val kafkaLowerings: List
 ```
 
-### `io.github.matthewjones372:kestrel-record`
+### `io.github.matthewjones372:proofload-record`
 
 ```text
 class Answer
@@ -1723,7 +1723,7 @@ top-level in RedactionKt
     fun withoutSecrets(String): String
 ```
 
-### `io.github.matthewjones372:kestrel-report-github`
+### `io.github.matthewjones372:proofload-report-github`
 
 ```text
 top-level in MarkdownKt
@@ -1739,7 +1739,7 @@ top-level in StepSummaryKt
     fun appendToStepSummary(RunResult, Comparison, Floor, Function1): StepSummary
 ```
 
-### `io.github.matthewjones372:kestrel-report-html`
+### `io.github.matthewjones372:proofload-report-html`
 
 ```text
 top-level in CapacityPageKt
@@ -1753,7 +1753,7 @@ top-level in TrendPageKt
     fun writeHtmlReport(Trend, Path): Path
 ```
 
-### `io.github.matthewjones372:kestrel-websocket`
+### `io.github.matthewjones372:proofload-websocket`
 
 ```text
 class Connection

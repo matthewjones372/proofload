@@ -1,5 +1,0 @@
-public final class io/github/matthewjones372/kestrel/mcp/ServerKt {
-	public static final fun main ()V
-	public static synthetic fun main ([Ljava/lang/String;)V
-}
-

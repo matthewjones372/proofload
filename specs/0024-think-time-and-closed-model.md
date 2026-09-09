@@ -10,7 +10,7 @@ three requests back to back models a script, not a person, and the concurrency
 it produces at a given rate is wrong in a way nobody notices.
 
 **The closed model.** "Fifty users, looping" is how most people describe load,
-and Kestrel cannot express it. Refusing outright is defensible only if the tool
+and Proofload cannot express it. Refusing outright is defensible only if the tool
 explains the trade; refusing silently just sends people back to Gatling.
 
 ## Not doing

@@ -8,7 +8,7 @@ immediately without touching a socket". That was the right question for 0011 —
 what do the scheduler and the recorders cost — and it is answered.
 
 It is not the number a user is bounded by. Nobody runs null actions. They run
-`kestrel-http`, which is a blocking `send` per virtual thread through one
+`proofload-http`, which is a blocking `send` per virtual thread through one
 shared `HttpClient` that has its own selector and its own executor between the
 thread and the socket. Nothing in this repository has ever measured that path,
 so the published figure is an upper bound on a path nobody takes, sitting under

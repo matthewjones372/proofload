@@ -47,7 +47,7 @@ which is a fair signal about where the difficulty is.
 ## Shape
 
 ```bash
-kestrel run --scenario com.acme.Checkout --on host1,host2,host3,host4 --starting-in 30s
+proofload run --scenario com.acme.Checkout --on host1,host2,host3,host4 --starting-in 30s
 ```
 
 - SSH as the transport, because every load machine already has it and it needs

@@ -1,11 +1,11 @@
 # What this tool costs
 
-Kestrel measures a target, so its own overhead is part of whether its numbers
+Proofload measures a target, so its own overhead is part of whether its numbers
 mean anything. This is that overhead, measured rather than claimed.
 
 `./gradlew :benchmarks:ceiling` runs two sweeps, and this page carries both:
 
-- **Over a socket — at least 2,500 a second.** The shipped `kestrel-http` step
+- **Over a socket — at least 2,500 a second.** The shipped `proofload-http` step
   against a target on loopback. A **lower bound**: the target's own service
   time is inside it.
 - **Without a socket — 100,000 a second.** A step that returns immediately, so
@@ -29,7 +29,7 @@ against each other.
 ## Over a socket
 
 The step a user writes, sent the way a user sends it: one blocking `send` per
-virtual thread through the pooled shared `HttpClient` that `kestrel-http`
+virtual thread through the pooled shared `HttpClient` that `proofload-http`
 builds, at a `com.sun.net.httpserver` target answering from memory in this same
 process. Generator and target share the four cores, which is what a laptop run
 and a single CI runner both look like.
@@ -80,7 +80,7 @@ what a quiet machine looks like at this precision.
 
 `com.sun.net.httpserver` is not a fast server, and this sweep did not
 characterise it. So a rate the sweep failed to reach may be the target's limit
-rather than the client's, and the honest reading is that Kestrel's HTTP step
+rather than the client's, and the honest reading is that Proofload's HTTP step
 reaches *at least* this rate — not that it stops here. Making it an equality
 would mean measuring the server too, which is a second project about something
 nobody ships.
@@ -102,7 +102,7 @@ recycling too slowly, not descriptors, and not the target refusing work.
 
 That is a better answer than this page could give before, and it is not a
 complete one: the port figure is machine-wide, so it cannot prove every one of
-those sockets was Kestrel's, and it does not rule out the server's accept path
+those sockets was Proofload's, and it does not rule out the server's accept path
 failing at the same time. It narrows the question from "the client, the loopback
 stack or the server" to "port exhaustion at this end, or the accept path at the
 other".
@@ -146,7 +146,7 @@ deliberately excludes. Until then the number stays a lower bound for the reason
 it always was, and the honest reading of the rows above is that this
 arrangement saturates, not that the JDK client does.
 
-The consequence for anyone thinking of a faster client: `kestrel-http`'s
+The consequence for anyone thinking of a faster client: `proofload-http`'s
 transport seam makes one easy to write, and this measurement is not a reason to.
 It is not evidence the client is slow. Getting evidence either way means
 measuring against a target that is not in the way.
@@ -161,7 +161,7 @@ strict about that.
 
 - **No network.** Loopback only. A ceiling measured across a LAN measures the
   LAN.
-- **No tuning.** The client exactly as `kestrel-http` ships it — pooled,
+- **No tuning.** The client exactly as `proofload-http` ships it — pooled,
   shared, no executor swap, no connection-pool flags. The question is what a
   user gets, not what is achievable.
 - **No characterisation of the target.** That is what makes this a bound rather
@@ -241,7 +241,7 @@ and then handed over in a way that reintroduced it.
 Subtracting the elapsed time at booking took the median at a hundred thousand a
 second from 45 ms to 10 µs. Those two figures are from the machine the bug was
 found on, not the one in the tables above. `ScheduleDriftTest` in
-`kestrel-engine` is the regression test.
+`proofload-engine` is the regression test.
 
 ## What the recorder keeps
 
@@ -365,7 +365,7 @@ connections, and in this repository's own regression test it measured a p99 of
 327 ms where every run after it measured 28 ms — a tenfold difference with no
 change to the target at all.
 
-Discard a run before keeping one. `kestrel-baseline` does not do this for you,
+Discard a run before keeping one. `proofload-baseline` does not do this for you,
 because a tool that quietly threw away the first run of a two-run session would
 be deciding which measurements count.
 
@@ -380,7 +380,7 @@ differs is the refusal.
 `./gradlew :benchmarks:kafkaCeiling`. An `emit` producing through a producer
 that answers immediately and keeps nothing, so what is left between the
 departure the profile promised and the sample the recorder took is what
-`kestrel-kafka` adds: the serializer lambda, the record, the correlation
+`proofload-kafka` adds: the serializer lambda, the record, the correlation
 header, and waiting on the send's future.
 
 | Rate | Records | Failed | Behind p50 | Behind p99 | Behind max | p50 within 1ms |
@@ -431,7 +431,7 @@ reads like it does.
   on the host, not just this process's, so a busy neighbour inflates it. It is
   read against the ephemeral range, which is machine-wide too, so the reading
   and its ceiling describe the same thing — but it cannot prove a particular
-  socket was Kestrel's.
+  socket was Proofload's.
 - **What a real Kafka producer costs.** The adapter sweep above removes the
   broker with a producer that answers immediately, which also removes the
   accumulator, the batching and the sender thread — the parts most likely to

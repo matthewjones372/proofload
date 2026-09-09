@@ -2,7 +2,7 @@
 
 ## Problem
 
-[0095](0095-kestrel-from-scala.md) landed, so a Scala team can write a
+[0095](0095-proofload-from-scala.md) landed, so a Scala team can write a
 scenario. It cannot write a *test*: [0008](0008-a-load-test-is-a-test.md) and
 [0009](0009-kotest.md) gave JUnit 5 and Kotest a runner each, and a ZIO service
 is tested in zio-test. Dropping to a JUnit class to write a load test is the
@@ -10,7 +10,7 @@ is tested in zio-test. Dropping to a JUnit class to write a load test is the
 for a Kotlin team: a zio-test suite is an effect, so a blocking call in the
 middle of one is not a style clash but a fiber parked on the compute pool.
 
-0095's **Not doing** says no ZIO. That refusal is about the *engine* — Kestrel
+0095's **Not doing** says no ZIO. That refusal is about the *engine* — Proofload
 handing back a `ZIO` for a step body, or departures scheduled on a fiber
 runtime — and it stands. This spec is about the call around a whole run, which
 is a different question with a different answer.
@@ -31,11 +31,11 @@ is a different question with a different answer.
 
 ## Shape
 
-`kestrel-zio-test`, over `kestrel-scala`, with zio-test `compileOnly` as Kotest
-is in `kestrel-kotest`:
+`proofload-zio-test`, over `proofload-scala`, with zio-test `compileOnly` as Kotest
+is in `proofload-kotest`:
 
 ```scala
-import io.github.matthewjones372.kestrel.ziotest.kestrel
+import io.github.matthewjones372.proofload.ziotest.proofload
 import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
 
@@ -43,27 +43,27 @@ object CheckoutSpec extends ZIOSpecDefault:
 
   def spec = suite("checkout")(
     test("holds p99 under 200ms at 50 a second"):
-      for result <- kestrel.run(checkout.at(50.perSecond, over = 1.minute))
+      for result <- proofload.run(checkout.at(50.perSecond, over = 1.minute))
       yield assertTrue(result(pay).responseTime.p99 < 200.millis),
   )
 ```
 
-`kestrel.run` is the whole module: `ZIO.attemptBlocking` around the same
-`Kestrel(Progress.silent)` the other two framework modules build. Blocking
+`proofload.run` is the whole module: `ZIO.attemptBlocking` around the same
+`Proofload(Progress.silent)` the other two framework modules build. Blocking
 rather than compute, because the call blocks its thread for the length of the
 run while the engine sends on virtual threads; on the compute pool that is a
 starved runtime, and a starved runtime is a scheduler this tool would then
 measure.
 
 Silent for the reason the JUnit extension is silent: a zio-test report is
-somebody else's output. Exclusive because `Kestrel()` already is, so
+somebody else's output. Exclusive because `Proofload()` already is, so
 `TestAspect.parallel` over two load tests measures the machine twice in a row
 rather than measuring each other.
 
 ## Why this shape
 
 One method, and the argument is entirely about which executor it runs on. The
-alternative — a `ZLayer[Any, Nothing, Kestrel]`, which is what a ZIO library
+alternative — a `ZLayer[Any, Nothing, Proofload]`, which is what a ZIO library
 normally looks like — is recommended against: it buys nothing a `val` does not,
 and makes the runner look like a resource with a lifetime when it is a value
 with none. The dependency test is where "this changes no engine behaviour" gets
@@ -71,8 +71,8 @@ checked, as it was in 0009, and it matters more here than the surface does.
 
 ## Stack
 
-- [x] **`spec-0108-module`** — `kestrel-zio-test`, its `NoSecondStackTest`, and
-      `kestrel.run` on the blocking executor.
+- [x] **`spec-0108-module`** — `proofload-zio-test`, its `NoSecondStackTest`, and
+      `proofload.run` on the blocking executor.
       Done when: a `ZIOSpecDefault` runs a simulation against a JDK
       `HttpServer` under `./gradlew build`, and a test names the executor the
       run happened on.
@@ -92,7 +92,7 @@ checked, as it was in 0009, and it matters more here than the surface does.
 
 ```bash
 ./gradlew build
-./gradlew :kestrel-zio-test:test
+./gradlew :proofload-zio-test:test
 ```
 
 ## Found while building
@@ -100,22 +100,22 @@ checked, as it was in 0009, and it matters more here than the surface does.
 - **`notWorseThan` cannot be reached from Scala at all, and this is not the
   spec that should fix it.** `Difference.notWorseThan` and `Difference
   .explained` are top-level extensions taking a `Share`, so their JVM names
-  carry a value-class hash — the thing `kestrel-java` exists to keep out of
+  carry a value-class hash — the thing `proofload-java` exists to keep out of
   another language's source, and it has no `Differences` facade because
-  [0094](0094-kestrel-from-java.md) reversed itself and put a Java-facing
+  [0094](0094-proofload-from-java.md) reversed itself and put a Java-facing
   baselines assertion in a spec of its own. Adding one here would be that spec,
   written in the wrong place. So `metItsGoals` landed alone, and a zio-test
   spec comparing against a baseline waits for the baselines facade.
 - **zio-test runs under Gradle through `zio-test-junit-engine`**, a JUnit
   platform engine rather than the JUnit 4 runner `zio-test-junit` carries. Test
   names come out as the sentences they were written as, which the Scala
-  backtick names in `kestrel-scala` do not.
+  backtick names in `proofload-scala` do not.
 
 ## Open questions
 
 - **Does the module attach what the runs measured to a failure?** Recommend
   **not yet**: a `TestAspect` that annotates a failed test with
-  `Kestrel.summary()` is maybe twenty lines, and 0009 specified the same thing
+  `Proofload.summary()` is maybe twenty lines, and 0009 specified the same thing
   for Kotest and never built it, which suggests the assertion's own message is
   usually enough. Worth doing for all three frameworks at once, or for none.
 - **Is "on the blocking executor" the right test, or should it be a timing
@@ -123,6 +123,6 @@ checked, as it was in 0009, and it matters more here than the surface does.
   fiber departs on the same schedule as one started from a plain thread is a
   wall-clock test, and those cost an isolated task and a tag. The executor is
   the mechanism the schedule depends on, and it is checkable in microseconds.
-- **`kestrel-zio-test` or `kestrel-zio`?** Recommend the longer name: this
+- **`proofload-zio-test` or `proofload-zio`?** Recommend the longer name: this
   integrates a test framework, not an effect system, and the shorter name
   should stay free for the spec that turns 0095's refusal down again.

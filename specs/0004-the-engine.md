@@ -23,8 +23,8 @@ made itself.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.engine.run
-import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.proofload.engine.run
+import io.github.matthewjones372.proofload.perSecond
 import kotlin.time.Duration.Companion.minutes
 
 val result = checkout.at(50.perSecond, over = 1.minutes).run()
@@ -33,7 +33,7 @@ result["pay"].responseTime.p99
 result.behind.max
 ```
 
-- `kestrel-engine`, a module depending on `kestrel-core` and the JDK. It
+- `proofload-engine`, a module depending on `proofload-core` and the JDK. It
   carries its own `NoThirdPartyDependenciesTest`.
 - `fun Simulation.run(): RunResult` — blocks until the last user finishes.
 - One **virtual thread per virtual user**, started by a scheduler at the
@@ -63,7 +63,7 @@ and it reported `pay: ok` for a user who never had a cart.
 
 ## Stack
 
-- [ ] **`spec-0004-module`** — the `kestrel-engine` module, its build wiring,
+- [ ] **`spec-0004-module`** — the `proofload-engine` module, its build wiring,
       its dependency test, and `Simulation.run()` running one user inline.
       Done when: a one-step scenario at one user per second returns a
       `RunResult` with that step's count at 1, and `./gradlew build` is green.

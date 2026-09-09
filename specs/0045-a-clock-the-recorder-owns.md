@@ -3,7 +3,7 @@
 ## Problem
 
 0025 gives every sample a second to belong to, counted from the run's start.
-The engine knows that origin because it started the run. `kestrel-pelican` does
+The engine knows that origin because it started the run. `proofload-pelican` does
 not: it is handed a `RunRecorder` and has no idea when the run began, so it
 counts seconds from the moment its transport was constructed.
 
@@ -21,7 +21,7 @@ suspect — and the shape of the chart still looks plausible.
 - No new clock abstraction, no injectable time source. The engine reads
   `System.nanoTime()` and that is right; this is about who is allowed to ask.
 - No change to what a second contains, or to how it is counted. 0025 settled it.
-- No change to `kestrel-pelican`'s transport API for its callers.
+- No change to `proofload-pelican`'s transport API for its callers.
 - No wall-clock time in the recorder. The origin is monotonic, like everything
   else on the timed path.
 
@@ -33,7 +33,7 @@ recorder.sinceStart()      // how long this run has been going, from the recorde
 
 - `RunRecorder` already takes the instant the run started; it gains a monotonic
   origin beside it and answers offsets from that.
-- Every recording caller — the engine and `kestrel-pelican` alike — asks the
+- Every recording caller — the engine and `proofload-pelican` alike — asks the
   recorder rather than keeping an origin of its own.
 - The engine's existing `at` argument keeps working: a caller that already knows
   the offset passes it, and one that does not asks.
@@ -54,7 +54,7 @@ unchanged because it still passes the offset it already computed.
 ## Stack
 
 - [x] **`spec-0045-origin`** — the monotonic origin on `RunRecorder`, and
-      `kestrel-pelican` asking it instead of timing from construction.
+      `proofload-pelican` asking it instead of timing from construction.
       Done when: a transport constructed well before a run starts records its
       samples in the seconds they actually happened in, and the engine's
       recording path still passes its own offset.

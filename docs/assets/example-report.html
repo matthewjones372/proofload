@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kestrel run — 2026-09-01T06:43:14.238194725Z</title>
+<title>Proofload run — 2026-09-01T06:43:14.238194725Z</title>
 <style>
 :root {
   color-scheme: light dark;
@@ -284,7 +284,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
 <main>
   <header class="run">
     <div class="run-name">
-      <span class="wordmark">Kestrel</span>
+      <span class="wordmark">Proofload</span>
       <h1>checkout</h1>
     </div>
     <div class="run-meta">
@@ -304,7 +304,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
       <li class="met"><span class="goal">the generator keeps its schedule</span><span class="measured">897 µs</span></li>
     </ul>
   </section>
-  <p class="note" id="kestrel-steady">
+  <p class="note" id="proofload-steady">
     <strong>Settled after 0 ns</strong>, judged over the remaining 31.0 s. The first 0 ns are drawn on the timeline below and left out of every goal above that reads the counts or either clock; the generator's own backlog is not kept second by second, so a goal on that is judged over the whole run. Every percentile in the table below is the whole run: nothing here is discarded. Two windows count as the same within <strong>12.50%</strong> of each other — twice the width of the buckets these seconds are read from, and a default rather than something this run discovered.
   </p>
   <section class="plan" aria-label="What was asked for">
@@ -350,7 +350,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     </ul>
     <p class="note">Goodput counts the requests that both succeeded and came back inside the target, over the window the plan asked for rather than the span the run took. It is read off the successes' own distribution, so a failure that was also slow is counted out once rather than twice. The bucket holding the target counts as having missed it, which is the direction every percentile here already rounds.</p>
   </section>
-  <p class="note" id="kestrel-hiccups">The injector's own JVM stalled for 449 µs at p99 and 40.4 ms at worst, measured on a thread no request ran on. A tail that size is this machine as readily as the target.</p>
+  <p class="note" id="proofload-hiccups">The injector's own JVM stalled for 449 µs at p99 and 40.4 ms at worst, measured on a thread no request ran on. A tail that size is this machine as readily as the target.</p>
   <section class="reading" aria-label="What these numbers say">
     <p><strong>2,700 requests</strong>, <strong>6 failed</strong> (0.2%).</p>
     <p>The run sent all 2,700 of them.</p>
@@ -1949,7 +1949,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
     <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
   </section>
 </main>
-<script type="application/json" id="kestrel-run">
+<script type="application/json" id="proofload-run">
 {
   "startedAt": "2026-09-01T06:43:14.238194725Z",
   "durationUnit": "nanoseconds",
@@ -2411,7 +2411,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   // Absent until a reader says otherwise, so an untouched report keeps
   // following the machine's own setting rather than one this page chose.
   var kept = null;
-  try { kept = localStorage.getItem('kestrel-theme'); } catch (ignored) { kept = null; }
+  try { kept = localStorage.getItem('proofload-theme'); } catch (ignored) { kept = null; }
   if (kept === 'light' || kept === 'dark') root.setAttribute('data-theme', kept);
 
   function dark() {
@@ -2428,7 +2428,7 @@ td.goals { color: var(--muted); font-size: 0.85rem; }
   toggle.addEventListener('click', function () {
     var next = dark() ? 'light' : 'dark';
     root.setAttribute('data-theme', next);
-    try { localStorage.setItem('kestrel-theme', next); } catch (ignored) { /* a file:// URL may refuse */ }
+    try { localStorage.setItem('proofload-theme', next); } catch (ignored) { /* a file:// URL may refuse */ }
     label();
   });
 })();

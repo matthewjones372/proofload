@@ -58,7 +58,7 @@ Two measurements, taken differently because they answer different questions:
   departures. This is the number that can be wrong in a way that changes a
   reported latency, and the one worth watching flat as the rate climbs.
 
-The output is a table in `build/reports/kestrel/footprint.md`, beside the
+The output is a table in `build/reports/proofload/footprint.md`, beside the
 ceiling's, and the run's own `fellBehind` printed next to it — a footprint taken
 from a run that lost its schedule is measuring a backlog, not a design.
 
@@ -99,7 +99,7 @@ answered by two numbers and a division.
 
 ```bash
 ./gradlew :benchmarks:footprint
-cat build/reports/kestrel/footprint.md
+cat build/reports/proofload/footprint.md
 ./gradlew build   # unchanged: the harness is not in the test lane
 ```
 

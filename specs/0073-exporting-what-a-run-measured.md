@@ -3,7 +3,7 @@
 ## Problem
 
 A run's numbers exist only in formats this repository invented:
-`kestrel-baseline`'s tab-separated lines, and the JSON `kestrel-report-html`
+`proofload-baseline`'s tab-separated lines, and the JSON `proofload-report-html`
 inlines in a `<script>`. Neither is readable by the Grafana, Prometheus, OTel
 backend and `HistogramLogAnalyzer` a team already runs, so the comparison that
 matters — what the client observed against what the server recorded — is done
@@ -19,7 +19,7 @@ by eye across two tabs. 0023 built the sending half of that join, a
   version to keep up with.
 - **No replacing the baseline format.** It stays what `Runs.readAll` reads and
   what 0037 and 0038 compare. None of these exports round-trips.
-- **No third-party dependency in `kestrel-core` or `kestrel-report-html`.** The
+- **No third-party dependency in `proofload-core` or `proofload-report-html`.** The
   page opens with nothing fetched, and core has a test that fails on one.
 - **No exemplars, no metric per request.** `spec-0023-exemplars` is drafted and
   unbuilt; this leaves a place for one. A series per request is 0003's argument
@@ -27,7 +27,7 @@ by eye across two tabs. 0023 built the sending half of that join, a
 
 ## Shape
 
-Two leaf modules over a frozen result. **`kestrel-export`** — core and the JDK
+Two leaf modules over a frozen result. **`proofload-export`** — core and the JDK
 only, its own `NoThirdPartyDependenciesTest` — carries the two formats needing
 no library. `writeHistogramLog(path)` writes HdrHistogram's log format: a
 `Tag=` line per step per side per clock, the frozen buckets in the compressed
@@ -35,15 +35,15 @@ base64 V2 encoding, on `Deflater` and `Base64`. `openMetrics()` returns a
 snapshot for a Pushgateway or textfile collector, untimestamped as they require:
 
 ```
-kestrel_latency_seconds_bucket{step="pay",outcome="ok",clock="service",le="0.020971519"} 2841
-kestrel_failures_total{step="pay",reason="HttpStatus(503)"} 41
-kestrel_behind_seconds_bucket{le="0.000104447"} 1750
-kestrel_hiccups_seconds_bucket{le="0.014680063"} 30
-kestrel_machine_info{cores="4",jdk="21.0.3+9",os="Linux",arch="aarch64"} 1
+proofload_latency_seconds_bucket{step="pay",outcome="ok",clock="service",le="0.020971519"} 2841
+proofload_failures_total{step="pay",reason="HttpStatus(503)"} 41
+proofload_behind_seconds_bucket{le="0.000104447"} 1750
+proofload_hiccups_seconds_bucket{le="0.014680063"} 30
+proofload_machine_info{cores="4",jdk="21.0.3+9",os="Linux",arch="aarch64"} 1
 ```
 
-**`kestrel-otel`** carries the OpenTelemetry SDK and OTLP exporter, the way
-`kestrel-pelican` carries `pelican-core`. `sendOtlp(endpoint)` sends the same
+**`proofload-otel`** carries the OpenTelemetry SDK and OTLP exporter, the way
+`proofload-pelican` carries `pelican-core`. `sendOtlp(endpoint)` sends the same
 measurements as one delta export and returns whether the collector took them
 rather than throwing — 0007's reason: a test that dies because the collector
 was down is one people stop running.
@@ -86,7 +86,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 - [x] **`spec-0073-openmetrics`** — `openMetrics()`, against a golden.
       Done when: the golden matches, buckets are cumulative and end in `+Inf`,
       two reasons are two series, and `behind` and `hiccups` are both there.
-- [x] **`spec-0073-otel`** — `kestrel-otel`, carrying the SDK, and `sendOtlp`.
+- [x] **`spec-0073-otel`** — `proofload-otel`, carrying the SDK, and `sendOtlp`.
       Done when: a run sent at a collector that is not there returns a refusal
       naming it rather than throwing, and against a recording collector the
       boundaries and counts equal the exposition's.
@@ -116,7 +116,7 @@ trace id, the exporter reads it as an OTel exemplar and a p99 clicks through.
 2. **Does the hlog carry the timeline too?** It is what makes
     `HistogramLogAnalyzer` draw something, but those histograms are coarse, and
     one file of two precisions misleads. Recommend a separate call and file.
-3. **Should HdrHistogram be a real dependency of `kestrel-export`?** Recommend
+3. **Should HdrHistogram be a real dependency of `proofload-export`?** Recommend
     test-only — but that is the decision to reverse first if hand-encoding V2
     runs past its share of the stack. **Held when built**: the encoder came to
     about 150 lines of `Deflater`, `Base64` and zig-zag, and the library on the

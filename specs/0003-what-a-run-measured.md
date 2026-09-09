@@ -26,7 +26,7 @@ That is coordinated omission, and it is the default bug in this class of tool.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.RunResult
+import io.github.matthewjones372.proofload.RunResult
 import kotlin.time.Duration.Companion.milliseconds
 
 val result: RunResult = /* spec 0004 produces one */

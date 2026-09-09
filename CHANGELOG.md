@@ -14,16 +14,16 @@ one.
 
 ## [0.1.0] — unreleased
 
-The first release. Seventeen modules, published together and versioned together.
+The first release. Twenty-seven modules, published together and versioned together.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
 ### Added
 
-- **A load test that is a zio-test test.** `kestrel-zio-test` is one method:
+- **A load test that is a zio-test test.** `proofload-zio-test` is one method:
   `ZIO.attemptBlocking` around the same silent, exclusive runner
-  `kestrel-junit5` and `kestrel-kotest` build. Blocking rather than compute,
+  `proofload-junit5` and `proofload-kotest` build. Blocking rather than compute,
   because the call holds its thread for the length of the run while the engine
   sends on virtual threads — on the compute pool that is a starved runtime, and
   a starved runtime is a scheduler this tool would then measure and report as
@@ -38,10 +38,10 @@ enough to list, and long enough to matter.
   carries a value-class hash, and the facade that would fix it is the
   Java-facing baselines module 0094 left to a spec of its own.
 
-- **Kestrel from Scala.** `kestrel-scala` puts `FiniteDuration` on both sides
+- **Proofload from Scala.** `proofload-scala` puts `FiniteDuration` on both sides
   of the boundary, `perSecond` and `perMinute` on `Int` and `Double`,
   `sessionKey[T]` recovered from a `ClassTag` rather than handed a `Class`, and
-  `step`, `exec`, `pause` and `scenario` over `kestrel-java`'s builder — which
+  `step`, `exec`, `pause` and `scenario` over `proofload-java`'s builder — which
   stays the one place a scenario's steps are frozen, so this is extension
   methods over the same values and not a second way to describe a run. Compiled
   against Scala 3.3.8, the LTS line: a published Scala library can only be read
@@ -52,7 +52,7 @@ enough to list, and long enough to matter.
   qualified-private members that are public bytecode — names no caller can
   type, moving on edits no caller can see — so `surfaceRecorded` names the
   modules whose surface is checked, and `examples-scala` is this one's whole
-  gate, as `examples-java` is `kestrel-java`'s. And `result(step).responseTime
+  gate, as `examples-java` is `proofload-java`'s. And `result(step).responseTime
   .p99` needed a small reader carrying the step and the clock: `Timing`'s
   percentiles are `kotlin.time.Duration` properties, so their getters carry a
   value-class hash and no extension method can reach them. It holds no number
@@ -99,11 +99,11 @@ enough to list, and long enough to matter.
   travel onto the result through `drawing(...)`, so the page says what the data
   came from and a comparison refuses two runs drawn differently.
 
-  `kestrel-arbs` is pure Kotlin over core, so it arrives in `kestrel-plan` with
+  `proofload-arbs` is pure Kotlin over core, so it arrives in `proofload-plan` with
   no third-party jar behind it — which is why this needed no module of its own,
   unlike Kafka and gRPC. Five downstream dependency tests name it.
 - **`benchmark`, the tool a request actually arrives as.** The rest of the MCP
-  table is a verb per step of Kestrel's own model — the shape a library has, not
+  table is a verb per step of Proofload's own model — the shape a library has, not
   the shape a question has. Nobody asks to validate a plan; they ask whether
   their service holds up, and answering that took seven calls in an order the
   caller had to infer. `benchmark` takes an OpenAPI document, a plan, or just a
@@ -119,8 +119,8 @@ enough to list, and long enough to matter.
   a credential is asked about because the target answered 401, paths because a
   bare URL was all it was given — and a plan somebody wrote themselves is asked
   nothing.
-- **Kestrel over MCP.** `kestrel-mcp` is a stdio server whose every tool is a
-  call `kestrel-cli` already makes, so what a program can do is what a person at
+- **Proofload over MCP.** `proofload-mcp` is a stdio server whose every tool is a
+  call `proofload-cli` already makes, so what a program can do is what a person at
   a terminal can do and there is no second behaviour to keep in step. The
   framing is line-delimited JSON-RPC written here rather than taken from a
   library — a notification is not answered, a method nobody serves is a JSON-RPC
@@ -147,7 +147,7 @@ enough to list, and long enough to matter.
   true whether a plan would send one request or a million.
 
   The server also takes stdout for the protocol and points everything else at
-  stderr before a single tool runs. `trace` narrates to stdout and `Kestrel`'s
+  stderr before a single tool runs. `trace` narrates to stdout and `Proofload`'s
   default progress prints to it too; either landing mid-message would end the
   session. Cheaper than auditing every call for prints, and it stays true for
   calls nobody has written yet.
@@ -160,7 +160,7 @@ enough to list, and long enough to matter.
   something a caller can poll forever. The `Allowance` refuses before the run
   begins, so a refused run departs nothing. Runs are held in memory and lost
   with the process — the honest scope for a server a client starts and stops.
-- **A plan from a contract.** `kestrel-contract`'s `planFrom(endpoints, baseUrl)`
+- **A plan from a contract.** `proofload-contract`'s `planFrom(endpoints, baseUrl)`
   reads Pelican endpoint values into a `plan/1` document: a step per endpoint,
   named by the operation the contract named and keyed on the path template, so
   `/orders/{id}` is one step rather than one per id. Read methods only unless
@@ -170,7 +170,7 @@ enough to list, and long enough to matter.
   generated artefact should never be the thing that hurt something; the caller
   raises it on purpose, under an `Allowance`. Every step carries a goal against
   a placeholder limit, so a generated plan cannot validate green while asserting
-  nothing. Its own module rather than a generator inside `kestrel-pelican`,
+  nothing. Its own module rather than a generator inside `proofload-pelican`,
   whose dependency test promises a consumer nothing but core and `pelican-core`.
 - **Values a contract already calls legal.** A generated step's path is filled
   from the constraints on its own inputs — `between(1, 100)` is both the rule
@@ -181,7 +181,7 @@ enough to list, and long enough to matter.
   name and fails the step when nothing is there, and a plan has no feeder to put
   one there, so a generated step that kept its braces would fail every request
   it made. One value, the same for every user — a generated plan is a smoke at
-  one a second, and per-user variety is what `kestrel emit` and a feeder are
+  one a second, and per-user variety is what `proofload emit` and a feeder are
   for.
 - **A declared failure is not a defect.** `HttpAction.declaring(404, 409)` names
   the statuses an endpoint is documented to answer with. They still fail the
@@ -189,11 +189,11 @@ enough to list, and long enough to matter.
   would inflate the goodput of a run against a service returning nothing but
   declared errors — but they fail as `DeclaredStatus` rather than `HttpStatus`,
   so a report separates a service working as written from one doing something
-  nobody wrote down. `plan/1` carries a `declared:` list per step, `kestrel
+  nobody wrote down. `plan/1` carries a `declared:` list per step, `proofload
   emit` prints it, and `planFrom` fills it from the endpoint's own `orFail`
   declarations. Every other load tool has to be told this by hand, per step, and
   mostly is not.
-- **A plan from an OpenAPI document.** `kestrel from-openapi orders.yaml` reads
+- **A plan from an OpenAPI document.** `proofload from-openapi orders.yaml` reads
   a document and writes the plan it describes: a step per read operation, the
   path filled from the schema its own parameters declare, and every other
   documented status carried as `declared:`. `$ref` into `components` is
@@ -202,7 +202,7 @@ enough to list, and long enough to matter.
   `readPlan(plan.asYaml())` is the same declaration — a generator whose output
   nobody can read back is a generator nobody can use.
 
-  In `kestrel-openapi`, apart from `kestrel-contract`, so that reading a
+  In `proofload-openapi`, apart from `proofload-contract`, so that reading a
   document costs nothing from Pelican: most people with a document do not have a
   Pelican service, and the command line would otherwise install `pelican-core`
   for a feature that never touches it. The two share the half that turns a
@@ -221,7 +221,7 @@ enough to list, and long enough to matter.
   project that takes the facade.
 
 - **Scenarios as values.** `Scenario`, `Step`, `Action`, `Session` and
-  `StepResult` in `kestrel-core`, with typed `SessionKey<T>` and a step body
+  `StepResult` in `proofload-core`, with typed `SessionKey<T>` and a step body
   that names neither the session nor its result. A scenario is a tree rather
   than a list: `Step.Repeat` and `Step.When` hold steps instead of naming one,
   so `name` sits on the leaves and `Scenario.stepNames` reads off every name a
@@ -251,13 +251,13 @@ enough to list, and long enough to matter.
   about nothing. `Runs.against` puts many runs on each side, so a `Difference`
   carries a `Spread` and can say it cannot tell instead of calling noise a
   regression.
-- **`kestrel-baseline`** — a run written to a file and read back, and a
+- **`proofload-baseline`** — a run written to a file and read back, and a
   directory of them read as `Runs`, so the comparison above has something to
   compare against between builds.
 - **Progress says how long.** The line a run prints names the window the profile
   scheduled, and a capacity search names the bound it already computed. Neither
   is a forecast: both are read off values that exist before a request leaves.
-- **`kestrel-engine`** — one virtual thread per user, departures started by a
+- **`proofload-engine`** — one virtual thread per user, departures started by a
   scheduler, recorders sharded rather than one per user, and a failed step
   abandoning that user rather than counting its later steps as successes.
 - **The rate a scenario sustains.** `Scenario.sustainable(upTo, holding,
@@ -268,11 +268,11 @@ enough to list, and long enough to matter.
   could not offer is void rather than failed, and ends the search.
   `Capacity.toHtmlReport()` draws the curve, with the operating point marked.
 - **A credential that stays fresh.** `refreshing(every) { fetchToken() }` in
-  `kestrel-core` fetches once before the run and again on a daemon scheduler,
+  `proofload-core` fetches once before the run and again on a daemon scheduler,
   so a step reads `current` — a volatile read — rather than timing an identity
   provider. `Refreshing.fixed(value)` is the same value with no scheduler, and
   `stop()` ends the schedule.
-- **`kestrel-http`** — steps on `java.net.http`, keyed on the path template.
+- **`proofload-http`** — steps on `java.net.http`, keyed on the path template.
   `withCookies()` carries cookies between a user's steps, in that user's own
   session rather than on the run's shared client, and `traced()` puts a W3C
   `traceparent` and a synthetic-traffic `baggage` entry on every request.
@@ -282,12 +282,12 @@ enough to list, and long enough to matter.
   other rather than measuring each other, and a killed holder frees the machine
   with nothing to reap. It degrades rather than fails: a lock that cannot be
   taken says so once and the run goes ahead with the in-JVM guarantee.
-  `kestrel.exclusive=false` opts out, `kestrel.exclusive.file` moves the lock,
-  and `kestrel.exclusive.timeout` puts a ceiling on the wait. A run that queued
+  `proofload.exclusive=false` opts out, `proofload.exclusive.file` moves the lock,
+  and `proofload.exclusive.timeout` puts a ceiling on the wait. A run that queued
   says how long; one that did not says nothing.
 - **A test can name its engine.** `Engine` is a `fun interface` in core; a
   JUnit class names one by implementing `RunsOn`, and a Kotest spec by calling
-  `kestrel(engine)`. A class that names none runs on virtual threads, so bare
+  `proofload(engine)`. A class that names none runs on virtual threads, so bare
   `@LoadTest` is unchanged. A named engine is still held exclusively, so two
   tests never measure each other whichever engine sends them.
 - **Loops and conditionals in the DSL.** `repeat(n) { }`, `during(window) { }`
@@ -310,7 +310,7 @@ enough to list, and long enough to matter.
 - **A ceiling measured over a socket.** `:benchmarks:ceiling` now sweeps the
   shipped HTTP step against a loopback target as well as a null step, and
   `docs/what-it-costs.md` leads with the figure and calls it a lower bound.
-- **`kestrel-websocket`** — `open`, `send`, `awaiting` and `close` as timed
+- **`proofload-websocket`** — `open`, `send`, `awaiting` and `close` as timed
   steps on `java.net.http.WebSocket`, one connection per user, held in the
   session. `open` times the upgrade to the 101 alone and `close` the Close frame
   out and back; `send` is timed for the write and waits for nothing, `awaiting`
@@ -326,21 +326,21 @@ enough to list, and long enough to matter.
   from the column of the same name, with a conversion overload for a key that is
   not a `String`. A key naming a column the file lacks fails when the feeder is
   built, not on user one.
-- **The test frameworks are quiet.** `@LoadTest` and Kotest's `kestrel()` hand
+- **The test frameworks are quiet.** `@LoadTest` and Kotest's `proofload()` hand
   the runner `Progress.silent`, and a calibration no longer announces its
   twenty-four internal runs. A `main` still prints.
   `open` times the upgrade to the server's 101 and `close` times the Close
   frame out to the far end's Close back; neither is a message, and no message
   is timed yet.
-- **`kestrel-junit5` and `kestrel-kotest`** — a load test in whichever
+- **`proofload-junit5` and `proofload-kotest`** — a load test in whichever
   framework is already there, with the runner handed over as a parameter.
-- **`kestrel-report-html` and `kestrel-report-github`** — one self-contained
+- **`proofload-report-html` and `proofload-report-github`** — one self-contained
   interactive page, a markdown summary, `$GITHUB_STEP_SUMMARY`, and a Pages
   index.
 - **`Scenario.trace(feeder)`** — one user walked through the ordinary step
   machinery and printed, a step to a line. It schedules nothing and returns
   nothing, so a diagnostic pass cannot be read as a measurement.
-- **`kestrel-pelican`** — Pelican's `ClientTransport` over the JDK client, so a
+- **`proofload-pelican`** — Pelican's `ClientTransport` over the JDK client, so a
   generated typed client runs inside a load test with no Pekko.
 
 - **A warm-up the runner does.** `warmingUp(over)` on a run and on a search
@@ -359,7 +359,7 @@ enough to list, and long enough to matter.
   than only that it did. The page, the job summary and a void rung now say the
   service times are the target at the load that left — service time is
   measured from the departure that happened, so a run the generator could not
-  drive is a smaller experiment rather than a wasted one. Kestrel still will
+  drive is a smaller experiment rather than a wasted one. Proofload still will
   not throttle itself mid-run: a run that lowers its own rate measures a load
   it then does not report.
 - **An exemplar beside a percentile.** A traced run keeps one trace id per
@@ -382,7 +382,7 @@ enough to list, and long enough to matter.
   share it. Every recording path asks the recorder rather than keeping an
   origin of its own, so a transport built before the run can no longer count
   seconds from its own construction.
-- **`kestrel-arbs`** — data a run makes up rather than reads from a file, so a
+- **`proofload-arbs`** — data a run makes up rather than reads from a file, so a
   thousand-row CSV cycled for a million users stops deciding the target's hit
   rate. An `Arb<T>` answers `at(userNumber)` and nothing else: a pure function
   over a mixing hash, so a run replays, user 8,412 is re-derivable, and fifty
@@ -405,7 +405,7 @@ enough to list, and long enough to matter.
   of the user's number and nothing else, so nothing downstream could work out
   the cardinality and skew a run was measured under by looking at it — the
   caller says it here or the page has nothing to state. `Shape` lives in
-  `kestrel-core` rather than in `kestrel-arbs` for that: a plan is a core value,
+  `proofload-core` rather than in `proofload-arbs` for that: a plan is a core value,
   and a leaf module cannot put a type of its own into one. A baseline keeps it
   at format version 9; a version 8 file reads as it always did and claims
   nothing, since every stored baseline predates the field. Two runs that both
@@ -425,12 +425,12 @@ enough to list, and long enough to matter.
   `write_spec` all read it back. `list_runs` is ordered by when each run
   started rather than by its id, because an id that sorts is a counter.
 
-  `kestrel-mcp` carries `kestrel-baseline` for it — the format this repository
+  `proofload-mcp` carries `proofload-baseline` for it — the format this repository
   already writes a run in, and pure Kotlin over core, so no third-party jar
   arrives. Failing to write does not fail the run: the measurement is in hand
   by then, and losing it to a full disk afterwards would be the worse trade.
 
-- **`kestrel-record` writes no credential it can recognise, not only the ones in
+- **`proofload-record` writes no credential it can recognise, not only the ones in
   headers.** The generated file says every credential the recording carried was
   dropped, and redaction looked at headers alone — so a HAR with
   `?access_token=…` in the URL wrote that sentence directly above the token, and
@@ -456,15 +456,15 @@ enough to list, and long enough to matter.
   naming the type, rather than exiting. Found by sending it a document that was
   not one.
 
-- **`kestrel run --json` writes the document and nothing else.** The engine's
+- **`proofload run --json` writes the document and nothing else.** The engine's
   progress lines went to the same stdout as the run document, so
-  `kestrel run plan.yaml --json | jq` was handed a run's commentary followed by
+  `proofload run plan.yaml --json | jq` was handed a run's commentary followed by
   JSON and parsed neither. `--json` is silent now, which is the caller
   `Progress.silent` already names in its own KDoc — a CI step that parses
   stdout. Without `--json` a run still says what it is doing, because
   silencing every run would take the countdown from the person watching one.
-  `obey` accordingly takes a `(Progress) -> Kestrel` rather than a
-  `() -> Kestrel`. Found by piping it.
+  `obey` accordingly takes a `(Progress) -> Proofload` rather than a
+  `() -> Proofload`. Found by piping it.
 
 - **`write_spec` no longer tells a plan with a `POST` in it that it covers
   nothing that writes.** Found by using the tool against a shop: a benchmark
@@ -489,8 +489,8 @@ enough to list, and long enough to matter.
 
   The stubs come from `grpc-services`, which is the heaviest dependency claim in
   the repository — `grpc-core`, `grpc-protobuf` and `proto-google-common-protos`
-  arrive with it, and `kestrel-grpc-dynamic` therefore cannot make the whole of
-  `kestrel-grpc`'s no-second-stack claim. The half that survives is stated as a
+  arrive with it, and `proofload-grpc-dynamic` therefore cannot make the whole of
+  `proofload-grpc`'s no-second-stack claim. The half that survives is stated as a
   test: no transport. The tests judge this client against gRPC's own reflection
   service on the other end, because a second hand-written implementation would
   be a test that agrees with the client about a wire format they could both have
@@ -518,7 +518,7 @@ enough to list, and long enough to matter.
   typed path was written for, so a renamed field is as loud as a file can make
   it. An answer comes back as one line of JSON, which is what a `trace` prints.
 
-- **`kestrel-grpc-dynamic`, and a descriptor set read into methods.** A method
+- **`proofload-grpc-dynamic`, and a descriptor set read into methods.** A method
   is found by the name gRPC puts on the wire — `shop.Orders/PlaceOrder`, what a
   plan writes and what `grpcurl` takes — and a name nobody declared is answered
   with the ones there are rather than with a null. A set whose files import one
@@ -526,10 +526,10 @@ enough to list, and long enough to matter.
   refused naming both files, because the fix is a `protoc` flag and not a
   change to the plan.
 
-  Beside `kestrel-grpc` rather than inside it: the typed path carries `grpc-api`
+  Beside `proofload-grpc` rather than inside it: the typed path carries `grpc-api`
   and a caller's own stubs, and protobuf's runtime is a stack nobody wanting
   that path should inherit. No transport here either, for the reason
-  `kestrel-grpc` names none.
+  `proofload-grpc` names none.
 
 - **A broker is a host a fence can see.** `Targeted` gained a `hosts` beside its
   `host`, defaulting to the one, because a bootstrap list is several and a fence
@@ -544,8 +544,8 @@ enough to list, and long enough to matter.
   the records, which topic carries the answer where nothing does, and whether
   one key for every record is the partition distribution the service really
   sees. `plan_schema` describes all three step kinds and carries a third worked
-  plan. `kestrel-cli` and `kestrel-mcp` carry `kestrel-plan-kafka` and say so in
-  their dependency tests; `kestrel-plan` on its own still carries no broker.
+  plan. `proofload-cli` and `proofload-mcp` carry `proofload-plan-kafka` and say so in
+  their dependency tests; `proofload-plan` on its own still carries no broker.
 
 - **`produce`, `completes` and their keys in `readPlan`.** A step names which
   protocol it is by which key it carries — a verb, or `produce`, or `completes` —
@@ -553,7 +553,7 @@ enough to list, and long enough to matter.
   record writes one file. `baseUrl` and `brokers` are read as optional for the
   same reason. A key nobody declared is still named as the key it is, and
   `readPlan(plan.asYaml())` round-trips a topic plan, which is what makes the
-  writer usable. `kestrel emit` on such a plan is checked in under `examples`
+  writer usable. `proofload emit` on such a plan is checked in under `examples`
   and compiled by the build, beside the HTTP one: a `Topic` value per produce
   step carrying what that step sends, one call to a line.
 
@@ -574,15 +574,15 @@ enough to list, and long enough to matter.
   the scenario. `emit --kotlin` prints the `emit`/`completing` pair, with the
   correlation header on both topics.
 
-- **`kestrel-plan-kafka`, the module that lowers a produce step.** `KafkaSteps`
+- **`proofload-plan-kafka`, the module that lowers a produce step.** `KafkaSteps`
   is the `Lowering` `asSimulation` wants for a plan with topics in it, and it
-  builds the step through `kestrel-kafka`'s own DSL rather than assembling one —
+  builds the step through `proofload-kafka`'s own DSL rather than assembling one —
   so a plan cannot describe a step the language could not have. It takes a
   `Kafka` to lower onto, defaulting to the one the plan's brokers name, so a
   caller with a producer of their own passes `kafka.over(it)`. Kafka's own
   producer settings pass through by their own names, `acks` included.
 
-  `kestrel-kafka`'s fake broker moved to test fixtures, since proving a lowered
+  `proofload-kafka`'s fake broker moved to test fixtures, since proving a lowered
   plan produces what the equivalent Kotlin produces wants the same socket a real
   `KafkaProducer` connects to. The fixture variants are kept out of the
   published component, so nothing new goes to Maven Central beside the library.
@@ -598,12 +598,12 @@ enough to list, and long enough to matter.
   that wanted the missing one. `Declaration.requests()` is the way back to the
   request steps for a caller that had them typed before.
 
-  `kestrel-plan` still carries `kestrel-http` and one parser and nothing else.
+  `proofload-plan` still carries `proofload-http` and one parser and nothing else.
   A produce step is lowered by a `Lowering` a caller passes to `asSimulation`,
   supplied by the module that carries the Kafka client, so a plan of nothing but
   requests does not inherit a broker's stack; a plan with a produce step and no
   such lowering says which module supplies one. `ScenarioBuilder.produce(name,
-  topic)` in `kestrel-kafka` is the publish measured on its own, where `emit` is
+  topic)` in `proofload-kafka` is the publish measured on its own, where `emit` is
   the publish plus the answer on a second topic.
 
 - **A step body can record more than one sample.** `Action.run` takes the
@@ -642,7 +642,7 @@ enough to list, and long enough to matter.
   `Streamed` — rather than a `String?`, because a nullable string cannot say
   "a stream this long".
 - **Server-sent events.** `sse.baseUrl(...).at(path)` opens a feed in
-  `kestrel-http` — no new module, no new dependency — and it is read with the
+  `proofload-http` — no new module, no new dependency — and it is read with the
   split 0071 settled for gRPC: `open` ends when the target agrees to stream,
   `firstEvent` is the round trip to the first event, and `cadence` is one
   sample per event after it, each measured from the event before. A `cadence`
@@ -679,7 +679,7 @@ enough to list, and long enough to matter.
   `max.block.ms`, so it bounds the adapter and says nothing about producing to
   a broker. It also says that the median rule naming the ceiling calls 100,000 a
   second "kept its schedule" while the 99th percentile departure is 179 ms late.
-- **`kestrel-kafka`** — Kafka produce steps, and the answer read off another
+- **`proofload-kafka`** — Kafka produce steps, and the answer read off another
   topic. `kafka.brokers(...).topic(name).keyed { }.value { }` produces through
   an `emit`, and `topic.correlatedBy(Header(...)).completions()` is the sink a
   `completing` drains — so the latency that matters is a consumer having done
@@ -691,7 +691,7 @@ enough to list, and long enough to matter.
   declaration on every consumer. `linger.ms` defaults to 0, since a producer
   that lingers makes the arrivals figure describe the injector rather than the
   broker. No broker in the build, embedded or containerised.
-- **`kestrel-grpc`** — gRPC steps over a caller's own stubs. `grpc.target(...)`
+- **`proofload-grpc`** — gRPC steps over a caller's own stubs. `grpc.target(...)`
   gives a channel to build a stub on, `call(descriptor) { }` times one round
   trip and names the row `orders.v1.Orders/PlaceOrder` off the descriptor, and
   a status is a value: `failedWith(GrpcStatus(UNAVAILABLE))` reads a run back,
@@ -708,7 +708,7 @@ enough to list, and long enough to matter.
   `grpc-api` and `grpc-stub` only: no transport, no protobuf runtime, no
   coroutines, so the thread model stays the caller's.
 - **A run nothing fires by accident.** `Allowance` is what a machine permits a
-  run to do, read from a `kestrel.toml` a human commits: `hosts`, `maxRate`,
+  run to do, read from a `proofload.toml` a human commits: `hosts`, `maxRate`,
   `maxDuration` and `maxRequests`, any of them absent meaning unbounded. A
   hand-read `key = value` subset rather than a TOML dependency in core — four
   keys do not earn one, and the thing this has to get right is the message,
@@ -729,11 +729,11 @@ enough to list, and long enough to matter.
   whether the count has an upper bound; a scenario looping on `during` or
   `doIf` has none, and is refused against a request cap rather than allowed on
   its lower bound — a fence that cannot count cannot fence. Hosts come through
-  a new `Targeted` interface core declares and `kestrel-http` answers, read off
+  a new `Targeted` interface core declares and `proofload-http` answers, read off
   the base URL rather than resolved: a DNS lookup would be the first thing this
   tool did to a host nobody agreed it may touch. A step whose target cannot be
   read is counted as `untargeted` rather than as safe.
-- **`runWithin`.** `kestrel.runWithin(allowance, simulation)` returns `Ran.Result`
+- **`runWithin`.** `proofload.runWithin(allowance, simulation)` returns `Ran.Result`
   or `Ran.Refused`, taking the same `preview` a caller can take itself, so what
   a run is refused for is what it was shown. It sits beside `run` rather than
   replacing it: a library call somebody wrote by hand is that person's decision,
@@ -741,7 +741,7 @@ enough to list, and long enough to matter.
   file for every caller that never asked for a fence. A refused run departs
   nothing, which the engine's own test proves by counting what the action was
   asked to do rather than by believing the runner.
-- **A plan as a value.** `kestrel-plan` holds `Declaration` — a plan somebody
+- **A plan as a value.** `proofload-plan` holds `Declaration` — a plan somebody
   wrote down — and `asSimulation()`, which lowers it into the values the Kotlin
   DSL already builds, so the two cannot describe different runs. Deliberately a
   strict subset: everything needing a lambda, a capture or a condition is absent
@@ -759,10 +759,10 @@ enough to list, and long enough to matter.
   so that every failure names the line it came from — an undeclared key is
   refused with the line and the list of keys that were allowed, which is what a
   caller working from the schema needs in order to fix it. `Rate.parse` moves
-  into core so that `"500/s"` in a plan and `"500/s"` in a `kestrel.toml` cannot
+  into core so that `"500/s"` in a plan and `"500/s"` in a `proofload.toml` cannot
   come to mean different things.
-- **A command line.** `kestrel validate <plan>`, `kestrel preview <plan>` and
-  `kestrel run <plan> [--json]`, in `kestrel-cli`. The exit code is the verdict
+- **A command line.** `proofload validate <plan>`, `proofload preview <plan>` and
+  `proofload run <plan> [--json]`, in `proofload-cli`. The exit code is the verdict
   — 0 met, 1 missed a goal, 2 the generator fell behind, 3 refused by the
   allowance, 4 the plan does not read — so a shell branches on it without a JSON
   reader in sight, and `behind` outranks a missed goal there for the reason it
@@ -772,22 +772,22 @@ enough to list, and long enough to matter.
   printed in words, off the same goals and the same remedy, so a caller cannot
   be told two things. A plan that does not read exits with the parser's own
   sentence — the line and what was allowed — rather than a stack trace.
-- **The way out of the file.** `kestrel emit <plan>` prints the plan as the
+- **The way out of the file.** `proofload emit <plan>` prints the plan as the
   Kotlin it was equivalent to — step handles, the scenario, the profile and the
   goals — so the moment a plan needs a capture, a condition or a body per user
   the caller carries on in the language rather than asking for another key in
   the file. That is what stops `plan/1` growing into a worse DSL. The emitted
   source is checked in under `examples`, so the build compiles it and a test
   keeps it identical to what the emitter writes: a golden can show the text is
-  unchanged and only a compiler can show it is Kotlin. `kestrel-record` emits
+  unchanged and only a compiler can show it is Kotlin. `proofload-record` emits
   Kotlin too and is deliberately not reused — its output is a scenario where
   this is a whole load test, and its header describes a browser recording with
   the credentials stripped out, which would be a false account of where a plan
   came from.
-- **`Traceparent` in core** — the W3C id generator moved out of `kestrel-http`,
+- **`Traceparent` in core** — the W3C id generator moved out of `proofload-http`,
   which is where it was first needed, so every protocol that can carry a trace
   uses the same one rather than a copy per module.
-- **`kestrel-export` and `kestrel-otel`** — a run's measurements in formats
+- **`proofload-export` and `proofload-otel`** — a run's measurements in formats
   other tools already read. `writeHistogramLog(path)` writes HdrHistogram's log
   format, one tagged line per step per side per clock plus the run's lateness
   and the injector's stalls, with nothing re-bucketed: this counter table *is*
@@ -798,8 +798,8 @@ enough to list, and long enough to matter.
   export and answers `Accepted` or `Refused` rather than throwing. These three
   metrics formats carry measurements only — the plan, the goals, the verdicts,
   the intervals and every "cannot tell" stay in the report, and in the run
-  document below, which is read whole rather than scraped. `kestrel-export` is core and the JDK
-  only; `kestrel-otel` carries the SDK, over `java.net.http` rather than the
+  document below, which is read whole rather than scraped. `proofload-export` is core and the JDK
+  only; `proofload-otel` carries the SDK, over `java.net.http` rather than the
   OkHttp the exporter ships with. See
   [docs/exporting.md](docs/exporting.md).
 - **A result a machine can read.** `result.json(Density.Summary)` is the run's
@@ -808,7 +808,7 @@ enough to list, and long enough to matter.
   Little's law, the counts and the failures folded together by reason — and
   `Density.Full` adds the per-step timings, the timeline and the run's own
   lateness. `writeJson(path)` puts either on disk. Every document names its
-  schema, `kestrel/run/1`, in its first field, and a reader must ignore keys it
+  schema, `proofload/run/1`, in its first field, and a reader must ignore keys it
   does not know, so a new optional field is not a break. The verdict is ordered
   rather than scored: `behind` outranks a missed goal, because a run whose
   generator lost its schedule did not measure the target, and a run carrying no
@@ -824,7 +824,7 @@ enough to list, and long enough to matter.
   while a reader is still told to ignore keys it does not know. Durations are
   the
   nanoseconds the histogram reported: the document holds the measurement and
-  the reader does the formatting. In `kestrel-export`, which stays core and the
+  the reader does the formatting. In `proofload-export`, which stays core and the
   JDK only; the JSON the HTML report inlines is a separate document with a
   separate job and is unchanged.
 - **A precision that travels with the number.** `Timing.precision` carries the
@@ -887,7 +887,7 @@ enough to list, and long enough to matter.
 
 - **A run says what it is doing while it is doing it.** `and` composes two
   `Progress` reporters and `throttled(every)` slows one that costs something,
-  both in core; `otlpEvery(interval, to)` in `kestrel-otel` pushes the live
+  both in core; `otlpEvery(interval, to)` in `proofload-otel` pushes the live
   `Snapshot` at a collector, under the names the finished export uses. A
   collector that refuses is one line on stderr rather than a two-hour run that
   died at minute one.
@@ -906,7 +906,7 @@ enough to list, and long enough to matter.
   cannot-tell rather than as a red tick nobody can chase. Both reports put the
   verdict on the stage row it belongs to.
 
-- **Database steps, with the pool wait counted apart.** `kestrel-jdbc` sends
+- **Database steps, with the pool wait counted apart.** `proofload-jdbc` sends
   `query` and `update` over a `DataSource` the caller hands in — no driver, no
   pool, no ORM, and `java.sql` is the whole of what it adds to a classpath. The
   statement is timed from the statement: the connection checkout is recorded
@@ -926,7 +926,7 @@ enough to list, and long enough to matter.
   baseline format is version 8**, which is version 7 plus that one field;
   version 7 files still read, and claim no hold.
 
-- **A scenario from traffic you already have.** `kestrel-record` reads a HAR —
+- **A scenario from traffic you already have.** `proofload-record` reads a HAR —
   the file every browser and proxy exports — and writes Kotlin source you edit
   and commit: one `exec` per request, a `capture` and a `{name}` where one
   answer's value turns up in a later request, one step where forty differ only
@@ -936,7 +936,7 @@ enough to list, and long enough to matter.
   run is one nobody edits. It carries a JSON parser, which is why it is a module
   of its own and on nobody else's classpath.
 
-- **`kestrel-java`** — the same values, built from Java. `Rates.perSecond(50)`,
+- **`proofload-java`** — the same values, built from Java. `Rates.perSecond(50)`,
   `Steps.named("pay")` and `Shares.percent(1)` hand back core's own `Rate`,
   `StepName` and `Share` rather than a copy of them, and `SessionKeys.of(
   String.class, "orderId")` reaches the key that `sessionKey<T>` cannot give a
@@ -957,7 +957,7 @@ enough to list, and long enough to matter.
   the one shape Java has nothing for.
 
 - **A Java caller runs the thing and reads what it measured.**
-  `Kestrel.create().run(Simulations.at(checkout, Rates.perSecond(50),
+  `Proofload.create().run(Simulations.at(checkout, Rates.perSecond(50),
   Duration.ofMinutes(1)))` hands back core's own `RunResult`, and `Results.p99(
   result, placeOrder)` reads a percentile off it as a `java.time.Duration` —
   there is no parallel result tree, only accessors that convert. `Https.baseUrl`
@@ -968,7 +968,7 @@ enough to list, and long enough to matter.
   whose whole content is one load test written in Java, compiled by
   `./gradlew build`. `apiCheck` records the Kotlin surface and cannot see
   whether it is *callable* from Java; deleting a facade method fails here
-  instead of in a consumer's project. `kestrel-java` is in `smoke/` beside the
+  instead of in a consumer's project. `proofload-java` is in `smoke/` beside the
   other published modules.
 
 - **The public API is recorded, and a break is a diff.**
@@ -1000,7 +1000,7 @@ commit this section was written on, not planned or assumed.
   says so.
 - **No queue beyond Kafka.** HTTP, server-sent events, WebSocket handshakes,
   gRPC, JDBC, Kafka and Pelican endpoints are the protocols. `emit` is the seam
-  for anything else, and the caller writes the client. `kestrel-jdbc` holds no
+  for anything else, and the caller writes the client. `proofload-jdbc` holds no
   transaction across steps and sends no batches: a connection held across a
   think time is a pool exhausted by a scenario rather than by load, and a batch
   wants a spec saying whether it is one sample or many.

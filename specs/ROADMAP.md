@@ -59,7 +59,7 @@ built. Each row links the spec that argued for it.
 | [0048](0048-a-floor-measured-where-the-claim-is.md) | the absolute floor, read at the magnitude of the claim |
 | [0049](0049-response-time-second-by-second.md) | response time on every `Second`, so the steady segment narrows both clocks |
 | [0050](0050-one-run-at-a-time.md) | one run at a time — in the JVM, and across processes with a file lock that degrades rather than fails |
-| [0051](0051-an-engine-core-declares.md) | `Engine` in core, `VirtualThreads` as one of them, `RunsOn` / `kestrel(engine)` to name another |
+| [0051](0051-an-engine-core-declares.md) | `Engine` in core, `VirtualThreads` as one of them, `RunsOn` / `proofload(engine)` to name another |
 | [0052](0052-more-than-one-scenario.md) | a mix of arms on one merged schedule, named per row on the page |
 | [0053](0053-control-flow-in-a-scenario.md) | `repeat`, `during`, `doIf`, and `reached` beside `count` |
 | [0054](0054-a-feeder-that-reads-a-file.md) | `csv(path)` and `feeding(keys)`, a column per key, failing before the run |
@@ -67,7 +67,7 @@ built. Each row links the spec that argued for it.
 | [0056](0056-a-ceiling-measured-over-a-socket.md) | the HTTP ceiling measured over a loopback socket, on the page as a lower bound |
 | [0057](0057-a-run-you-can-watch.md) | `Progress`: a line every five seconds, silent under a test framework, a countdown and a bound |
 | [0058](0058-what-was-actually-sent.md) | `trace`, one user walked with the URL, headers, body, status and captures printed |
-| [0059](0059-an-answer-that-streams.md) | `kestrel-websocket`: `open`, `send`, `awaiting` a sample per message, `close`, a connection per user |
+| [0059](0059-an-answer-that-streams.md) | `proofload-websocket`: `open`, `send`, `awaiting` a sample per message, `close`, a connection per user |
 | [0062](0062-a-spread-measured-on-the-thing-compared.md) | `RegressionTest` judged over populations, and a page that says what a single-run interval does not bound |
 | [0063](0063-a-reason-with-a-type.md) | `Reason`: a failure is a value, and the module that made the request names it |
 | [0064](0064-how-long-this-will-take.md) | a run says its schedule and counts down; a search says its bound and narrows it |
@@ -94,20 +94,21 @@ built. Each row links the spec that argued for it.
 | [0081](0081-what-a-run-says-while-it-is-running.md) | reporters composed and throttled, and the live snapshot pushed at a collector while the run is still going |
 | [0082](0082-a-response-nobody-has-to-hold.md) | `discardingBody()`: the bytes counted and let go, and a check or a capture on one refused where it is written |
 | [0084](0084-a-goal-judged-where-it-was-asked.md) | `inEveryStage`: a goal asked of each stage, so a run cannot meet one by lengthening its ramp |
-| [0083](0083-database-steps.md) | `kestrel-jdbc`: statements over a caller's own `DataSource`, with the connection checkout counted apart from the query |
+| [0083](0083-database-steps.md) | `proofload-jdbc`: statements over a caller's own `DataSource`, with the connection checkout counted apart from the query |
 | [0086](0086-more-than-one-injector-started-together.md) | the hold each injector computed against the instant it was given, and a merge that refuses clocks which disagree — the coordinator argued against and not built |
-| [0080](0080-a-scenario-from-traffic-you-already-have.md) | `kestrel-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
+| [0080](0080-a-scenario-from-traffic-you-already-have.md) | `proofload-record`: a HAR read into Kotlin source, with the chain captured, the runs collapsed and every credential dropped |
 | [0085](0085-an-api-that-is-written-down.md) | a checked-in `.api` dump per published module, and `apiCheck` from `check`, so a break is a diff rather than a memory |
 | [0090](0090-the-docs-a-model-needs.md) | `llms.txt`, and an API section rendered from the `.api` dumps so it cannot drift |
 | [0087](0087-a-result-a-machine-can-read.md) | the run's judgement as a document, in two densities, with a remedy on every verdict |
 | [0088](0088-a-run-nothing-fires-by-accident.md) | a ceiling a human commits, and a plan you can ask what it would send |
 | [0089](0089-a-plan-without-a-compiler.md) | a plan as a file, validated in milliseconds, emitted back as DSL to grow into |
 | [0091](0091-a-plan-from-a-contract.md) | endpoints and OpenAPI documents as scenarios, with legal bodies and declared failures |
-| [0092](0092-kestrel-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
+| [0092](0092-proofload-over-mcp.md) | the tools above behind MCP — a debug loop that sends one request, and only `run` sending load |
 | [0093](0093-what-a-run-holds.md) | what a run retains and what it allocates per departure |
-| [0094](0094-kestrel-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
-| [0095](0095-kestrel-from-scala.md) | `FiniteDuration` both ways over that facade, and a Scala source set that fails the build when a conversion goes |
+| [0094](0094-proofload-from-java.md) | a facade with no value-class hashes in it, and a Java source set that fails the build when one comes back |
+| [0095](0095-proofload-from-scala.md) | `FiniteDuration` both ways over that facade, and a Scala source set that fails the build when a conversion goes |
 | [0108](0108-a-load-test-that-is-a-zio-test.md) | a load test that is a zio-test test, on the blocking executor rather than the pool the fiber is on |
+| [0109](0109-a-name-that-can-be-found.md) | the rename off a name Microsoft's web server already owns, and a mark that is not a bird |
 | [0096](0096-not-one-row-repeated.md) | generators that are a function of the user's number, and the skew that decides a cache hit rate |
 | [0097](0097-a-threshold-that-means-material.md) | a schedule verdict judged on what the lateness moves, rather than on what a histogram can see |
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |

@@ -31,7 +31,7 @@ is a population, not a run. `ROADMAP.md` lists this under Known and unwritten.
 ## Shape
 
 ```kotlin
-// history/<label>/run-<started>-<pid>.kestrel, one subdirectory per commit
+// history/<label>/run-<started>-<pid>.proofload, one subdirectory per commit
 val trend = readTrend(Path.of("history"), p99(pay), acceptable = 5.percent)
 val point = trend.points.last()
 point.label       // "9f2c1ab" — the directory it was read from
@@ -50,7 +50,7 @@ points 1–12 ran on 4 cores and 13–40 on 8, and the line breaks there.
 
 - `Trend` and `Trend.Point` in core: one `Statistic`, an ordered list of
   labelled `Runs`, and the adjacent `Difference`s. `readTrend` in
-  `kestrel-baseline` reads each subdirectory with `readAll`, and the page is a
+  `proofload-baseline` reads each subdirectory with `readAll`, and the page is a
   third kind beside the run report and `CapacityPage`, on 0044's stylesheet.
 - `Band(low, high)` — a point's reading resampled, in that statistic's units.
   Not `Spread`, the range a *ratio* sits in, nor `Interval`, a sampling interval

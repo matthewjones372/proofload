@@ -63,13 +63,13 @@ thing only an executable check keeps honest.
 
 ## Stack
 
-- [x] **`spec-0041-alone`** ([#10](https://github.com/matthewjones372/kestrel/pull/10)) — exclude `timingTests` from Kover instrumentation
+- [x] **`spec-0041-alone`** ([#10](https://github.com/matthewjones372/proofload/pull/10)) — exclude `timingTests` from Kover instrumentation
       so `build` no longer schedules it, and keep it runnable on its own.
       Done when: `./gradlew build --dry-run` does not list
       `:examples:timingTests`, `./gradlew :examples:timingTests` still runs the
       tagged tests, and `koverVerify` still passes at the current floor with no
       change to the bound.
-- [x] **`spec-0041-asserted`** ([#13](https://github.com/matthewjones372/kestrel/pull/13)) — a check that fails if a wall-clock test ever
+- [x] **`spec-0041-asserted`** ([#13](https://github.com/matthewjones372/proofload/pull/13)) — a check that fails if a wall-clock test ever
       re-enters `build`, and the correction to `AGENTS.md`.
       Done when: the check fails on a tree where the exclusion is reverted, and
       `AGENTS.md`'s testing section describes what the build actually does.

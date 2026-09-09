@@ -65,28 +65,33 @@ spotless {
 
 /** One line per module, so a Maven search result says what the artifact is. */
 val moduleDescriptions = mapOf(
-    "kestrel-arbs" to "Generators shaped like traffic: cardinality and skew as a function of the user's number.",
-    "kestrel-baseline" to "Keeps a run on disk, so the next one can be compared to it.",
-    "kestrel-core" to "Load scenarios as values. No dependencies.",
-    "kestrel-engine" to "Runs a Kestrel simulation on virtual threads. Depends on kestrel-core.",
-    "kestrel-export" to "A run's measurements in formats other tools read. No dependencies.",
-    "kestrel-grpc" to "gRPC steps over a caller's own stubs and channel.",
-    "kestrel-grpc-dynamic" to "gRPC steps from a descriptor set, for a caller with no generated stubs.",
-    "kestrel-http" to "HTTP steps on the JDK client. Depends on kestrel-core and nothing else.",
-    "kestrel-java" to "Kestrel from Java: static factories and builders over the same values Kotlin builds.",
-    "kestrel-jdbc" to "Database steps over a caller's own DataSource, with the pool wait counted apart.",
-    "kestrel-junit5" to "Load tests that are ordinary JUnit 5 tests.",
-    "kestrel-kafka" to "Kafka produce steps, and completions read off another topic.",
-    "kestrel-kotest" to "Load tests that are ordinary Kotest specs.",
-    "kestrel-otel" to "A run's measurements sent to an OpenTelemetry collector.",
-    "kestrel-pelican" to "Load tests driven by Pelican endpoint descriptions.",
-    "kestrel-plan-kafka" to "Lowers a plan's produce steps onto a Kafka cluster.",
-    "kestrel-record" to "A HAR recording read into a Kestrel scenario you edit and commit.",
-    "kestrel-report-github" to "Run results as markdown, a job summary and a Pages directory.",
-    "kestrel-report-html" to "A run result as one self-contained HTML file. No dependencies.",
-    "kestrel-scala" to "Kestrel from Scala 3: FiniteDuration both ways, over the same values Kotlin builds.",
-    "kestrel-websocket" to "WebSocket steps on the JDK client. Depends on kestrel-core and nothing else.",
-    "kestrel-zio-test" to "Load tests that are ordinary zio-test tests, run on the blocking executor.",
+    "proofload-arbs" to "Generators shaped like traffic: cardinality and skew as a function of the user's number.",
+    "proofload-baseline" to "Keeps a run on disk, so the next one can be compared to it.",
+    "proofload-cli" to "`validate`, `preview`, `run` and `emit` from a shell, with the verdict as the exit code.",
+    "proofload-contract" to "Pelican endpoint values read into a plan you edit and commit.",
+    "proofload-core" to "Load scenarios as values. No dependencies.",
+    "proofload-engine" to "Runs a Proofload simulation on virtual threads. Depends on proofload-core.",
+    "proofload-export" to "A run's measurements in formats other tools read. No dependencies.",
+    "proofload-grpc" to "gRPC steps over a caller's own stubs and channel.",
+    "proofload-grpc-dynamic" to "gRPC steps from a descriptor set, for a caller with no generated stubs.",
+    "proofload-http" to "HTTP steps on the JDK client. Depends on proofload-core and nothing else.",
+    "proofload-java" to "Proofload from Java: static factories and builders over the same values Kotlin builds.",
+    "proofload-jdbc" to "Database steps over a caller's own DataSource, with the pool wait counted apart.",
+    "proofload-junit5" to "Load tests that are ordinary JUnit 5 tests.",
+    "proofload-kafka" to "Kafka produce steps, and completions read off another topic.",
+    "proofload-kotest" to "Load tests that are ordinary Kotest specs.",
+    "proofload-mcp" to "The CLI's calls over MCP, for a caller that is a program rather than a person.",
+    "proofload-openapi" to "An OpenAPI document read into a plan you edit and commit.",
+    "proofload-otel" to "A run's measurements sent to an OpenTelemetry collector.",
+    "proofload-pelican" to "Load tests driven by Pelican endpoint descriptions.",
+    "proofload-plan" to "A plan written down, read into the values the DSL builds, and printed back as Kotlin.",
+    "proofload-plan-kafka" to "Lowers a plan's produce steps onto a Kafka cluster.",
+    "proofload-record" to "A HAR recording read into a Proofload scenario you edit and commit.",
+    "proofload-report-github" to "Run results as markdown, a job summary and a Pages directory.",
+    "proofload-report-html" to "A run result as one self-contained HTML file. No dependencies.",
+    "proofload-scala" to "Proofload from Scala 3: FiniteDuration both ways, over the same values Kotlin builds.",
+    "proofload-websocket" to "WebSocket steps on the JDK client. Depends on proofload-core and nothing else.",
+    "proofload-zio-test" to "Load tests that are ordinary zio-test tests, run on the blocking executor.",
 )
 
 // Coverage, aggregated across the modules rather than per-module: a line in
@@ -157,10 +162,10 @@ val publishedModules =
  * The Scala modules are published and are not here. A dump of one is
  * `Durations$package$`, lazy-init closures and qualified-private members that
  * Scala emits as public bytecode: names no caller can type, moving on edits no
- * caller can see. They are gated the way `kestrel-java` is, by a source set a
+ * caller can see. They are gated the way `proofload-java` is, by a source set a
  * compiler for that language has to accept.
  */
-val surfaceRecorded = publishedModules - "kestrel-scala" - "kestrel-zio-test"
+val surfaceRecorded = publishedModules - "proofload-scala" - "proofload-zio-test"
 
 // Derived from the published list rather than kept beside it: a second list is
 // a thing to forget, and forgetting this one means a new module ships with no
@@ -335,10 +340,10 @@ subprojects {
         useJUnitPlatform()
         systemProperty("junit.jupiter.execution.timeout.default", "60s")
         // Forwarded to the test JVM, which is where the goldens are compared.
-        // `-Dkestrel.regenerate=true` rewrites them from the run and fails, so
+        // `-Dproofload.regenerate=true` rewrites them from the run and fails, so
         // a change to a page is a diff to read rather than a file to hand-edit.
-        providers.systemProperty("kestrel.regenerate").orNull
-            ?.let { asked -> systemProperty("kestrel.regenerate", asked) }
+        providers.systemProperty("proofload.regenerate").orNull
+            ?.let { asked -> systemProperty("proofload.regenerate", asked) }
     }
 
     apply(plugin = "org.jetbrains.kotlinx.kover")
@@ -385,8 +390,8 @@ subprojects {
 
             pom {
                 name.set(this@subprojects.name)
-                description.set(moduleDescriptions[this@subprojects.name] ?: "Part of Kestrel.")
-                url.set("https://github.com/matthewjones372/kestrel")
+                description.set(moduleDescriptions[this@subprojects.name] ?: "Part of Proofload.")
+                url.set("https://github.com/matthewjones372/proofload")
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
@@ -400,9 +405,9 @@ subprojects {
                     }
                 }
                 scm {
-                    url.set("https://github.com/matthewjones372/kestrel")
-                    connection.set("scm:git:https://github.com/matthewjones372/kestrel.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/kestrel.git")
+                    url.set("https://github.com/matthewjones372/proofload")
+                    connection.set("scm:git:https://github.com/matthewjones372/proofload.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/proofload.git")
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 ## Problem
 
-`kestrel-mcp` is written for one person at a terminal, and every part of it says
+`proofload-mcp` is written for one person at a terminal, and every part of it says
 so. The registry is a map lost with the process. Run ids come from an
 `AtomicInteger`, so two replicas both hand out `r-1`. A second `run` while one
 is sending is **refused** — `r-1 is still sending; one run at a time` — and the
@@ -12,7 +12,7 @@ describing *this machine*, with no notion of who asked.
 Deployed as a service with hundreds of callers, each of those is a fault. A
 model told "still sending" has no way to know whether to wait two seconds or
 twenty minutes, so it retries; a caller polling after a restart is told its run
-never existed; and one operator's `kestrel.toml` fences every tenant alike.
+never existed; and one operator's `proofload.toml` fences every tenant alike.
 
 What must **not** change is the constraint underneath: one run at a time on one
 host. Two runs on a box contend for its cores, descriptors and ports and each
@@ -77,7 +77,7 @@ nothing to poll and retries, which is the load pattern this tool exists to
 teach people not to write.
 
 The tenant question is the sharp one and is deliberately narrow here: an
-`Allowance` per caller rather than per machine. `kestrel.toml` becomes the
+`Allowance` per caller rather than per machine. `proofload.toml` becomes the
 default a caller inherits, not the only one there is — otherwise a shared
 deployment fences every tenant with one operator's numbers, and 0088's ceiling
 stops being anybody's commitment in particular.
@@ -124,7 +124,7 @@ stops being anybody's commitment in particular.
   `spec-0105-a-fence-per-caller`.** A single-tenant tool a person runs and a
   queued multi-tenant service are not the same thing, and four stack entries
   will not make them one. The first three are improvements even for one caller
-  and are built. The fourth turns `kestrel.toml` from "what this machine may
+  and are built. The fourth turns `proofload.toml` from "what this machine may
   do" into a per-tenant policy, which is the point the answer starts to matter,
   so it waits for one.
 - **Answered: caller identity is an opaque string the front door sets.** A

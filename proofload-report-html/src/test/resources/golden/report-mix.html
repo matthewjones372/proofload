@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proofload run — 2026-08-26T09:00:00Z</title>
+<style>
+</style>
+</head>
+<body>
+<main>
+  <header class="run">
+    <div class="run-name">
+      <span class="wordmark">Proofload</span>
+      <h1>browse + checkout</h1>
+    </div>
+    <div class="run-meta">
+      <p class="when">Started <time datetime="2026-08-26T09:00:00Z">2026-08-26T09:00:00Z</time></p>
+      <button type="button" id="theme-toggle" class="theme-toggle" hidden aria-label="Switch theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="m17.7 17.7 1.4 1.4"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.3 17.7-1.4 1.4"></path><path d="m19.1 4.9-1.4 1.4"></path></svg></button>
+    </div>
+  </header>
+  <section class="plan" aria-label="What was asked for">
+    <p><strong>browse + checkout</strong> — 4 steps, 2 arms over 4.00 s. Planned 200 users, 400 requests.</p>
+    <p class="arrivals">Arrivals were evenly spaced, which understates queueing against the same mean rate in production.</p>
+    <p class="note">The rate above is users a second — each one opens a connection or makes a request and then walks its 4 steps. What was recorded a second is on the timeline below.</p>
+    <ul class="mix-list">
+      <li><span class="mix-arm">browse</span><span class="mix-shape">40/s held for 4.00 s</span><span class="mix-share">80.00% asked, 76.92% departed</span></li>
+      <li><span class="mix-arm">checkout</span><span class="mix-shape">10/s held for 4.00 s</span><span class="mix-share">20.00% asked, 23.08% departed</span></li>
+    </ul>
+    <p class="note"><strong>Asked</strong> is the arm's share of the users the plan named. <strong>Departed</strong> is its share of the 195 users the run counted: the most any one step of the arm was reached by. A user that failed a step still reached it, so this is exact for a scenario whose steps every user meets, and a floor for one that puts its steps behind a condition.</p>
+    <figure class="chart shape">
+      <figcaption>browse — the shape that was asked for — peak 40/s</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">
+        <polygon class="shape-area" points="0.0,60.0 0.0,8.0 640.0,8.0 640.0,60.0"></polygon>
+        <polyline class="shape-line" points="0.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label shape-start" x="0" y="78">0</text>
+        <text class="tick-label shape-end" x="640.0" y="78">4.00 s</text>
+      </svg>
+    </figure>
+    <figure class="chart shape">
+      <figcaption>checkout — the shape that was asked for — peak 10/s</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="load shape">
+        <polygon class="shape-area" points="0.0,60.0 0.0,8.0 640.0,8.0 640.0,60.0"></polygon>
+        <polyline class="shape-line" points="0.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label shape-start" x="0" y="78">0</text>
+        <text class="tick-label shape-end" x="640.0" y="78">4.00 s</text>
+      </svg>
+    </figure>
+  </section>
+  <section class="totals" aria-label="Totals">
+    <div class="tile">
+      <span class="tile-label">Requests</span>
+      <span class="tile-value">480</span>
+    </div>
+    <div class="tile ok">
+      <span class="tile-label">OK</span>
+      <span class="tile-value">480</span>
+    </div>
+    <div class="tile failed">
+      <span class="tile-label">Failed</span>
+      <span class="tile-value">0</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Behind schedule, p99</span>
+      <span class="tile-value">0 ns</span>
+    </div>
+  </section>
+  <section class="reading" aria-label="What these numbers say">
+    <p><strong>480 requests</strong>, none failed.</p>
+    <p>The run sent all 400 of them.</p>
+    <p>The run kept to its schedule, so these latencies are the target's rather than this tool's.</p>
+    <p><strong>home is the slowest step</strong> at 20.1 ms p99.</p>
+    <p><strong>p99 rests on 1 request</strong> for cart. Treat it as a hint rather than a number: a longer run is the only thing that firms a percentile up.</p>
+    <p>A user completes 4 steps, so about <strong>1 user in 25</strong> meets a p99 somewhere in the journey — assuming the steps are independent, which they are not quite. Percentiles do not add: the journey's own p99 is not the sum of the steps'.</p>
+  </section>
+  <section class="steps">
+    <div class="steps-head">
+      <h2>Steps</h2>
+      <p class="mode">Showing <strong id="mode-name">service time</strong>. <button type="button" id="mode-toggle">Show response time</button></p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" data-sort="step" aria-sort="none"><button type="button">Step</button></th>
+            <th scope="col" data-sort="arm" aria-sort="none"><button type="button">Arm</button></th>
+            <th scope="col" class="num" data-sort="count" aria-sort="none"><button type="button">Count</button></th>
+            <th scope="col" class="num" data-sort="reached" aria-sort="none"><button type="button">Reached</button></th>
+            <th scope="col" class="num" data-sort="ok" aria-sort="none"><button type="button">OK</button></th>
+            <th scope="col" class="num" data-sort="failed" aria-sort="none"><button type="button">Failed</button></th>
+            <th scope="col" class="num" data-sort="p50" aria-sort="none"><button type="button">p50</button></th>
+            <th scope="col" class="num" data-sort="p95" aria-sort="none"><button type="button">p95 (3)</button></th>
+            <th scope="col" class="num" data-sort="p99" aria-sort="none"><button type="button">p99 (1)</button></th>
+            <th scope="col" class="num" data-sort="max" aria-sort="none"><button type="button">Max</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="step" data-step="home">
+            <th scope="row">home</th>
+            <td class="arm">browse</td>
+            <td class="num">150</td>
+            <td class="num reached">150</td>
+            <td class="num ok">150</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+          </tr>
+          <tr class="step" data-step="search">
+            <th scope="row">search</th>
+            <td class="arm">browse</td>
+            <td class="num">240</td>
+            <td class="num reached">120</td>
+            <td class="num ok">240</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+          </tr>
+          <tr class="step" data-step="cart">
+            <th scope="row">cart</th>
+            <td class="arm">checkout</td>
+            <td class="num">45</td>
+            <td class="num reached">45</td>
+            <td class="num ok">45</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+          </tr>
+          <tr class="step" data-step="pay">
+            <th scope="row">pay</th>
+            <td class="arm">checkout</td>
+            <td class="num">45</td>
+            <td class="num reached">45</td>
+            <td class="num ok">45</td>
+            <td class="num failed">0</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+            <td class="num time" data-service="20.1 ms" data-response="20.1 ms" data-service-ns="20054015" data-response-ns="20054015">20.1 ms</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      <figure class="chart">
+        <figcaption>home — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="home distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>150 at 20.1 ms</title>
+          </rect>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p99</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>search — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="search distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>240 at 20.1 ms</title>
+          </rect>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p99</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>cart — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="cart distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>45 at 20.1 ms</title>
+          </rect>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p99</text>
+        </svg>
+      </figure>
+      <figure class="chart">
+        <figcaption>pay — where the requests landed</figcaption>
+        <svg viewBox="0 0 640.0 140" role="img" preserveAspectRatio="none" aria-label="pay distribution">
+          <rect class="bar" x="0.0" y="0.0" width="4.0" height="120.0">
+            <title>45 at 20.1 ms</title>
+          </rect>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p50</text>
+          <line class="mark" x1="0.0" y1="0" x2="0.0" y2="120.0"></line>
+          <text class="mark-label" x="3.0" y="12">p99</text>
+        </svg>
+      </figure>
+    <p class="note">Count is requests and reached is the users that got here, counted once each: a loop multiplies the first and a condition divides it, and a step that made few requests because few users reached it is a different finding from one they each made few at. Service time is what the target took; response time counts from the departure the profile promised, so it carries the generator's own backlog. Percentiles are the top of the histogram bucket a sample fell in, never a point interpolated between two: each is good to 0.78%, and rounds away from the target rather than towards it.</p>
+  </section>
+  <section class="timeline" aria-label="Over time">
+    <h2>Over time</h2>
+    <figure class="chart over-time">
+      <figcaption>requests a second — peak 122</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="requests a second">
+        <polyline class="series count" points="0.0,8.0 160.0,8.0 160.0,8.9 320.0,8.9 320.0,9.3 480.0,9.3 480.0,9.3 640.0,9.3"></polyline>
+        <text class="tick-label series-start" x="0" y="78">0</text>
+        <text class="tick-label series-end" x="640.0" y="78">4.00 s</text>
+      </svg>
+    </figure>
+    <figure class="chart over-time">
+      <figcaption>service time — <span class="key p99">p99</span> peaks at 21.0 ms, <span class="key p50">p50</span> at 21.0 ms</figcaption>
+      <svg viewBox="0 0 640.0 78" role="img" preserveAspectRatio="none" aria-label="service time each second">
+        <polyline class="series p50" points="0.0,8.0 160.0,8.0 160.0,8.0 320.0,8.0 320.0,8.0 480.0,8.0 480.0,8.0 640.0,8.0"></polyline>
+        <polyline class="series p99" points="0.0,8.0 160.0,8.0 160.0,8.0 320.0,8.0 320.0,8.0 480.0,8.0 480.0,8.0 640.0,8.0"></polyline>
+        <text class="tick-label series-start" x="0" y="78">0</text>
+        <text class="tick-label series-end" x="640.0" y="78">4.00 s</text>
+      </svg>
+    </figure>
+    <p class="note">One point a second, counted from the run's start, and a second nothing ran in is drawn as the zero it was. These percentiles come from a coarse histogram — good to 6.25%, against 0.78% for the table above — because a full one a second per step is tens of megabytes of counters. Read a shape here and a number there.</p>
+  </section>
+  <section class="tail" aria-label="The tail">
+    <h2>p99.9</h2>
+    <ul class="tail-list">
+      <li><span class="tail-step">home</span><span class="tail-value none">Not measured — only 150 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">search</span><span class="tail-value none">Not measured — only 240 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">cart</span><span class="tail-value none">Not measured — only 45 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+      <li><span class="tail-step">pay</span><span class="tail-value none">Not measured — only 45 samples, and under 1000 the top bucket holds fewer than one.</span></li>
+    </ul>
+    <p class="note">Response time, and the range beside it is the 95% sampling interval — the width a percentile resting on one request in a thousand has. It is where two JVM collectors that match to p99 come apart. A step under 1,000 samples has not measured one request in a thousand, so it says so rather than printing a percentile nobody reached.</p>
+  </section>
+</main>
+<script type="application/json" id="proofload-run">
+{
+  "startedAt": "2026-08-26T09:00:00Z",
+  "durationUnit": "nanoseconds",
+  "precision": 0.0078125,
+  "count": 480,
+  "ok": 480,
+  "failed": 0,
+  "behind": {
+    "count": 480,
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "p999": null,
+    "max": 0
+  },
+  "hiccups": {
+    "count": 0,
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "p999": null,
+    "max": 0
+  },
+  "limits": {
+    "openFiles": {
+      "peak": null,
+      "limit": null,
+      "because": "nothing sampled this run"
+    },
+    "ports": {
+      "peak": null,
+      "limit": null,
+      "because": "nothing sampled this run"
+    },
+    "cpu": {
+      "peak": null,
+      "limit": null,
+      "because": "nothing sampled this run"
+    }
+  },
+  "arrivals": {
+    "count": 0,
+    "mean": 0,
+    "cov": 0.0
+  },
+  "steps": [
+    {
+      "name": "home",
+      "count": 150,
+      "reached": 150,
+      "visits": 0,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 150,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "responseTime": {
+        "count": 150,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "ok": {
+        "count": 150,
+        "serviceTime": {
+          "count": 150,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "responseTime": {
+          "count": 150,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    },
+    {
+      "name": "search",
+      "count": 240,
+      "reached": 120,
+      "visits": 0,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 240,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "responseTime": {
+        "count": 240,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "ok": {
+        "count": 240,
+        "serviceTime": {
+          "count": 240,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "responseTime": {
+          "count": 240,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    },
+    {
+      "name": "cart",
+      "count": 45,
+      "reached": 45,
+      "visits": 0,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 45,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "responseTime": {
+        "count": 45,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "ok": {
+        "count": 45,
+        "serviceTime": {
+          "count": 45,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "responseTime": {
+          "count": 45,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    },
+    {
+      "name": "pay",
+      "count": 45,
+      "reached": 45,
+      "visits": 0,
+      "unmatched": 0,
+      "inFlight": 0,
+      "serviceTime": {
+        "count": 45,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "responseTime": {
+        "count": 45,
+        "p50": 20054015,
+        "p95": 20054015,
+        "p99": 20054015,
+        "p999": null,
+        "max": 20054015
+      },
+      "ok": {
+        "count": 45,
+        "serviceTime": {
+          "count": 45,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "responseTime": {
+          "count": 45,
+          "p50": 20054015,
+          "p95": 20054015,
+          "p99": 20054015,
+          "p999": null,
+          "max": 20054015
+        },
+        "reasons": []
+      },
+      "failed": {
+        "count": 0,
+        "serviceTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "responseTime": {
+          "count": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "p999": null,
+          "max": 0
+        },
+        "reasons": []
+      }
+    }
+  ],
+  "timelinePrecision": 0.0625,
+  "steadyState": {
+    "tolerance": 0.125,
+    "settledAfter": null,
+    "why": "a run of 4 s has nothing to detect: a verdict needs at least 10 intervals"
+  },
+  "timeline": [
+    {
+      "count": 122,
+      "ok": 122,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 120,
+      "ok": 120,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 119,
+      "ok": 119,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    },
+    {
+      "count": 119,
+      "ok": 119,
+      "failed": 0,
+      "p50": 20971519,
+      "p99": 20971519
+    }
+  ],
+  "latePerSecond": [
+    {
+      "count": 122,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "p999": null,
+      "max": 0
+    },
+    {
+      "count": 120,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "p999": null,
+      "max": 0
+    },
+    {
+      "count": 119,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "p999": null,
+      "max": 0
+    },
+    {
+      "count": 119,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "p999": null,
+      "max": 0
+    }
+  ]
+}
+</script>
+<script>
+(function () {
+  var toggle = document.getElementById('theme-toggle');
+  if (!toggle) return;
+  var root = document.documentElement;
+  toggle.hidden = false;
+
+  // Absent until a reader says otherwise, so an untouched report keeps
+  // following the machine's own setting rather than one this page chose.
+  var kept = null;
+  try { kept = localStorage.getItem('proofload-theme'); } catch (ignored) { kept = null; }
+  if (kept === 'light' || kept === 'dark') root.setAttribute('data-theme', kept);
+
+  function dark() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function label() {
+    toggle.setAttribute('aria-label', dark() ? 'Switch to the light theme' : 'Switch to the dark theme');
+  }
+  label();
+
+  toggle.addEventListener('click', function () {
+    var next = dark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('proofload-theme', next); } catch (ignored) { /* a file:// URL may refuse */ }
+    label();
+  });
+})();
+(function () {
+  var table = document.querySelector('.steps table');
+  if (!table) return;
+  var body = table.tBodies[0];
+
+  function rowsOf(step) {
+    return Array.prototype.filter.call(body.rows, function (row) {
+      return row.dataset.step === step || row.dataset.for === step;
+    });
+  }
+
+  Array.prototype.forEach.call(body.querySelectorAll('tr.reasons'), function (row) {
+    row.hidden = true;
+  });
+
+  body.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.step[aria-expanded]');
+    if (!row) return;
+    var open = row.getAttribute('aria-expanded') === 'true';
+    row.setAttribute('aria-expanded', open ? 'false' : 'true');
+    rowsOf(row.dataset.step).forEach(function (each) {
+      if (each.classList.contains('reasons')) each.hidden = open;
+    });
+  });
+
+  var toggle = document.getElementById('mode-toggle');
+  var name = document.getElementById('mode-name');
+  toggle.addEventListener('click', function () {
+    var showing = table.dataset.mode === 'response' ? 'service' : 'response';
+    table.dataset.mode = showing;
+    name.textContent = showing === 'response' ? 'response time' : 'service time';
+    toggle.textContent = showing === 'response' ? 'Show service time' : 'Show response time';
+    Array.prototype.forEach.call(table.querySelectorAll('td.time'), function (cell) {
+      cell.textContent = showing === 'response' ? cell.dataset.response : cell.dataset.service;
+    });
+  });
+
+  function keyOf(row, column, mode) {
+    var cell = row.cells[column];
+    if (cell.classList.contains('time')) {
+      return Number(mode === 'response' ? cell.dataset.responseNs : cell.dataset.serviceNs);
+    }
+    var text = cell.textContent.replace(/[^0-9.]/g, '');
+    return text === '' ? cell.textContent.toLowerCase() : Number(text);
+  }
+
+  Array.prototype.forEach.call(table.tHead.rows[0].cells, function (header, column) {
+    header.querySelector('button').addEventListener('click', function () {
+      var descending = header.getAttribute('aria-sort') !== 'descending';
+      Array.prototype.forEach.call(table.tHead.rows[0].cells, function (each) {
+        each.setAttribute('aria-sort', 'none');
+      });
+      header.setAttribute('aria-sort', descending ? 'descending' : 'ascending');
+
+      var mode = table.dataset.mode === 'response' ? 'response' : 'service';
+      var steps = Array.prototype.filter.call(body.rows, function (row) {
+        return row.classList.contains('step');
+      });
+      steps.sort(function (left, right) {
+        var a = keyOf(left, column, mode);
+        var b = keyOf(right, column, mode);
+        if (a === b) return 0;
+        return (a < b ? -1 : 1) * (descending ? -1 : 1);
+      });
+      steps.forEach(function (row) {
+        rowsOf(row.dataset.step).forEach(function (each) { body.appendChild(each); });
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

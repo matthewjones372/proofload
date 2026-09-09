@@ -15,23 +15,23 @@ across files and compared before a request is sent. Nothing in it executes.
 ## Not doing
 
 - No execution engine, scheduler or virtual threads — spec 0002.
-- No HTTP or protocol types; `kestrel-http` over `java.net.http` is spec 0003.
+- No HTTP or protocol types; `proofload-http` over `java.net.http` is spec 0003.
 - No closed-model injection (N users looping). Open model only.
 - No histogram and no report rendering — specs 0004 and 0005. `RunResult` is
   named as a return type here and designed there.
 - No JUnit and no Kotest extension, and no dependency on either anywhere below
   them. A simulation runs from a `main`; both are later leaf modules.
 - No feeders, no checks/assertions DSL, no pauses beyond what a profile states.
-- No Pelican binding. `kestrel-pelican` implements Pelican's `ClientTransport`
+- No Pelican binding. `proofload-pelican` implements Pelican's `ClientTransport`
   so a typed client runs under this engine; it needs 0003 first.
 
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Scenario
-import io.github.matthewjones372.kestrel.Simulation
-import io.github.matthewjones372.kestrel.constantRate
-import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.proofload.Scenario
+import io.github.matthewjones372.proofload.Simulation
+import io.github.matthewjones372.proofload.constantRate
+import io.github.matthewjones372.proofload.scenario
 import kotlin.time.Duration.Companion.minutes
 
 val checkout: Scenario = scenario("checkout") {
@@ -72,7 +72,7 @@ rather than out of the documentation.
 ## Stack
 
 - [ ] **`spec-0001-scenario`** — `Scenario`, `Step`, `Action`, `Session` in
-      `kestrel-core`, with contract tests through the public API.
+      `proofload-core`, with contract tests through the public API.
       Done when: a two-step scenario builds, inspects and compares by value,
       and `./gradlew build` is green. (`apiCheck` was a gate then; it was
       removed later — see the note at the end of this file.)
@@ -100,7 +100,7 @@ and the answers are in the shape above:
     catching a throwable.
 2. **`Session` is in.** Retrofitting per-user state through a value model
     touches every type in it.
-3. **`kestrel-core.api` is regenerated in the first PR** and its diff read as a
+3. **`proofload-core.api` is regenerated in the first PR** and its diff read as a
     golden file, not rubber-stamped.
 4. **`Pause` and `Group` wait** for an engine that can honour them.
 

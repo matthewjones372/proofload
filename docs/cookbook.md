@@ -79,16 +79,16 @@ test that quietly asserts about a step nobody runs.
 
 ## A first load test
 
-`@LoadTest` is `@Test` plus a `Kestrel` parameter. There is nothing to
+`@LoadTest` is `@Test` plus a `Proofload` parameter. There is nothing to
 register, no base class, and no lifecycle to remember.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.at
-import io.github.matthewjones372.kestrel.engine.Kestrel
-import io.github.matthewjones372.kestrel.http.exec
-import io.github.matthewjones372.kestrel.junit5.LoadTest
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.scenario
+import io.github.matthewjones372.proofload.at
+import io.github.matthewjones372.proofload.engine.Proofload
+import io.github.matthewjones372.proofload.http.exec
+import io.github.matthewjones372.proofload.junit5.LoadTest
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.scenario
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.milliseconds
@@ -97,13 +97,13 @@ import kotlin.time.Duration.Companion.minutes
 class CheckoutLoadTest {
 
     @LoadTest
-    fun `checkout holds up at fifty a second`(kestrel: Kestrel) {
+    fun `checkout holds up at fifty a second`(proofload: Proofload) {
         val checkout = scenario("checkout") {
             exec(browse, api.get("/products"))
             exec(placeOrder, api.post("/orders").body("""{"cart":"1 anvil"}""").expecting(201))
         }
 
-        val result = kestrel.run(checkout.at(50.perSecond, over = 1.minutes))
+        val result = proofload.run(checkout.at(50.perSecond, over = 1.minutes))
 
         result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
         result.failed shouldBe 0L
@@ -118,18 +118,18 @@ behind it.
 
 ## The same thing in Kotest
 
-`kestrel()` is a suspend function that hands back the runner for the test it is
+`proofload()` is a suspend function that hands back the runner for the test it is
 called from. No spec base class, and nothing to register — called from a spec
 that registered nothing it still works.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.kotest.kestrel
+import io.github.matthewjones372.proofload.kotest.proofload
 import io.kotest.core.spec.style.StringSpec
 
 class CheckoutSpec : StringSpec({
 
     "checkout holds up at fifty a second" {
-        val result = kestrel().run(checkout.at(50.perSecond, over = 1.minutes))
+        val result = proofload().run(checkout.at(50.perSecond, over = 1.minutes))
 
         result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
     }
@@ -138,7 +138,7 @@ class CheckoutSpec : StringSpec({
 
 ## Run on an engine of your own
 
-Kestrel runs on virtual threads and there is no second engine in the tree — but
+Proofload runs on virtual threads and there is no second engine in the tree — but
 core declares what a runner is, so the seam is real rather than promised:
 
 ```kotlin
@@ -152,21 +152,21 @@ implement it runs on virtual threads, so `@LoadTest` costs an implementer
 nothing:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.junit5.RunsOn
+import io.github.matthewjones372.proofload.junit5.RunsOn
 
 class CheckoutLoadTest : RunsOn {
 
     override val engine = Actors()
 
     @LoadTest
-    fun `checkout holds up at fifty a second`(kestrel: Kestrel) { ... }
+    fun `checkout holds up at fifty a second`(proofload: Proofload) { ... }
 }
 ```
 
 and a Kotest spec names one by passing it:
 
 ```kotlin
-val result = kestrel(Actors()).run(checkout.at(50.perSecond, over = 1.minutes))
+val result = proofload(Actors()).run(checkout.at(50.perSecond, over = 1.minutes))
 ```
 
 The engine you name is still wrapped so that one run has the machine at a time —
@@ -184,8 +184,8 @@ A simulation is a value and `run` is an extension on it, so a `main` is enough.
 This is the shape for a scheduled soak or a one-off from a shell.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.engine.run
-import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import io.github.matthewjones372.proofload.engine.run
+import io.github.matthewjones372.proofload.report.writeHtmlReport
 import java.nio.file.Path
 
 fun main() {
@@ -202,15 +202,15 @@ it when a step fails and you want to know which one, before spending ten
 minutes of load finding out.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.engine.trace
+import io.github.matthewjones372.proofload.engine.trace
 
 checkout.trace()
 ```
 
 ```
-kestrel: trace checkout
-kestrel:   /products     ok
-kestrel:   /orders       FAILED status 500 — user abandoned here
+proofload: trace checkout
+proofload:   /products     ok
+proofload:   /orders       FAILED status 500 — user abandoned here
 ```
 
 It is a diagnostic and returns nothing, deliberately. One pass on a cold JVM
@@ -229,9 +229,9 @@ checkout.at(50.perSecond, over = 1.minutes).userCount()   // 3000, before anythi
 A run says its shape before it departs and counts down while it goes:
 
 ```
-kestrel: checkout — 30,000 users over 10m, 2 steps each
-kestrel: 00:05  departed 250  in flight 3  behind 88.033us  09:55 left
-kestrel: 10:00  departed 30,000  in flight 41  behind 96.718us  draining
+proofload: checkout — 30,000 users over 10m, 2 steps each
+proofload: 00:05  departed 250  in flight 3  behind 88.033us  09:55 left
+proofload: 10:00  departed 30,000  in flight 41  behind 96.718us  draining
 ```
 
 Nothing there is estimated. The window and the user count are the profile's own
@@ -245,10 +245,10 @@ because the ladder stops as soon as it has the knee and then bisects. So it
 prints a bound, and narrows it:
 
 ```
-kestrel: capacity — at most 10 rungs of 2s and the bisection after them, so at most 30s
-kestrel: rung 1 — 4/s passed, at most 28s left
-kestrel: rung 5 — 20/s failed, at most 20s left
-kestrel: rung 9 — 17/s passed, at most 12s left
+proofload: capacity — at most 10 rungs of 2s and the bisection after them, so at most 30s
+proofload: rung 1 — 4/s passed, at most 28s left
+proofload: rung 5 — 20/s failed, at most 20s left
+proofload: rung 9 — 17/s passed, at most 12s left
 ```
 
 "At most", never a forecast. A bound that is beaten leaves you pleasantly
@@ -262,12 +262,12 @@ When the output is somebody else's report — a CI step that parses stdout, a te
 framework — hand it a quiet one:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Progress
+import io.github.matthewjones372.proofload.Progress
 
-val kestrel = Kestrel(Progress.silent)
+val proofload = Proofload(Progress.silent)
 
 // or a different interval
-val kestrel = Kestrel(Progress.lines(every = 30.seconds))
+val proofload = Proofload(Progress.lines(every = 30.seconds))
 ```
 
 Nothing in a tick is read from what was recorded. A live histogram read for a
@@ -281,21 +281,21 @@ The progress line is one reporter. `and` puts a second one beside it, and
 still going:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Progress
-import io.github.matthewjones372.kestrel.and
-import io.github.matthewjones372.kestrel.engine.Kestrel
-import io.github.matthewjones372.kestrel.otel.otlpEvery
+import io.github.matthewjones372.proofload.Progress
+import io.github.matthewjones372.proofload.and
+import io.github.matthewjones372.proofload.engine.Proofload
+import io.github.matthewjones372.proofload.otel.otlpEvery
 import kotlin.time.Duration.Companion.seconds
 
-val kestrel = Kestrel(
+val proofload = Proofload(
     Progress.lines() and otlpEvery(30.seconds, to = "http://collector:4318/v1/metrics", run = "soak-2026-09-03"),
 )
 ```
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:kestrel-engine:0.1.0")
-    testImplementation("io.github.matthewjones372:kestrel-otel:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-engine:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-otel:0.1.0")
 }
 ```
 
@@ -304,13 +304,13 @@ export uses:
 
 | Series | What it says |
 |---|---|
-| `kestrel.departed` | users handed to a thread so far |
-| `kestrel.in_flight` | users still running — a parked user counts here |
-| `kestrel.requests` | requests recorded since the last push |
-| `kestrel.failures` | failures recorded since the last push |
-| `kestrel.behind.last` | how late the last departure was |
+| `proofload.departed` | users handed to a thread so far |
+| `proofload.in_flight` | users still running — a parked user counts here |
+| `proofload.requests` | requests recorded since the last push |
+| `proofload.failures` | failures recorded since the last push |
+| `proofload.behind.last` | how late the last departure was |
 
-Read `kestrel.behind.last` before any of the counts. Where it is growing, the
+Read `proofload.behind.last` before any of the counts. Where it is growing, the
 rate you named is no longer being offered and every number under it is about a
 lighter test than the one you asked for — which at minute four is a run worth
 stopping, and is the whole reason for watching one.
@@ -344,12 +344,12 @@ at the end is not counted twice.
 `at` is the flat case and covers most tests. For anything else, name the shape:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.constantRate
-import io.github.matthewjones372.kestrel.hold
-import io.github.matthewjones372.kestrel.injecting
-import io.github.matthewjones372.kestrel.rampRate
-import io.github.matthewjones372.kestrel.then
-import io.github.matthewjones372.kestrel.thenRampTo
+import io.github.matthewjones372.proofload.constantRate
+import io.github.matthewjones372.proofload.hold
+import io.github.matthewjones372.proofload.injecting
+import io.github.matthewjones372.proofload.rampRate
+import io.github.matthewjones372.proofload.then
+import io.github.matthewjones372.proofload.thenRampTo
 
 checkout.at(50.perSecond, over = 10.minutes)                     // flat
 
@@ -379,7 +379,7 @@ The closed model — how most people describe load, and the one shape here that
 measures a queue of its own making:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.users
+import io.github.matthewjones372.proofload.users
 
 val soak = looping.at(users(50, over = 10.minutes))
 ```
@@ -419,7 +419,7 @@ testing: real arrivals are close to Poisson, and queueing delay scales with the
 variability of arrivals rather than only with their mean.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.randomized
+import io.github.matthewjones372.proofload.randomized
 
 checkout.injecting(constantRate(50.perSecond, over = 10.minutes).randomized(seed = 7))
 ```
@@ -485,7 +485,7 @@ captured minutes at twice the rate is five minutes of run.
 
 Scaling multiplies every gap by the same number, which leaves the coefficient of
 variation exactly where it was — that is what lets the report print the
-capture's burstiness beside the run's and mean something. Kestrel will not thin
+capture's burstiness beside the run's and mean something. Proofload will not thin
 the arrivals to scale them: thinning drives a point process towards Poisson,
 which is the shape you replayed a capture to avoid.
 
@@ -544,8 +544,8 @@ Most real load is a mix. Name each journey as an arm with its own rate and its
 own data:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Arm
-import io.github.matthewjones372.kestrel.Simulation
+import io.github.matthewjones372.proofload.Arm
+import io.github.matthewjones372.proofload.Simulation
 
 val simulation = Simulation(
     arms = listOf(
@@ -554,7 +554,7 @@ val simulation = Simulation(
     ),
 )
 
-kestrel.run(simulation)
+proofload.run(simulation)
 ```
 
 The arms are merged into one departure schedule rather than booked one after
@@ -575,9 +575,9 @@ Every virtual user starts with its own data, so a cache in front of the target
 cannot answer for all of them:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.feed
-import io.github.matthewjones372.kestrel.fedBy
-import io.github.matthewjones372.kestrel.sessionKey
+import io.github.matthewjones372.proofload.feed
+import io.github.matthewjones372.proofload.fedBy
+import io.github.matthewjones372.proofload.sessionKey
 
 val customer = sessionKey<String>("customer")
 
@@ -626,7 +626,7 @@ string, and a stream is not one.
 ## A fixed list
 
 ```kotlin
-import io.github.matthewjones372.kestrel.feedFrom
+import io.github.matthewjones372.proofload.feedFrom
 
 val sku = sessionKey<String>("sku")
 
@@ -649,8 +649,8 @@ checkout.at(50.perSecond, over = 1.minutes)
 Read once, before the run, and held as a value:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.csv
-import io.github.matthewjones372.kestrel.feeding
+import io.github.matthewjones372.proofload.csv
+import io.github.matthewjones372.proofload.feeding
 
 val customer = sessionKey<String>("customer")
 val tier = sessionKey<String>("tier")
@@ -691,13 +691,13 @@ every cache the target has, so part of the p99 on the page is a hit rate the
 test invented. Drawing a key uniformly at random is wrong the other way — it
 misses every cache — and real traffic does neither. What decides the number is
 how many distinct keys there are and how unevenly they are asked for, and
-`kestrel-arbs` is where both are said out loud:
+`proofload-arbs` is where both are said out loud:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.arbs.map
-import io.github.matthewjones372.kestrel.arbs.oneOf
-import io.github.matthewjones372.kestrel.arbs.zipf
-import io.github.matthewjones372.kestrel.feed
+import io.github.matthewjones372.proofload.arbs.map
+import io.github.matthewjones372.proofload.arbs.oneOf
+import io.github.matthewjones372.proofload.arbs.zipf
+import io.github.matthewjones372.proofload.feed
 
 val customerId = zipf(keys = 1_000_000, skew = 1.1).map { "customer-$it" }
 val basket = oneOf("anvil", "rocket", "birdseed")
@@ -708,7 +708,7 @@ checkout.at(50.perSecond, over = 1.minutes)
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:kestrel-arbs:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-arbs:0.1.0")
 }
 ```
 
@@ -734,7 +734,7 @@ downstream can work out what a run's keys were drawn from by looking at it.
 `drawing` is where you say it, beside `fedBy`:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.drawing
+import io.github.matthewjones372.proofload.drawing
 
 checkout.at(50.perSecond, over = 1.minutes)
     .fedBy(feed(customer) { customerId at it } + feed(sku) { basket at it })
@@ -756,7 +756,7 @@ row. `draw` names a session key and a generator, and `{name}` in a path or a
 body reads it:
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 baseUrl:  https://shop.internal
 scenario: catalogue
 seed: 7
@@ -779,18 +779,18 @@ what a path reads. Each key is seeded from `seed` and its own name, so two keys
 never draw in step with one another — without that, customer 41 would always
 buy item 41 and nothing in the report would show it.
 
-`kestrel from-openapi` writes the draw itself where the document bounds a
+`proofload from-openapi` writes the draw itself where the document bounds a
 parameter: `minimum: 1, maximum: 500` becomes `{uniform: {from: 1, to: 500}}`,
 and an `enum` becomes every value it lists. Where the document bounds nothing,
 one legal value is substituted as before — inventing a range it never stated
 would be inventing the cardinality this section is about.
 
-`kestrel emit` prints the Kotlin above, seeds included, so the file and the
+`proofload emit` prints the Kotlin above, seeds included, so the file and the
 source draw the same data.
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:kestrel-plan:$kestrelVersion")
+    testImplementation("io.github.matthewjones372:proofload-plan:$proofloadVersion")
 }
 ```
 
@@ -801,7 +801,7 @@ hundred, and the p99 becomes a measurement of your identity provider.
 `refreshing` keeps it off the measured path:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.refreshing
+import io.github.matthewjones372.proofload.refreshing
 
 val token = refreshing(every = 4.minutes) { fetchToken() }
 
@@ -827,13 +827,13 @@ adopting any load tool. If you already have the flow in a browser or a proxy,
 export a HAR and read it in:
 
 ```bash
-./gradlew :kestrel-record:run --args="checkout.har --package com.acme.load --out src/test/kotlin"
+./gradlew :proofload-record:run --args="checkout.har --package com.acme.load --out src/test/kotlin"
 ```
 
 ```
-kestrel: 2 steps from 3 recorded requests, at src/test/kotlin/com/acme/load/Checkout.kt
-kestrel: captured orderId
-kestrel: 1 credential header(s) dropped, each left as a TODO
+proofload: 2 steps from 3 recorded requests, at src/test/kotlin/com/acme/load/Checkout.kt
+proofload: captured orderId
+proofload: 1 credential header(s) dropped, each left as a TODO
 ```
 
 The output is Kotlin source you edit and commit, not a `Scenario` read at run
@@ -871,7 +871,7 @@ and a man-in-the-middle on somebody's laptop. Chrome, Firefox, Charles,
 mitmproxy and every API client already export HAR; this reads the file.
 
 `docs/examples/checkout.har` is the recording behind this book's own checkout,
-and `kestrel-record/src/test/.../generated/Checkout.kt` is what it generates —
+and `proofload-record/src/test/.../generated/Checkout.kt` is what it generates —
 checked in, compiled and formatted by the same build as everything else, which
 is what keeps "the output compiles" from being a claim.
 
@@ -922,7 +922,7 @@ A response is read into a `String` so a check can read it and a capture can take
 values out of it. For the export nobody reads, that is 200 MB per user:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.http.http
+import io.github.matthewjones372.proofload.http.http
 
 val api = http.baseUrl("https://api.example.com")
 
@@ -948,7 +948,7 @@ the body — and so is a retry.
 
 ## Retry, without burying the retry
 
-Real clients retry a 503. Kestrel will too, if you ask — and asking is the
+Real clients retry a 503. Proofload will too, if you ask — and asking is the
 point, because a target that fails one request in ten looks perfect behind two
 retries:
 
@@ -978,7 +978,7 @@ than the target.
 
 `docs/what-it-costs.md` measures the shipped path at a lower bound of a couple
 of thousand a second on four shared cores, and that is the JDK client's number
-rather than Kestrel's. A caller who needs more hands in a transport:
+rather than Proofload's. A caller who needs more hands in a transport:
 
 ```kotlin
 val api = http.baseUrl("https://orders.internal").over(FasterClient())
@@ -996,7 +996,7 @@ not answer in time and `Threw(class)` for anything else — and no duration:
 service time is measured by the engine around the step, and a clock inside a
 transport would be a third one to reconcile.
 
-`TransportContractTest` in `kestrel-http` is what an implementation is judged
+`TransportContractTest` in `proofload-http` is what an implementation is judged
 against: a 503 is an answer and not a failure, a silent target is
 `Failed(TimedOut)`, a refused connection is `Failed(Threw("ConnectException"))`,
 and a redirect is never followed of the transport's own accord.
@@ -1078,9 +1078,9 @@ by the same route. The first reason wins — a timeout that follows a 503 is the
 Two handshakes, each its own timed step:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.websocket.close
-import io.github.matthewjones372.kestrel.websocket.open
-import io.github.matthewjones372.kestrel.websocket.ws
+import io.github.matthewjones372.proofload.websocket.close
+import io.github.matthewjones372.proofload.websocket.open
+import io.github.matthewjones372.proofload.websocket.ws
 
 val feed = ws.baseUrl("wss://prices.internal")
 val connect = step("connect")
@@ -1106,9 +1106,9 @@ Between them, `send` and `awaiting` are two steps because they are two
 questions:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Correlation
-import io.github.matthewjones372.kestrel.websocket.awaiting
-import io.github.matthewjones372.kestrel.websocket.send
+import io.github.matthewjones372.proofload.Correlation
+import io.github.matthewjones372.proofload.websocket.awaiting
+import io.github.matthewjones372.proofload.websocket.send
 
 val subscribe = step("subscribe")
 val ticks = step("ticks")
@@ -1162,11 +1162,11 @@ stream is opened once and read with two verbs, because there are two honest
 numbers in it:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.http.cadence
-import io.github.matthewjones372.kestrel.http.firstEvent
-import io.github.matthewjones372.kestrel.http.open
-import io.github.matthewjones372.kestrel.http.sse
-import io.github.matthewjones372.kestrel.http.stopReading
+import io.github.matthewjones372.proofload.http.cadence
+import io.github.matthewjones372.proofload.http.firstEvent
+import io.github.matthewjones372.proofload.http.open
+import io.github.matthewjones372.proofload.http.sse
+import io.github.matthewjones372.proofload.http.stopReading
 
 val fills = sse.baseUrl("https://feeds.internal").traced().at("/fills")
 
@@ -1222,9 +1222,9 @@ that matters is not the ack — it is the departure the profile promised to the
 answer arriving.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Correlation
-import io.github.matthewjones372.kestrel.InMemoryCompletions
-import io.github.matthewjones372.kestrel.completing
+import io.github.matthewjones372.proofload.Correlation
+import io.github.matthewjones372.proofload.InMemoryCompletions
+import io.github.matthewjones372.proofload.completing
 
 val tradeId = sessionKey<Long>("tradeId")
 val submitted = step("submitted")
@@ -1239,7 +1239,7 @@ val trades = scenario("trades") {
     )
 }
 
-val result = kestrel.run(
+val result = proofload.run(
     trades.at(5_000.perSecond, over = 5.minutes)
         .completing(submitted, from = settlements, drainingFor = 30.seconds),
 )
@@ -1267,14 +1267,14 @@ Declare goals when several do, or when you want the report to say which one
 missed and by how much:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.expecting
-import io.github.matthewjones372.kestrel.failureRate
-import io.github.matthewjones372.kestrel.goodput
-import io.github.matthewjones372.kestrel.keptSchedule
-import io.github.matthewjones372.kestrel.p99
-import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.proofload.expecting
+import io.github.matthewjones372.proofload.failureRate
+import io.github.matthewjones372.proofload.goodput
+import io.github.matthewjones372.proofload.keptSchedule
+import io.github.matthewjones372.proofload.p99
+import io.github.matthewjones372.proofload.percent
 
-val result = kestrel.run(
+val result = proofload.run(
     checkout.at(50.perSecond, over = 10.minutes).expecting(
         p99(placeOrder) under 200.milliseconds,
         failureRate under 0.1.percent,
@@ -1304,8 +1304,8 @@ because the ramp was long enough and easy enough to pull the total under the
 line, which is a green test somebody earned by editing the profile:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.inEveryStage
-import io.github.matthewjones372.kestrel.p99
+import io.github.matthewjones372.proofload.inEveryStage
+import io.github.matthewjones372.proofload.p99
 import kotlin.time.Duration.Companion.milliseconds
 
 checkout.at(hold(100.perSecond, over = 2.minutes) then rampTo(1000.perSecond, over = 5.minutes))
@@ -1342,12 +1342,12 @@ A reason is a value, not a string, and the module that made the request is the
 one that names it:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Said
-import io.github.matthewjones372.kestrel.Threw
-import io.github.matthewjones372.kestrel.TimedOut
-import io.github.matthewjones372.kestrel.http.CheckFailed
-import io.github.matthewjones372.kestrel.http.HttpStatus
-import io.github.matthewjones372.kestrel.http.NothingCaptured
+import io.github.matthewjones372.proofload.Said
+import io.github.matthewjones372.proofload.Threw
+import io.github.matthewjones372.proofload.TimedOut
+import io.github.matthewjones372.proofload.http.CheckFailed
+import io.github.matthewjones372.proofload.http.HttpStatus
+import io.github.matthewjones372.proofload.http.NothingCaptured
 
 result[placeOrder].failedWith(HttpStatus(503))        // the target said no
 result[placeOrder].failedWith(TimedOut)               // it was up and too slow
@@ -1392,8 +1392,8 @@ A run's first seconds are class loading, JIT and a cold cache. `steady` is the
 segment after the run settled, found rather than assumed:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.steady
-import io.github.matthewjones372.kestrel.steadyState
+import io.github.matthewjones372.proofload.steady
+import io.github.matthewjones372.proofload.steadyState
 
 result.steadyState        // SteadyState.From(offset) or NeverSettled
 result.steady[placeOrder].responseTime.p99
@@ -1411,8 +1411,8 @@ Rather than guessing a rate and asserting about it, ask for the highest one that
 holds your goals:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.engine.run
-import io.github.matthewjones372.kestrel.sustainable
+import io.github.matthewjones372.proofload.engine.run
+import io.github.matthewjones372.proofload.sustainable
 
 val capacity = checkout.sustainable(
     upTo = 500.perSecond,
@@ -1461,7 +1461,7 @@ result.latePerSecond[12].p99   // how late that second's departures were
 
 So the answer to "it fell behind, now what" is: re-run at a rate the machine
 held, and read the service times of this run as the target at `left` in the
-meantime. Kestrel will not quietly lower the rate for you mid-run — a run that
+meantime. Proofload will not quietly lower the rate for you mid-run — a run that
 throttles itself measures a load it then does not report, which is the bug this
 tool exists to close. A [capacity search](#find-the-rate-it-sustains) is the
 supported way to adapt, because every rung is a separate, labelled run.
@@ -1475,14 +1475,14 @@ One self-contained file — the data, the stylesheet and the script inline — s
 opens from a `file://` URL and uploads as a CI artifact unchanged.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import io.github.matthewjones372.proofload.report.writeHtmlReport
 
-result.writeHtmlReport(Path.of("build/reports/kestrel/checkout.html"))
+result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
 ```
 
 ```
-kestrel: report written to build/reports/kestrel/checkout.html
-kestrel:   file:///home/you/project/build/reports/kestrel/checkout.html
+proofload: report written to build/reports/proofload/checkout.html
+proofload:   file:///home/you/project/build/reports/proofload/checkout.html
 ```
 
 It takes the optional arguments that make it say more, and each one adds a
@@ -1492,7 +1492,7 @@ section rather than changing a number:
 result.writeHtmlReport(
     path,
     comparison = result.against(readBaseline(path)),   // this run against the last
-    floor = kestrel.calibrate(),                       // what this machine can resolve
+    floor = proofload.calibrate(),                       // what this machine can resolve
     differences = listOf(difference),                  // several runs a side
 )
 ```
@@ -1500,7 +1500,7 @@ result.writeHtmlReport(
 A capacity search has a page of its own, with the curve on it:
 
 ```kotlin
-capacity.writeHtmlReport(Path.of("build/reports/kestrel/capacity.html"))
+capacity.writeHtmlReport(Path.of("build/reports/proofload/capacity.html"))
 ```
 
 ## One run at a time, on the whole machine
@@ -1510,8 +1510,8 @@ measure each other, that guarantee reaches across processes as well as threads:
 a second JVM waits for the first rather than competing with it.
 
 ```
-kestrel: waited 204.682774ms for the machine
-kestrel: checkout — 30,000 users over 10m, 2 steps each
+proofload: waited 204.682774ms for the machine
+proofload: checkout — 30,000 users over 10m, 2 steps each
 ```
 
 A run that did not queue says nothing. The lock is a `FileLock` on a file under
@@ -1527,10 +1527,10 @@ Four properties, all optional:
 
 | Property | Default | What it does |
 |---|---|---|
-| `kestrel.exclusive` | `true` | `false` lets runs overlap. Set it on a benchmark, which is measuring the machine and must not queue behind a test. |
-| `kestrel.exclusive.file` | `$java.io.tmpdir/kestrel-machine.lock` | Where the lock lives. One name per host is what makes two people queue for each other. |
-| `kestrel.exclusive.timeout` | none | Seconds to queue before giving up, failing with the holder's pid. Unset waits indefinitely. |
-| `kestrel.resolution` | measured | A floor somebody already measured, skipping `calibrate()`. A floor named rather than measured carries no probe, so nothing can compare two machines by it. |
+| `proofload.exclusive` | `true` | `false` lets runs overlap. Set it on a benchmark, which is measuring the machine and must not queue behind a test. |
+| `proofload.exclusive.file` | `$java.io.tmpdir/proofload-machine.lock` | Where the lock lives. One name per host is what makes two people queue for each other. |
+| `proofload.exclusive.timeout` | none | Seconds to queue before giving up, failing with the holder's pid. Unset waits indefinitely. |
+| `proofload.resolution` | measured | A floor somebody already measured, skipping `calibrate()`. A floor named rather than measured carries no probe, so nothing can compare two machines by it. |
 
 Two containers on one host cannot serialise against each other this way — they
 do not share a temp directory — and no file can fix that. Nothing here pretends
@@ -1550,19 +1550,19 @@ whatever baseline was restored beside it, write the comparison into the job
 summary, and leave this run behind as the next one's baseline.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Change
-import io.github.matthewjones372.kestrel.Comparison
-import io.github.matthewjones372.kestrel.against
-import io.github.matthewjones372.kestrel.at
-import io.github.matthewjones372.kestrel.baseline.readBaseline
-import io.github.matthewjones372.kestrel.baseline.writeBaseline
-import io.github.matthewjones372.kestrel.calibratedBy
-import io.github.matthewjones372.kestrel.engine.Kestrel
-import io.github.matthewjones372.kestrel.http.http
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.report.appendToStepSummary
-import io.github.matthewjones372.kestrel.scenario
-import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.proofload.Change
+import io.github.matthewjones372.proofload.Comparison
+import io.github.matthewjones372.proofload.against
+import io.github.matthewjones372.proofload.at
+import io.github.matthewjones372.proofload.baseline.readBaseline
+import io.github.matthewjones372.proofload.baseline.writeBaseline
+import io.github.matthewjones372.proofload.calibratedBy
+import io.github.matthewjones372.proofload.engine.Proofload
+import io.github.matthewjones372.proofload.http.http
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.report.appendToStepSummary
+import io.github.matthewjones372.proofload.scenario
+import io.github.matthewjones372.proofload.step
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.exitProcess
@@ -1573,13 +1573,13 @@ val api = http.baseUrl("https://orders.internal")
 val paying = scenario("paying") { exec(pay, api.get("/pay")) }
 
 fun main() {
-    val baseline = Path.of("build/kestrel/paying.kestrel")
-    val kestrel = Kestrel()
+    val baseline = Path.of("build/proofload/paying.proofload")
+    val proofload = Proofload()
 
     // Before the load, not after: this is what the machine could do while
     // nothing else was asked of it.
-    val floor = kestrel.calibrate()
-    val result = kestrel.run(paying.at(200.perSecond, over = 2.minutes)).calibratedBy(floor)
+    val floor = proofload.calibrate()
+    val result = proofload.run(paying.at(200.perSecond, over = 2.minutes)).calibratedBy(floor)
 
     val previous = baseline.takeIf { Files.exists(it) }?.let(::readBaseline)
     val comparison = result.against(previous)
@@ -1597,11 +1597,11 @@ fun main() {
 dependencies {
     // Whatever you have published or built with ./gradlew publishToMavenLocal;
     // nothing is on Maven Central yet.
-    implementation("io.github.matthewjones372:kestrel-core:$kestrelVersion")
-    implementation("io.github.matthewjones372:kestrel-engine:$kestrelVersion")
-    implementation("io.github.matthewjones372:kestrel-http:$kestrelVersion")
-    implementation("io.github.matthewjones372:kestrel-baseline:$kestrelVersion")
-    implementation("io.github.matthewjones372:kestrel-report-github:$kestrelVersion")
+    implementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
+    implementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")
+    implementation("io.github.matthewjones372:proofload-http:$proofloadVersion")
+    implementation("io.github.matthewjones372:proofload-baseline:$proofloadVersion")
+    implementation("io.github.matthewjones372:proofload-report-github:$proofloadVersion")
 }
 ```
 
@@ -1609,7 +1609,7 @@ dependencies {
 nothing at all off Actions, so the same `main` runs on a laptop.
 
 There is a working copy of this in the repository:
-[`AgainstTheBaseline.kt`](../examples/src/main/kotlin/io/github/matthewjones372/kestrel/examples/AgainstTheBaseline.kt),
+[`AgainstTheBaseline.kt`](../examples/src/main/kotlin/io/github/matthewjones372/proofload/examples/AgainstTheBaseline.kt),
 run by [`baseline.yml`](../.github/workflows/baseline.yml) against a JDK
 `HttpServer` in the same process.
 
@@ -1619,9 +1619,9 @@ run by [`baseline.yml`](../.github/workflows/baseline.yml) against a JDK
 - name: Restore the last baseline
   uses: actions/cache@v4
   with:
-    path: build/kestrel
-    key: kestrel-baseline-${{ github.run_id }}
-    restore-keys: kestrel-baseline-
+    path: build/proofload
+    key: proofload-baseline-${{ github.run_id }}
+    restore-keys: proofload-baseline-
 ```
 
 The key is a run id, so it never hits and the cache is always written fresh at
@@ -1644,8 +1644,8 @@ a different workflow cannot use a cache at all. Upload the file:
   if: always()
   uses: actions/upload-artifact@v7
   with:
-    name: kestrel-baseline
-    path: build/kestrel/*.kestrel
+    name: proofload-baseline
+    path: build/proofload/*.proofload
     retention-days: 90
     if-no-files-found: error
 ```
@@ -1657,15 +1657,15 @@ and fetch the newest successful one before the run:
   env:
     GH_TOKEN: ${{ github.token }}
   run: |
-    mkdir -p build/kestrel
+    mkdir -p build/proofload
     run_id=$(gh run list --branch main --workflow baseline.yml --status success \
       --limit 1 --json databaseId --jq '.[0].databaseId')
-    gh run download "$run_id" --name kestrel-baseline --dir build/kestrel \
+    gh run download "$run_id" --name proofload-baseline --dir build/proofload \
       || echo "no baseline published yet; this run will write the first one"
 ```
 
 The `||` matters. A missing baseline is a thing to report, not a thing to die
-of — and Kestrel reports it, so let the step pass and let the summary say it.
+of — and Proofload reports it, so let the step pass and let the summary say it.
 
 ### Keeping it: a branch somebody reviews
 
@@ -1674,11 +1674,11 @@ baseline is a number the team argues about — the rate a service is expected to
 hold — put it on an orphan branch and change it in a pull request:
 
 ```bash
-git switch --orphan kestrel-baseline
+git switch --orphan proofload-baseline
 git rm -rf .
-cp build/kestrel/paying.kestrel .
-git add paying.kestrel && git commit -m "chore: baseline for paying at 200/s"
-git push origin kestrel-baseline
+cp build/proofload/paying.proofload .
+git add paying.proofload && git commit -m "chore: baseline for paying at 200/s"
+git push origin proofload-baseline
 ```
 
 and read it in the job, which needs no checkout of it:
@@ -1686,9 +1686,9 @@ and read it in the job, which needs no checkout of it:
 ```yaml
 - name: Fetch the reviewed baseline
   run: |
-    mkdir -p build/kestrel
-    git fetch --depth 1 origin kestrel-baseline
-    git show FETCH_HEAD:paying.kestrel > build/kestrel/paying.kestrel
+    mkdir -p build/proofload
+    git fetch --depth 1 origin proofload-baseline
+    git show FETCH_HEAD:paying.proofload > build/proofload/paying.proofload
 ```
 
 Then stop writing it from the job: a baseline somebody reviews is one only a
@@ -1707,14 +1707,14 @@ spread of the thing being compared, rather than a number borrowed from
 somewhere else:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Runs
-import io.github.matthewjones372.kestrel.against
-import io.github.matthewjones372.kestrel.baseline.readAll
-import io.github.matthewjones372.kestrel.baseline.writeInto
-import io.github.matthewjones372.kestrel.junit5.assertNotWorseThan
+import io.github.matthewjones372.proofload.Runs
+import io.github.matthewjones372.proofload.against
+import io.github.matthewjones372.proofload.baseline.readAll
+import io.github.matthewjones372.proofload.baseline.writeInto
+import io.github.matthewjones372.proofload.junit5.assertNotWorseThan
 
 val before = Runs.readAll(Path.of("baselines/checkout"))
-val now = Runs(List(5) { kestrel.run(checkout.at(50.perSecond, over = 2.minutes)) })
+val now = Runs(List(5) { proofload.run(checkout.at(50.perSecond, over = 2.minutes)) })
 
 now.against(before, p99(placeOrder), acceptable = 10.percent)
     .assertNotWorseThan(10.percent)
@@ -1723,7 +1723,7 @@ now.against(before, p99(placeOrder), acceptable = 10.percent)
 In Kotest, the same threshold as a matcher:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.kotest.NotWorseThan
+import io.github.matthewjones372.proofload.kotest.NotWorseThan
 
 now.against(before, p99(placeOrder)) should NotWorseThan(10.percent)
 ```
@@ -1753,7 +1753,7 @@ for i in $(seq 1 5); do ./gradlew :examples:soak; done   # each writes one file
 ```
 
 ```kotlin
-result.writeInto(Path.of("baselines/checkout"))   // run-<started>-<pid>.kestrel
+result.writeInto(Path.of("baselines/checkout"))   // run-<started>-<pid>.proofload
 ```
 
 Both halves of the name are needed: two runs of one JVM start at different
@@ -1767,7 +1767,7 @@ split the run across hosts. Each is given which one it is, how many there are,
 and the instant they all start on:
 
 ```kotlin
-kestrel.run(soak.sharded(index = 2, of = 4, startingAt = at))
+proofload.run(soak.sharded(index = 2, of = 4, startingAt = at))
 ```
 
 Injector *k* of *N* sends the users whose number is `k` modulo `N`, so the four
@@ -1798,8 +1798,8 @@ for i in $(seq 1 5); do ./gradlew :examples:soak; done   # into history/$GITHUB_
 ```
 
 ```kotlin
-import io.github.matthewjones372.kestrel.baseline.readTrend
-import io.github.matthewjones372.kestrel.report.writeHtmlReport
+import io.github.matthewjones372.proofload.baseline.readTrend
+import io.github.matthewjones372.proofload.report.writeHtmlReport
 
 val trend = readTrend(Path.of("history"), p99(pay), acceptable = 5.percent)
 
@@ -1829,8 +1829,8 @@ descriptor your generated code already carries, and build your own stub on the
 channel it gives you:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.grpc.exec
-import io.github.matthewjones372.kestrel.grpc.grpc
+import io.github.matthewjones372.proofload.grpc.exec
+import io.github.matthewjones372.proofload.grpc.grpc
 
 val orders = grpc.target("orders.internal:8443").traced().deadline(2.seconds)
 val stub = OrdersGrpc.newBlockingStub(orders.channel)
@@ -1914,17 +1914,17 @@ out with the call.
 ## Database steps
 
 The database under a service is where the ceiling usually is, and from the HTTP
-side it is invisible except as latency nobody can attribute. `kestrel-jdbc`
+side it is invisible except as latency nobody can attribute. `proofload-jdbc`
 sends statements over a `DataSource` you hand in:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.jdbc.exec
-import io.github.matthewjones372.kestrel.jdbc.jdbc
-import io.github.matthewjones372.kestrel.jdbc.rows
-import io.github.matthewjones372.kestrel.jdbc.waitedForPool
-import io.github.matthewjones372.kestrel.scenario
-import io.github.matthewjones372.kestrel.sessionKey
-import io.github.matthewjones372.kestrel.step
+import io.github.matthewjones372.proofload.jdbc.exec
+import io.github.matthewjones372.proofload.jdbc.jdbc
+import io.github.matthewjones372.proofload.jdbc.rows
+import io.github.matthewjones372.proofload.jdbc.waitedForPool
+import io.github.matthewjones372.proofload.scenario
+import io.github.matthewjones372.proofload.sessionKey
+import io.github.matthewjones372.proofload.step
 
 val orderId = sessionKey<Int>("orderId")
 val byId = step("select an order")
@@ -1938,7 +1938,7 @@ val reading = scenario("reading") {
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:kestrel-jdbc:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-jdbc:0.1.0")
     // The driver and the pool are yours, and are the point: this module carries
     // neither, so a run measures the pool your service actually runs.
     testImplementation("org.postgresql:postgresql:42.7.4")
@@ -1998,10 +1998,10 @@ and the answer is a `completing`, the shape [work that finishes somewhere
 else](#work-that-finishes-somewhere-else) already describes:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.kafka.Header
-import io.github.matthewjones372.kestrel.kafka.completions
-import io.github.matthewjones372.kestrel.kafka.emit
-import io.github.matthewjones372.kestrel.kafka.kafka
+import io.github.matthewjones372.proofload.kafka.Header
+import io.github.matthewjones372.proofload.kafka.completions
+import io.github.matthewjones372.proofload.kafka.emit
+import io.github.matthewjones372.proofload.kafka.kafka
 
 val broker = kafka.brokers("localhost:9092").acks(Acks.All)
 
@@ -2074,12 +2074,12 @@ A run's measurements in formats other tools read: an HdrHistogram log, a
 Prometheus or OpenMetrics exposition, and an OTLP push at a collector.
 
 ```kotlin
-import io.github.matthewjones372.kestrel.export.writeHistogramLog
-import io.github.matthewjones372.kestrel.export.writeOpenMetrics
-import io.github.matthewjones372.kestrel.otel.sendOtlp
+import io.github.matthewjones372.proofload.export.writeHistogramLog
+import io.github.matthewjones372.proofload.export.writeOpenMetrics
+import io.github.matthewjones372.proofload.otel.sendOtlp
 
-result.writeHistogramLog(Path.of("build/kestrel/run.hlog"))
-result.writeOpenMetrics(Path.of("/var/lib/node_exporter/kestrel.prom"))
+result.writeHistogramLog(Path.of("build/proofload/run.hlog"))
+result.writeOpenMetrics(Path.of("/var/lib/node_exporter/proofload.prom"))
 result.sendOtlp("http://collector:4318/v1/metrics")
 ```
 
@@ -2099,7 +2099,7 @@ The HTML report is one self-contained file, so publishing is a copy and an
 index:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.report.writePagesIndex
+import io.github.matthewjones372.proofload.report.writePagesIndex
 
 val directory = Path.of("build/pages")
 result.writeHtmlReport(directory.resolve("checkout.html"))
@@ -2121,7 +2121,7 @@ so a report that stops being written stops being linked.
 There is also the job summary, which needs no Pages setup at all:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.report.appendToStepSummary
+import io.github.matthewjones372.proofload.report.appendToStepSummary
 
 result.appendToStepSummary(comparison = comparison, floor = floor)
 ```
@@ -2133,13 +2133,13 @@ it is not in CI is one people stop running locally.
 ## Bound what a run on this machine may do
 
 A rate arrives from somewhere — a person, a script, or a plan file a program
-wrote. `kestrel.toml` beside the build says what this machine permits, and
+wrote. `proofload.toml` beside the build says what this machine permits, and
 `preview` says what a plan would do before it does any of it:
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Allowance
-import io.github.matthewjones372.kestrel.Preview
-import io.github.matthewjones372.kestrel.preview
+import io.github.matthewjones372.proofload.Allowance
+import io.github.matthewjones372.proofload.Preview
+import io.github.matthewjones372.proofload.preview
 
 when (val asked = checkout.at(50.perSecond, over = 1.minutes).preview(Allowance.fromFile())) {
     is Preview.Allowed -> println("${asked.users} users to ${asked.hosts}")
@@ -2147,7 +2147,7 @@ when (val asked = checkout.at(50.perSecond, over = 1.minutes).preview(Allowance.
 }
 ```
 
-`Kestrel().runWithin(allowance, plan)` returns `Ran.Refused` instead of
+`Proofload().runWithin(allowance, plan)` returns `Ran.Refused` instead of
 departing. It is a fence rather than a sandbox, and
 [allowance.md](allowance.md) says where that stops.
 
@@ -2197,7 +2197,7 @@ of those repeats as a fraction of a null step's own tiny median.
 runner whose spread you have already measured, name it instead:
 
 ```yaml
-- run: ./gradlew :examples:againstTheBaseline -Dkestrel.resolution=0.05
+- run: ./gradlew :examples:againstTheBaseline -Dproofload.resolution=0.05
 ```
 
 That skips the measurement, and with it the probe — a floor somebody typed has

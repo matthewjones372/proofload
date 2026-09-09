@@ -1,0 +1,283 @@
+public final class io/github/matthewjones372/proofload/plan/Declaration {
+	public static final field Companion Lio/github/matthewjones372/proofload/plan/Declaration$Companion;
+	public static final field VERSION Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/proofload/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/proofload/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Lio/github/matthewjones372/proofload/plan/DeclaredLoad;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun component9 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/proofload/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;J)Lio/github/matthewjones372/proofload/plan/Declaration;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/Declaration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lio/github/matthewjones372/proofload/plan/DeclaredLoad;Ljava/util/List;Ljava/util/Map;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/Declaration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getBrokers ()Ljava/lang/String;
+	public final fun getDraw ()Ljava/util/Map;
+	public final fun getGoals ()Ljava/util/List;
+	public final fun getLoad ()Lio/github/matthewjones372/proofload/plan/DeclaredLoad;
+	public final fun getScenario ()Ljava/lang/String;
+	public final fun getSeed ()J
+	public final fun getSteps ()Ljava/util/List;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/Declaration$Companion {
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclarationKt {
+	public static final fun asSimulation (Lio/github/matthewjones372/proofload/plan/Declaration;Ljava/util/List;)Lio/github/matthewjones372/proofload/Simulation;
+	public static synthetic fun asSimulation$default (Lio/github/matthewjones372/proofload/plan/Declaration;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Simulation;
+	public static final fun requests (Lio/github/matthewjones372/proofload/plan/Declaration;)Ljava/util/List;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/plan/DeclaredDraw {
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredDraw$Digits : io/github/matthewjones372/proofload/plan/DeclaredDraw {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Digits;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Digits;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Digits;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredDraw$OneOf : io/github/matthewjones372/proofload/plan/DeclaredDraw {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$OneOf;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredDraw$OneOf;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$OneOf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredDraw$Uniform : io/github/matthewjones372/proofload/plan/DeclaredDraw {
+	public fun <init> (JJ)V
+	public synthetic fun <init> (JJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun copy (JJ)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Uniform;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Uniform;JJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Uniform;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()J
+	public final fun getKeys ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredDraw$Uuids : io/github/matthewjones372/proofload/plan/DeclaredDraw {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Uuids;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredDraw$Zipf : io/github/matthewjones372/proofload/plan/DeclaredDraw {
+	public fun <init> (JD)V
+	public final fun component1 ()J
+	public final fun component2 ()D
+	public final fun copy (JD)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Zipf;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Zipf;JDILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredDraw$Zipf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKeys ()J
+	public final fun getSkew ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/plan/DeclaredGoal {
+	public abstract fun getStep ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredGoal$FailureRate : io/github/matthewjones372/proofload/plan/DeclaredGoal {
+	public fun <init> (Ljava/lang/String;D)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()D
+	public final fun copy (Ljava/lang/String;D)Lio/github/matthewjones372/proofload/plan/DeclaredGoal$FailureRate;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredGoal$FailureRate;Ljava/lang/String;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredGoal$FailureRate;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getStep ()Ljava/lang/String;
+	public final fun getUnder ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredGoal$Percentile : io/github/matthewjones372/proofload/plan/DeclaredGoal {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-SxA4cEA (Ljava/lang/String;Ljava/lang/String;J)Lio/github/matthewjones372/proofload/plan/DeclaredGoal$Percentile;
+	public static synthetic fun copy-SxA4cEA$default (Lio/github/matthewjones372/proofload/plan/DeclaredGoal$Percentile;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredGoal$Percentile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPercentile ()Ljava/lang/String;
+	public fun getStep ()Ljava/lang/String;
+	public final fun getUnder-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/plan/DeclaredLoad {
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredLoad$Constant : io/github/matthewjones372/proofload/plan/DeclaredLoad {
+	public synthetic fun <init> (DJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-JlLZVlU ()D
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-kfZY7pg (DJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
+	public static synthetic fun copy-kfZY7pg$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;DJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Constant;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOver-UwyO8pc ()J
+	public final fun getRate-JlLZVlU ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp : io/github/matthewjones372/proofload/plan/DeclaredLoad {
+	public synthetic fun <init> (DDJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-JlLZVlU ()D
+	public final fun component2-JlLZVlU ()D
+	public final fun component3-UwyO8pc ()J
+	public final fun copy-AlzetgU (DDJ)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
+	public static synthetic fun copy-AlzetgU$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;DDJILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Ramp;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom-JlLZVlU ()D
+	public final fun getOver-UwyO8pc ()J
+	public final fun getTo-JlLZVlU ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredLoad$Staged : io/github/matthewjones372/proofload/plan/DeclaredLoad {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Staged;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Staged;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredLoad$Staged;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStages ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/plan/DeclaredStep {
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun getPauseAfter-FghU774 ()Lkotlin/time/Duration;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredStep$Completes : io/github/matthewjones372/proofload/plan/DeclaredStep {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Lkotlin/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5-UwyO8pc ()J
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7-FghU774 ()Lkotlin/time/Duration;
+	public final fun copy-eHa6T9w (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Lkotlin/time/Duration;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Completes;
+	public static synthetic fun copy-eHa6T9w$default (Lio/github/matthewjones372/proofload/plan/DeclaredStep$Completes;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Lkotlin/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Completes;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBy ()Ljava/lang/String;
+	public final fun getCompletes ()Ljava/lang/String;
+	public final fun getGroup ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
+	public final fun getOn ()Ljava/lang/String;
+	public fun getPauseAfter-FghU774 ()Lkotlin/time/Duration;
+	public final fun getWithin-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredStep$Produce : io/github/matthewjones372/proofload/plan/DeclaredStep {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun component6-FghU774 ()Lkotlin/time/Duration;
+	public final fun copy-BAu0izY (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/time/Duration;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Produce;
+	public static synthetic fun copy-BAu0izY$default (Lio/github/matthewjones372/proofload/plan/DeclaredStep$Produce;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Produce;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
+	public fun getPauseAfter-FghU774 ()Lkotlin/time/Duration;
+	public final fun getSettings ()Ljava/util/Map;
+	public final fun getTopic ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/DeclaredStep$Request : io/github/matthewjones372/proofload/plan/DeclaredStep {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()I
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8-FghU774 ()Lkotlin/time/Duration;
+	public final fun copy-bAucREo (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Request;
+	public static synthetic fun copy-bAucREo$default (Lio/github/matthewjones372/proofload/plan/DeclaredStep$Request;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/util/List;Lkotlin/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/DeclaredStep$Request;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getDeclared ()Ljava/util/List;
+	public final fun getExpecting ()I
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun getPauseAfter-FghU774 ()Lkotlin/time/Duration;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/EmittingKt {
+	public static final fun asKotlin (Lio/github/matthewjones372/proofload/plan/Declaration;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/proofload/plan/Lowered {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Completing;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Completing;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lio/github/matthewjones372/proofload/Feeder;
+	public final fun component3 ()Lio/github/matthewjones372/proofload/Completing;
+	public final fun copy (Ljava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Completing;)Lio/github/matthewjones372/proofload/plan/Lowered;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/plan/Lowered;Ljava/util/List;Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Completing;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/plan/Lowered;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCompleting ()Lio/github/matthewjones372/proofload/Completing;
+	public final fun getFeeder ()Lio/github/matthewjones372/proofload/Feeder;
+	public final fun getSteps ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/matthewjones372/proofload/plan/Lowering {
+	public abstract fun lower (Lio/github/matthewjones372/proofload/plan/DeclaredStep;Lio/github/matthewjones372/proofload/plan/Declaration;)Lio/github/matthewjones372/proofload/plan/Lowered;
+}
+
+public final class io/github/matthewjones372/proofload/plan/ReadingKt {
+	public static final fun readPlan (Ljava/lang/String;)Lio/github/matthewjones372/proofload/plan/Declaration;
+	public static final fun readPlan (Ljava/nio/file/Path;)Lio/github/matthewjones372/proofload/plan/Declaration;
+}
+
+public final class io/github/matthewjones372/proofload/plan/WritingKt {
+	public static final fun asYaml (Lio/github/matthewjones372/proofload/plan/Declaration;)Ljava/lang/String;
+}
+

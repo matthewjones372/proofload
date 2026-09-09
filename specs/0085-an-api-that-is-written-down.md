@@ -45,8 +45,8 @@ That rule is only worth anything if *recorded* is checked.
 ```
 
 ```
-kestrel-core/api/kestrel-core.api
-kestrel-http/api/kestrel-http.api
+proofload-core/api/proofload-core.api
+proofload-http/api/proofload-http.api
 ...one per published module, checked in
 ```
 
@@ -123,7 +123,7 @@ Then delete a public function and watch `./gradlew build` fail naming it.
     their own that changes nothing else, so the diff of the next change is
     readable.
     **Sixteen of them, and they landed in a commit of their own.** Three
-    thousand lines, of which `kestrel-core` is two thousand.
+    thousand lines, of which `proofload-core` is two thousand.
 3. **Should Kover's coverage gate and this share a task?** No, but both are
     gates that fire from `check`. Recommend leaving them separate and saying so
     in `AGENTS.md`, which lists what the gate runs.

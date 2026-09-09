@@ -15,7 +15,7 @@ Every injector runs the same jar and is given which one it is, how many there
 are, and the instant they all start on:
 
 ```kotlin
-kestrel.run(soak.sharded(index = 2, of = 4, startingAt = at))
+proofload.run(soak.sharded(index = 2, of = 4, startingAt = at))
 ```
 
 Injector *k* of *N* sends the users whose number is `k` modulo `N`, filtered per
@@ -53,10 +53,10 @@ nothing to install on the injectors but the jar you already have:
 AT=$(( ($(date +%s) + 30) * 1000 ))      # thirty seconds from now, in millis
 for i in 0 1 2 3; do
   ssh injector-$i "java -cp app.jar com.example.OneInjector \
-      /var/kestrel http://target:8080 60000 $i 4 $AT" &
+      /var/proofload http://target:8080 60000 $i 4 $AT" &
 done
 wait
-for i in 0 1 2 3; do scp injector-$i:/var/kestrel/*.kestrel ./run/; done
+for i in 0 1 2 3; do scp injector-$i:/var/proofload/*.proofload ./run/; done
 ```
 
 Each writes one file, named for when it started, which injector it was, and its
@@ -69,8 +69,8 @@ four calls run.
 ## Reading them back
 
 ```kotlin
-import io.github.matthewjones372.kestrel.Shards
-import io.github.matthewjones372.kestrel.baseline.readAll
+import io.github.matthewjones372.proofload.Shards
+import io.github.matthewjones372.proofload.baseline.readAll
 
 val shards = Shards.readAll(Path.of("run"))
 
@@ -120,7 +120,7 @@ the load that left.
 Only for a test of the mechanism. The one-run-at-a-time lock is per host and is
 taken *before* the wait — queueing for a busy machine inside the alignment
 window would de-align the timeline — so four injectors on one host serialise
-unless you pass `-Dkestrel.exclusive=false`. Four processes contending for four
+unless you pass `-Dproofload.exclusive=false`. Four processes contending for four
 cores is also the arrangement all of this exists to escape.
 
 `examples/src/test/kotlin/.../FourInjectorsTest.kt` does exactly this, and is

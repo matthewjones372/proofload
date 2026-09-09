@@ -1,0 +1,17 @@
+public final class io/github/matthewjones372/proofload/report/CapacityPageKt {
+	public static final fun toHtmlReport (Lio/github/matthewjones372/proofload/Capacity;)Ljava/lang/String;
+	public static final fun writeHtmlReport (Lio/github/matthewjones372/proofload/Capacity;Ljava/nio/file/Path;)Ljava/nio/file/Path;
+}
+
+public final class io/github/matthewjones372/proofload/report/HtmlReportKt {
+	public static final fun toHtmlReport (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/Comparison;Lio/github/matthewjones372/proofload/Floor;Ljava/util/List;)Ljava/lang/String;
+	public static synthetic fun toHtmlReport$default (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/Comparison;Lio/github/matthewjones372/proofload/Floor;Ljava/util/List;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun writeHtmlReport (Lio/github/matthewjones372/proofload/RunResult;Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Comparison;Lio/github/matthewjones372/proofload/Floor;Ljava/util/List;)Ljava/nio/file/Path;
+	public static synthetic fun writeHtmlReport$default (Lio/github/matthewjones372/proofload/RunResult;Ljava/nio/file/Path;Lio/github/matthewjones372/proofload/Comparison;Lio/github/matthewjones372/proofload/Floor;Ljava/util/List;ILjava/lang/Object;)Ljava/nio/file/Path;
+}
+
+public final class io/github/matthewjones372/proofload/report/TrendPageKt {
+	public static final fun toHtmlReport (Lio/github/matthewjones372/proofload/Trend;)Ljava/lang/String;
+	public static final fun writeHtmlReport (Lio/github/matthewjones372/proofload/Trend;Ljava/nio/file/Path;)Ljava/nio/file/Path;
+}
+

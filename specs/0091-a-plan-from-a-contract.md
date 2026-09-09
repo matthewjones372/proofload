@@ -35,18 +35,18 @@ endpoints into steps.
 - **No change to Pelican.** If the endpoint model needs something, that is a
   spec in that repository.
 - **Nothing on a measured path.** Both readers are build-time, like
-  `kestrel-record`.
+  `proofload-record`.
 
 ## Shape
 
 Two sources, one output — an 0089 plan a person can read and edit:
 
 ```bash
-kestrel from-openapi orders.yaml --out plan.yaml --methods get,post
+proofload from-openapi orders.yaml --out plan.yaml --methods get,post
 ```
 
 ```kotlin
-import io.github.matthewjones372.kestrel.pelican.planFrom
+import io.github.matthewjones372.proofload.pelican.planFrom
 
 // A Pelican service: the descriptions are values already on the classpath.
 val plan = planFrom(OrdersEndpoints.all, baseUrl = "https://orders.internal")
@@ -66,9 +66,9 @@ What the contract buys beyond the paths:
 ## Why this shape
 
 Emitting a plan file rather than Kotlin is the choice worth arguing. Kotlin is
-what `kestrel-record` emits and what a person eventually wants; a plan file is
+what `proofload-record` emits and what a person eventually wants; a plan file is
 editable by whatever produced the request, re-validated in milliseconds, and
-one `kestrel emit --kotlin` away from the source anyway. Recommend the plan,
+one `proofload emit --kotlin` away from the source anyway. Recommend the plan,
 with `emit` as the graduation — it puts one generator behind both outputs
 instead of two.
 
@@ -82,7 +82,7 @@ document importer is cut.
 ## Stack
 
 - [x] **`spec-0091-endpoints`** — `planFrom(endpoints, baseUrl)` in
-      `kestrel-pelican`: a step per endpoint, named by path template.
+      `proofload-pelican`: a step per endpoint, named by path template.
       Done when: six endpoints yield six steps, and a path parameter yields one
       row rather than one per value.
 - [x] **`spec-0091-data`** — constraint-satisfying values per input, seeded, so
@@ -93,17 +93,17 @@ document importer is cut.
       undeclared statuses counted apart.
       Done when: a run against a stub returning a declared 404 and an
       undeclared 500 reports one of each, separately.
-- [x] **`spec-0091-openapi`** — the document reader in `kestrel-contract` and
+- [x] **`spec-0091-openapi`** — the document reader in `proofload-contract` and
       the `from-openapi` command.
-      Done when: a document with fifteen paths produces a plan that `kestrel
+      Done when: a document with fifteen paths produces a plan that `proofload
       validate` accepts, with the auth placeholder unfilled and refusing.
 
 ## Acceptance
 
 ```bash
 ./gradlew build
-build/install/kestrel/bin/kestrel from-openapi specs/fixtures/orders.yaml --out plan.yaml
-build/install/kestrel/bin/kestrel validate plan.yaml   # fails: token placeholder
+build/install/proofload/bin/proofload from-openapi specs/fixtures/orders.yaml --out plan.yaml
+build/install/proofload/bin/proofload validate plan.yaml   # fails: token placeholder
 ```
 
 ## Open questions
@@ -112,7 +112,7 @@ build/install/kestrel/bin/kestrel validate plan.yaml   # fails: token placeholde
 > reasoning is left standing rather than deleted: a decision is easier to
 > reopen when the alternative it beat is still written down.
 
-- **Does `kestrel-openapi` depend on `pelican-import`, or does Kestrel read the
+- **Does `proofload-openapi` depend on `pelican-import`, or does Proofload read the
   document itself?** ~~Recommend depending on it.~~ **Reversed on 2026-09-04:
   the option did not exist.** `pelican-import` is a build-time code generator,
   not a reader — `importEndpoints(document, sourceRoot, …): List<File>` writes
@@ -120,7 +120,7 @@ build/install/kestrel/bin/kestrel validate plan.yaml   # fails: token placeholde
   call, so depending on it would mean generating source, compiling it and
   loading the endpoint values, which is not a thing a command line can do.
 
-  Kestrel reads the document itself, in `kestrel-contract`, on the
+  Proofload reads the document itself, in `proofload-contract`, on the
   snakeyaml-engine already there. The reader is small because the target is: it
   needs paths, methods, path-parameter schema facets and response statuses, not
   the full type model a code generator has to build. There are now two OpenAPI

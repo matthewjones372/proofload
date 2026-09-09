@@ -1,0 +1,38 @@
+public final class io/github/matthewjones372/proofload/jdbc/Database {
+	public final fun query (Ljava/lang/String;)Lio/github/matthewjones372/proofload/jdbc/JdbcAction;
+	public final fun update (Ljava/lang/String;)Lio/github/matthewjones372/proofload/jdbc/JdbcAction;
+}
+
+public final class io/github/matthewjones372/proofload/jdbc/Jdbc {
+	public static final field INSTANCE Lio/github/matthewjones372/proofload/jdbc/Jdbc;
+	public final fun on (Ljavax/sql/DataSource;)Lio/github/matthewjones372/proofload/jdbc/Database;
+}
+
+public final class io/github/matthewjones372/proofload/jdbc/JdbcAction : io/github/matthewjones372/proofload/Action {
+	public final fun binding (Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/proofload/jdbc/JdbcAction;
+	public final fun getName ()Ljava/lang/String;
+	public fun run (Lio/github/matthewjones372/proofload/StepScope;)V
+}
+
+public final class io/github/matthewjones372/proofload/jdbc/JdbcKt {
+	public static final fun exec (Lio/github/matthewjones372/proofload/ScenarioBuilder;Lio/github/matthewjones372/proofload/jdbc/JdbcAction;)V
+	public static final fun getJdbc ()Lio/github/matthewjones372/proofload/jdbc/Jdbc;
+}
+
+public final class io/github/matthewjones372/proofload/jdbc/ReadingKt {
+	public static final fun getRows (Lio/github/matthewjones372/proofload/StepStats;)J
+	public static final fun getWaitedForPool (Lio/github/matthewjones372/proofload/StepStats;)Lio/github/matthewjones372/proofload/Timing;
+}
+
+public final class io/github/matthewjones372/proofload/jdbc/SqlState : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/matthewjones372/proofload/jdbc/SqlState;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/jdbc/SqlState;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/jdbc/SqlState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

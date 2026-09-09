@@ -8,7 +8,7 @@ has to decide alone whether to ship.
 
 Every load tool that answers this without being told invents a threshold, and
 an invented threshold is the same lie as an interpolated percentile. The fix is
-not for Kestrel to guess — it is for the target to be stated once, in Kotlin,
+not for Proofload to guess — it is for the target to be stated once, in Kotlin,
 where the test and the report can both read it.
 
 ## Not doing
@@ -23,11 +23,11 @@ where the test and the report can both read it.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.expecting
-import io.github.matthewjones372.kestrel.failureRate
-import io.github.matthewjones372.kestrel.keptSchedule
-import io.github.matthewjones372.kestrel.p99
-import io.github.matthewjones372.kestrel.percent
+import io.github.matthewjones372.proofload.expecting
+import io.github.matthewjones372.proofload.failureRate
+import io.github.matthewjones372.proofload.keptSchedule
+import io.github.matthewjones372.proofload.p99
+import io.github.matthewjones372.proofload.percent
 
 val simulation = checkout.at(50.perSecond, over = 1.minutes).expecting(
     p99(pay) under 200.milliseconds,

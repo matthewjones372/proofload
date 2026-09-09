@@ -19,18 +19,18 @@ fresh for the whole run.
 
 ## Not doing
 
-- No OAuth client, no device flow, no identity provider integration. Kestrel
+- No OAuth client, no device flow, no identity provider integration. Proofload
   gets a token from a function the caller wrote.
 - No retry-on-401. Retries change what is being measured and belong in their
   own spec.
 - No credential storage, no secrets handling. A token comes from the caller's
-  environment, and Kestrel neither reads nor writes it anywhere.
+  environment, and Proofload neither reads nor writes it anywhere.
 - No per-user refresh. Per-user credentials are the session's job.
 
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.refreshing
+import io.github.matthewjones372.proofload.refreshing
 import kotlin.time.Duration.Companion.minutes
 
 val token = refreshing(every = 5.minutes) { fetchToken() }

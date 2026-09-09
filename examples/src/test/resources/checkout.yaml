@@ -1,5 +1,5 @@
 # The plan the checked-in Kotlin beside this file was written from.
-kestrel:  plan/1
+proofload:  plan/1
 baseUrl:  https://orders.internal
 scenario: checkout
 steps:

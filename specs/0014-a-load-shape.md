@@ -22,11 +22,11 @@ rather than one — three sets of percentiles, three warm-ups, and no answer to
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.hold
-import io.github.matthewjones372.kestrel.perSecond
-import io.github.matthewjones372.kestrel.rampRate
-import io.github.matthewjones372.kestrel.then
-import io.github.matthewjones372.kestrel.thenRampTo
+import io.github.matthewjones372.proofload.hold
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.rampRate
+import io.github.matthewjones372.proofload.then
+import io.github.matthewjones372.proofload.thenRampTo
 import kotlin.time.Duration.Companion.minutes
 
 val soak = rampRate(from = 0.perSecond, to = 200.perSecond, over = 1.minutes)

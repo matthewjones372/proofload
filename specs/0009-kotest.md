@@ -18,8 +18,8 @@ framework-agnostic as the README claims.
 ## Shape
 
 ```kotlin
-import io.github.matthewjones372.kestrel.kotest.kestrel
-import io.github.matthewjones372.kestrel.perSecond
+import io.github.matthewjones372.proofload.kotest.proofload
+import io.github.matthewjones372.proofload.perSecond
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeLessThan
 import kotlin.time.Duration.Companion.milliseconds
@@ -28,18 +28,18 @@ import kotlin.time.Duration.Companion.minutes
 class CheckoutSpec : StringSpec({
 
     "checkout holds p99 under 200ms at 50 a second" {
-        val result = kestrel().run(checkout.at(50.perSecond, over = 1.minutes))
+        val result = proofload().run(checkout.at(50.perSecond, over = 1.minutes))
 
         result["pay"].responseTime.p99 shouldBeLessThan 200.milliseconds
     }
 })
 ```
 
-- `kestrel-kotest`, depending on `kestrel-core`, `kestrel-engine` and Kotest.
+- `proofload-kotest`, depending on `proofload-core`, `proofload-engine` and Kotest.
   Its dependency test asserts those and no second stack — in particular, no
   JUnit-5 module of ours on its classpath.
-- The same `Kestrel` runner type as 0008, moved to core or duplicated —
-  whichever keeps `kestrel-junit5` and `kestrel-kotest` independent.
+- The same `Proofload` runner type as 0008, moved to core or duplicated —
+  whichever keeps `proofload-junit5` and `proofload-kotest` independent.
 
 ## Why this shape
 
@@ -50,10 +50,10 @@ checked, so it matters more here than the API surface does.
 
 ## Stack
 
-- [ ] **`spec-0009-module`** — module, wiring, dependency test, and `kestrel()`
+- [ ] **`spec-0009-module`** — module, wiring, dependency test, and `proofload()`
       inside a Kotest spec.
       Done when: a `StringSpec` runs a one-user simulation and asserts on the
-      result, with no `kestrel-junit5` on the classpath, and `./gradlew build`
+      result, with no `proofload-junit5` on the classpath, and `./gradlew build`
       is green.
 - [ ] **`spec-0009-listener`** — a Kotest listener carrying the same
       failure-message summary as the JUnit extension.
@@ -69,8 +69,8 @@ checked, so it matters more here than the API surface does.
 
 Answered by the architect:
 
-1. **If `Kestrel` has to be shared between the two extension modules, it moves
-    into `kestrel-engine`**, which both already depend on. It does not move
-    into `kestrel-core`: core describes, it does not run.
+1. **If `Proofload` has to be shared between the two extension modules, it moves
+    into `proofload-engine`**, which both already depend on. It does not move
+    into `proofload-core`: core describes, it does not run.
 2. **Kotest is a real third-party dependency and that is fine.** This is a leaf
     module; AGENTS.md allows exactly this, and the dependency test states it.

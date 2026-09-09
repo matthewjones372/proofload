@@ -3,12 +3,12 @@
 ## Problem
 
 A request that returns 200 with an error page in the body is counted as a
-success. The only thing `kestrel-http` checks is the status, so a target that
+success. The only thing `proofload-http` checks is the status, so a target that
 degrades into cheerful empty responses looks faster and healthier than one that
 fails honestly.
 
 Retries are the other half. Every real client retries something — a 503, a
-timeout, a token that expired — and Kestrel has no way to express it. Worse, a
+timeout, a token that expired — and Proofload has no way to express it. Worse, a
 caller who writes their own retry loop inside a step gets the retries timed as
 one long request, which quietly triples a p99 nobody can explain.
 

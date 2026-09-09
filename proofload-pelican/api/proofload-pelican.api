@@ -1,0 +1,17 @@
+public final class io/github/matthewjones372/proofload/pelican/ProofloadTransportKt {
+	public static final fun proofloadTransport (Lio/github/matthewjones372/proofload/RunRecorder;Ljava/util/List;Ljava/time/Duration;)Lio/github/matthewjones372/pelican/ClientTransport;
+	public static synthetic fun proofloadTransport$default (Lio/github/matthewjones372/proofload/RunRecorder;Ljava/util/List;Ljava/time/Duration;ILjava/lang/Object;)Lio/github/matthewjones372/pelican/ClientTransport;
+}
+
+public final class io/github/matthewjones372/proofload/pelican/Status : io/github/matthewjones372/proofload/Reason {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/matthewjones372/proofload/pelican/Status;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/pelican/Status;IILjava/lang/Object;)Lio/github/matthewjones372/proofload/pelican/Status;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public fun getDescribed ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

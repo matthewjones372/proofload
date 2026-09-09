@@ -63,7 +63,7 @@ write_spec {"runId": "r-1", "into": "benchmarks/search.md"}
 ## The plan
 
 ```yaml
-kestrel:  plan/1
+proofload:  plan/1
 ...
 ```
 

@@ -42,9 +42,9 @@ jobs:
       - name: Restore the last baseline
         uses: actions/cache@v4
         with:
-          path: build/kestrel
-          key: kestrel-baseline-${{ github.run_id }}
-          restore-keys: kestrel-baseline-
+          path: build/proofload
+          key: proofload-baseline-${{ github.run_id }}
+          restore-keys: proofload-baseline-
 
       # No `continue-on-error` and no threshold: this fails only if requests
       # failed. Latency does not gate a merge on a shared runner — see the
@@ -59,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: kestrel-baseline
-          path: build/kestrel/*.kestrel
+          name: proofload-baseline
+          path: build/proofload/*.proofload
           retention-days: 90
           if-no-files-found: error

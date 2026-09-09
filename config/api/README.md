@@ -25,7 +25,7 @@ transcript of it running.
 $ ./config/api/proves-the-gate.sh
 --- removed 'fun Progress.throttled' from the public surface; running ./gradlew apiCheck
 --- apiCheck failed and named it, which is the gate working:
-41:  -	public static final fun throttled-HG0u8IE (Lio/github/matthewjones372/kestrel/Progress;J)Lio/github/matthewjones372/kestrel/Progress;
+41:  -	public static final fun throttled-HG0u8IE (Lio/github/matthewjones372/proofload/Progress;J)Lio/github/matthewjones372/proofload/Progress;
 ```
 
 The script puts the function back on the way out, whatever happens. Run it after

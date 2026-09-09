@@ -1,5 +1,6 @@
 package io.github.matthewjones372.proofload.kafka
 
+import org.apache.kafka.common.Uuid
 import org.apache.kafka.common.message.ApiVersionsResponseData
 import org.apache.kafka.common.message.FetchRequestData
 import org.apache.kafka.common.message.FetchResponseData
@@ -14,7 +15,7 @@ import org.apache.kafka.common.protocol.ApiKeys
 import org.apache.kafka.common.protocol.ByteBufferAccessor
 import org.apache.kafka.common.protocol.Message
 import org.apache.kafka.common.protocol.ObjectSerializationCache
-import org.apache.kafka.common.record.MemoryRecords
+import org.apache.kafka.common.record.internal.MemoryRecords
 import org.apache.kafka.common.requests.RequestHeader
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -60,6 +61,17 @@ class FakeBroker : AutoCloseable {
     // a record batch a Fetch response can hand straight back, so nothing here
     // encodes one — which is what makes a consumer affordable at all.
     private val log = java.util.concurrent.ConcurrentLinkedQueue<MemoryRecords>()
+
+    /**
+     * The offset the next record appended will get.
+     *
+     * A broker assigns a batch's offsets when it appends it; a client's batches all
+     * arrive claiming to start at zero. Handing them back that way works only while
+     * there is one of them — a consumer that has moved past zero discards a second
+     * batch as already seen, which loses every record in it and reads as a gap in
+     * the middle rather than as an error.
+     */
+    private val nextOffset = java.util.concurrent.atomic.AtomicLong(0L)
 
     /** How many records this broker has been handed, across every produce request. */
     val recordsProduced: Long get() = produced.get()
@@ -147,6 +159,10 @@ class FakeBroker : AutoCloseable {
                 listOf(
                     MetadataResponseData.MetadataResponseTopic()
                         .setName(TOPIC)
+                        // A 4.x client addresses a topic by id from Produce v13 on, and
+                        // will not accept the zero id a topic without one gets. Fixed
+                        // rather than random so a failure reads the same twice.
+                        .setTopicId(TOPIC_ID)
                         .setPartitions(
                             listOf(
                                 MetadataResponseData.MetadataResponsePartition()
@@ -173,7 +189,16 @@ class FakeBroker : AutoCloseable {
         request.topicData().forEach { topic ->
             topic.partitionData().forEach { partition ->
                 (partition.records() as MemoryRecords?)?.let { records ->
-                    produced.addAndGet(records.records().count().toLong())
+                    val count = records.records().count().toLong()
+                    val base = nextOffset.getAndAdd(count)
+                    // What a real broker does on append: rewrite each batch's last
+                    // offset so the batch says where in the log it actually sits.
+                    var last = base - 1L
+                    records.batches().forEach { batch ->
+                        last += (batch.countOrNull() ?: 0)
+                        batch.setLastOffset(last)
+                    }
+                    produced.addAndGet(count)
                     log.add(records)
                 }
             }
@@ -182,8 +207,15 @@ class FakeBroker : AutoCloseable {
             setResponses(
                 ProduceResponseData.TopicProduceResponseCollection(
                     request.topicData().map { topic ->
+                        // Produce v13 identifies a topic by id rather than by name —
+                        // `topicId` arrived in 4.x and does not exist in 3.9's schema.
+                        // Both are set: the one the negotiated version serialises is
+                        // the one that goes out, and echoing the request's id is what
+                        // lets the client match the response to what it sent. The
+                        // fetch response below has always done this.
                         ProduceResponseData.TopicProduceResponse()
                             .setName(topic.name())
+                            .setTopicId(topic.topicId())
                             .setPartitionResponses(
                                 topic.partitionData().map { partition ->
                                     ProduceResponseData.PartitionProduceResponse()
@@ -246,7 +278,7 @@ class FakeBroker : AutoCloseable {
                     .setPartitions(
                         topic.partitions().map { partition ->
                             val held = log.toList()
-                            val sending = held.drop(batchesBefore(held, partition.fetchOffset()))
+                            val sending = listOfNotNull(holding(held, partition.fetchOffset()))
                             FetchResponseData.PartitionData()
                                 .setPartitionIndex(partition.partition())
                                 .setErrorCode(0)
@@ -260,13 +292,22 @@ class FakeBroker : AutoCloseable {
         )
     }
 
-    private fun batchesBefore(held: List<MemoryRecords>, offset: Long): Int {
-        var seen = 0L
-        held.forEachIndexed { at, batch ->
-            if (seen >= offset) return at
-            seen += batch.records().count()
+    /**
+     * The batch holding [offset], or null where the log has not reached it.
+     *
+     * By offset rather than by counting batches: a consumer asks for a position in
+     * the log, and the batch it wants is the one whose range covers that position.
+     * Counting batches assumed one fetch per batch in order, which held only while
+     * the producer sent one.
+     */
+    private fun holding(held: List<MemoryRecords>, offset: Long): MemoryRecords? {
+        var base = 0L
+        held.forEach { batch ->
+            val count = batch.records().count().toLong()
+            if (offset < base + count) return batch
+            base += count
         }
-        return held.size
+        return null
     }
 
     /** Length prefix, response header at its own version, then the body at the request's. */
@@ -290,5 +331,14 @@ class FakeBroker : AutoCloseable {
 
     companion object {
         const val TOPIC: String = "trades"
+
+        /**
+         * The id this broker gives its one topic.
+         *
+         * Produce v13 addresses a topic by id rather than by name, and a client
+         * will not accept the zero id a topic without one gets. Fixed rather than
+         * random so a failure reads the same way twice.
+         */
+        val TOPIC_ID: Uuid = Uuid(1L, 1L)
     }
 }

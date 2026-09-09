@@ -24,14 +24,14 @@ plugins {
 // wrote.
 dependencies {
     api(project(":proofload-core"))
-    // Held at 3.x deliberately. Kafka 4.3 is not a bump for this module: it moved
-    // `MemoryRecords` into `record.internal`, and dropped the
-    // `MockProducer(boolean, Serializer, Serializer)` constructor along with
-    // `DefaultPartitioner`, which breaks `FakeBroker` and three test files. That is
-    // a migration with a decision in it — whether a fake broker may lean on an
-    // internal package at all, when 0061's real-broker containers are the way out
-    // of needing one — and it does not belong inside a grouped dependency update.
-    api("org.apache.kafka:kafka-clients:3.9.1")
+    // 4.x, and 0117 is what it cost: `MemoryRecords` moved into `record.internal`,
+    // `MockProducer` lost its three-argument constructor, `Producer` gained two
+    // metric-subscription methods and lost a transaction overload, and Produce v13
+    // addresses a topic by id rather than by name — which is what `FakeBroker` had
+    // to learn. The fake was kept rather than replaced by containers: it proves the
+    // wire against a real producer and a real consumer inside `./gradlew build`,
+    // everywhere, for no dependency, which is what 0061 already argued.
+    api("org.apache.kafka:kafka-clients:4.3.1")
 
     // An engine to run the scenarios these tests build, and nothing that is a
     // broker: whether a cluster is sized right needs the caller's cluster.

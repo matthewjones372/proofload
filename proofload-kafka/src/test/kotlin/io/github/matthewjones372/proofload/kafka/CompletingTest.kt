@@ -120,7 +120,7 @@ class CompletingTest {
             .run(Progress.silent)
     }
 
-    private fun mock() = MockProducer(true, ByteArraySerializer(), ByteArraySerializer())
+    private fun mock() = MockProducer(true, null, ByteArraySerializer(), ByteArraySerializer())
 
     @Test
     fun `the id an emit wrote is the id the completions match on`() {

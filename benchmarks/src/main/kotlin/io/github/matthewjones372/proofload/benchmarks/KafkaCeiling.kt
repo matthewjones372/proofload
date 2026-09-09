@@ -119,11 +119,12 @@ private class Discarding : Producer<ByteArray, ByteArray> {
         groupMetadata: ConsumerGroupMetadata,
     ) = throw ProducerFencedException("no transactions here")
 
-    @Deprecated("kept because the interface still declares it", ReplaceWith("sendOffsetsToTransaction"))
-    override fun sendOffsetsToTransaction(
-        offsets: MutableMap<TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata>,
-        consumerGroupId: String,
-    ) = throw ProducerFencedException("no transactions here")
+    // 4.x dropped the `(Map, String)` overload this used to have to declare, and
+    // added the two below for client-side metric push. Nothing here has metrics to
+    // subscribe to: the point of this producer is to be the absence of a broker.
+    override fun registerMetricForSubscription(metric: org.apache.kafka.common.metrics.KafkaMetric) = Unit
+
+    override fun unregisterMetricFromSubscription(metric: org.apache.kafka.common.metrics.KafkaMetric) = Unit
 
     override fun commitTransaction() = Unit
     override fun abortTransaction() = Unit

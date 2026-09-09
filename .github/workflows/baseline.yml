@@ -68,3 +68,5 @@ jobs:
           path: build/proofload/*.proofload
           retention-days: 90
           if-no-files-found: error
+
+# probe: a comment, to test whether touching this file suppresses PR checks.

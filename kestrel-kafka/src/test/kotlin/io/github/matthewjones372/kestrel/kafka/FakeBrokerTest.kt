@@ -69,6 +69,13 @@ class FakeBrokerTest {
                 setProperty(ConsumerConfig.GROUP_ID_CONFIG, "spike")
                 setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
                 setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+                // Both default to 30s, which is the whole of PATIENCE below: a
+                // client that spent one request timeout retrying left the loop
+                // no budget to see the retry succeed, so a loaded runner failed
+                // this on content while the real cause was the clock. Short
+                // enough that several attempts fit inside the deadline.
+                setProperty(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "5000")
+                setProperty(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "10000")
             }
 
             val read = KafkaConsumer(settings, ByteArrayDeserializer(), ByteArrayDeserializer()).use { consumer ->
@@ -90,6 +97,12 @@ class FakeBrokerTest {
                 seen
             }
 
+            // The deadline is a guard against a hang, not a claim about speed.
+            // Saying which one ended the loop keeps a slow runner from being
+            // reported as a broker that fetched the wrong records.
+            withClue("only ${read.size} of $PRODUCED records arrived within $PATIENCE: $read") {
+                read.size shouldBe PRODUCED
+            }
             withClue("$read") { read.take(PRODUCED) shouldBe (0 until PRODUCED).map { "trade $it" } }
         }
     }

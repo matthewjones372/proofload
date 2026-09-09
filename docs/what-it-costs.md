@@ -91,13 +91,12 @@ generator was, in the ordinary case, on time.
 
 **`fellBehind()`** is what the library reports on a run, and it asks a different
 question: whether the injector's *p99* lateness is more than `MATERIAL` — a
-twentieth — of the **worst** step's response-time p99, bounded below by the
-machine's own floor where one was measured. Against a target answering in
-hundreds of microseconds that threshold is itself microseconds, so a run with
-any lateness at all trips it. Reading a `yes` there as "the tool cannot manage a
-hundred a second" is exactly backwards: it says the generator's own lateness is
-large enough to be visible beside the number being reported, which at these
-latencies it nearly always is.
+twentieth — of the **worst** step's response-time p99. Against a target
+answering in hundreds of microseconds that threshold is itself microseconds, so
+a run with any lateness at all trips it. Reading a `yes` there as "the tool
+cannot manage a hundred a second" is exactly backwards: it says the generator's
+own lateness is large enough to be visible beside the number being reported,
+which at these latencies it nearly always is.
 
 It is a whole-run verdict read off one step, so in a mix of a slow step and a
 fast one it answers for the slow one. `RunResult.kt` states the threshold in one

@@ -100,6 +100,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           number=$(cat build/badges/coverage.json)
+          # Measuring runs the tests, and a test that writes into the tree leaves
+          # it dirty enough that `git switch` refuses. Nothing built here is worth
+          # keeping past this point — the number is already read into `$number`.
+          git checkout -- .
+          git clean -qfd -e build -e '*/build'
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin badges --depth 1 2>/dev/null && git switch badges \

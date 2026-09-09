@@ -22,6 +22,9 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21%2B-437291.svg?logo=openjdk&logoColor=white)](https://adoptium.net)
 
+<sub>A load-testing library for the JVM. Not the "Proofload Method" published on
+Zenodo, and not proof-load testing of lifting equipment.</sub>
+
 </div>
 
 **A passing load test can still ship a slow service.** When the load generator
@@ -143,10 +146,9 @@ directory has no such state to get wrong.
 
 [docs/mcp.md](docs/mcp.md#starting-it) has all four routes.
 
-While this repository is private, the release asset and the image are private with
-it: the download needs `gh release download` and the image needs
-`docker login ghcr.io`. Maven Central needs neither, so the `jbang` line above is the
-one that works for anyone today.
+Maven Central and the release download need no account: the repository is public
+and the asset is served to anyone. The GHCR image is the exception — its package
+is still private, so `docker` needs `docker login ghcr.io` until that is changed.
 
 Working on Proofload itself, or on an unreleased change, build it instead:
 
@@ -275,6 +277,21 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
 - **Answers before you run.** A scenario is a value, so
   `checkout.at(50.perSecond, over = 1.minutes).profile.userCount()` is `3000`
   before a single request goes out.
+- **A ceiling for the tool itself.** The shipped HTTP step sustains **at least
+  2,500 requests a second**, and a step that touches no socket sustains
+  **100,000** — on four cores shared with the target, over loopback, untuned.
+  [docs/what-it-costs.md](docs/what-it-costs.md) has the tables, the machine and
+  what each sweep left out.
+
+The HTTP figure is a deliberately conservative lower bound: 5,000/s kept the
+median departure inside a millisecond too, and was passed over because three
+requests in twenty-five thousand were refused. Neither number is a comparison
+with another tool — this repository publishes none, on purpose.
+
+**`fellBehind()` is not a capacity verdict.** It asks whether the generator's own
+p99 lateness is large enough to be visible beside the target's p99, which at
+microsecond latencies it usually is. A `yes` at a hundred a second says the
+target was fast, not that the tool struggled.
 
 <div align="center">
 <picture>
@@ -287,9 +304,9 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc1")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc1")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc1")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc3")
 }
 ```
 
@@ -312,9 +329,10 @@ a note on why it is those lines and not the obvious alternative:
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 
 > [!NOTE]
-> Early days. `0.1.0-rc1` is the first release on Maven Central — a release
-> candidate, so signatures and coordinates are real but the API may still move
-> before `0.1.0`. `specs/` tracks what is built and what is not.
+> Early days. **`0.1.0-rc3` is the current release**, and every coordinate on
+> this page and under `docs/` is pinned to it. A release candidate, so signatures
+> and coordinates are real but the API may still move before `0.1.0`. `specs/`
+> tracks what is built and what is not.
 
 ## The rest
 

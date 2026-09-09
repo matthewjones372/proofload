@@ -26,6 +26,33 @@ A rate kept its schedule when the median departure left within a millisecond of
 when it was due. The same rule decides both tables, so the two can be read
 against each other.
 
+## What has a number, and what has none
+
+Proofload ships steps over more transports than this page has swept. A document
+about what the tool costs should say which of them carry a number before it
+shows one.
+
+| Path | Measured | Where, and what the number is |
+|---|---|:---|
+| the engine alone, no socket | yes | `:benchmarks:ceiling` — 100,000/s, an upper bound on a path nobody runs |
+| `proofload-http`, a request per step | yes | `:benchmarks:ceiling` — at least 2,500/s, a lower bound: loopback, target in this JVM |
+| `proofload-kafka` | partly | `:benchmarks:kafkaCeiling` — the adapter, with the broker, the accumulator and the sender thread taken out |
+| what a run retains | yes | `:benchmarks:footprint` and `:benchmarks:timelineCost`, on a different machine, named where those figures are |
+| `proofload-http` server-sent events | **no** | nothing sweeps a stream held open |
+| `proofload-websocket` | **no** | nothing sweeps it |
+| `proofload-grpc`, `proofload-grpc-dynamic` | **no** | nothing sweeps them |
+| `proofload-jdbc` | **no** | nothing sweeps it, and a pool wait is the interesting part |
+
+**"No" means nobody measured it, not that it is slow.** An unswept adapter still
+reports `behind`, `hiccups` and `fellBehind()` on every run it is used in, so a
+user is not flying blind — what is missing is the sweep that says at which rate
+that verdict starts turning over, which is the thing only a benchmark can say.
+
+**Every rate on this page was measured against a target that answers
+immediately.** By Little's law that puts fewer than one user in flight, so all of
+them are rates at near-zero concurrency, and none says what this tool costs while
+it holds thousands of users open. That is a gap, not a subtlety.
+
 ## Over a socket
 
 The step a user writes, sent the way a user sends it: one blocking `send` per

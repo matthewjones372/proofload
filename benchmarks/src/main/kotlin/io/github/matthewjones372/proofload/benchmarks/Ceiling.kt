@@ -55,25 +55,28 @@ private fun measureNullStep(rate: Int): Measured {
     // the rates happen to be in.
     // Silent: a row measuring this tool should not have this tool talking
     // over it, and a progress line is a comfort rather than a measurement.
-    nothing.at(rate.perSecond, over = WARMUP).run(Progress.silent)
+    nothing.at(rate.perSecond, over = SWEEP_WARMUP).run(Progress.silent)
 
-    return Measured(rate, nothing.at(rate.perSecond, over = WINDOW).run(Progress.silent), loadAverage())
+    return Measured(rate, nothing.at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent), loadAverage())
 }
 
 private fun measureOverASocket(rate: Int): Measured {
     // The warm-up gets a target of its own, because the row reports what this
     // rate's target took and a shared one would answer for two windows.
-    loopback { warming -> hitting(warming).at(rate.perSecond, over = WARMUP).run(Progress.silent) }
+    loopback { warming -> hitting(warming).at(rate.perSecond, over = SWEEP_WARMUP).run(Progress.silent) }
 
     return loopback { target ->
-        val result = hitting(target).at(rate.perSecond, over = WINDOW).run(Progress.silent)
+        val result = hitting(target).at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent)
         Measured(rate, result, loadAverage(), served = target.served())
     }
 }
 
 /** The shipped step, unconfigured: the sweep measures what a user gets. */
-private fun hitting(target: LoopbackTarget): Scenario =
-    scenario("over a socket") { exec(http.baseUrl(target.baseUrl).get("/")) }
+private fun hitting(target: LoopbackTarget): Scenario = hitting(target.baseUrl)
+
+/** The same step at a target this process cannot see into, which is the only difference. */
+internal fun hitting(baseUrl: String): Scenario =
+    scenario("over a socket") { exec(http.baseUrl(baseUrl).get("/")) }
 
 internal class Measured(
     val rate: Int,
@@ -92,7 +95,7 @@ internal class Measured(
      * actually decides the ceiling — a departure late by more than this is late
      * enough to show up in a real target's percentiles.
      */
-    val keptSchedule: Boolean get() = result.behind.p50 <= BUDGET
+    val keptSchedule: Boolean get() = result.behind.p50 <= SWEEP_BUDGET
 
     /** A refused request is not a request this tool sent at the rate it promised. */
     val answeredEverything: Boolean get() = result.failed == 0L
@@ -139,8 +142,8 @@ internal fun report(withoutASocket: List<Measured>, overASocket: List<Measured>)
 private fun preamble(): List<String> = listOf(
     "# What this tool costs",
     "",
-    "Two sweeps, one rule. Each row is a $WINDOW run at one rate, and a rate kept",
-    "its schedule when the median departure left within $BUDGET of when it was due —",
+    "Two sweeps, one rule. Each row is a $SWEEP_WINDOW run at one rate, and a rate kept",
+    "its schedule when the median departure left within $SWEEP_BUDGET of when it was due —",
     "the same criterion in both tables, so the two ceilings can be read against each",
     "other.",
     "",
@@ -180,7 +183,7 @@ private fun overSocketSection(measured: List<Measured>): List<String> {
         "against a range that is machine-wide too, and a busy neighbour inflates both.",
         "",
         "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
-            "Served p50 | Served p99 | Files | Ports | p50 within $BUDGET | fellBehind() |",
+            "Served p50 | Served p99 | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
         "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
     ) + measured.map { it.socketRow() } + listOf(
         "",
@@ -205,7 +208,7 @@ private fun nullStepSection(measured: List<Measured>): List<String> {
         "times higher — so it holds stalls on the machine as well as any backlog, and one",
         "run of each rate is not enough to separate the two.",
         "",
-        "| Rate | Requests | Behind p50 | Behind p99 | Behind max | p50 within $BUDGET | fellBehind() |",
+        "| Rate | Requests | Behind p50 | Behind p99 | Behind max | p50 within $SWEEP_BUDGET | fellBehind() |",
         "|---:|---:|---:|---:|---:|:---:|:---:|",
     ) + measured.map { it.nullStepRow() } + listOf(
         "",
@@ -224,7 +227,7 @@ private fun footer(measured: List<Measured>): List<String> {
     return listOf("", "Measured on ${machine()}, under $carrying.")
 }
 
-private fun Measured.socketRow(): String =
+internal fun Measured.socketRow(): String =
     "| ${rate.grouped()} | ${result.count.grouped()} | ${result.failed.grouped()} | $whyFailed | " +
         "${result.behind.p50.readable()} | ${result.behind.p99.readable()} | ${result.behind.max.readable()} | " +
         "${served?.p50.readable()} | ${served?.p99.readable()} | $room | " +
@@ -238,12 +241,12 @@ private fun Measured.nullStepRow(): String =
 /** What the machine was carrying, so a figure taken on a busy one says so. */
 internal fun loadAverage(): Double = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
 
-private fun machine(): String =
+internal fun machine(): String =
     "${System.getProperty("os.name")} ${System.getProperty("os.arch")}, " +
         "${Runtime.getRuntime().availableProcessors()} processors, " +
         "JDK ${System.getProperty("java.version")}"
 
-private fun Double.rounded(): String = String.format(Locale.ROOT, "%.2f", this)
+internal fun Double.rounded(): String = String.format(Locale.ROOT, "%.2f", this)
 
 internal fun Duration?.readable(): String = this?.toString() ?: NOTHING
 
@@ -255,9 +258,9 @@ internal fun Number.grouped(): String =
 
 private const val THOUSAND = 3
 
-private val WARMUP: Duration = 1.seconds
+internal val SWEEP_WARMUP: Duration = 1.seconds
 
-private val WINDOW: Duration = 5.seconds
+internal val SWEEP_WINDOW: Duration = 5.seconds
 
 private val RATES = listOf(100, 250, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000)
 
@@ -266,11 +269,11 @@ private val RATES = listOf(100, 250, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 
  * connection, a handler thread and two syscalls, and a rate the loopback stack
  * cannot answer measures the queue it built rather than the generator.
  */
-private val SOCKET_RATES = listOf(100, 250, 500, 1_000, 2_500, 5_000, 10_000)
+internal val SOCKET_RATES = listOf(100, 250, 500, 1_000, 2_500, 5_000, 10_000)
 
 /**
  * How late a departure may be before the tool is inflating what it measures.
  * A millisecond is roughly the floor of what a real target's p99 moves by, so a
  * generator inside it cannot be blamed for a number a user reads.
  */
-private val BUDGET: Duration = 1.milliseconds
+internal val SWEEP_BUDGET: Duration = 1.milliseconds

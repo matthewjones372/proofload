@@ -660,9 +660,7 @@ fun RunResult.fellBehind(): Boolean {
  * one and a half percent is one people learn to route around, and this is the
  * verdict the tool exists to deliver.
  *
- * A twentieth of the tail is a tail worth distrusting. Where a run measured a
- * floor, [Floor] bounds this from below as well: lateness under what the machine
- * can resolve is not evidence of anything.
+ * A twentieth of the tail is a tail worth distrusting.
  */
 const val MATERIAL: Double = 0.05
 

@@ -11,6 +11,12 @@
 
 [![build](https://github.com/matthewjones372/proofload/actions/workflows/build.yml/badge.svg)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/proofload-core?label=maven%20central)](https://central.sonatype.com/artifact/io.github.matthewjones372/proofload-core)
+<!-- Line coverage, which is what `koverVerify`'s floor is on. It is the kinder of
+     two numbers — branch coverage over the same code is materially lower — and
+     0116 carries that argument. Renders once this repository is public: shields.io
+     reads the raw file anonymously, and raw.githubusercontent.com will not serve a
+     private one. -->
+[![coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/matthewjones372/proofload/badges/coverage.json)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21%2B-437291.svg?logo=openjdk&logoColor=white)](https://adoptium.net)

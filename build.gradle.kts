@@ -123,6 +123,65 @@ dependencies {
 tasks.named("check") { dependsOn("koverVerify") }
 
 /**
+ * The coverage number, in the one file a shields.io endpoint reads.
+ *
+ * In the build rather than in a workflow step: the thresholds belong beside the
+ * floor above, and a step nobody can run locally is a step that rots. It reads
+ * `koverXmlReport`'s own output, so the badge and the gate cannot disagree about
+ * what was covered.
+ *
+ * Line coverage, because that is what `minBound` is on. Branch coverage over the
+ * same code is materially lower, and a badge saying `coverage` while showing the
+ * kinder of two numbers is worth knowing about — 0116 carries the argument.
+ */
+tasks.register("coverageBadge") {
+    group = "verification"
+    description = "Writes build/badges/coverage.json for a shields.io endpoint badge."
+
+    val report = layout.buildDirectory.file("reports/kover/report.xml")
+    val badge = layout.buildDirectory.file("badges/coverage.json")
+    dependsOn(tasks.named("koverXmlReport"))
+    inputs.file(report)
+    outputs.file(badge)
+
+    doLast {
+        val counters = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+            .newDocumentBuilder()
+            .parse(report.get().asFile)
+            .documentElement
+            .childNodes
+
+        // The totals are the `counter` elements directly under `<report>`; the
+        // same element name appears per package and per class further down.
+        var covered = 0L
+        var missed = 0L
+        for (index in 0 until counters.length) {
+            val node = counters.item(index) as? org.w3c.dom.Element ?: continue
+            if (node.tagName != "counter" || node.getAttribute("type") != "LINE") continue
+            covered = node.getAttribute("covered").toLong()
+            missed = node.getAttribute("missed").toLong()
+        }
+        require(covered + missed > 0L) { "no LINE counter in ${report.get().asFile}" }
+
+        val percentage = 100.0 * covered / (covered + missed)
+        // Green at the floor `koverVerify` enforces, brighter above it, and a
+        // warning colour below — which `build` will already have failed on.
+        val colour = when {
+            percentage >= 90.0 -> "brightgreen"
+            percentage >= 80.0 -> "green"
+            percentage >= 70.0 -> "yellow"
+            else -> "red"
+        }
+        val rendered = String.format(java.util.Locale.ROOT, "%.1f%%", percentage)
+
+        badge.get().asFile.apply { parentFile.mkdirs() }.writeText(
+            """{"schemaVersion":1,"label":"coverage","message":"$rendered","color":"$colour"}""" + "\n",
+        )
+        logger.lifecycle("coverage $rendered ($covered/${covered + missed} lines) -> ${badge.get().asFile}")
+    }
+}
+
+/**
  * Derived from the tag rather than kept in a list beside it: a second list is a
  * thing to forget, and forgetting it puts a wall-clock test back into `build`.
  */

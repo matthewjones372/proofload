@@ -10,16 +10,15 @@ Every module is on Maven Central, so a launcher that resolves coordinates starts
 the server without a clone or a build:
 
 ```bash
-jbang --main io.github.matthewjones372.proofload.mcp.ServerKt io.github.matthewjones372:proofload-mcp:0.1.0-rc1
+jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc3
 ```
 
-Pass `--main` until the next release. `0.1.0-rc1` was published before the jar
-carried a `Main-Class`, and omitting it does not fail cleanly: jbang asks which
-class to run in a pop-up dialog, which a client waiting on stdout reads as a
-hang. From the release after `0.1.0-rc1` the coordinate on its own is enough.
+The coordinate alone: the published jar carries a `Main-Class`, so nothing has to be
+told which class to run. `0.1.0-rc1` predates that and needs
+`--main io.github.matthewjones372.proofload.mcp.ServerKt` if you pin it.
 
 [Coursier](https://get-coursier.io) is the same shape:
-`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc1`.
+`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc3`.
 
 jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
 and a client parses it as-is.
@@ -29,22 +28,27 @@ in step with the modules it would have shaded — so the jar carries no classpat
 and whatever starts it has to resolve the POM. That is the whole reason a
 launcher is named here rather than a download.
 
-Two more routes arrive with the release after `0.1.0-rc1`, which is the first one
-the workflow builds them in — neither exists for `0.1.0-rc1` itself.
+Two more routes need no launcher. Both arrived with `0.1.0-rc3`, the first release the
+workflow builds them in.
+
+While this repository is private they are private with it: the download needs
+`gh release download v0.1.0-rc3 --repo matthewjones372/proofload`, and the image needs
+`docker login ghcr.io`. Maven Central needs neither, which is why the coordinate
+above is the one that works for anyone today.
 
 A download, for anyone who wants no launcher. It carries `bin/proofload-mcp` and
 `bin/proofload-mcp.bat`, so it is also the Windows answer:
 
 ```bash
-curl -LO https://github.com/matthewjones372/proofload/releases/download/vVERSION/proofload-mcp-VERSION.zip
-unzip proofload-mcp-VERSION.zip
-claude mcp add proofload -- "$PWD/proofload-mcp-VERSION/bin/proofload-mcp"
+curl -LO https://github.com/matthewjones372/proofload/releases/download/v0.1.0-rc3/proofload-mcp-0.1.0-rc3.zip
+unzip proofload-mcp-0.1.0-rc3.zip
+claude mcp add proofload -- "$PWD/proofload-mcp-0.1.0-rc3/bin/proofload-mcp"
 ```
 
 A container, for anyone who wants no JDK either:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc3
 ```
 
 `-i` and no `-t`: the protocol is stdin and stdout, and a TTY would corrupt it.

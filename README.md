@@ -116,23 +116,19 @@ behaviour to keep in step.
 It is on Maven Central, so adding it takes no clone and no build:
 
 ```bash
-claude mcp add proofload -- jbang --main io.github.matthewjones372.proofload.mcp.ServerKt io.github.matthewjones372:proofload-mcp:0.1.0-rc1
+claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc3
 ```
 
-Pass `--main` until the next release. `0.1.0-rc1` shipped before the jar carried
-a `Main-Class`, and without it jbang asks which class to run in a pop-up rather
-than failing — which a client waiting on stdout reads as a hang. From the release
-after `0.1.0-rc1` the coordinate on its own is enough.
-[Coursier](https://get-coursier.io) does the same job with `cs launch`.
-`java -jar` is not one of the ways — the jar is thin and carries no classpath, so
-whatever starts it has to resolve the POM.
+The coordinate alone, because the published jar carries a `Main-Class`.
+[Coursier](https://get-coursier.io) does the same job with `cs launch`. `java -jar`
+is not one of the ways — the jar is thin and carries no classpath, so whatever starts
+it has to resolve the POM.
 
-From the release after `0.1.0-rc1` there are two more routes, neither of which
-needs a launcher — a download from the GitHub release (which carries a `.bat`, so
-it is the Windows answer too), and a container:
+Two more routes need no launcher at all — a download from the GitHub release, which
+carries a `.bat` and so is the Windows answer too, and a container:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc3
 ```
 
 That is the whole command: `benchmark`, `plan_schema`, `validate`, `preview`,
@@ -146,6 +142,11 @@ file is not there yet, which then cannot be read as an allowance. Mounting the
 directory has no such state to get wrong.
 
 [docs/mcp.md](docs/mcp.md#starting-it) has all four routes.
+
+While this repository is private, the release asset and the image are private with
+it: the download needs `gh release download` and the image needs
+`docker login ghcr.io`. Maven Central needs neither, so the `jbang` line above is the
+one that works for anyone today.
 
 Working on Proofload itself, or on an unreleased change, build it instead:
 

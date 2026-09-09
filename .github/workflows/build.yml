@@ -1,8 +1,13 @@
 name: build
 
+# `main` rather than every branch. This repository opens a pull request as it
+# creates a branch, so the `pull_request` event already builds every commit on
+# one, and `["**"]` was building each of them a second time — six jobs for one
+# commit where three answer the same question. `baseline.yml` has always been
+# scoped this way.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

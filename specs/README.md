@@ -52,3 +52,4 @@ way it does, which is why the source comments do not have to be.
 - Not a design essay. Where a decision needs pages of reasoning, the reasoning
   goes under **Why this shape** in a paragraph, not a chapter.
 - Not a backlog. One spec, one change.
+

@@ -45,7 +45,7 @@ jobs:
       # `docs/cookbook.md` as a command a reader types from the root, so the
       # task is what moves to meet it.
       - name: Restore the last baseline
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: build/proofload
           key: proofload-baseline-${{ github.run_id }}

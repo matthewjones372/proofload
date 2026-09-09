@@ -53,6 +53,11 @@ tasks.register<JavaExec>("againstTheBaseline") {
     description = "Runs one simulation, compares it to the baseline beside it, and writes the job summary."
     mainClass.set("io.github.matthewjones372.proofload.examples.AgainstTheBaseline")
     classpath = sourceSets.main.get().runtimeClasspath
+    // The baseline path below is relative, and a JavaExec resolves it against
+    // its own project directory unless told otherwise. That wrote the run to
+    // `examples/build/` while `baseline.yml` cached and uploaded the root's,
+    // so the job never restored a baseline and failed uploading nothing.
+    workingDir = rootDir
     // A runner somebody has already characterised names its floor instead of
     // spending thirty seconds measuring one; see docs/cookbook.md for what
     // that costs.

@@ -5,6 +5,11 @@
 | browse |       10 |       — |    10 |      0 | 2.01ms | 3.01ms | 3.01ms | 3.01ms |
 | pay    |      100 |       — |    97 |      3 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 
+```
+pay  p50 20.1ms  p99 30.0ms
+10ms  ############  100
+```
+
 **Failures**
 
 | Step  | Failure    | Count |

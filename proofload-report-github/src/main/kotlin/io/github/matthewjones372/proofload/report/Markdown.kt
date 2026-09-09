@@ -29,6 +29,7 @@ import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -53,7 +54,7 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
             concurrencyLine(),
         ) +
             comparison.blocks(floor) + mixBlocks() +
-            stepTable() + listOfNotNull(streamLine(), stageTable(), hiccupLine()) +
+            stepTable() + shapeBlocks() + listOfNotNull(streamLine(), stageTable(), hiccupLine()) +
             failureBlocks() + totals() +
             listOfNotNull(arrivalLine()) + measurementNote()
     }
@@ -560,6 +561,97 @@ private fun RunResult.failureBlocks(): List<String> {
 
 private fun RunResult.totals(): String = "$count requests, $ok ok, $failed failed. Started $startedAt."
 
+/**
+ * The shape the percentiles were read off, for the steps worth looking at.
+ *
+ * Two numbers hide a bimodal step: one answering in 10ms nine times in ten and
+ * 2s the rest has the p99 of a step that is merely slow, and the two want
+ * different remedies. A reader with only `p50` and `p99` has to open the page to
+ * tell them apart, which is the point at which they stop bothering.
+ *
+ * The bars are the counted buckets collapsed to decades — the log axis the page
+ * already draws, at lower resolution rather than a different view. A decade
+ * inside the range that counted nothing is blank rather than smoothed, because
+ * "no smoothing, no interpolation" is the claim the numbers are sold on.
+ */
+private fun RunResult.shapeBlocks(): List<String> = shapedSteps().mapNotNull { it.shape() }
+
+/**
+ * A failing step and the slowest one, capped.
+ *
+ * Every step would be eighty rows on a twenty-step plan, and a passing run does
+ * not need them: the shape is diagnostic, so it goes where there is something to
+ * diagnose. Goals would be the better selector, but [io.github.matthewjones372.proofload.Goal]
+ * exposes no step of its own and matching its variants here would tie this file
+ * to that list.
+ */
+private fun RunResult.shapedSteps(): List<StepStats> {
+    val failing = steps.values.filter { it.failed.count > 0L }
+    val slowest = steps.values.maxByOrNull { it.responseTime.p99 }
+    return (failing + listOfNotNull(slowest)).distinctBy { it.name }.take(SHAPED_STEPS)
+}
+
+/**
+ * Fenced, because alignment is the whole point and markdown reflows anything
+ * that is not. Nothing is escaped inside a fence — there is nothing active in
+ * one — so the name arrives as it is, less any control character that would end
+ * the block early.
+ */
+private fun StepStats.shape(): String? {
+    val counted = responseTime.distribution
+    if (counted.isEmpty()) return null
+
+    val perDecade = counted.groupBy { decadeOf(it.upperBound) }
+        .mapValues { (_, buckets) -> buckets.sumOf { it.count } }
+    val decades = perDecade.keys.min()..perDecade.keys.max()
+    val widest = perDecade.values.max()
+    val label = decades.associateWith { decadeLabel(it) }
+    val gutter = label.values.maxOf { it.length }
+
+    return buildString {
+        append("```\n")
+        append(name.filterNot { it.isISOControl() })
+        append("  p50 ${responseTime.p50.report()}  p99 ${responseTime.p99.report()}\n")
+        decades.forEach { decade ->
+            val seen = perDecade[decade] ?: 0L
+            val bar = BAR.repeat(barWidth(seen, widest))
+            val tally = if (seen > 0L) "  $seen" else ""
+            // Trimmed: a decade that counted nothing would otherwise leave the
+            // gutter's padding behind as trailing spaces on a blank row.
+            append("${label.getValue(decade).padStart(gutter)}  $bar$tally".trimEnd())
+            append("\n")
+        }
+        append("```")
+    }
+}
+
+/** Which power of ten a bucket's upper bound sits in, as an exponent over nanoseconds. */
+private fun decadeOf(bound: Duration): Int {
+    val nanos = bound.inWholeNanoseconds
+    return if (nanos <= 0L) 0 else floor(log10(nanos.toDouble())).toInt()
+}
+
+/**
+ * A decade bound is exact, so it is printed exactly. [report] exists to stop a
+ * measured value claiming a precision nobody read it at, and a power of ten is
+ * not a measurement — "10.0ms" would imply three digits of one.
+ */
+private fun decadeLabel(decade: Int): String = TEN.pow(decade).nanoseconds.toString()
+
+/**
+ * At least one mark for anything counted: a bar scaled to the largest bucket
+ * rounds a real reading to nothing, and a blank row already means zero. The
+ * count is printed beside every bar so the bar never has to be trusted.
+ */
+private fun barWidth(count: Long, widest: Long): Int =
+    if (count == 0L) 0 else ((count * BAR_WIDTH) / widest).toInt().coerceAtLeast(1)
+
+private fun Int.pow(exponent: Int): Long {
+    var value = 1L
+    repeat(exponent) { value *= this }
+    return value
+}
+
 private enum class Align { LEFT, RIGHT }
 
 private class Column(val header: String, val align: Align)
@@ -612,6 +704,10 @@ private const val MIN_COLUMN_WIDTH = 5
 /** Under this share of the window, a shortfall is the timeline's own whole seconds rather than a run that stopped. */
 private const val SHORTFALL = 0.1
 
+private const val SHAPED_STEPS = 3
+private const val BAR = "#"
+private const val BAR_WIDTH = 12
+private const val TEN = 10
 private const val SIGNIFICANT_DIGITS = 3
 private const val NANOS_PER_MICRO = 1_000L
 private const val NANOS_PER_MILLI = 1_000_000L

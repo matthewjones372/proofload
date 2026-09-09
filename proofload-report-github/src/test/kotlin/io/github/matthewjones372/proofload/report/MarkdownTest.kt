@@ -92,6 +92,13 @@ class MarkdownTest {
             List(samples - fifth * 4) { 30.milliseconds }
     }
 
+    /**
+     * Nine in ten at 10 ms and the rest at 2 s. Its p99 is that of a step which
+     * is merely slow, and it is nothing of the kind — the shape is the only part
+     * of a summary that can tell the two apart, which is why it is printed.
+     */
+    private val bimodal = step("checkout", List(900) { 10.milliseconds } + List(100) { 2.seconds })
+
     private val startedAt = Instant.parse("2026-08-26T09:00:00Z")
 
     @Test
@@ -113,6 +120,33 @@ class MarkdownTest {
         val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = Histogram().timing())
 
         result.markdown() shouldContain "| browse |       10 |       — |"
+    }
+
+    @Test
+    fun `a bimodal step shows both modes, and the decade between them that counted nothing`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("checkout" to bimodal),
+            behind = Histogram().timing(),
+        )
+
+        result.markdown() matches "bimodal.md"
+    }
+
+    @Test
+    fun `every sample the step counted is in the bars, so no mode is quietly dropped`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("checkout" to bimodal),
+            behind = Histogram().timing(),
+        )
+
+        val summary = result.markdown()
+        val counted = summary.lines()
+            .filter { it.contains('#') }
+            .mapNotNull { it.trim().substringAfterLast(' ').toLongOrNull() }
+
+        withClue(summary) { counted.sum() shouldBe bimodal.count }
     }
 
     @Test

@@ -294,8 +294,8 @@ val proofload = Proofload(
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-engine:0.1.0")
-    testImplementation("io.github.matthewjones372:proofload-otel:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-engine:0.1.0-rc1")
+    testImplementation("io.github.matthewjones372:proofload-otel:0.1.0-rc1")
 }
 ```
 
@@ -708,7 +708,7 @@ checkout.at(50.perSecond, over = 1.minutes)
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-arbs:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-arbs:0.1.0-rc1")
 }
 ```
 
@@ -1595,8 +1595,8 @@ fun main() {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Whatever you have published or built with ./gradlew publishToMavenLocal;
-    // nothing is on Maven Central yet.
+    // `0.1.0-rc1` is the first release on Maven Central; anything newer is what
+    // you built with ./gradlew publishToMavenLocal.
     implementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-http:$proofloadVersion")
@@ -1938,7 +1938,7 @@ val reading = scenario("reading") {
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-jdbc:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-jdbc:0.1.0-rc1")
     // The driver and the pool are yours, and are the point: this module carries
     // neither, so a run measures the pool your service actually runs.
     testImplementation("org.postgresql:postgresql:42.7.4")

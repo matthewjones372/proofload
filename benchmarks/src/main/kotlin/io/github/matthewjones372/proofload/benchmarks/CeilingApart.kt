@@ -36,10 +36,10 @@ private fun measureApart(rate: Int): Measured {
     // A target of its own for the warm-up, as the in-process sweep does: a row
     // reports what this rate's target took, and a shared one would answer for
     // two windows.
-    apart { warming -> hitting(warming.baseUrl).at(rate.perSecond, over = WARMUP).run(Progress.silent) }
+    apart { warming -> hitting(warming.baseUrl).at(rate.perSecond, over = SWEEP_WARMUP).run(Progress.silent) }
 
     val run = apart { target ->
-        hitting(target.baseUrl).at(rate.perSecond, over = WINDOW).run(Progress.silent)
+        hitting(target.baseUrl).at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent)
     }
     return Measured(rate, run.answered, loadAverage(), served = run.served)
 }
@@ -52,7 +52,7 @@ internal fun apartReport(measured: List<Measured>): String {
             "# What this tool costs, with the target out of the way",
             "",
             "The same sweep as `:benchmarks:ceiling`'s over-a-socket table and the same rule —",
-            "a rate kept its schedule when the median departure left within $BUDGET of when it",
+            "a rate kept its schedule when the median departure left within $SWEEP_BUDGET of when it",
             "was due — against a target in a JVM of its own rather than in this one.",
             "",
             "**Still a lower bound, and still not the client's number.** The target no longer",
@@ -64,7 +64,7 @@ internal fun apartReport(measured: List<Measured>): String {
             "\"a JVM boundary was worth this much\", not \"the client reaches this rate\".",
             "",
             "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
-                "Served p50 | Served p99 | Files | Ports | p50 within $BUDGET | fellBehind() |",
+                "Served p50 | Served p99 | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
             "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
         ) + measured.map { it.socketRow() } + listOf(
             "",

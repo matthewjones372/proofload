@@ -39,10 +39,15 @@ jobs:
       # A pull request reads main's cache and writes only into its own scope,
       # which is what makes the comparison "against main" rather than against
       # whatever ran last anywhere.
+      #
+      # `examples/build`, not `build`: the runner is the `:examples`
+      # subproject and a JavaExec resolves its arguments against its own
+      # project directory. The cookbook's `build/kestrel` is right for the
+      # single-module project a reader copies it into.
       - name: Restore the last baseline
         uses: actions/cache@v4
         with:
-          path: build/kestrel
+          path: examples/build/kestrel
           key: kestrel-baseline-${{ github.run_id }}
           restore-keys: kestrel-baseline-
 
@@ -60,6 +65,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: kestrel-baseline
-          path: build/kestrel/*.kestrel
+          path: examples/build/kestrel/*.kestrel
           retention-days: 90
           if-no-files-found: error

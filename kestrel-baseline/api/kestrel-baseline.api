@@ -11,6 +11,7 @@ public final class io/github/matthewjones372/kestrel/baseline/HistoryKt {
 public final class io/github/matthewjones372/kestrel/baseline/ManyRunsKt {
 	public static final fun readAll (Lio/github/matthewjones372/kestrel/Runs$Companion;Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/Runs;
 	public static final fun readAll (Lio/github/matthewjones372/kestrel/Shards$Companion;Ljava/nio/file/Path;)Lio/github/matthewjones372/kestrel/Shards;
+	public static final fun readAll-SxA4cEA (Lio/github/matthewjones372/kestrel/Shards$Companion;Ljava/nio/file/Path;J)Lio/github/matthewjones372/kestrel/Shards;
 	public static final fun writeInto (Lio/github/matthewjones372/kestrel/RunResult;Ljava/nio/file/Path;)Ljava/nio/file/Path;
 }
 

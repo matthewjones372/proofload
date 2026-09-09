@@ -71,6 +71,7 @@ top-level in HistoryKt
 top-level in ManyRunsKt
     fun readAll(Runs.Companion, Path): Runs
     fun readAll(Shards.Companion, Path): Shards
+    fun readAll(Shards.Companion, Path, Long): Shards
     fun writeInto(RunResult, Path): Path
 ```
 

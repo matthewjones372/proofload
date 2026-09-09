@@ -1,8 +1,8 @@
 package io.github.matthewjones372.proofload.export
 
 import com.networknt.schema.InputFormat
-import com.networknt.schema.JsonSchemaFactory
-import com.networknt.schema.SpecVersion
+import com.networknt.schema.SchemaRegistry
+import com.networknt.schema.SpecificationVersion
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -21,8 +21,11 @@ import java.nio.file.Path
  */
 class RunSchemaTest {
 
-    private val schema = JsonSchemaFactory
-        .getInstance(SpecVersion.VersionFlag.V202012)
+    // 3.x renamed the entry point and the version enum — `JsonSchemaFactory` and
+    // `SpecVersion.VersionFlag.V202012` as they were. The string-in, errors-out
+    // shape is unchanged, which is all this test uses it for.
+    private val schema = SchemaRegistry
+        .withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
         .getSchema(Files.readString(SCHEMA, Charsets.UTF_8))
 
     @Test

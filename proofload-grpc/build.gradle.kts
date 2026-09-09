@@ -20,26 +20,26 @@ plugins {
 // cannot call this module without them.
 dependencies {
     api(project(":proofload-core"))
-    api("io.grpc:grpc-api:1.78.0")
+    api("io.grpc:grpc-api:1.84.0")
 
     // `grpc-stub` too, and only for `StreamObserver`: a streaming seam has to
     // speak the type a generated async stub is written against, and that type
     // lives here rather than in `grpc-api`. It adds nothing a gRPC caller does
     // not already have — generated code depends on it — and none of the
     // refusals move: still no transport, no protobuf runtime, no coroutines.
-    api("io.grpc:grpc-stub:1.78.0")
+    api("io.grpc:grpc-stub:1.84.0")
 
     // A server this module's own tests can call, on the test classpath only.
     // Whether a cluster is sized right needs the caller's cluster; what an
     // in-process server proves is that a step is named, timed and recorded.
-    testImplementation("io.grpc:grpc-inprocess:1.78.0")
+    testImplementation("io.grpc:grpc-inprocess:1.84.0")
 
     // A real transport, on the test classpath only, and for one test: that a
     // refused connection arrives as `UNAVAILABLE` rather than as a
     // `ConnectException` needs a socket, and an in-process server has none.
     // That this module needs to borrow one to write that test is the
     // dependency claim demonstrating itself.
-    testImplementation("io.grpc:grpc-okhttp:1.78.0")
+    testImplementation("io.grpc:grpc-okhttp:1.84.0")
 
     // An engine to run the scenarios these tests build. Test-only:
     // a module of steps does not depend on the thing that runs them.

@@ -54,7 +54,7 @@ dependencies {
     // neither the JSON an agent reads nor the page a browser opens. The renderer
     // is the one a job summary already uses, so there is no second one to drift.
     implementation(project(":proofload-report-github"))
-    implementation("org.snakeyaml:snakeyaml-engine:2.10")
+    implementation("org.snakeyaml:snakeyaml-engine:3.1.1")
 }
 
 tasks.test {

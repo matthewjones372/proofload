@@ -22,7 +22,7 @@ dependencies {
 
     // H2 in its PostgreSQL compatibility mode, so the statements in the tests
     // look like statements somebody would write.
-    testImplementation("com.h2database:h2:2.4.240")
+    testImplementation("com.h2database:h2:2.5.250")
 }
 
 tasks.test {

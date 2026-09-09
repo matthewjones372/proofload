@@ -31,10 +31,9 @@ launcher is named here rather than a download.
 Two more routes need no launcher. Both arrived with `0.1.0-rc3`, the first release the
 workflow builds them in.
 
-While this repository is private they are private with it: the download needs
-`gh release download v0.1.0-rc3 --repo matthewjones372/proofload`, and the image needs
-`docker login ghcr.io`. Maven Central needs neither, which is why the coordinate
-above is the one that works for anyone today.
+The repository is public, so the download is served to anyone and needs no
+account. The image is the exception: its GHCR package is still private, so
+`docker` needs `docker login ghcr.io` until that package is made public.
 
 A download, for anyone who wants no launcher. It carries `bin/proofload-mcp` and
 `bin/proofload-mcp.bat`, so it is also the Windows answer:

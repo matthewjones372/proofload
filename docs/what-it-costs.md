@@ -26,6 +26,33 @@ A rate kept its schedule when the median departure left within a millisecond of
 when it was due. The same rule decides both tables, so the two can be read
 against each other.
 
+## What has a number, and what has none
+
+Proofload ships steps over more transports than this page has swept. A document
+about what the tool costs should say which of them carry a number before it
+shows one.
+
+| Path | Measured | Where, and what the number is |
+|---|---|:---|
+| the engine alone, no socket | yes | `:benchmarks:ceiling` — 100,000/s, an upper bound on a path nobody runs |
+| `proofload-http`, a request per step | yes | `:benchmarks:ceiling` — at least 2,500/s, a lower bound: loopback, target in this JVM |
+| `proofload-kafka` | partly | `:benchmarks:kafkaCeiling` — the adapter, with the broker, the accumulator and the sender thread taken out |
+| what a run retains | yes | `:benchmarks:footprint` and `:benchmarks:timelineCost`, on a different machine, named where those figures are |
+| `proofload-http` server-sent events | **no** | nothing sweeps a stream held open |
+| `proofload-websocket` | **no** | nothing sweeps it |
+| `proofload-grpc`, `proofload-grpc-dynamic` | **no** | nothing sweeps them |
+| `proofload-jdbc` | **no** | nothing sweeps it, and a pool wait is the interesting part |
+
+**"No" means nobody measured it, not that it is slow.** An unswept adapter still
+reports `behind`, `hiccups` and `fellBehind()` on every run it is used in, so a
+user is not flying blind — what is missing is the sweep that says at which rate
+that verdict starts turning over, which is the thing only a benchmark can say.
+
+**Every rate on this page was measured against a target that answers
+immediately.** By Little's law that puts fewer than one user in flight, so all of
+them are rates at near-zero concurrency, and none says what this tool costs while
+it holds thousands of users open. That is a gap, not a subtlety.
+
 ## Over a socket
 
 The step a user writes, sent the way a user sends it: one blocking `send` per
@@ -62,14 +89,18 @@ mistake in one of them.
 departure left within a millisecond of when it was due. It asks whether the
 generator was, in the ordinary case, on time.
 
-**`fellBehind()`** is what the library reports on a run, and it asks something
-much stricter: whether the injector's *p99* lateness is larger than the
-precision the report quotes the target's p99 to — 0.78% of it. At a hundred a
-second that threshold is a few microseconds, so any lateness at all trips it.
-Reading a `yes` there as "the tool cannot manage a hundred a second" is exactly
-backwards: it says the generator's own lateness is big enough to be visible
-beside the number being reported, which at these latencies it nearly always
-is.
+**`fellBehind()`** is what the library reports on a run, and it asks a different
+question: whether the injector's *p99* lateness is more than `MATERIAL` — a
+twentieth — of the **worst** step's response-time p99. Against a target
+answering in hundreds of microseconds that threshold is itself microseconds, so
+a run with any lateness at all trips it. Reading a `yes` there as "the tool
+cannot manage a hundred a second" is exactly backwards: it says the generator's
+own lateness is large enough to be visible beside the number being reported,
+which at these latencies it nearly always is.
+
+It is a whole-run verdict read off one step, so in a mix of a slow step and a
+fast one it answers for the slow one. `RunResult.kt` states the threshold in one
+place and 0097 argues for the number.
 
 Both are in the table because a reader deserves to see the strict test rather
 than have this page quietly pick the flattering one. It says `no` at exactly one

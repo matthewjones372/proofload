@@ -35,6 +35,10 @@ uses and inherits no stack it did not ask for.
 | `proofload-report-github` | markdown, a job summary and a Pages directory | core |
 | `proofload-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core, `pelican-core` |
 
+**Three of these have a measured ceiling and four do not.**
+[what-it-costs.md](what-it-costs.md#what-has-a-number-and-what-has-none) says
+which, and what each number leaves out.
+
 Kotest is `compileOnly` in `proofload-kotest`: a spec that uses the matchers
 already has Kotest, and one that does not should not be handed twenty jars by a
 load-testing library. zio-test is `compileOnly` in `proofload-zio-test` for the
@@ -65,8 +69,8 @@ of being found by a stranger. `./gradlew publishToMavenLocal` and then
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // `0.1.0-rc1` is the first release on Maven Central; anything newer is what
-    // you built with ./gradlew publishToMavenLocal.
+    // `0.1.0-rc3` is the current release on Maven Central; anything newer is
+    // what you built with ./gradlew publishToMavenLocal.
     implementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-http:$proofloadVersion")

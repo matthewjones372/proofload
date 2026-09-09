@@ -106,6 +106,35 @@ on another channel later — the latency you measure is the real round trip, not
 makes, so a model gets what a person at a terminal gets and there is no second
 behaviour to keep in step.
 
+It is on Maven Central, so adding it takes no clone and no build:
+
+```bash
+claude mcp add proofload -- jbang --main io.github.matthewjones372.proofload.mcp.ServerKt io.github.matthewjones372:proofload-mcp:0.1.0-rc1
+```
+
+Pass `--main` until the next release. `0.1.0-rc1` shipped before the jar carried
+a `Main-Class`, and without it jbang asks which class to run in a pop-up rather
+than failing — which a client waiting on stdout reads as a hang. From the release
+after `0.1.0-rc1` the coordinate on its own is enough.
+[Coursier](https://get-coursier.io) does the same job with `cs launch`.
+`java -jar` is not one of the ways — the jar is thin and carries no classpath, so
+whatever starts it has to resolve the POM.
+
+From the release after `0.1.0-rc1` there are two more routes, neither of which
+needs a launcher — a download from the GitHub release (which carries a `.bat`, so
+it is the Windows answer too), and a container:
+
+```bash
+claude mcp add proofload -- docker run -i --rm -v "$PWD/proofload.toml:/work/proofload.toml:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
+```
+
+The mount is not optional there: an absent allowance means no limits, which is
+fine for a tool you installed yourself and not for an image a model drives, so the
+image refuses to `run` without a fence. [docs/mcp.md](docs/mcp.md#starting-it) has
+all four routes.
+
+Working on Proofload itself, or on an unreleased change, build it instead:
+
 ```bash
 ./gradlew :proofload-mcp:installDist
 claude mcp add proofload -- "$PWD/proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp"
@@ -153,6 +182,61 @@ blocking for ten minutes, so you poll it:
 When it lands, `status` is the same document the HTML report is drawn from —
 every goal `met` or not, with the `remedy` beside the one that missed.
 
+`status` answers a model. `summary` answers you, in the chat you are already
+looking at: the markdown a GitHub job summary carries — the step table, the
+behind verdict, failures and totals — and under it the shape the percentiles were
+read off, which is the one thing the numbers cannot say on their own:
+
+```
+checkout  p50 10.0ms  p99 2.00s
+ 10ms  ############  900
+100ms
+   1s  #  100
+```
+
+Nine in ten answered in 10 ms and the rest took two seconds. A p99 of 2 s reads
+like a step that is merely slow, and this is a cache missing a tenth of the time
+— two different problems with the same percentile. Bars are the counted buckets
+on the same log axis the page draws, the count printed beside each so the bar
+never has to be trusted, and a decade that counted nothing is left blank rather
+than smoothed.
+
+**Hand it the contract, not just a base URL.** If the service has an OpenAPI
+document, `from_openapi` reads it — YAML or JSON — and writes the plan it
+describes, so the paths, methods and step names come from the contract rather
+than a guess. `baseUrl` is only needed when the document names no server.
+
+It also reads the *space* each parameter ranges over, because one id repeated is
+a measurement of one row and one cache line, and cardinality and skew are what
+move a p99. `minimum: 1, maximum: 500` becomes a uniform draw over exactly that
+range, and `enum: [emea, apac, amer]` becomes every value it lists rather than
+the first one — so the plan it writes arrives with its draws already in it:
+
+```yaml
+draw:
+  sku:    {uniform: {from: 1, to: 500}}
+  region: {oneOf: [emea, apac, amer]}
+steps:
+  - name: getProduct
+    get: '/products/{sku}'
+  - name: getRegion
+    get: '/regions/{region}'
+```
+
+The braces survive so the draw has something to fill: `{sku}` in a path or a body
+is filled per user from the session key of that name. A parameter the contract
+does not bound is substituted rather than drawn — inventing a range the contract
+never stated would be inventing a cardinality.
+
+`draw` is not only for generated plans; write it in any plan yourself. `uniform`,
+`zipf`, `oneOf`, `digits` and `uuids` are the generators, and `zipf` is the shape
+real traffic has — a few keys asked for constantly and a long tail asked for once:
+
+```yaml
+draw:
+  sku: {zipf: {keys: 1000000, skew: 1.1}}
+```
+
 **Only `run` sends load.** Everything else sends nothing, or one request per
 step, and [the table](docs/mcp.md#the-tools) says which before you call it — so
 a model still working out your plan cannot find that out at three thousand a
@@ -188,9 +272,9 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc1")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc1")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc1")
 }
 ```
 
@@ -213,8 +297,9 @@ a note on why it is those lines and not the obvious alternative:
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 
 > [!NOTE]
-> Early days. It runs and it's tested, but nothing is released to Maven Central
-> yet — `specs/` tracks what is built and what is not.
+> Early days. `0.1.0-rc1` is the first release on Maven Central — a release
+> candidate, so signatures and coordinates are real but the API may still move
+> before `0.1.0`. `specs/` tracks what is built and what is not.
 
 ## The rest
 

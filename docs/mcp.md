@@ -6,16 +6,74 @@ second behaviour to keep in step.
 
 ## Starting it
 
+Every module is on Maven Central, so a launcher that resolves coordinates starts
+the server without a clone or a build:
+
+```bash
+jbang --main io.github.matthewjones372.proofload.mcp.ServerKt io.github.matthewjones372:proofload-mcp:0.1.0-rc1
+```
+
+Pass `--main` until the next release. `0.1.0-rc1` was published before the jar
+carried a `Main-Class`, and omitting it does not fail cleanly: jbang asks which
+class to run in a pop-up dialog, which a client waiting on stdout reads as a
+hang. From the release after `0.1.0-rc1` the coordinate on its own is enough.
+
+[Coursier](https://get-coursier.io) is the same shape:
+`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc1`.
+
+jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
+and a client parses it as-is.
+
+`java -jar` is not one of the ways. There is no fat jar — nothing has to be kept
+in step with the modules it would have shaded — so the jar carries no classpath
+and whatever starts it has to resolve the POM. That is the whole reason a
+launcher is named here rather than a download.
+
+Two more routes arrive with the release after `0.1.0-rc1`, which is the first one
+the workflow builds them in — neither exists for `0.1.0-rc1` itself.
+
+A download, for anyone who wants no launcher. It carries `bin/proofload-mcp` and
+`bin/proofload-mcp.bat`, so it is also the Windows answer:
+
+```bash
+curl -LO https://github.com/matthewjones372/proofload/releases/download/vVERSION/proofload-mcp-VERSION.zip
+unzip proofload-mcp-VERSION.zip
+claude mcp add proofload -- "$PWD/proofload-mcp-VERSION/bin/proofload-mcp"
+```
+
+A container, for anyone who wants no JDK either:
+
+```bash
+claude mcp add proofload -- docker run -i --rm \
+  -v "$PWD/proofload.toml:/work/proofload.toml:ro" \
+  ghcr.io/matthewjones372/proofload-mcp:VERSION
+```
+
+`-i` and no `-t`: the protocol is stdin and stdout, and a TTY would corrupt it.
+
+**The mount is not optional in the image.** `docs/allowance.md` says an absent
+allowance means no limits, which is the right default for someone who installed a
+load generator themselves and the wrong one for an image a model drives — so the
+image sets `PROOFLOAD_REQUIRE_ALLOWANCE` and `run` refuses without a fence.
+`preview`, `smoke` and `trace` need no mount, because the plan's shape bounds
+them rather than its rate. A local install is unaffected and behaves as it always
+has.
+
+`report` writes into the container, where its path is no use to you. `summary`
+answers with the run itself and needs no filesystem, which is the one to reach for
+here; mount a directory if you want the page as well.
+
+Working on Proofload itself, build it:
+
 ```bash
 ./gradlew :proofload-mcp:installDist
 ```
 
 That writes `proofload-mcp/build/install/proofload-mcp/bin/proofload-mcp`, a start
-script with the jars beside it. No fat jar, so nothing has to be kept in step
-with the modules it would have shaded.
+script with the jars beside it.
 
-It speaks line-delimited JSON-RPC on stdin and stdout, so it is testable with a
-pipe before any client is involved:
+Either way it speaks line-delimited JSON-RPC on stdin and stdout, so it is
+testable with a pipe before any client is involved:
 
 ```bash
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
@@ -60,6 +118,7 @@ directory, not yours.
 | `status` | what a run is doing, or the verdict and remedy of a finished one | nothing |
 | `explain` | the full document for a finished run — every step, the timeline | nothing |
 | `report` | writes the run's self-contained HTML page, returns its path | nothing |
+| `summary` | what the run measured, as markdown a person reads in the chat | nothing |
 | `list_runs` | every run this server started, newest first | nothing |
 | `compare` | one finished run against another: better, worse, or cannot tell | nothing |
 
@@ -123,6 +182,30 @@ can ask for the format writes a valid plan on the first attempt rather than a
 plausible one, and what comes back is the shape the parser enforces rather than
 documentation about it.
 
+**A request plan can draw its own values.** A `draw` block names a generator per
+key, and `{key}` in a path or a body is filled per user from it: `uniform`,
+`zipf`, `oneOf`, `digits` and `uuids`, with `zipf` the shape real traffic has — a
+few keys asked for constantly and a long tail asked for once. One id repeated
+measures one row and one cache line, and cardinality and skew are what move a
+p99, so `from_openapi` derives the draws from the contract's own schemas rather
+than substituting one legal id: `minimum: 1, maximum: 500` becomes
+`{uniform: {from: 1, to: 500}}`, and an `enum` becomes every value it lists
+rather than the first. A parameter the contract does not bound is substituted
+instead, because inventing a range it never stated would be inventing a
+cardinality.
+
+```yaml
+draw:
+  sku:    {zipf: {keys: 1000000, skew: 1.1}}
+  region: {oneOf: [emea, apac, amer]}
+steps:
+  - name: open product
+    get: '/regions/{region}/products/{sku}'
+    declared: [404]
+```
+
+`plan_schema` carries the whole vocabulary and a worked plan for it.
+
 Every tool's description states what it sends before you have to find out. The
 first four send nothing, so they are free to call and free to get wrong — which
 is the point, because it lets a caller iterate against a parser instead of
@@ -174,9 +257,10 @@ forever for an answer that never comes reports no failure and no number.
 topics — a journey that is a request and then a record is one journey.
 
 The correlation is the user's number, which is unique per departure and is the
-only value a plan has without a lambda. Every record from one step carries the
-same key and the same body for the same reason; where per-user variety matters,
-`emit` prints the Kotlin and a feeder goes there.
+only value a *record* has without a lambda: `draw` and `{key}` templating are a
+request-plan feature, so every record from one step carries the same key and the
+same body. Where per-user variety matters there, `emit` prints the Kotlin and a
+feeder goes there.
 
 A broker is a host. `preview` names every entry of the bootstrap list, and an
 allowance that does not permit the cluster refuses the plan the way it refuses
@@ -222,12 +306,32 @@ Runs live in the server's memory and are lost when it stops. That is the honest
 scope for a server a client starts and stops; anything meant to survive goes to
 disk, which is what `report` will be for.
 
-## Two readers, two artefacts
+## Three readers, three artefacts
 
-`explain` returns JSON and `report` returns a path. That split is the point: an
-agent reads the document, and a person opens the page. Handing a model the
-page's bytes would be handing it inlined SVG to no purpose, and handing a person
-the JSON would be handing them the thing the charts were made from.
+`explain` returns JSON, `report` returns a path, and `summary` returns markdown.
+That split is the point: an agent reads the document, a person with a browser
+opens the page, and a person watching the chat reads the summary. Handing a model
+the page's bytes would be handing it inlined SVG to no purpose, and handing a
+person the JSON would be handing them the thing the charts were made from —
+which is what watching `status` does, and the reason `summary` exists.
+
+`summary` is the markdown a GitHub job summary already carries, from the same
+renderer. A chat-only one would be a second behaviour to keep in step, and the
+one thing that reader loses against the page is the distribution — so the
+markdown draws it, for the steps worth looking at:
+
+```
+checkout  p50 10.0ms  p99 2.00s
+ 10ms  ############  900
+100ms
+   1s  #  100
+```
+
+Nine in ten answered in 10 ms and the rest took two seconds. The p99 alone is
+that of a step which is merely slow; the shape is what says otherwise. Bars are
+the counted buckets collapsed to decades, the count printed beside each so the
+bar never has to be trusted, and a decade that counted nothing left blank rather
+than smoothed.
 
 `compare` answers in three, not two. "Cannot tell" is the one that matters: a
 comparison that only ever says better or worse will say one of them about noise,

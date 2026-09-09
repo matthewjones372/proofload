@@ -107,6 +107,12 @@ internal val TOOLS: List<Tool> = listOf(
         arguments = listOf(RUN_ID),
     ),
     Tool(
+        name = "summary",
+        describes = "What the run measured, as markdown a person can read in the chat.",
+        sends = "nothing",
+        arguments = listOf(RUN_ID),
+    ),
+    Tool(
         name = "list_runs",
         describes = "Every run this server has started, newest first.",
         sends = "nothing",

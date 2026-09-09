@@ -21,6 +21,15 @@ application {
     applicationName = "proofload-mcp"
 }
 
+// The same class in the published jar's manifest, so a launcher resolving these
+// coordinates needs no `--main`. Taken from `application` rather than repeated,
+// because two spellings of one entry point is one that goes stale. This makes no
+// fat jar and does not make `java -jar` work — a thin jar carries no classpath —
+// it only saves a launcher that already resolves the POM from being told.
+tasks.jar {
+    manifest { attributes("Main-Class" to application.mainClass.get()) }
+}
+
 dependencies {
     api(project(":proofload-cli"))
     // The CLI keeps this one `implementation`, so this names it rather than
@@ -41,6 +50,10 @@ dependencies {
     // `report` writes the page a person opens. An agent reads the JSON
     // above; nobody gains from a model reading inlined SVG.
     implementation(project(":proofload-report-html"))
+    // `summary` answers the third reader: the person watching the chat, who gets
+    // neither the JSON an agent reads nor the page a browser opens. The renderer
+    // is the one a job summary already uses, so there is no second one to drift.
+    implementation(project(":proofload-report-github"))
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
 }
 

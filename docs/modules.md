@@ -65,8 +65,8 @@ of being found by a stranger. `./gradlew publishToMavenLocal` and then
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Whatever you have published or built with ./gradlew publishToMavenLocal;
-    // nothing is on Maven Central yet.
+    // `0.1.0-rc1` is the first release on Maven Central; anything newer is what
+    // you built with ./gradlew publishToMavenLocal.
     implementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-http:$proofloadVersion")

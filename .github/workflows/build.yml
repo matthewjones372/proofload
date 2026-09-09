@@ -65,3 +65,51 @@ jobs:
             **/build/reports/tests/
             **/build/test-results/
           retention-days: 7
+
+  # The number the badge shows, published where a badge service can read it.
+  #
+  # `main` only: a pull request that moved the badge would show a number for code
+  # nobody has merged. Separate from `build` because this one can write and that
+  # matrix should not, and it holds no secrets either way.
+  coverage-badge:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Measure
+        run: ./gradlew coverageBadge
+
+      # An orphan branch rather than a path on `main`. A job that commits to the
+      # branch that triggered it either loops or leans on a `[skip ci]` convention
+      # that one future edit forgets.
+      - name: Publish to the badges branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number=$(cat build/badges/coverage.json)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin badges --depth 1 2>/dev/null && git switch badges \
+            || git switch --orphan badges
+          git rm -rq --cached . 2>/dev/null || true
+          mkdir -p .
+          printf '%s' "$number" > coverage.json
+          git add coverage.json
+          # Nothing to say where the number has not moved.
+          git diff --cached --quiet && echo "coverage unchanged" && exit 0
+          git commit -qm "coverage: $(python3 -c 'import json,sys;print(json.load(open("coverage.json"))["message"])')"
+          git push origin badges
+

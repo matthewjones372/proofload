@@ -45,3 +45,117 @@ jobs:
       # permanent. Set `mavenCentralAutomaticPublishing` to skip the click.
       - name: Publish the modules to Maven Central
         run: ./gradlew publishToMavenCentral --no-configuration-cache
+
+      # For anyone who wants neither a launcher nor a JDK. Only the server has a
+      # distribution: `proofload-cli` has no `application` block, so it has no
+      # start script to zip — from a shell it is a launcher or Maven Central.
+      # The zip rather than the tar, and the zip rather than an uploaded
+      # directory, because an artifact upload does not keep the executable bit
+      # that `bin/proofload-mcp` needs.
+      - name: Build the distribution
+        run: ./gradlew :proofload-mcp:distZip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: proofload-mcp/build/distributions/*.zip
+          if-no-files-found: error
+
+  # Separate from `publish` on purpose. That job holds the signing key and the
+  # Central token and cannot write to this repository; this one can write and
+  # holds neither. Keeping them apart is why a failed release has never been able
+  # to do damage.
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # The only end-to-end check that the thing people download actually runs.
+      # A distribution that cannot answer `initialize` is worth catching here
+      # rather than in someone's client.
+      - name: Start what is about to be published
+        run: |
+          unzip -q dist/*.zip -d unpacked
+          answer=$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+            | unpacked/*/bin/proofload-mcp)
+          echo "$answer"
+          case "$answer" in
+            *'"protocolVersion"'*) ;;
+            *) echo "the distribution did not answer initialize"; exit 1 ;;
+          esac
+
+      # A draft, for the same reason the Central bundle waits: nothing is public
+      # until a person looks. `gh` is on the runner, so a release step needs no
+      # third-party action.
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in *-rc*|*-RC*|*-beta*|*-alpha*) prerelease="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/*.zip \
+            --draft --generate-notes --title "$GITHUB_REF_NAME" $prerelease
+
+  # Also separate, and also holding none of the signing secrets: this one can
+  # write packages and nothing else.
+  image:
+    needs: publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist
+
+      # Where the Dockerfile expects `installDist` to have left it. Unzipped
+      # rather than re-built with Gradle: unzip keeps the executable bit, and a
+      # second Gradle build to produce bytes we already have is a second thing
+      # that can differ.
+      - name: Lay the distribution out
+        run: |
+          unzip -q dist/*.zip -d unpacked
+          mkdir -p proofload-mcp/build/install
+          mv unpacked/proofload-mcp-* proofload-mcp/build/install/proofload-mcp
+
+      # Both architectures every time. An emulated JVM is slow enough to move a
+      # measurement, and a release candidate nobody can run on an Apple Silicon
+      # machine is one nobody tests.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          image="ghcr.io/${{ github.repository_owner }}/proofload-mcp"
+          tags="--tag $image:$version"
+          # No `latest` on a release candidate: whoever pulls the bare name
+          # should get something that was meant for them.
+          case "$GITHUB_REF_NAME" in
+            *-rc*|*-RC*|*-beta*|*-alpha*) ;;
+            *) tags="$tags --tag $image:latest" ;;
+          esac
+          docker buildx build proofload-mcp \
+            --platform linux/amd64,linux/arm64 \
+            $tags --push

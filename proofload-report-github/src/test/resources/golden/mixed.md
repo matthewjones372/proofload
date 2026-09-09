@@ -14,6 +14,11 @@
 | cart   | checkout |       45 |      45 |    45 |      0 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 | pay    | checkout |       45 |      45 |    45 |      0 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 
+```
+home  p50 20.1ms  p99 30.0ms
+10ms  ############  150
+```
+
 480 requests, 480 ok, 0 failed. Started 2026-08-26T09:00:00Z.
 
 Arrivals were evenly spaced, which understates queueing against the same mean rate in production.

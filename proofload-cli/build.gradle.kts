@@ -14,6 +14,13 @@ dependencies {
     implementation(project(":proofload-export"))
 }
 
+// So `jbang io.github.matthewjones372:proofload-cli:VERSION validate plan.yaml`
+// works without being told the class. Named literally because this module has no
+// `application` block to take it from; `Cli.kt`'s `main` is the whole entry point.
+tasks.jar {
+    manifest { attributes("Main-Class" to "io.github.matthewjones372.proofload.cli.CliKt") }
+}
+
 tasks.test {
     val mainRuntime = configurations.runtimeClasspath
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")

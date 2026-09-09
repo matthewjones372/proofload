@@ -1,0 +1,4 @@
+# Only the laid-out distribution belongs in the context. Everything else in
+# `build/` is intermediate and would be copied for nothing.
+*
+!build/install/proofload-mcp

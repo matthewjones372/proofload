@@ -44,6 +44,8 @@ class NoThirdPartyDependenciesTest {
         "proofload-openapi",
         "proofload-cli",
         "proofload-report-html",
+        // The markdown a job summary carries, which `summary` hands to a chat.
+        "proofload-report-github",
         "snakeyaml-engine",
     )
 

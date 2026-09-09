@@ -2,6 +2,11 @@
 | :---- | -------: | ------: | ----: | -----: | -----: | -----: | -----: | -----: |
 | pay   |      100 |       — |   100 |      0 | 20.1ms | 30.0ms | 30.0ms | 30.0ms |
 
+```
+pay  p50 20.1ms  p99 30.0ms
+10ms  ############  100
+```
+
 The injector's own JVM stalled for 14.0ms at p99 and 30.0ms at worst, measured on a thread no request ran on. A tail that size is this machine as readily as the target.
 
 100 requests, 100 ok, 0 failed. Started 2026-08-26T09:00:00Z.

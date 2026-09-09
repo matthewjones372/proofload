@@ -6,6 +6,7 @@ import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.against
 import io.github.matthewjones372.proofload.export.Density
 import io.github.matthewjones372.proofload.export.json
+import io.github.matthewjones372.proofload.report.markdown
 import io.github.matthewjones372.proofload.report.writeHtmlReport
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,6 +21,19 @@ import java.nio.file.Path
  */
 internal fun explain(registry: Registry, id: String?): String = onFinished(registry, id) { result ->
     content(result.json(Density.Full))
+}
+
+/**
+ * The run for the third reader — the person watching the chat, who gets neither
+ * [explain]'s JSON nor the page [report] writes.
+ *
+ * `docs/mcp.md` argues that handing a person the JSON is handing them the thing
+ * the charts were made from, and that is exactly what watching `status` does. So
+ * this hands over the markdown a job summary already carries: the same renderer,
+ * because a chat-only one would be a second behaviour to keep in step.
+ */
+internal fun summarised(registry: Registry, id: String?): String = onFinished(registry, id) { result ->
+    content(result.markdown())
 }
 
 internal fun report(registry: Registry, id: String?, into: Path): String = onFinished(registry, id) { result ->

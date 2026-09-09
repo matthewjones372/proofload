@@ -44,20 +44,27 @@ claude mcp add proofload -- "$PWD/proofload-mcp-VERSION/bin/proofload-mcp"
 A container, for anyone who wants no JDK either:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm \
-  -v "$PWD/proofload.toml:/work/proofload.toml:ro" \
-  ghcr.io/matthewjones372/proofload-mcp:VERSION
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:VERSION
 ```
 
 `-i` and no `-t`: the protocol is stdin and stdout, and a TTY would corrupt it.
 
-**The mount is not optional in the image.** `docs/allowance.md` says an absent
+Nothing else is needed to start. `benchmark`, `plan_schema`, `validate`, `preview`,
+`smoke` and `trace` all work as they are, because the plan's shape bounds them
+rather than its rate.
+
+**`run` is the one that needs a fence.** `docs/allowance.md` says an absent
 allowance means no limits, which is the right default for someone who installed a
 load generator themselves and the wrong one for an image a model drives — so the
-image sets `PROOFLOAD_REQUIRE_ALLOWANCE` and `run` refuses without a fence.
-`preview`, `smoke` and `trace` need no mount, because the plan's shape bounds
-them rather than its rate. A local install is unaffected and behaves as it always
-has.
+image sets `PROOFLOAD_REQUIRE_ALLOWANCE`, and `run` refuses until it finds a
+`proofload.toml` in the directory it was started from. Write one there and the mount
+above picks it up. A local install is unaffected and behaves as it always has.
+
+**Mount the directory, not the file.** `-v "$PWD/proofload.toml:/work/proofload.toml:ro"`
+reads better and is a trap: where the file does not exist yet, Docker creates a
+*directory* of that name in your working directory, which can never be read as an
+allowance and has to be deleted by hand. Mounting the directory has no such state to
+get wrong, and a plan on disk becomes readable at the same time.
 
 `report` writes into the container, where its path is no use to you. `summary`
 answers with the run itself and needs no filesystem, which is the one to reach for

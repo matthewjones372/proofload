@@ -103,7 +103,7 @@ class RegistryTest {
 
     @Test
     fun `a caller's serializer resolves its schema against the registry, once`() {
-        val producer = MockProducer(true, ByteArraySerializer(), ByteArraySerializer())
+        val producer = MockProducer(true, null, ByteArraySerializer(), ByteArraySerializer())
         val broker = kafka.brokers("nowhere:9092").over(producer)
         val serializer = Registering()
 
@@ -129,7 +129,7 @@ class RegistryTest {
 
     @Test
     fun `the round trip lands in the step's own latency, and not in the generator's lateness`() {
-        val producer = MockProducer(true, ByteArraySerializer(), ByteArraySerializer())
+        val producer = MockProducer(true, null, ByteArraySerializer(), ByteArraySerializer())
         val broker = kafka.brokers("nowhere:9092").over(producer)
 
         val result = scenario("trades") {

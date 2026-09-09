@@ -72,7 +72,7 @@ class ProduceTest {
     }
 
     private fun mock(): MockProducer<ByteArray, ByteArray> =
-        MockProducer(true, ByteArraySerializer(), ByteArraySerializer())
+        MockProducer(true, null, ByteArraySerializer(), ByteArraySerializer())
 
     /**
      * A producer that takes every record and then refuses it, deterministically.

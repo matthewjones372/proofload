@@ -35,6 +35,12 @@ tasks.test {
     inputs.dir(gate).withPropertyName("theSourceSetItQuotes")
     systemProperty("proofload.repoRoot", rootProject.projectDir.path)
 
+    // `TastyVersionTest` reads the header of this module's own output, which is
+    // the byte a consumer on an older compiler trips over.
+    val classes = layout.buildDirectory.dir("classes/scala/main")
+    inputs.dir(classes).withPropertyName("theCompiledOutput")
+    systemProperty("proofload.scala.classes", classes.get().asFile.path)
+
     val mainRuntime = configurations.runtimeClasspath
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(

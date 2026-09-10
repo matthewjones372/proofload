@@ -73,7 +73,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: distribution
           path: dist
@@ -129,7 +129,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: distribution
           path: dist
@@ -147,8 +147,8 @@ jobs:
       # Both architectures every time. An emulated JVM is slow enough to move a
       # measurement, and a release candidate nobody can run on an Apple Silicon
       # machine is one nobody tests.
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
         run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin

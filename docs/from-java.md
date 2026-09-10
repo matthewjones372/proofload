@@ -2,7 +2,7 @@
 
 Proofload is JVM bytecode, so a Java caller can reach all of it. What it reaches
 is not an API: `proofload-core` publishes 245 functions whose names carry a
-value-class hash — `p99-_FgASpo`, `goodput-_E9U6aE` — because `StepName`,
+value-class hash (`p99-_FgASpo`, `goodput-_E9U6aE`) because `StepName`,
 `Share` and `Rate` are `@JvmInline`. Every duration arrives as a bare `long`
 whose unit the type no longer states, and `sessionKey<T>` is `reified inline`,
 which compiles to no method at all.
@@ -89,8 +89,8 @@ or `double` underneath it, so no Kotlin signature can hand a `Rate` back to Java
 as a `Rate` at all.
 
 A step body is a `Consumer<StepScope>` through `Actions.of`, since a lambda with
-a receiver is the one shape Java has nothing for. The rest of `Http` — `get`,
-`post`, `body`, `header`, `expecting`, `timeout` — is already plain and is
+a receiver is the one shape Java has nothing for. The rest of `Http` (`get`,
+`post`, `body`, `header`, `expecting`, `timeout`) is already plain and is
 called directly; only `capture` and `checking` are stated as a lambda in Kotlin
 and so are named again on `Https`.
 
@@ -112,7 +112,7 @@ for (Verdict verdict : Results.verdicts(result)) {
 
 Kotlin writes the first of those as `p99(placeOrder) under 200.milliseconds`.
 The infix form has no Java spelling, and every call that builds a goal takes a
-`StepName` or a `Share` — so `Goals` is where they are named instead. The clock
+`StepName` or a `Share`, so `Goals` is where they are named instead. The clock
 defaults to response time in both languages, because a goal written against
 service time can be met by a generator that never sent the load.
 
@@ -130,7 +130,7 @@ behind and lies about it.
 
 [`examples-java`](../examples-java) is a module whose whole content is the load
 test above, compiled by `./gradlew build`. `apiCheck` records the Kotlin surface
-and cannot see whether that surface is *callable* from Java — only a Java
-compiler knows — so a facade method that goes fails the build there rather than
+and cannot see whether that surface is *callable* from Java. Only a Java
+compiler knows, so a facade method that goes fails the build there rather than
 in your project. Every snippet on this page is a line from that source, and
 `FromJavaDocTest` fails when it stops being one.

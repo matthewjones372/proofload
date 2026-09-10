@@ -1,8 +1,8 @@
 # Modules
 
 `proofload-core` depends on the Kotlin standard library and nothing else.
-Anything with a third-party type in it is a leaf module beside it — an HTTP
-client, a test framework, a reporting format — so a project takes the ones it
+Anything with a third-party type in it is a leaf module beside it: an HTTP
+client, a test framework, a reporting format. A project takes the ones it
 uses and inherits no stack it did not ask for.
 
 | Module | What it is | Depends on |
@@ -20,7 +20,7 @@ uses and inherits no stack it did not ask for.
 | `proofload-junit5` | a load test that is an ordinary `@Test` | core, engine, JUnit 5 |
 | `proofload-kotest` | the same, in a Kotest spec | core, engine |
 | `proofload-zio-test` | the same again, in a zio-test spec, sent on the blocking executor rather than the pool the fiber is on | core, engine, http, java, scala |
-| `proofload-arbs` | generators shaped like traffic — cardinality and skew, as a function of the user's number | core |
+| `proofload-arbs` | generators shaped like traffic: cardinality and skew, as a function of the user's number | core |
 | `proofload-baseline` | a run kept in a file, so the next one can be compared to it | core |
 | `proofload-export` | a run's measurements in the formats other tools already read | core |
 | `proofload-otel` | the same measurements, sent to an OpenTelemetry collector | core, the OTel SDK |
@@ -42,20 +42,20 @@ which, and what each number leaves out.
 Kotest is `compileOnly` in `proofload-kotest`: a spec that uses the matchers
 already has Kotest, and one that does not should not be handed twenty jars by a
 load-testing library. zio-test is `compileOnly` in `proofload-zio-test` for the
-same reason and one more — nothing there ships an effect runtime to a project
+same reason and one more: nothing there ships an effect runtime to a project
 that asked for a load test, which its dependency test states.
 
 Three more directories are in the build and are not published. `examples` is
 where every module meets, so that they compose is a test rather than a README
 paragraph. `examples-java` is one load test written in Java: `apiCheck` records
 `proofload-java`'s Kotlin surface and cannot see whether that surface is callable
-from Java, and only a Java compiler knows — [from-java.md](from-java.md) is the
+from Java, and only a Java compiler knows. [from-java.md](from-java.md) is the
 page it backs. `examples-scala` is the same gate one step further out:
 `proofload-scala` has no `.api` dump at all, because what BCV records of a Scala
 module is compiler-generated names no caller can type. It carries a zio-test
-spec beside the sample, which the build runs rather than only compiles —
+spec beside the sample, which the build runs rather than only compiles.
 [from-scala.md](from-scala.md) is the page both back. `benchmarks` measures what this tool costs, and is kept out of the
-coverage aggregation because measuring the tool is not testing it —
+coverage aggregation because measuring the tool is not testing it.
 [what-it-costs.md](what-it-costs.md) is what it produces.
 
 `smoke/` is not in the build at all. It is a Gradle build of its own that
@@ -138,25 +138,25 @@ short allow-list. A few say more than that: `proofload-http` also asserts core i
 exported, `proofload-kotest` that `proofload-junit5` is absent, and
 `proofload-pelican` that no part of Pekko reached the classpath. `proofload-export`
 is the pointed case: HdrHistogram owns the log format it writes and would write
-it in one call, and it sits on that module's *test* classpath instead — as the
+it in one call, and it sits on that module's *test* classpath instead, as the
 oracle that reads the output back, rather than on the classpath of everyone who
 wanted one file out of a run. `proofload-otel` is the other side of the same
 argument: it carries the OpenTelemetry SDK because that is what it is for, and
-its test says *which* dependency arrived — OTLP over HTTP, so no gRPC runtime
+its test says *which* dependency arrived: OTLP over HTTP, so no gRPC runtime
 and no Netty, because a load test's own process is the last place to put a
 second networking stack. `proofload-grpc` makes the third version of the claim:
 `grpc-api` and no transport, so `grpc-netty-shaded` or `grpc-okhttp` stays the
-caller's choice — it is the thing that most decides what a gRPC run can drive,
+caller's choice, since it is the thing that most decides what a gRPC run can drive,
 and picking one here would decide it for everybody silently. `proofload-kafka`
 says what did *not* arrive: no broker, embedded or containerised, and no schema
-registry — `io.confluent:kafka-avro-serializer` is not on Maven Central, so
+registry. `io.confluent:kafka-avro-serializer` is not on Maven Central, so
 depending on it would force a `packages.confluent.io` declaration on every
 consumer and break the smoke project below, which resolves from
 `mavenCentral()` on purpose. Its wire is proved rather than assumed:
 `FakeBrokerTest` stands up a broker built from `kafka-clients`' own protocol
 classes and drives a real `KafkaProducer` and a real `KafkaConsumer` at it over
-a socket, so the accumulator, the sender thread and the ack path — the parts no
-mock models — run inside `./gradlew build` with no container and no Docker.
+a socket, so the accumulator, the sender thread and the ack path, the parts no
+mock models, run inside `./gradlew build` with no container and no Docker.
 
 This page is a test too. `ModulesDocTest` in `examples` fails when a module in
 `settings.gradle.kts` is missing from the tables above, when a published module
@@ -166,6 +166,6 @@ names no test, or when a test named here has moved.
 
 The rule is not a style preference. A dependency in core is inherited by every
 consumer of every other module, including the ones that only wanted a markdown
-table — so core declares an interface and an adapter module carries the
+table, so core declares an interface and an adapter module carries the
 library. [AGENTS.md](../AGENTS.md) states it; the tests above are what makes it
 true.

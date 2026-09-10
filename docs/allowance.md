@@ -1,8 +1,8 @@
 # What a run on this machine may do
 
 A rate is a number, and a number arrives from somewhere. Somebody types it,
-or a script computes it, or — under [0089](../specs/0089-a-plan-without-a-compiler.md)
-and [0092](../specs/0092-proofload-over-mcp.md) — a program writes it into a plan
+or a script computes it, or, under [0089](../specs/0089-a-plan-without-a-compiler.md)
+and [0092](../specs/0092-proofload-over-mcp.md), a program writes it into a plan
 file. `checkout.at(50000.perSecond, over = 8.hours)` is a legal value whichever
 of those wrote it, and without a fence the first thing that says it was wrong
 is the target.
@@ -14,7 +14,7 @@ Read this paragraph before the rest of the page.
 An `Allowance` stops a mistake: a typo, a misplaced decimal point, a program
 that computed a rate nobody read. It does not stop somebody holding the jar. A
 caller can construct its own `Allowance`, or call `run` instead of `runWithin`,
-and nothing here prevents either — they are ordinary public API.
+and nothing here prevents either. They are ordinary public API.
 
 If what you need is a guarantee rather than a guard rail, the boundary belongs
 somewhere this tool cannot reach around: a network policy, a firewall, a
@@ -59,9 +59,9 @@ Four of the numbers it returns are worth knowing the shape of:
 
 | | |
 |---|---|
-| `peakRate` | the tallest stage, never the mean — a fence that averaged a ramp would allow a peak nobody agreed to. Null for a closed run, whose departures are the target's to decide |
+| `peakRate` | the tallest stage, never the mean, since a fence that averaged a ramp would allow a peak nobody agreed to. Null for a closed run, whose departures are the target's to decide |
 | `requestsAtLeast` | the fewest it can send |
-| `requestsBounded` | whether that is also the most. False where `during` or `doIf` leaves the count to the run — and a plan like that is **refused** against `maxRequests` rather than allowed on its lower bound, because a fence that cannot count cannot fence |
+| `requestsBounded` | whether that is also the most. False where `during` or `doIf` leaves the count to the run, and a plan like that is **refused** against `maxRequests` rather than allowed on its lower bound, because a fence that cannot count cannot fence |
 | `untargeted` | steps whose host could not be read. Not "allowed": unknown. A step body calling a client of your own is invisible from here, and counting it as safe would be the reassurance this page exists to avoid |
 
 ## Running inside one
@@ -76,7 +76,7 @@ when (val ran = Proofload().runWithin(Allowance.fromFile(), plan)) {
 }
 ```
 
-A refused run departs nothing — the check happens before the first departure,
+A refused run departs nothing. The check happens before the first departure,
 and the engine's own test proves it by counting what the action was asked to do
 rather than by believing the runner.
 
@@ -88,6 +88,6 @@ distance.
 ## Not to be confused with `Limits`
 
 `Limits` is the other direction, and older: what the *injector* ran into while
-it measured — descriptors, ephemeral ports, its share of the cores. That one is
+it measured: descriptors, ephemeral ports, its share of the cores. That one is
 observed during a run and travels in the result. This one is declared before a
 run and decides whether there is one.

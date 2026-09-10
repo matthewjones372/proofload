@@ -7,12 +7,12 @@
 
 # Proofload
 
-### Load testing for Kotlin — with a p99 you can trust.
+### Load testing for Kotlin, with a p99 you can trust.
 
 [![build](https://github.com/matthewjones372/proofload/actions/workflows/build.yml/badge.svg)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/proofload-core?label=maven%20central)](https://central.sonatype.com/artifact/io.github.matthewjones372/proofload-core)
 <!-- Line coverage, which is what `koverVerify`'s floor is on. It is the kinder of
-     two numbers — branch coverage over the same code is materially lower — and
+     two numbers (branch coverage over the same code is materially lower) and
      0116 carries that argument.
      The number is in the URL rather than fetched from a file, because a shields
      endpoint reads that file anonymously and raw.githubusercontent.com will not
@@ -26,8 +26,8 @@
 
 **A passing load test can still ship a slow service.** When the load generator
 can't keep up, it quietly queues requests and reports the wait as your server's
-latency — the classic *coordinated omission* bug — so the tail looks fine and the
-test goes green anyway.
+latency. That is the classic *coordinated omission* bug, so the tail looks fine
+and the test goes green anyway.
 
 Proofload takes a different approach: it times every request from the moment it was
 *meant* to start, and proves on every run whether the generator kept up. Green
@@ -41,7 +41,7 @@ means the numbers are the target's, not the tool's.
 </picture>
 </a>
 
-<sub>A real run. <code>POST /pay</code> missed its 300 ms target — and the green
+<sub>A real run. <code>POST /pay</code> missed its 300 ms target, and the green
 <b>"the generator keeps its schedule"</b> is the proof that's the server's fault,
 not the tool's. <a href="docs/assets/report-full-light.png">See the whole page →</a></sub>
 </div>
@@ -81,7 +81,7 @@ class CheckoutLoadTest {
 ```
 
 That is the whole test. `@LoadTest` hands you a `Proofload`, you assert on a value,
-and it runs on virtual threads on the JDK's own HTTP client — nothing to install.
+and it runs on virtual threads on the JDK's own HTTP client. Nothing to install.
 Everything is typed and named once: capture into `orderId` and it comes back a
 `String`; rename `placeOrder` and the code stops compiling instead of silently
 checking a step that no longer exists.
@@ -93,7 +93,7 @@ HTTP, server-sent events, WebSockets, gRPC, Kafka and JDBC come in the box, and
 Database steps time the connection checkout apart from the query, because a pool
 your users queued for is not the database being slow.
 
-Anything else — another queue, a cache — is just a step body. Whatever you call
+Anything else, another queue or a cache, is just a step body. Whatever you call
 inside it is timed and recorded like any other step, so you use the client you
 already have:
 
@@ -104,8 +104,9 @@ exec(settle) {
 }
 ```
 
-And for work that finishes somewhere else — publish now, match the reply that arrives
-on another channel later — the latency you measure is the real round trip, not the ack.
+And for work that finishes somewhere else, where you publish now and match the
+reply that arrives on another channel later, the latency you measure is the real
+round trip rather than the ack.
 
 ## Or hand the whole thing to an agent
 
@@ -121,10 +122,10 @@ claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-
 
 The coordinate alone, because the published jar carries a `Main-Class`.
 [Coursier](https://get-coursier.io) does the same job with `cs launch`. `java -jar`
-is not one of the ways — the jar is thin and carries no classpath, so whatever starts
+is not one of the ways. The jar is thin and carries no classpath, so whatever starts
 it has to resolve the POM.
 
-Two more routes need no launcher at all — a download from the GitHub release, which
+Two more routes need no launcher at all. One is a download from the GitHub release, which
 carries a `.bat` and so is the Windows answer too, and a container:
 
 ```bash
@@ -132,7 +133,7 @@ claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthe
 ```
 
 That is the whole command: `benchmark`, `plan_schema`, `validate`, `preview`,
-`smoke` and `trace` work with nothing else set up. Only `run` needs a fence — write
+`smoke` and `trace` work with nothing else set up. Only `run` needs a fence. Write
 a `proofload.toml` in the directory you started it from and it is picked up, because
 that directory is what the mount above hands over.
 
@@ -144,7 +145,7 @@ directory has no such state to get wrong.
 [docs/mcp.md](docs/mcp.md#starting-it) has all four routes.
 
 Maven Central and the release download need no account: the repository is public
-and the asset is served to anyone. The GHCR image is the exception — its package
+and the asset is served to anyone. The GHCR image is the exception: its package
 is still private, so `docker` needs `docker login ghcr.io` until that is changed.
 
 Working on Proofload itself, or on an unreleased change, build it instead:
@@ -155,7 +156,7 @@ claude mcp add proofload -- "$PWD/proofload-mcp/build/install/proofload-mcp/bin/
 ```
 
 A base URL is enough to start. `benchmark` writes a plan, validates it, previews
-what it would send, and sends one request per step — then says what it had to
+what it would send, and sends one request per step, then says what it had to
 guess rather than pretending it knew:
 
 ```
@@ -178,14 +179,14 @@ Nothing above sent load. Call `run` with this plan to do that.
 
 This plan is guessing. Ask whoever wants the benchmark:
   - This only sends `GET /`, because a base URL is all it was given. Which paths
-    actually matter — a journey, a hot endpoint, a slow one?
-  - The rate is a placeholder — one a second, because nothing said otherwise.
+    actually matter: a journey, a hot endpoint, a slow one?
+  - The rate is a placeholder, one a second, because nothing said otherwise.
     What does this see at peak, and over how long?
 ```
 
 The questions come from that plan and that smoke: a credential is asked about
 because the target answered 401, not because targets often need one. You answer,
-it raises the rate on purpose and calls `run` — which returns rather than
+it raises the rate on purpose and calls `run`, which returns rather than
 blocking for ten minutes, so you poll it:
 
 ```json
@@ -193,12 +194,12 @@ blocking for ten minutes, so you poll it:
 {"state":"sending","remaining":"41s"}
 ```
 
-When it lands, `status` is the same document the HTML report is drawn from —
+When it lands, `status` is the same document the HTML report is drawn from:
 every goal `met` or not, with the `remedy` beside the one that missed.
 
 `status` answers a model. `summary` answers you, in the chat you are already
-looking at: the markdown a GitHub job summary carries — the step table, the
-behind verdict, failures and totals — and under it the shape the percentiles were
+looking at: the markdown a GitHub job summary carries (the step table, the
+behind verdict, failures and totals), and under it the shape the percentiles were
 read off, which is the one thing the numbers cannot say on their own:
 
 ```
@@ -209,14 +210,14 @@ checkout  p50 10.0ms  p99 2.00s
 ```
 
 Nine in ten answered in 10 ms and the rest took two seconds. A p99 of 2 s reads
-like a step that is merely slow, and this is a cache missing a tenth of the time
-— two different problems with the same percentile. Bars are the counted buckets
+like a step that is merely slow, and this is a cache missing a tenth of the time.
+Two different problems with the same percentile. Bars are the counted buckets
 on the same log axis the page draws, the count printed beside each so the bar
 never has to be trusted, and a decade that counted nothing is left blank rather
 than smoothed.
 
 **Hand it the contract, not just a base URL.** If the service has an OpenAPI
-document, `from_openapi` reads it — YAML or JSON — and writes the plan it
+document, `from_openapi` reads it, YAML or JSON, and writes the plan it
 describes, so the paths, methods and step names come from the contract rather
 than a guess. `baseUrl` is only needed when the document names no server.
 
@@ -224,7 +225,7 @@ It also reads the *space* each parameter ranges over, because one id repeated is
 a measurement of one row and one cache line, and cardinality and skew are what
 move a p99. `minimum: 1, maximum: 500` becomes a uniform draw over exactly that
 range, and `enum: [emea, apac, amer]` becomes every value it lists rather than
-the first one — so the plan it writes arrives with its draws already in it:
+the first one, so the plan it writes arrives with its draws already in it:
 
 ```yaml
 draw:
@@ -239,12 +240,12 @@ steps:
 
 The braces survive so the draw has something to fill: `{sku}` in a path or a body
 is filled per user from the session key of that name. A parameter the contract
-does not bound is substituted rather than drawn — inventing a range the contract
+does not bound is substituted rather than drawn. Inventing a range the contract
 never stated would be inventing a cardinality.
 
 `draw` is not only for generated plans; write it in any plan yourself. `uniform`,
 `zipf`, `oneOf`, `digits` and `uuids` are the generators, and `zipf` is the shape
-real traffic has — a few keys asked for constantly and a long tail asked for once:
+real traffic has: a few keys asked for constantly and a long tail asked for once:
 
 ```yaml
 draw:
@@ -252,7 +253,7 @@ draw:
 ```
 
 **Only `run` sends load.** Everything else sends nothing, or one request per
-step, and [the table](docs/mcp.md#the-tools) says which before you call it — so
+step, and [the table](docs/mcp.md#the-tools) says which before you call it, so
 a model still working out your plan cannot find that out at three thousand a
 second. `proofload.toml` fences what it may do at all, by host, rate, duration
 and request count.
@@ -266,7 +267,7 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
   its own schedule. A green test on a generator that fell behind is the trap
   Proofload exists to close.
 - **Real percentiles.** Bars are counted buckets, a percentile is the top of the
-  bucket a sample landed in, on a log axis. No smoothing, no interpolation — if a
+  bucket a sample landed in, on a log axis. No smoothing, no interpolation. If a
   number is on the page, something measured it.
 - **A report, not a web app.** One self-contained HTML file: data, styles and
   charts inline. It opens straight from disk, uploads as a CI artifact as-is, and
@@ -276,14 +277,14 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
   before a single request goes out.
 - **A ceiling for the tool itself.** The shipped HTTP step sustains **at least
   2,500 requests a second**, and a step that touches no socket sustains
-  **100,000** — on four cores shared with the target, over loopback, untuned.
+  **100,000**, on four cores shared with the target, over loopback, untuned.
   [docs/what-it-costs.md](docs/what-it-costs.md) has the tables, the machine and
   what each sweep left out.
 
 The HTTP figure is a deliberately conservative lower bound: 5,000/s kept the
 median departure inside a millisecond too, and was passed over because three
 requests in twenty-five thousand were refused. Neither number is a comparison
-with another tool — this repository publishes none, on purpose.
+with another tool. This repository publishes none, on purpose.
 
 **`fellBehind()` is not a capacity verdict.** It asks whether the generator's own
 p99 lateness is large enough to be visible beside the target's p99, which at
@@ -313,7 +314,7 @@ Write the test above, then write the report:
 result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
 ```
 
-**[The cookbook](docs/cookbook.md) has the rest** — each recipe a few lines, with
+**[The cookbook](docs/cookbook.md) has the rest.** Each recipe a few lines, with
 a note on why it is those lines and not the obvious alternative:
 
 | | |
@@ -333,16 +334,16 @@ a note on why it is those lines and not the obvious alternative:
 
 ## The rest
 
-- **[docs/what-it-costs.md](docs/what-it-costs.md)** — the tool's own measured overhead, so you can trust the numbers above it.
-- **[docs/modules.md](docs/modules.md)** — the modules and the coordinates to depend on them.
-- **[docs/mcp.md](docs/mcp.md)** — the MCP server in full: every tool, what each one sends, and what it refuses.
-- **[docs/allowance.md](docs/allowance.md)** — `proofload.toml`, the fence a run is held to, and why it is a fence rather than a sandbox.
-- **[docs/exporting.md](docs/exporting.md)** — a run's measurements in the formats other tools read.
-- **[docs/more-than-one-injector.md](docs/more-than-one-injector.md)** — one run sent from several machines, and read back as the run they were pieces of.
-- **[docs/for-agents.md](docs/for-agents.md)** — every public signature, rendered from the `.api` dumps, for handing to a model.
-- **[docs/from-java.md](docs/from-java.md)** — writing a load test in Java, and why the facade is a module rather than annotations on core.
-- **[docs/from-scala.md](docs/from-scala.md)** — the same from Scala 3, over the Java facade, with `FiniteDuration` both ways, and a load test that is a zio-test test.
-- **[AGENTS.md](AGENTS.md)** — read this first if you want to work on Proofload itself.
+- **[docs/what-it-costs.md](docs/what-it-costs.md)**: the tool's own measured overhead, so you can trust the numbers above it.
+- **[docs/modules.md](docs/modules.md)**: the modules and the coordinates to depend on them.
+- **[docs/mcp.md](docs/mcp.md)**: the MCP server in full: every tool, what each one sends, and what it refuses.
+- **[docs/allowance.md](docs/allowance.md)**: `proofload.toml`, the fence a run is held to, and why it is a fence rather than a sandbox.
+- **[docs/exporting.md](docs/exporting.md)**: a run's measurements in the formats other tools read.
+- **[docs/more-than-one-injector.md](docs/more-than-one-injector.md)**: one run sent from several machines, and read back as the run they were pieces of.
+- **[docs/for-agents.md](docs/for-agents.md)**: every public signature, rendered from the `.api` dumps, for handing to a model.
+- **[docs/from-java.md](docs/from-java.md)**: writing a load test in Java, and why the facade is a module rather than annotations on core.
+- **[docs/from-scala.md](docs/from-scala.md)**: the same from Scala 3, over the Java facade, with `FiniteDuration` both ways, and a load test that is a zio-test test.
+- **[AGENTS.md](AGENTS.md)**: read this first if you want to work on Proofload itself.
 
 ```bash
 ./gradlew build          # tests, detekt, spotless, coverage
@@ -354,4 +355,4 @@ grow a dependency and the Kotest module can't quietly start needing the JUnit on
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

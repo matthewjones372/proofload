@@ -12,6 +12,19 @@ updates:
     groups:
       gradle:
         patterns: ["*"]
+    ignore:
+      # `proofload-scala` is published against the Scala 3 LTS line on purpose:
+      # TASTy is forward-compatible and not backward, so the compiler that
+      # builds it is the oldest one that can read it. A bump here is a breaking
+      # change for every consumer below the new version, not an update.
+      #
+      # This is not hypothetical. A grouped bump took it from 3.3.8 to 3.9.0
+      # and an rc went out that needed a compiler almost nobody runs. Patches
+      # within the LTS line are still wanted; anything wider is a decision.
+      - dependency-name: "org.scala-lang:scala3-library_3"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   # `smoke/` is a build of its own with its own settings file — it resolves the
   # published coordinates rather than the projects — so the root entry above

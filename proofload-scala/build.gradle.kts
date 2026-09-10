@@ -8,10 +8,16 @@ plugins {
 }
 
 // A published Scala library can only be read by a compiler at least as new as
-// the one that built it — TASTy is forward-compatible, not backward — so this
-// is the LTS line rather than the newest release. `docs/from-scala.md` names
-// the version, because a consumer on an older compiler needs to know.
-val scalaVersion = "3.9.0"
+// the one that built it: TASTy is forward-compatible, not backward. So this is
+// the LTS line rather than the newest release, and moving it forward is a
+// breaking change for every consumer on an older compiler.
+//
+// Dependabot moved this to 3.9.0 once, inside a nineteen-update group, and
+// nothing failed: `docs/from-scala.md` still promised the LTS line while the
+// published module needed a compiler almost nobody runs. `.github/dependabot.yml`
+// now ignores this coordinate, and `ScalaVersionTest` beside this holds the
+// build and the page to the same number, because a comment did not.
+val scalaVersion = "3.3.8"
 
 // Over the Java facade rather than over core: the unmangling is written once,
 // and a facade method missing from Java is missing from Scala in the same
@@ -34,6 +40,10 @@ tasks.test {
     inputs.files(page).withPropertyName("theScalaPage")
     inputs.dir(gate).withPropertyName("theSourceSetItQuotes")
     systemProperty("proofload.repoRoot", rootProject.projectDir.path)
+
+    // The compiler this module is built by, handed to the test that holds the
+    // page to it. A literal in the test would be a third place to change.
+    systemProperty("proofload.scalaVersion", scalaVersion)
 
     val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")

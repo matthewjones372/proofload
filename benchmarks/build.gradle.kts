@@ -41,6 +41,17 @@ tasks.register<JavaExec>("ceilingApart") {
     jvmArgs("-Xmx2g")
 }
 
+tasks.register<JavaExec>("clientsAxis") {
+    // A benchmark measures this machine, so it must not queue behind a test run.
+    systemProperty("proofload.exclusive", "false")
+    group = "verification"
+    description = "Whether more than one HttpClient moves the over-a-socket ceiling."
+    mainClass.set("io.github.matthewjones372.proofload.benchmarks.ClientsAxisKt")
+    classpath = sourceSets.main.get().runtimeClasspath
+    systemProperty("proofload.axisRate", providers.gradleProperty("proofload.axisRate").getOrElse(""))
+    jvmArgs("-Xmx2g")
+}
+
 tasks.register<JavaExec>("kafkaCeiling") {
     // A benchmark measures this machine, so it must not queue behind a test
     // run and must not make one queue behind it.

@@ -117,6 +117,15 @@ here, and it is the shape of thing 0086 declined for the same reason.
 - [ ] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
       Done when: the paragraph that "cannot say whether the client or the target
       ran out first" either does, or names exactly what is still missing.
+      Half done in #95, and left unticked because the halves came apart. The
+      "done when" is met: the page now names what is missing, and names a piece
+      of it that was not known when this spec was written, which is that the
+      target stops reusing connections at `maxIdleConnections` long before the
+      client stops anything. The entry itself is not: there is no third table,
+      because `ceilingApart` and `clientsAxis` have only ever run on a cloud
+      container and a figure taken there is not a measurement of the machine
+      this page names. Running both on that machine is what closes this, and it
+      is the one thing here nobody can do from inside a session.
 
 ## Acceptance
 

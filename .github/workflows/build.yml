@@ -2,7 +2,7 @@ name: build
 
 # `main` rather than every branch. This repository opens a pull request as it
 # creates a branch, so the `pull_request` event already builds every commit on
-# one, and `["**"]` was building each of them a second time — six jobs for one
+# one, and `["**"]` was building each of them a second time: six jobs for one
 # commit where three answer the same question. `baseline.yml` has always been
 # scoped this way.
 on:
@@ -46,6 +46,23 @@ jobs:
       - name: Build and test
         run: ./gradlew build --stacktrace
 
+      # Not a gate: a probe, and a temporary one. `org.gradle.configuration-cache`
+      # is not on, and before it can be there is build logic to move.
+      # `apiDocDump` and `apiDocCheck` call script-level functions from
+      # `doLast`, and `renderedSurface()` reaches `Project.file(...)` at
+      # execution time, which the configuration cache refuses. That much is
+      # readable off `build.gradle.kts`; what is not readable is the rest of the
+      # list, so this asks Gradle for it rather than guessing.
+      #
+      # A real build rather than `--dry-run`, because some of these are only
+      # raised when a task action runs. One JDK: the answer is about the build
+      # script, not the toolchain. Delete this step once the list is worked
+      # through and the cache is on.
+      - name: What the configuration cache would refuse
+        if: matrix.java == '21'
+        continue-on-error: true
+        run: ./gradlew build --configuration-cache
+
       # `build` does not run these, on purpose: a 40 ms target measured beside
       # eight modules' tests answers about the runner rather than the tool. A
       # step of their own is what keeps the wall-clock claims checked instead of
@@ -54,7 +71,7 @@ jobs:
         run: ./gradlew :examples:timingTests --stacktrace
 
       # A load generator's own suites assert on timing, so a failure here is
-      # worth reading rather than guessing at — and a flake on a loaded runner
+      # worth reading rather than guessing at, and a flake on a loaded runner
       # looks exactly like a regression until someone opens the report.
       - name: Upload test reports
         if: failure()
@@ -94,7 +111,7 @@ jobs:
 
       # Written into the README rather than published for a shields endpoint to
       # fetch. An endpoint badge reads its file anonymously, and
-      # raw.githubusercontent.com does not serve one from a private repository — so
+      # raw.githubusercontent.com does not serve one from a private repository, so
       # the number goes in the URL, where shields needs to fetch nothing.
       - name: Write the number into the README
         env:

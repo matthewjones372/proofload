@@ -7,6 +7,7 @@ import io.github.matthewjones372.proofload.StepName
 import io.github.matthewjones372.proofload.java.Scenarios
 import io.github.matthewjones372.proofload.java.SessionKeys
 import io.github.matthewjones372.proofload.java.Steps
+import java.time.Duration as JavaDuration
 import _root_.scala.concurrent.duration.FiniteDuration
 import _root_.scala.reflect.ClassTag
 
@@ -31,6 +32,9 @@ def exec(step: StepName, action: Action): ScenarioStep = _.exec(step, action)
 
 /** A wait between steps, which records nothing and so has no name. */
 def pause(over: FiniteDuration): ScenarioStep = _.pause(asJava(over))
+
+/** The same, in the duration a ZIO caller already holds. */
+def pause(over: JavaDuration): ScenarioStep = _.pause(over)
 
 /** What a virtual user does, in order. A vararg rather than a builder: Scala has no lambda-with-receiver to work around. */
 def scenario(name: String)(steps: ScenarioStep*): Scenario =

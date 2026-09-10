@@ -9,6 +9,7 @@ import io.github.matthewjones372.proofload.Scenario
 import io.github.matthewjones372.proofload.Search
 import io.github.matthewjones372.proofload.Verdict
 import io.github.matthewjones372.proofload.java.Searches
+import java.time.Duration as JavaDuration
 import _root_.scala.concurrent.duration.FiniteDuration
 import _root_.scala.jdk.CollectionConverters.ListHasAsScala
 import _root_.scala.jdk.CollectionConverters.SeqHasAsJava
@@ -22,10 +23,17 @@ extension (scenario: Scenario)
   def sustainable(upTo: Rate, holding: FiniteDuration, expecting: Goal*): Search =
     Searches.sustainable(scenario, upTo, asJava(holding), expecting.toList.asJava)
 
+  /** The same, in the duration a ZIO caller already holds. */
+  def sustainable(upTo: Rate, holding: JavaDuration, expecting: Goal*): Search =
+    Searches.sustainable(scenario, upTo, holding, expecting.toList.asJava)
+
 extension (search: Search)
 
   /** The same search, with every rung warmed for `over` at that rung's own rate before it is measured. */
   def warmingUp(over: FiniteDuration): Search = Searches.warmingUp(search, asJava(over))
+
+  /** The same, in the duration a ZIO caller already holds. */
+  def warmingUp(over: JavaDuration): Search = Searches.warmingUp(search, over)
 
 extension (capacity: Capacity)
 

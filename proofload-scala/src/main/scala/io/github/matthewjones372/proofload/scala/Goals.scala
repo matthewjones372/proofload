@@ -26,15 +26,18 @@ final class PercentileOf private[scala] (step: StepName, clock: Clock, goal: (St
   /** The limit the percentile has to stay under. */
   infix def under(limit: FiniteDuration): Goal = goal(step, asJava(limit), clock)
 
+  /** The same, for a caller already holding a `java.time.Duration`, which is what a ZIO one holds. */
+  infix def under(limit: JavaDuration): Goal = goal(step, limit, clock)
+
 /** How much of the run may fail, waiting for the share it has to stay under. */
 final class FailuresOf private[scala] (goal: Double => Goal):
 
   infix def under(share: Share): Goal = goal(share.getPercent)
 
 /** A step's good requests, waiting for the share of them a run has to reach. */
-final class GoodputOf private[scala] (step: StepName, under: FiniteDuration, clock: Clock):
+final class GoodputOf private[scala] (step: StepName, under: JavaDuration, clock: Clock):
 
-  infix def atLeast(share: Share): Goal = Goals.goodputAtLeast(step, asJava(under), share.getPercent, clock)
+  infix def atLeast(share: Share): Goal = Goals.goodputAtLeast(step, under, share.getPercent, clock)
 
 def p50(step: StepName, of: Clock = Clock.ResponseTime): PercentileOf = PercentileOf(step, of, Goals.p50Under(_, _, _))
 
@@ -54,7 +57,16 @@ def failureRate(step: StepName): FailuresOf = FailuresOf(percent => Goals.failur
 
 /** The share of a step's requests that were both fast enough and successful. */
 def goodput(step: StepName, under: FiniteDuration, of: Clock = Clock.ResponseTime): GoodputOf =
-  GoodputOf(step, under, of)
+  GoodputOf(step, asJava(under), of)
+
+/**
+ * The same, in the duration a ZIO caller already holds. Written as two arities
+ * rather than one with a default, because Scala allows only one overloaded
+ * alternative to declare defaults and the `FiniteDuration` one has them.
+ */
+def goodput(step: StepName, under: JavaDuration): GoodputOf = GoodputOf(step, under, Clock.ResponseTime)
+
+def goodput(step: StepName, under: JavaDuration, of: Clock): GoodputOf = GoodputOf(step, under, of)
 
 extension (share: Int)
 

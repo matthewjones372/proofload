@@ -114,6 +114,14 @@ enough to list, and long enough to matter.
   Each is tested equal to the goal `Goals` builds, so it is a second spelling
   rather than a second DSL.
 
+- **A ZIO caller writes its own durations.** `at`, `pause`, `sustainable`,
+  `warmingUp`, `under` and `goodput` take a `java.time.Duration` beside the
+  `FiniteDuration` they already took. `zio.Duration` is `java.time.Duration`, so
+  importing `zio.*` beside Scala's `DurationInt` made `15.seconds` ambiguous and
+  a load test resolved it by writing `FiniteDuration(15, TimeUnit.SECONDS)` by
+  hand. Overloads rather than a `zio.Duration` given: a given that silently
+  bridges two duration types is the ambiguity that caused the problem.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

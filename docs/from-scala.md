@@ -298,6 +298,14 @@ Three things follow from that, and are worth knowing before you write one:
   one. No fiber sits between the departure clock and the socket, which is the
   thing this project refuses and the reason it can claim its own overhead.
 
+Durations are zio's here and nothing has to be converted. `zio.Duration` *is*
+`java.time.Duration`, and `at`, `pause`, `sustainable`, `warmingUp`, `under` and
+`goodput` each take one beside the `FiniteDuration` they already took. So a spec
+that imports `zio.*` writes `1.minute`, needs no `DurationInt`, and sets no
+language flag. Importing both spellings is what makes `15.seconds` ambiguous,
+and a load test on `0.1.0-rc1` resolved that by dropping `import zio.*` and
+writing `FiniteDuration(15, TimeUnit.SECONDS)` by hand.
+
 `result.metItsGoals` is for when several numbers decide the test: it reads the
 run's own verdicts and fails naming every goal that missed and the remedy each
 carries, rather than stopping at the first assertion that did. Where one number

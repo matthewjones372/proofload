@@ -107,7 +107,7 @@ open question against it.
 
 ## Stack
 
-- [ ] **`spec-0138-durations`** — `java.time.Duration` overloads on `at`,
+- [x] **`spec-0138-durations`** — `java.time.Duration` overloads on `at`,
       `pause`, and the goal builders.
       Done when: a spec importing `zio.*` writes `1.minute` and compiles with no
       language flag.

@@ -45,9 +45,6 @@ extension (rung: Rung)
 
   def rate: Rate = Searches.rate(rung)
 
-  /** The rate the load actually left at, which is under [[rate]] where the injector fell behind. */
-  def offered: Rate = Searches.offered(rung)
-
   def result: RunResult = rung.getResult
 
   def verdicts: Seq[Verdict] = rung.getVerdicts.asScala.toSeq

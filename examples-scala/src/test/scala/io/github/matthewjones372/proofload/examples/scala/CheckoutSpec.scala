@@ -4,19 +4,25 @@ import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.proofload.java.Goals
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.apply
+import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.curve
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.feed
+import io.github.matthewjones372.proofload.scala.fedBy
 import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
 import io.github.matthewjones372.proofload.scala.offered
 import io.github.matthewjones372.proofload.scala.perSecond
 import io.github.matthewjones372.proofload.scala.rate
+import io.github.matthewjones372.proofload.scala.`+`
 import io.github.matthewjones372.proofload.scala.scenario
+import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import io.github.matthewjones372.proofload.scala.sustainable
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import zio.ZIO
 import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
@@ -36,12 +42,32 @@ object CheckoutSpec extends ZIOSpecDefault:
 
   private val browse = step("browse")
 
+  private val pathTo = step("path to")
+
+  private val personId = sessionKey[String]("personId")
+
+  private val target = sessionKey[String]("target")
+
   private val serving = ZIO.acquireRelease(
     ZIO.attemptBlocking:
       val server = HttpServer.create(InetSocketAddress(0), 0)
       server.createContext(
         "/products",
         exchange =>
+          exchange.sendResponseHeaders(200, 0)
+          exchange.close(),
+      )
+      server.start()
+      server,
+  )(server => ZIO.succeed(server.stop(0)))
+
+  private def counting(seen: java.util.Set[String]) = ZIO.acquireRelease(
+    ZIO.attemptBlocking:
+      val server = HttpServer.create(InetSocketAddress(0), 0)
+      server.createContext(
+        "/people",
+        exchange =>
+          seen.add(exchange.getRequestURI.getPath)
           exchange.sendResponseHeaders(200, 0)
           exchange.close(),
       )
@@ -76,5 +102,21 @@ object CheckoutSpec extends ZIOSpecDefault:
           capacity.curve.nonEmpty,
           capacity.curve.forall(rung => rung.rate.getPerSecond > 0.0),
           capacity.curve.forall(rung => rung.offered.getPerSecond > 0.0),
+        ),
+    test("asks about a different pair of characters for every user"):
+      ZIO.scoped:
+        val seen = ConcurrentHashMap.newKeySet[String]()
+        for
+          server <- counting(seen)
+          api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
+          graph = scenario("graph")(exec(pathTo, api.get("/people/{personId}/path-to/{target}").expecting(200)))
+          result <- proofload.run(
+            graph
+              .at(20.perSecond, over = 500.millis)
+              .fedBy(feed(personId)(user => (user % 82 + 1).toString) + feed(target)(user => (user % 61 + 7).toString)),
+          )
+        yield assertTrue(
+          result(pathTo).failed == 0L,
+          seen.size.toLong == result(pathTo).count,
         ),
   )

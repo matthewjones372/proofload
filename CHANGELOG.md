@@ -83,6 +83,12 @@ enough to list, and long enough to matter.
   a `Long` in core, and narrowing it in the facade would cap a run at two
   billion users to save a cast.
 
+- **Per-user data from Scala.** `feed(key)(user => ...)` curried so the function
+  reads as a block, `feedFrom(key, values)` over a `Seq`, `+` to combine two,
+  and `fedBy` on a simulation or a search. A run whose users each ask about
+  their own pair is in `examples-scala`, which is where the endpoint that
+  prompted this spec could not be measured from before.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

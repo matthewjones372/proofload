@@ -1,15 +1,14 @@
 package io.github.matthewjones372.proofload.examples.scala
 
 import com.sun.net.httpserver.HttpServer
-import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.apply
 import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.curve
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.expecting
 import io.github.matthewjones372.proofload.scala.failureRate
 import io.github.matthewjones372.proofload.scala.feed
 import io.github.matthewjones372.proofload.scala.fedBy
-import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
 import io.github.matthewjones372.proofload.scala.offered
 import io.github.matthewjones372.proofload.scala.percent
@@ -29,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap
 import zio.ZIO
 import zio.test.assertTrue
 import _root_.scala.concurrent.duration.DurationInt
-import _root_.scala.language.implicitConversions
 
 /**
  * A load test that is a zio-test test, and the gate on `proofload-zio-test`
@@ -91,7 +89,7 @@ object CheckoutSpec extends ProofloadSpec:
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
           result <- measured("checkout"):
-            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent)
+            browsing.at(20.perSecond, over = 500.millis).expecting(failureRate under 0.1.percent)
           table <- proofload.markdown(result)
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,

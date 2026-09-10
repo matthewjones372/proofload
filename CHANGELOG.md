@@ -149,6 +149,13 @@ enough to list, and long enough to matter.
   fine. No timeout is in there, because the right one is the length of what is
   being run.
 
+- **`expecting` beside `at`.** `checkout.at(50.perSecond, over = 1.minute)
+  .expecting(p99(placeOrder) under 200.millis)` is what a Scala caller writes
+  now; the goals were a Java static before, because `at` had nowhere to put
+  them. With that and the goals taking a `FiniteDuration`, no line of
+  `examples-scala` needs a conversion any more: both sources compile with no
+  `given` import and no `implicitConversions` flag.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

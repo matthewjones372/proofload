@@ -97,6 +97,7 @@ public final class io/github/matthewjones372/proofload/java/Shares {
 public final class io/github/matthewjones372/proofload/java/Simulations {
 	public static fun at (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;)Lio/github/matthewjones372/proofload/Simulation;
 	public static fun at (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;[Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Simulation;
+	public static fun expecting (Lio/github/matthewjones372/proofload/Simulation;[Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Simulation;
 }
 
 public final class io/github/matthewjones372/proofload/java/Steps {

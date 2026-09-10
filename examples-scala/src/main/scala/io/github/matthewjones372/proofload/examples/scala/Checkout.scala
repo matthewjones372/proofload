@@ -2,14 +2,13 @@ package io.github.matthewjones372.proofload.examples.scala
 
 import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Results
-import java.nio.file.Files
-import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.Proofload
 import io.github.matthewjones372.proofload.scala.appendToStepSummary
 import io.github.matthewjones372.proofload.scala.apply
+import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.expecting
 import io.github.matthewjones372.proofload.scala.failureRate
-import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
 import io.github.matthewjones372.proofload.scala.p99
 import io.github.matthewjones372.proofload.scala.pause
@@ -20,8 +19,8 @@ import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import io.github.matthewjones372.proofload.scala.writeHtmlReport
 import io.github.matthewjones372.proofload.scala.writePagesIndex
+import java.nio.file.Files
 import _root_.scala.concurrent.duration.DurationInt
-import _root_.scala.language.implicitConversions
 
 /**
  * A load test written in Scala, and the gate on `proofload-scala` being callable
@@ -53,13 +52,9 @@ object Checkout:
     )
 
     val result = Proofload().run(
-      Simulations.at(
-        checkout,
-        50.perSecond,
-        1.minute,
-        p99(placeOrder) under 200.millis,
-        failureRate under 0.1.percent,
-      ),
+      checkout
+        .at(50.perSecond, over = 1.minute)
+        .expecting(p99(placeOrder) under 200.millis, failureRate under 0.1.percent),
     )
 
     Results.verdicts(result).forEach: verdict =>

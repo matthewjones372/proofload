@@ -1,7 +1,9 @@
 package io.github.matthewjones372.proofload.scala
 
 import io.github.matthewjones372.proofload.Clock
+import io.github.matthewjones372.proofload.java.Actions
 import io.github.matthewjones372.proofload.java.Goals
+import io.github.matthewjones372.proofload.java.Simulations
 import java.time.Duration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -44,4 +46,14 @@ class GoalsTest:
     assertEquals(
       Goals.goodputAtLeast(placeOrder, Duration.ofMillis(200), 99.0, Clock.ServiceTime),
       goodput(placeOrder, under = 200.millis, of = Clock.ServiceTime) atLeast 99.percent,
+    )
+
+  @Test
+  def `the goals a run is judged against are the ones the facade attaches`(): Unit =
+    val browsing = scenario("browsing")(exec(placeOrder, Actions.of(_ => ())))
+    val goal = failureRate under 1.percent
+
+    assertEquals(
+      Simulations.at(browsing, 20.perSecond, Duration.ofMillis(500), goal),
+      browsing.at(20.perSecond, over = 500.millis).expecting(goal),
     )

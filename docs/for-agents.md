@@ -1419,6 +1419,7 @@ class Shares
 class Simulations
     fun at(Scenario, Rate, Duration): Simulation
     fun at(Scenario, Rate, Duration, Array<Goal>): Simulation
+    fun expecting(Simulation, Array<Goal>): Simulation
 class Steps
     fun named(String): StepName
 ```

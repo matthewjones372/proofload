@@ -39,12 +39,12 @@ dependencies {
 ```scala
 import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Results
-import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.Proofload
 import io.github.matthewjones372.proofload.scala.apply
+import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.expecting
 import io.github.matthewjones372.proofload.scala.failureRate
-import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
 import io.github.matthewjones372.proofload.scala.p99
 import io.github.matthewjones372.proofload.scala.pause
@@ -54,7 +54,6 @@ import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import _root_.scala.concurrent.duration.DurationInt
-import _root_.scala.language.implicitConversions
 ```
 
 `_root_.scala` because the module's own package is named `scala`, which shadows
@@ -88,13 +87,9 @@ val checkout = scenario("checkout")(
 
 ```scala
 val result = Proofload().run(
-  Simulations.at(
-    checkout,
-    50.perSecond,
-    1.minute,
-    p99(placeOrder) under 200.millis,
-    failureRate under 0.1.percent,
-  ),
+  checkout
+    .at(50.perSecond, over = 1.minute)
+    .expecting(p99(placeOrder) under 200.millis, failureRate under 0.1.percent),
 )
 ```
 
@@ -105,9 +100,13 @@ spelling of the goal `Goals` builds and equal to it, so nothing here is a second
 way to describe a run. Add `of = Clock.ServiceTime` to ask a percentile of the
 other clock.
 
-`Simulations.at` takes a `java.time.Duration` and is handed `1.minute`, because
-the conversion is `given`. That is what the `implicitConversions` import above
-is for; it is Scala's rule about applying a conversion, not this module's.
+`at` says what to send and `expecting` what it has to achieve, which is the
+order Kotlin says them in. Nothing above needs a conversion or a language flag:
+every entry point takes the `FiniteDuration` a Scala codebase already writes,
+and a `java.time.Duration` beside it. The `given` conversions are still there for
+a caller handing one of those to a Java static, and applying one needs
+`import scala.language.implicitConversions`, which is Scala's rule and not this
+module's.
 
 Read what it measured off the result. The percentile comes back a
 `FiniteDuration`, so it compares against one:
@@ -205,9 +204,10 @@ thing as being able to name what it returns.
 
 `FiniteDuration` both ways, `perSecond` and `perMinute` on `Int` and `Double`,
 `sessionKey[T]`, `step`, `exec`, `pause`, `scenario`, `http.baseUrl`,
-`Proofload()`, `at`, `feed`, `feedFrom`, `+`, `fedBy`, the readers above, the
-outputs above, and the capacity search below. Nothing else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
-static and is called directly, as the snippets here do.
+`Proofload()`, `at`, `expecting`, `feed`, `feedFrom`, `+`, `fedBy`, the goals
+above, the readers above, the outputs above, and the capacity search below.
+Nothing else: `Https` and `Results` are Java statics and are called directly, as
+the snippets here do.
 
 `sessionKey[T]` is the one call Scala does better than Java. `ClassTag`
 recovers at compile time the type Java has to be handed at runtime, so the
@@ -270,7 +270,7 @@ object CheckoutSpec extends ProofloadSpec:
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
           result <- measured("checkout"):
-            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent)
+            browsing.at(20.perSecond, over = 500.millis).expecting(failureRate under 0.1.percent)
           table <- proofload.markdown(result)
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,

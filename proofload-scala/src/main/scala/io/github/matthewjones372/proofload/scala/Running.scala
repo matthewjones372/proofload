@@ -1,5 +1,6 @@
 package io.github.matthewjones372.proofload.scala
 
+import io.github.matthewjones372.proofload.Goal
 import io.github.matthewjones372.proofload.Rate
 import io.github.matthewjones372.proofload.Scenario
 import io.github.matthewjones372.proofload.Simulation
@@ -28,3 +29,12 @@ extension (scenario: Scenario)
 
   /** The same, in the duration a ZIO caller already holds: `zio.Duration` is `java.time.Duration`. */
   def at(rate: Rate, over: JavaDuration): Simulation = Simulations.at(scenario, rate, over)
+
+extension (simulation: Simulation)
+
+  /**
+   * What this run is judged against, said after the run rather than inside the
+   * call that builds it: `at` takes what to send and `expecting` what it has to
+   * achieve, which is the order Kotlin says them in.
+   */
+  def expecting(goals: Goal*): Simulation = Simulations.expecting(simulation, goals*)

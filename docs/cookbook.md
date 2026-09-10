@@ -19,10 +19,17 @@ val account = step("account")
 A `step` handle carries its name, so a rename is a compile error rather than a
 test that quietly asserts about a step nobody runs.
 
+The recipes are Kotlin. Java and Scala reach the same values through
+`proofload-java` and `proofload-scala`, and the calls are named in each recipe
+where the spelling differs: [from-java.md](from-java.md) and
+[from-scala.md](from-scala.md) are the pages, and every snippet on those two is
+a line of a source set the build compiles.
+
 ## Contents
 
 **Getting a run out of it**: [a first load test](#a-first-load-test) ·
 [the same thing in Kotest](#the-same-thing-in-kotest) ·
+[the same thing in a zio-test spec](#the-same-thing-in-a-zio-test-spec) ·
 [run on an engine of your own](#run-on-an-engine-of-your-own) ·
 [without a test framework](#without-a-test-framework) ·
 [see what a scenario does before running it](#see-what-a-scenario-does-before-running-it) ·
@@ -135,6 +142,46 @@ class CheckoutSpec : StringSpec({
     }
 })
 ```
+
+## The same thing in a zio-test spec
+
+`ProofloadSpec` is a `ZIOSpecDefault` that already carries what a load spec
+needs, so what is left of the spec is the measurement:
+
+```scala
+object CheckoutSpec extends ProofloadSpec:
+
+  def spec = suite("checkout")(
+    test("holds up at fifty a second"):
+      for
+        result <- measured("checkout"):
+          checkout.at(50.perSecond, over = 1.minute).expecting(p99(placeOrder) under 200.millis)
+      yield assert(result)(failedNone && metEveryGoal),
+  )
+```
+
+Extending it brings `TestAspect.sequential` and `TestAspect.withLiveClock`. The
+second is the one to know about: zio-test hands a spec a `TestClock`, so any
+time the *spec* takes (a readiness retry, a `Schedule`, a timeout) never
+advances and the spec hangs rather than failing. The run itself is on the wall
+clock and is fine, which is what makes it hard to find. There is no timeout in
+there, because the right one is the length of what is being run: add
+`@@ TestAspect.timeout(...)` to the suite yourself.
+
+`measured` runs it, writes its page under `reportsTo` and appends its table to
+the job summary, and the index over that directory is written once, after the
+last test. `reportsTo` defaults to `target/proofload`; a caller who wants the
+result without a report has `proofload.run`.
+
+Durations are whichever kind you already hold: `1.minute` from `zio` and
+`1.minute` from Scala's `DurationInt` both work, and nothing needs a conversion
+or a language flag. A run fails with a `ProofloadError`, which is `Invalid`,
+`Interrupted` or `Failed`: the question a caller is asking is whether to retry.
+Nothing the target did reaches that channel, because a refused connection is a
+measurement.
+
+[from-scala.md](from-scala.md) is the page, and the spec above is a shortened
+version of one the build compiles and runs.
 
 ## Run on an engine of your own
 
@@ -592,6 +639,10 @@ checkout.at(50.perSecond, over = 1.minutes)
 A feeder is a function of the user's number rather than a cursor over a source,
 so there is nothing to lock on the path every request takes, nothing to run out
 of, and user 4,001 gets the same data tomorrow as it did today.
+
+Java says this as `Feeders.of(customer, user -> "customer-" + user)` and
+`Feeders.fedBy(simulation, feeder)`; Scala says `feed(customer)(user =>
+s"customer-$user")`, with `+` to combine two and `feedFrom` for a fixed list.
 
 A request body reads the session the same way, so the thing being posted varies
 per user too:
@@ -1432,6 +1483,11 @@ Check `voided` before quoting the answer. A rung where the generator itself fell
 behind found this tool's ceiling rather than the target's, and the number is
 about the machine you ran it on.
 
+`Rate` is a value class, so the search is `Searches.sustainable(checkout, upTo,
+holding, goals)` from Java and `checkout.sustainable(upTo, holding, goals*)`
+from Scala, where `capacity.rate` is an `Option[Rate]` and `capacity.curve` a
+`Seq[Rung]`.
+
 ## Did the generator keep up?
 
 The first question to ask of any result, and the one most tools do not answer:
@@ -1469,6 +1525,11 @@ supported way to adapt, because every rung is a separate, labelled run.
 `arrivals` says the same thing from the other side: the spacing the run actually
 produced, and its coefficient of variation.
 
+Scala reads all of this without naming a file class: `result.fellBehind`,
+`result.lostGround`, `result.ranOutOfRoom`, `result.concurrency` for Little's
+law, and `result.offered` as an `Option[Offered]` whose `asked`, `left` and
+`over` are the numbers above.
+
 ## Write an HTML report
 
 One self-contained file, with the data, the stylesheet and the script inline, so it
@@ -1502,6 +1563,12 @@ A capacity search has a page of its own, with the curve on it:
 ```kotlin
 capacity.writeHtmlReport(Path.of("build/reports/proofload/capacity.html"))
 ```
+
+Kotlin's default arguments do not cross a language boundary, so Scala has its
+own defaults over the same call: `result.writeHtmlReport(path)`,
+`result.markdown` and `result.appendToStepSummary()`, with
+`proofload.writeHtmlReport(result, path)` and the rest as effects in a zio-test
+spec. Nothing there is a hand-placed `null` or a `kotlin.jvm.functions.Function1`.
 
 ## One run at a time, on the whole machine
 

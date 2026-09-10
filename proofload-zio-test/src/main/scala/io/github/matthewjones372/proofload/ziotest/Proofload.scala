@@ -7,7 +7,7 @@ import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Search
 import io.github.matthewjones372.proofload.Simulation
 import io.github.matthewjones372.proofload.engine.ExclusiveKt
-import zio.Task
+import zio.IO
 import zio.ZIO
 import io.github.matthewjones372.proofload.engine.Proofload as Runner
 
@@ -30,8 +30,8 @@ import io.github.matthewjones372.proofload.engine.Proofload as Runner
  */
 object proofload:
 
-  def run(simulation: Simulation): Task[RunResult] =
-    ZIO.attemptBlocking(Runner(Progress.Companion.getSilent).run(simulation))
+  def run(simulation: Simulation): IO[ProofloadError, RunResult] =
+    sent(ZIO.attemptBlocking(Runner(Progress.Companion.getSilent).run(simulation)))
 
   /**
    * The same run, sent by [[on]] rather than by the default engine.
@@ -40,9 +40,9 @@ object proofload:
    * tests under `TestAspect.parallel` measure it one after the other rather
    * than measuring each other.
    */
-  def run(simulation: Simulation, on: Engine): Task[RunResult] =
+  def run(simulation: Simulation, on: Engine): IO[ProofloadError, RunResult] =
     val silent = Progress.Companion.getSilent
-    ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(simulation))
+    sent(ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(simulation)))
 
   /**
    * The rate the scenario sustains, hunted rung by rung.
@@ -51,10 +51,12 @@ object proofload:
    * test that calls this needs a timeout written against the search's own
    * `worstCase` rather than against a run's.
    */
-  def run(search: Search): Task[Capacity] =
-    ZIO.attemptBlocking(Runner(Progress.Companion.getSilent).run(search))
+  def run(search: Search): IO[ProofloadError, Capacity] =
+    sent(ZIO.attemptBlocking(Runner(Progress.Companion.getSilent).run(search)))
 
   /** The same search, sent by [[on]] rather than by the default engine. */
-  def run(search: Search, on: Engine): Task[Capacity] =
+  def run(search: Search, on: Engine): IO[ProofloadError, Capacity] =
     val silent = Progress.Companion.getSilent
-    ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(search))
+    sent(ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(search)))
+
+  private def sent[A](effect: ZIO[Any, Throwable, A]): IO[ProofloadError, A] = effect.mapError(ProofloadError.of)

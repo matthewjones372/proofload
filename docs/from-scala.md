@@ -306,6 +306,18 @@ language flag. Importing both spellings is what makes `15.seconds` ambiguous,
 and a load test on `0.1.0-rc1` resolved that by dropping `import zio.*` and
 writing `FiniteDuration(15, TimeUnit.SECONDS)` by hand.
 
+`proofload.run` fails with a `ProofloadError`: `Invalid` where the simulation
+could not be run as written, `Interrupted` where the run did not finish, and
+`Failed` for everything else. The question a caller is really asking is whether
+to retry, and three cases answer it without matching on an exception class. It
+is a `Throwable` and ZIO is covariant in its error type, so code that named
+`Task[RunResult]` still compiles.
+
+Nothing the target did reaches that channel. A refused connection and a bug in a
+step body are both recorded as failed requests, with the reason each failed for,
+and the run succeeds: a target that refuses every connection is a measurement,
+and losing it to an exception would throw away the answer.
+
 `result.metItsGoals` is for when several numbers decide the test: it reads the
 run's own verdicts and fails naming every goal that missed and the remedy each
 carries, rather than stopping at the first assertion that did. Where one number

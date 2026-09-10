@@ -122,6 +122,15 @@ enough to list, and long enough to matter.
   hand. Overloads rather than a `zio.Duration` given: a given that silently
   bridges two duration types is the ambiguity that caused the problem.
 
+- **A typed error channel for a run.** `proofload.run` fails with a
+  `ProofloadError`: `Invalid`, `Interrupted` or `Failed`, which is the question
+  "can I retry this" answered without matching on an exception class. It extends
+  `Throwable` and ZIO is covariant in its error type, so a caller who wrote
+  `Task[RunResult]` still compiles. The spec's fourth case, `Refused`, is not
+  there: a refused connection is recorded as a failed request rather than
+  thrown, so a run against a target that is down succeeds and carries the
+  measurement of a target that is down.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

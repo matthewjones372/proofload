@@ -168,14 +168,15 @@ today.
 Six more came out of writing a load test against this tool from Scala and ZIO,
 in another repository, on `0.1.0-rc1` and `rc3`. Every row is something that
 caller hit: work it could not call at all, work it could call only through
-Kotlin's file classes, and a release it could not resolve.
+Kotlin's file classes, and a release it could not resolve. Most of it is built;
+what is left is in the row.
 
-| Spec | What it would get |
+| Spec | What it got, and what is left |
 |---|---|
-| [0135](0135-what-scala-cannot-name.md) | a facade over the value-class mangling, so `sustainable`, `Offered` and `notWorseThan` are reachable |
+| [0135](0135-what-scala-cannot-name.md) | `Searches` and `Offereds` over the value-class mangling, so the capacity search and what a run offered are reachable. Left: the Java-facing baselines facade `notWorseThan` needs |
 | [0136](0136-a-feeder-from-scala.md) | per-user data from Java and Scala, which 0015 gave Kotlin and the facade never carried |
-| [0137](0137-a-scala-surface-that-reads-like-scala.md) | extensions over the file classes, infix goals, one import, and the package that shadows `scala` |
-| [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, the reports as effects, composable assertions, and a run you can watch |
+| [0137](0137-a-scala-surface-that-reads-like-scala.md) | extensions over the file classes, the outputs with Scala defaults, infix goals, and `expecting`. Left: the package rename, which is the breaking half |
+| [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, the outputs as effects, and composable assertions. Left: `watch`, which was last in the stack for a reason |
 | [0139](0139-the-scala-version-a-release-promises.md) | the LTS floor declared once and gated, after rc3 shipped TASTy no 3.8 consumer can read |
 | [0140](0140-a-spec-that-is-already-a-load-test.md) | a base class that carries the aspects and writes the report, so a load spec is only its measurement |
 

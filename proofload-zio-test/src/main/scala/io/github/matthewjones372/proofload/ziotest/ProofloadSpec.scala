@@ -2,9 +2,12 @@ package io.github.matthewjones372.proofload.ziotest
 
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Simulation
+import java.nio.file.Files
 import java.nio.file.Path
 import zio.Chunk
 import zio.IO
+import zio.UIO
+import zio.ZIO
 import zio.test.TestAspect
 import zio.test.ZIOSpecDefault
 
@@ -28,7 +31,7 @@ import zio.test.ZIOSpecDefault
 abstract class ProofloadSpec extends ZIOSpecDefault:
 
   override def aspects: Chunk[zio.test.TestAspectAtLeastR[zio.test.TestEnvironment]] =
-    Chunk(TestAspect.sequential, TestAspect.withLiveClock)
+    Chunk(TestAspect.sequential, TestAspect.withLiveClock, TestAspect.afterAll(indexed))
 
   /** Where reports and the index are written. Per spec, because the index is per directory. */
   def reportsTo: Path = Path.of("target/proofload")
@@ -44,3 +47,16 @@ abstract class ProofloadSpec extends ZIOSpecDefault:
    */
   def measured(name: String)(simulation: Simulation): IO[ProofloadError, RunResult] =
     proofload.measured(name, into = reportsTo)(simulation)
+
+  /**
+   * The index, once the last test has run: it lists what is on disk, so it is
+   * written after everything that writes there rather than once per run.
+   *
+   * Skipped where nothing was written, so a spec that measured nothing leaves
+   * nothing behind rather than an index of no reports.
+   */
+  private def indexed: UIO[Unit] =
+    ZIO
+      .whenZIO(ZIO.succeed(Files.isDirectory(reportsTo)))(proofload.writePagesIndex(reportsTo))
+      .unit
+      .orDie

@@ -182,6 +182,36 @@ transport seam makes one easy to write, and this measurement is not a reason to.
 It is not evidence the client is slow. Getting evidence either way means
 measuring against a target that is not in the way.
 
+### What has since been found out about the target
+
+`:benchmarks:ceilingApart` runs the same sweep with the target in a JVM of its
+own and the two ends pinned to disjoint processors, and `:benchmarks:clientsAxis`
+runs one rate with the number of `HttpClient`s on the axis. Neither has a table
+here yet, because neither has been run on the machine this page names. What they
+found is not a number, though, and it belongs here:
+
+**The target stops reusing connections long before the client does.** Every
+sweep now reports **requests per connection**, counted at the target as requests
+over the distinct client ports it answered on. That figure holds in the tens up
+to a couple of thousand a second and then falls to near one, and the fall is a
+cliff rather than a slope. `com.sun.net.httpserver` closes idle connections past
+`sun.net.httpserver.maxIdleConnections`, which defaults to two hundred; handing
+the target a larger cap moves the cliff and changes nothing at the rates below
+it, which is what crossing a threshold looks like rather than a speed-up.
+
+So the arrangement that saturates above has a named part, and the named part is
+the instrument. A rate at which this table's target has stopped reusing
+connections is a rate at which the generator is opening a socket per request or
+two, spending the machine's ephemeral range on the target's behalf.
+
+Two things follow. Comparing this client against another one, at a target
+configured this way, would be measuring `com.sun.net.httpserver` more than
+either client. And raising the cap is not obviously the right answer either: it
+makes the published figure better by changing the instrument, and which number
+this page should carry, the one a stock target allows or the one the generator
+reaches against a target that is not in the way, is a decision rather than a
+fix. `apart` forwards `proofload.targetFlags` so both can be measured.
+
 The pick is deliberately conservative. Five thousand a second kept the budget,
 a median departure 101 µs late, and is still not the ceiling, because three
 requests in twenty-five thousand failed. A refused request is not a request this

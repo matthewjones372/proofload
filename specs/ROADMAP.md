@@ -165,6 +165,19 @@ today.
 | [0133](0133-the-documents-1-0-cannot-ship-without.md) | the documentation audit, and the seven pages 1.0 needs |
 | [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants, and which five do not hold |
 
+Five more came out of writing a load test against this tool from Scala and ZIO,
+in another repository, on `0.1.0-rc1` and `rc3`. Every row is something that
+caller hit: work it could not call at all, work it could call only through
+Kotlin's file classes, and a release it could not resolve.
+
+| Spec | What it would get |
+|---|---|
+| [0135](0135-what-scala-cannot-name.md) | a facade over the value-class mangling, so `sustainable`, `Offered` and `notWorseThan` are reachable |
+| [0136](0136-a-feeder-from-scala.md) | per-user data from Java and Scala, which 0015 gave Kotlin and the facade never carried |
+| [0137](0137-a-scala-surface-that-reads-like-scala.md) | extensions over the file classes, infix goals, one import, and the package that shadows `scala` |
+| [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, the reports as effects, composable assertions, and a run you can watch |
+| [0139](0139-the-scala-version-a-release-promises.md) | the LTS floor declared once and gated, after rc3 shipped TASTy no 3.8 consumer can read |
+
 ## Known and unwritten
 
 Nothing. Per-stage results became [0077](0077-what-each-stage-measured.md),

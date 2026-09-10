@@ -97,6 +97,16 @@ enough to list, and long enough to matter.
   0.1.0-rc1. `NoFileClassesTest` reads the consumer source set and fails on the
   next one, and on `kotlin.jvm` beside it.
 
+- **The outputs, written from Scala.** `writeHtmlReport`, `toHtmlReport`,
+  `markdown`, `appendToStepSummary`, `writePagesIndex` and the capacity page, as
+  extensions with Scala defaults. Kotlin's default arguments do not cross the
+  boundary, so the rc1 version of the first was a file class, a path and three
+  hand-placed nulls in the right order, and the step summary took a
+  `kotlin.jvm.functions.Function1` in a signature a caller could see. Both
+  report modules are `compileOnly` on `proofload-scala`, the way
+  `proofload-zio-test` takes zio: asking for Scala does not hand anybody two
+  more jars.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

@@ -83,7 +83,7 @@ in every file, forever, and rc is when it is cheapest to fix.
 - [x] **`spec-0137-results`** — `fellBehind`, `lostGround`, `concurrency` and
       `offered` as extensions, with `Concurrency` as a Scala ADT.
       Done when: no `…Kt.` appears in `examples-scala`.
-- [ ] **`spec-0137-reports`** — `writeHtmlReport`, `markdown` and
+- [x] **`spec-0137-reports`** — `writeHtmlReport`, `markdown` and
       `appendToStepSummary` as extensions with Scala defaults, and no
       `kotlin.jvm.functions` in any signature a caller sees.
       Done when: a spec writes all three outputs in three lines.

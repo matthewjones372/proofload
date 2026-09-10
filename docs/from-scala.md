@@ -170,12 +170,36 @@ at the end: a feeder that ran out would end a load test for a reason that has
 nothing to do with the target. `fedBy` attaches one to a simulation or to a
 search, which are the only two things a feeder attaches to.
 
+## What it leaves behind
+
+```scala
+_ <- ZIO.attemptBlocking:
+  result.writeHtmlReport(reports.resolve("checkout.html"))
+  result.appendToStepSummary()
+  writePagesIndex(reports)
+```
+
+`result.markdown` is the same table as text, `result.toHtmlReport()` the page as
+a string, and `capacity.writeHtmlReport(path)` draws the curve with the
+operating point marked. Every optional argument is a Scala default rather than a
+hand-placed `null`: Kotlin's defaults do not cross the boundary, so the rc1
+version of these calls was `HtmlReportKt.writeHtmlReport(result, path, null,
+null, java.util.List.of())` and the caller had to know the order. The step
+summary's environment reader is a `String => Option[String]`, so nothing here
+puts `kotlin.jvm.functions.Function1` in a signature a caller sees, and
+`appendToStepSummary` answers `NotOnActions` off Actions rather than throwing:
+the same call runs on a laptop.
+
+Both report modules are `compileOnly` on `proofload-scala`. Calling one of these
+means having the module it belongs to on your own classpath, which is the same
+thing as being able to name what it returns.
+
 ## What the module is
 
 `FiniteDuration` both ways, `perSecond` and `perMinute` on `Int` and `Double`,
 `sessionKey[T]`, `step`, `exec`, `pause`, `scenario`, `http.baseUrl`,
-`Proofload()`, `at`, `feed`, `feedFrom`, `+`, `fedBy`, the readers above, and
-the capacity search below. Nothing else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
+`Proofload()`, `at`, `feed`, `feedFrom`, `+`, `fedBy`, the readers above, the
+outputs above, and the capacity search below. Nothing else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
 static and is called directly, as the snippets here do.
 
 `sessionKey[T]` is the one call Scala does better than Java. `ClassTag`

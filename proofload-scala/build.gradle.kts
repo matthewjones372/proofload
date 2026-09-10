@@ -19,6 +19,17 @@ val scalaVersion = "3.3.8"
 dependencies {
     api(project(":proofload-java"))
     api("org.scala-lang:scala3-library_3:$scalaVersion")
+
+    // `compileOnly`, the way `proofload-zio-test` takes zio: a caller reaching
+    // `result.markdown` already has the report module on its own classpath, and
+    // one that only wanted Scala should not be handed two more jars. The
+    // extensions resolve statically, so there is nothing to load until one is
+    // called.
+    compileOnly(project(":proofload-report-html"))
+    compileOnly(project(":proofload-report-github"))
+
+    testImplementation(project(":proofload-report-html"))
+    testImplementation(project(":proofload-report-github"))
 }
 
 // Tests here are Scala and assert with JUnit rather than with Kotest. The

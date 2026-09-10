@@ -107,6 +107,13 @@ enough to list, and long enough to matter.
   `proofload-zio-test` takes zio: asking for Scala does not hand anybody two
   more jars.
 
+- **Goals as infix, from Scala.** `p99(placeOrder) under 200.millis` and
+  `failureRate under 1.percent`, with `p50`, `p95`, `p999` and `goodput …
+  atLeast` beside them. Kotlin has the infix form and Java cannot have it, which
+  left Scala, which does infix better than either, writing the Java statics.
+  Each is tested equal to the goal `Goals` builds, so it is a second spelling
+  rather than a second DSL.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

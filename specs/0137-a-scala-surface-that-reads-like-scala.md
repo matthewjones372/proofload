@@ -87,7 +87,7 @@ in every file, forever, and rc is when it is cheapest to fix.
       `appendToStepSummary` as extensions with Scala defaults, and no
       `kotlin.jvm.functions` in any signature a caller sees.
       Done when: a spec writes all three outputs in three lines.
-- [ ] **`spec-0137-goals`** — `p99`, `p95`, `failureRate`, `goodput` and `under`
+- [x] **`spec-0137-goals`** — `p99`, `p95`, `failureRate`, `goodput` and `under`
       as infix extensions over `Goals`.
       Done when: the Shape's `goals` compiles and equals what `Goals` builds.
 - [ ] **`spec-0137-dsl`** — the package rename to `dsl`, one wildcard import

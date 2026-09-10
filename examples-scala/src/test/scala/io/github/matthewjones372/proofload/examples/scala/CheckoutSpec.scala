@@ -1,19 +1,20 @@
 package io.github.matthewjones372.proofload.examples.scala
 
 import com.sun.net.httpserver.HttpServer
-import io.github.matthewjones372.proofload.java.Goals
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.apply
 import io.github.matthewjones372.proofload.scala.appendToStepSummary
 import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.curve
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.failureRate
 import io.github.matthewjones372.proofload.scala.feed
 import io.github.matthewjones372.proofload.scala.fedBy
 import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
 import io.github.matthewjones372.proofload.scala.markdown
 import io.github.matthewjones372.proofload.scala.offered
+import io.github.matthewjones372.proofload.scala.percent
 import io.github.matthewjones372.proofload.scala.perSecond
 import io.github.matthewjones372.proofload.scala.rate
 import io.github.matthewjones372.proofload.scala.`+`
@@ -88,7 +89,7 @@ object CheckoutSpec extends ZIOSpecDefault:
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
           result <- proofload.run(
-            Simulations.at(browsing, 20.perSecond, 500.millis, Goals.failureRateUnder(0.1)),
+            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent),
           )
           reports <- ZIO.attemptBlocking(Files.createTempDirectory("proofload"))
           _ <- ZIO.attemptBlocking:
@@ -107,7 +108,7 @@ object CheckoutSpec extends ZIOSpecDefault:
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
           capacity <- proofload.run(
-            browsing.sustainable(upTo = 100.perSecond, holding = 500.millis, Goals.failureRateUnder(50)),
+            browsing.sustainable(upTo = 100.perSecond, holding = 500.millis, failureRate under 50.percent),
           )
         yield assertTrue(
           capacity.curve.nonEmpty,

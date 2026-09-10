@@ -37,16 +37,18 @@ dependencies {
 ## A load test
 
 ```scala
-import io.github.matthewjones372.proofload.java.Goals
 import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Results
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.Proofload
 import io.github.matthewjones372.proofload.scala.apply
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.failureRate
 import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
+import io.github.matthewjones372.proofload.scala.p99
 import io.github.matthewjones372.proofload.scala.pause
+import io.github.matthewjones372.proofload.scala.percent
 import io.github.matthewjones372.proofload.scala.perSecond
 import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
@@ -90,16 +92,22 @@ val result = Proofload().run(
     checkout,
     50.perSecond,
     1.minute,
-    Goals.p99Under(placeOrder, 200.millis),
-    Goals.failureRateUnder(0.1),
+    p99(placeOrder) under 200.millis,
+    failureRate under 0.1.percent,
   ),
 )
 ```
 
-`Goals.p99Under` takes a `java.time.Duration` and is handed `200.millis`,
-because the conversion is `given`. That is what the `implicitConversions`
-import above is for; it is Scala's rule about applying a conversion, not this
-module's.
+The goals are infix, as they are in Kotlin: `p99`, `p95`, `p50`, `p999` and
+`goodput` take the step and wait for the limit, `failureRate` takes the run or
+one step and waits for the share, and `1.percent` is a `Share`. Each is a second
+spelling of the goal `Goals` builds and equal to it, so nothing here is a second
+way to describe a run. Add `of = Clock.ServiceTime` to ask a percentile of the
+other clock.
+
+`Simulations.at` takes a `java.time.Duration` and is handed `1.minute`, because
+the conversion is `given`. That is what the `implicitConversions` import above
+is for; it is Scala's rule about applying a conversion, not this module's.
 
 Read what it measured off the result. The percentile comes back a
 `FiniteDuration`, so it compares against one:
@@ -261,7 +269,7 @@ object CheckoutSpec extends ZIOSpecDefault:
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
           result <- proofload.run(
-            Simulations.at(browsing, 20.perSecond, 500.millis, Goals.failureRateUnder(0.1)),
+            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent),
           )
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,
@@ -304,7 +312,7 @@ then bisects between the last rung that passed and the first that did not.
 
 ```scala
 capacity <- proofload.run(
-  browsing.sustainable(upTo = 100.perSecond, holding = 500.millis, Goals.failureRateUnder(50)),
+  browsing.sustainable(upTo = 100.perSecond, holding = 500.millis, failureRate under 50.percent),
 )
 ```
 

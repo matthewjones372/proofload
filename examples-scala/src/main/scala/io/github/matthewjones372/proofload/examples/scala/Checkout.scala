@@ -1,15 +1,17 @@
 package io.github.matthewjones372.proofload.examples.scala
 
-import io.github.matthewjones372.proofload.java.Goals
 import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Results
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.Proofload
 import io.github.matthewjones372.proofload.scala.apply
 import io.github.matthewjones372.proofload.scala.exec
+import io.github.matthewjones372.proofload.scala.failureRate
 import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
+import io.github.matthewjones372.proofload.scala.p99
 import io.github.matthewjones372.proofload.scala.pause
+import io.github.matthewjones372.proofload.scala.percent
 import io.github.matthewjones372.proofload.scala.perSecond
 import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
@@ -46,16 +48,13 @@ object Checkout:
       pause(1.second),
     )
 
-    // The goals go through the Java facade, and take `200.millis` because the
-    // conversion is given: this is what the `implicitConversions` import above
-    // is for.
     val result = Proofload().run(
       Simulations.at(
         checkout,
         50.perSecond,
         1.minute,
-        Goals.p99Under(placeOrder, 200.millis),
-        Goals.failureRateUnder(0.1),
+        p99(placeOrder) under 200.millis,
+        failureRate under 0.1.percent,
       ),
     )
 

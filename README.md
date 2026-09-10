@@ -22,9 +22,6 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21%2B-437291.svg?logo=openjdk&logoColor=white)](https://adoptium.net)
 
-<sub>A load-testing library for the JVM. Not the "Proofload Method" published on
-Zenodo, and not proof-load testing of lifting equipment.</sub>
-
 </div>
 
 **A passing load test can still ship a slow service.** When the load generator

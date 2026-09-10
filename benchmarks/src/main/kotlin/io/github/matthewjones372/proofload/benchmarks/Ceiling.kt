@@ -67,7 +67,7 @@ private fun measureOverASocket(rate: Int): Measured {
 
     return loopback { target ->
         val result = hitting(target).at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent)
-        Measured(rate, result, loadAverage(), served = target.served())
+        Measured(rate, result, loadAverage(), served = target.served(), connections = target.connections())
     }
 }
 
@@ -85,6 +85,8 @@ internal class Measured(
     val load: Double,
     /** What the target itself took, where a target was in the path. */
     val served: Timing? = null,
+    /** Distinct client ports the target answered on, where one counted them. */
+    val connections: Long? = null,
 ) {
 
     /**
@@ -125,6 +127,18 @@ internal class Measured(
      */
     val room: String get() = listOf(result.limits.openFiles, result.limits.ports)
         .joinToString(separator = " | ") { it.readable() }
+
+    /**
+     * Requests over the connections the target answered them on.
+     *
+     * The column that turns a port reading from a clue into an attribution.
+     * The ports figure beside it is machine-wide and cumulative, so it cannot
+     * say whether *this* run opened them; this is counted at the far end of
+     * this run's own sockets and can. A row whose lateness improved and whose
+     * reuse also moved improved for two reasons, and neither is isolated.
+     */
+    val perConnection: String
+        get() = connections?.let { if (it == 0L) NOTHING else (result.count.toDouble() / it).rounded() } ?: NOTHING
 }
 
 private fun Headroom.readable(): String = when (this) {
@@ -183,8 +197,8 @@ private fun overSocketSection(measured: List<Measured>): List<String> {
         "against a range that is machine-wide too, and a busy neighbour inflates both.",
         "",
         "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
-            "Served p50 | Served p99 | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
-        "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
+            "Served p50 | Served p99 | Per conn | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
+        "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
     ) + measured.map { it.socketRow() } + listOf(
         "",
         ceiling?.let { "Ceiling over a socket: **${it.rate.grouped()} a second** on this machine, a lower bound." }
@@ -230,7 +244,7 @@ private fun footer(measured: List<Measured>): List<String> {
 internal fun Measured.socketRow(): String =
     "| ${rate.grouped()} | ${result.count.grouped()} | ${result.failed.grouped()} | $whyFailed | " +
         "${result.behind.p50.readable()} | ${result.behind.p99.readable()} | ${result.behind.max.readable()} | " +
-        "${served?.p50.readable()} | ${served?.p99.readable()} | $room | " +
+        "${served?.p50.readable()} | ${served?.p99.readable()} | $perConnection | $room | " +
         "${if (keptSchedule) "yes" else "no"} | $relativeVerdict |"
 
 private fun Measured.nullStepRow(): String =

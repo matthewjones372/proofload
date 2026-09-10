@@ -33,7 +33,7 @@ class ApartTarget internal constructor(val baseUrl: String)
  * a `var` across the lambda to keep the first one is the accumulator AGENTS.md
  * asks for a reason before writing.
  */
-data class Apart<T>(val answered: T, val served: Timing)
+data class Apart<T>(val answered: T, val served: Timing, val connections: Long)
 
 /**
  * Starts a target in another JVM, hands it to [block], and stops it however
@@ -45,7 +45,9 @@ data class Apart<T>(val answered: T, val served: Timing)
  */
 fun <T> apart(block: (ApartTarget) -> T): Apart<T> {
     val counts = createTempFile("proofload-served", ".txt")
-    val target = ProcessBuilder(java(), "-cp", classpath(), TARGET_MAIN, counts.toString())
+    val target = ProcessBuilder(
+        listOf(java()) + targetFlags() + listOf("-cp", classpath(), TARGET_MAIN, counts.toString()),
+    )
         // Inherited, so a target that failed to start says so where the sweep
         // is being watched rather than into a pipe nobody reads.
         .redirectError(ProcessBuilder.Redirect.INHERIT)
@@ -62,41 +64,61 @@ fun <T> apart(block: (ApartTarget) -> T): Apart<T> {
         check(target.waitFor(STOPPING.inWholeSeconds, TimeUnit.SECONDS)) {
             "the target did not stop within $STOPPING"
         }
-        Apart(answered, parseServed(counts.readLines()))
+        parseServed(counts.readLines()).let { Apart(answered, it.timing, it.connections) }
     } finally {
         target.destroyForcibly()
         counts.deleteIfExists()
     }
 }
 
+/** What a target counted about itself, once it is no longer there to ask. */
+internal data class Served(val timing: Timing, val connections: Long)
+
 /**
- * What a target served, as lines: the precision it counted at, then one bucket
- * a line.
+ * What a target served, as lines: how many connections it answered on, the
+ * precision it counted at, then one bucket a line.
  *
  * The buckets rather than the percentiles, because a percentile computed either
  * side of a file is a second implementation of the arithmetic, and `timing`
  * already reads them off buckets counted somewhere else.
  */
-internal fun servedLines(served: Timing): List<String> =
-    listOf("${served.precision}") + served.distribution.map { "${it.upperBound.inWholeNanoseconds} ${it.count}" }
+internal fun servedLines(served: Timing, connections: Long): List<String> =
+    listOf("$connections", "${served.precision}") +
+        served.distribution.map { "${it.upperBound.inWholeNanoseconds} ${it.count}" }
 
 /** The other half of [servedLines], and the reason the format is written once. */
-internal fun parseServed(lines: List<String>): Timing {
+internal fun parseServed(lines: List<String>): Served {
     // A target that wrote nothing is a target that died, and a zero here would
     // be published as a served time. The empty *distribution* below is a real
     // reading — a target that answered nothing — and is left alone.
-    check(lines.isNotEmpty()) { "the target wrote no counts" }
-    val precision = lines.first().toDoubleOrNull()
-    return lines.drop(1)
+    check(lines.size >= 2) { "the target wrote no counts" }
+    val connections = lines.first().trim().toLong()
+    val precision = lines[1].toDoubleOrNull()
+    val timing = lines.drop(2)
         .filter { it.isNotBlank() }
         .map { line ->
             val (nanos, count) = line.split(' ')
             Bucket(nanos.toLong().nanoseconds, count.toLong())
         }
         .timing(precision)
+    return Served(timing, connections)
 }
 
 private fun java(): String = Path.of(System.getProperty("java.home"), "bin", "java").toString()
+
+/**
+ * Flags handed to the target's JVM, so a sweep can ask whether a limit it is
+ * hitting is the generator's or the target's.
+ *
+ * `com.sun.net.httpserver` closes idle connections past
+ * `sun.net.httpserver.maxIdleConnections`, which defaults to 200. A target that
+ * closes one makes the generator open another, and the reuse column cannot say
+ * which end decided that. Settable rather than guessed at.
+ */
+private fun targetFlags(): List<String> =
+    System.getProperty("proofload.targetFlags").orEmpty()
+        .split(' ')
+        .filter { it.isNotBlank() }
 
 private fun classpath(): String = System.getProperty("java.class.path")
 

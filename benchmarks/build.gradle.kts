@@ -34,6 +34,7 @@ tasks.register<JavaExec>("ceilingApart") {
     systemProperty("proofload.exclusive", "false")
     group = "verification"
     description = "The over-a-socket sweep with the target in a JVM of its own."
+    systemProperty("proofload.targetFlags", providers.gradleProperty("proofload.targetFlags").getOrElse(""))
     mainClass.set("io.github.matthewjones372.proofload.benchmarks.CeilingApartKt")
     classpath = sourceSets.main.get().runtimeClasspath
     // The generator's heap only. The target gets a JVM of its own and the

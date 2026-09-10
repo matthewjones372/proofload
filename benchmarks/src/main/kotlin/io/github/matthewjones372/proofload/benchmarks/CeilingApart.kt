@@ -41,7 +41,7 @@ private fun measureApart(rate: Int): Measured {
     val run = apart { target ->
         hitting(target.baseUrl).at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent)
     }
-    return Measured(rate, run.answered, loadAverage(), served = run.served)
+    return Measured(rate, run.answered, loadAverage(), served = run.served, connections = run.connections)
 }
 
 internal fun apartReport(measured: List<Measured>): String {
@@ -64,8 +64,8 @@ internal fun apartReport(measured: List<Measured>): String {
             "\"a JVM boundary was worth this much\", not \"the client reaches this rate\".",
             "",
             "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
-                "Served p50 | Served p99 | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
-            "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
+                "Served p50 | Served p99 | Per conn | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",
+            "|---:|---:|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|:---:|",
         ) + measured.map { it.socketRow() } + listOf(
             "",
             ceiling

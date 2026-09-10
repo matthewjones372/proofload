@@ -82,7 +82,7 @@ private fun measure(rate: Int, clients: Int): Measured {
     val run = apart { target ->
         striping(target.baseUrl, clients).at(rate.perSecond, over = SWEEP_WINDOW).run(Progress.silent)
     }
-    return Measured(rate, run.answered, loadAverage(), served = run.served)
+    return Measured(rate, run.answered, loadAverage(), served = run.served, connections = run.connections)
 }
 
 internal class Arm(val clients: Int, val order: String, val measured: Measured)
@@ -116,7 +116,8 @@ internal fun axisReport(rate: Int, arms: List<Arm>): String {
         "| ${arm.clients} | ${arm.order} | ${arm.measured.result.count.grouped()} | " +
             "${arm.measured.result.failed.grouped()} | ${arm.measured.result.behind.p50.readable()} | " +
             "${arm.measured.result.behind.p99.readable()} | ${arm.measured.served?.p50.readable()} | " +
-            "${arm.measured.room} | ${if (arm.measured.keptSchedule) "yes" else "no"} |"
+            "${arm.measured.perConnection} | ${arm.measured.room} | " +
+            "${if (arm.measured.keptSchedule) "yes" else "no"} |"
     }
     return (
         listOf(
@@ -137,8 +138,8 @@ internal fun axisReport(rate: Int, arms: List<Arm>): String {
             "than by having more selectors. Files and ports are machine-wide and cumulative.",
             "",
             "| Clients | Order | Requests | Failed | Behind p50 | Behind p99 | Served p50 | " +
-                "Files / Ports | p50 within $SWEEP_BUDGET |",
-            "|---:|:---|---:|---:|---:|---:|---:|---:|:---:|",
+                "Per conn | Files / Ports | p50 within $SWEEP_BUDGET |",
+            "|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|",
         ) + rows + footer(arms.map { it.measured })
         ).joinToString(separator = "\n")
 }

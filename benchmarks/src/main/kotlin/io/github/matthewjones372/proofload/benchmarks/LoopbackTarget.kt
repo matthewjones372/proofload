@@ -6,6 +6,7 @@ import io.github.matthewjones372.proofload.Histogram
 import io.github.matthewjones372.proofload.Timing
 import io.github.matthewjones372.proofload.timing
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -32,10 +33,35 @@ class LoopbackTarget internal constructor(private val server: HttpServer) {
     // run, which at a sweep's rates is the harness measuring itself.
     private val stripes = List(STRIPES) { Tally() }
 
+    /**
+     * Every client port this target has answered on, so requests over its size
+     * is how often a connection was reused.
+     *
+     * One shared set rather than striped like the tallies above. A kept-alive
+     * connection is answered by a new virtual thread each time, so striping by
+     * thread id would file one port under several stripes and count it more
+     * than once — and the whole number is a count of distinct ports.
+     *
+     * Added after the handler's own time is read, so the set is never in
+     * [served]. It is still work this target does per request; at a sweep's
+     * rates it is a hash of an int against a table that stops growing once the
+     * client stops opening connections, which is the thing being counted.
+     */
+    private val ports = ConcurrentHashMap.newKeySet<Int>()
+
     val baseUrl: String get() = "http://localhost:${server.address.port}/"
 
     /** How many counter tables the target holds, which a sweep's length must not move. */
     internal val tables: Int get() = stripes.size
+
+    /**
+     * How many distinct client ports the target has answered on.
+     *
+     * The denominator of reuse: a run that sent 25,000 requests over 700 of
+     * these reused each connection about 36 times, and one that sent them over
+     * 20,000 barely reused any and is spending the machine's ephemeral range.
+     */
+    fun connections(): Long = ports.size.toLong()
 
     /** What the target itself took, added up across the stripes it was counted in. */
     fun served(): Timing = stripes
@@ -54,6 +80,7 @@ class LoopbackTarget internal constructor(private val server: HttpServer) {
         // as time the target took to answer.
         val took = started.elapsedNow()
         stripes[(Thread.currentThread().threadId() % STRIPES).toInt()].record(took)
+        ports.add(exchange.remoteAddress.port)
     }
 }
 

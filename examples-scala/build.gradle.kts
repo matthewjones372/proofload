@@ -19,6 +19,13 @@ dependencies {
     // it runs rather than only compiling: a consumer's project is where a
     // published module either works or does not.
     testImplementation(project(":proofload-zio-test"))
+
+    // The outputs a load test leaves behind are part of what the gate compiles:
+    // `proofload-scala` and `proofload-zio-test` take both of these
+    // `compileOnly`, so nothing checks that what sits over them works until a
+    // consumer has them.
+    implementation(project(":proofload-report-html"))
+    implementation(project(":proofload-report-github"))
     testImplementation("dev.zio:zio_3:$zioVersion")
     testImplementation("dev.zio:zio-test_3:$zioVersion")
     testRuntimeOnly("dev.zio:zio-test-junit-engine_3:$zioVersion")

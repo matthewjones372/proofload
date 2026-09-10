@@ -3,6 +3,14 @@ public final class io/github/matthewjones372/proofload/java/Actions {
 	public static final fun of (Ljava/util/function/Consumer;)Lio/github/matthewjones372/proofload/Action;
 }
 
+public final class io/github/matthewjones372/proofload/java/Feeders {
+	public static fun combined (Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Feeder;
+	public static fun fedBy (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Search;
+	public static fun fedBy (Lio/github/matthewjones372/proofload/Simulation;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Simulation;
+	public static fun fromList (Lio/github/matthewjones372/proofload/SessionKey;Ljava/util/List;)Lio/github/matthewjones372/proofload/Feeder;
+	public static fun of (Lio/github/matthewjones372/proofload/SessionKey;Ljava/util/function/LongFunction;)Lio/github/matthewjones372/proofload/Feeder;
+}
+
 public final class io/github/matthewjones372/proofload/java/Goals {
 	public static fun failureRateUnder (D)Lio/github/matthewjones372/proofload/Goal;
 	public static fun failureRateUnder (Lio/github/matthewjones372/proofload/StepName;D)Lio/github/matthewjones372/proofload/Goal;
@@ -23,6 +31,13 @@ public final class io/github/matthewjones372/proofload/java/Https {
 	public static final fun baseUrl (Ljava/lang/String;)Lio/github/matthewjones372/proofload/http/Http;
 	public static final fun capturing (Lio/github/matthewjones372/proofload/http/HttpAction;Lio/github/matthewjones372/proofload/SessionKey;Ljava/util/function/Function;)Lio/github/matthewjones372/proofload/http/HttpAction;
 	public static final fun checking (Lio/github/matthewjones372/proofload/http/HttpAction;Ljava/lang/String;Ljava/util/function/Function;)Lio/github/matthewjones372/proofload/http/HttpAction;
+}
+
+public final class io/github/matthewjones372/proofload/java/Offereds {
+	public static fun asked (Lio/github/matthewjones372/proofload/Offered;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun left (Lio/github/matthewjones372/proofload/Offered;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun of (Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Offered;
+	public static fun over (Lio/github/matthewjones372/proofload/Offered;)Ljava/time/Duration;
 }
 
 public final class io/github/matthewjones372/proofload/java/Proofload {
@@ -62,6 +77,14 @@ public final class io/github/matthewjones372/proofload/java/Scenarios$Builder {
 	public fun pause (Ljava/time/Duration;)Lio/github/matthewjones372/proofload/java/Scenarios$Builder;
 }
 
+public final class io/github/matthewjones372/proofload/java/Searches {
+	public static fun offered (Lio/github/matthewjones372/proofload/Rung;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun rate (Lio/github/matthewjones372/proofload/Capacity;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun rate (Lio/github/matthewjones372/proofload/Rung;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun sustainable (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;Ljava/util/List;)Lio/github/matthewjones372/proofload/Search;
+	public static fun warmingUp (Lio/github/matthewjones372/proofload/Search;Ljava/time/Duration;)Lio/github/matthewjones372/proofload/Search;
+}
+
 public final class io/github/matthewjones372/proofload/java/SessionKeys {
 	public static final field INSTANCE Lio/github/matthewjones372/proofload/java/SessionKeys;
 	public static final fun of (Ljava/lang/Class;Ljava/lang/String;)Lio/github/matthewjones372/proofload/SessionKey;
@@ -74,6 +97,7 @@ public final class io/github/matthewjones372/proofload/java/Shares {
 public final class io/github/matthewjones372/proofload/java/Simulations {
 	public static fun at (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;)Lio/github/matthewjones372/proofload/Simulation;
 	public static fun at (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;[Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Simulation;
+	public static fun expecting (Lio/github/matthewjones372/proofload/Simulation;[Lio/github/matthewjones372/proofload/Goal;)Lio/github/matthewjones372/proofload/Simulation;
 }
 
 public final class io/github/matthewjones372/proofload/java/Steps {

@@ -107,25 +107,44 @@ open question against it.
 
 ## Stack
 
-- [ ] **`spec-0138-durations`** — `java.time.Duration` overloads on `at`,
+- [x] **`spec-0138-durations`** — `java.time.Duration` overloads on `at`,
       `pause`, and the goal builders.
       Done when: a spec importing `zio.*` writes `1.minute` and compiles with no
       language flag.
-- [ ] **`spec-0138-errors`** — `ProofloadError`, and `run` returning `IO`.
+- [x] **`spec-0138-errors`** — `ProofloadError`, and `run` returning `IO`.
       Done when: a refused connection and a step-body bug are distinguishable
       without matching on an exception class.
-- [ ] **`spec-0138-outputs`** — `writeHtmlReport`, `appendToStepSummary` and
+- [x] **`spec-0138-outputs`** — `writeHtmlReport`, `appendToStepSummary` and
       `markdown` as effects, so no caller writes `attemptBlocking` around a
       report.
       Done when: a spec writes all three outputs with no `ZIO.attemptBlocking`
       in its own source.
-- [ ] **`spec-0138-assertions`** — `Assertion[RunResult]` values for the goals,
+- [x] **`spec-0138-assertions`** — `Assertion[RunResult]` values for the goals,
       beside `metItsGoals` rather than replacing it.
       Done when: the Shape's `assert` compiles, and its negation reports which
       half held.
 - [ ] **`spec-0138-watch`** — `watch` as a `ZStream` of per-second samples.
       Done when: a two-minute run renders a live table, and a dependency test
       says no fiber sits on the departure path.
+
+## Found while building
+
+- **`Refused` cannot happen, and the shape above was wrong to promise it.** A
+  refused connection is recorded as a failed request with the reason it failed
+  for, not thrown: `Action.attempt` is the one place in the library allowed to
+  catch a throwable, and a bug in a step body arrives the same way. So a run
+  against a target that refuses every connection *succeeds*, carrying the
+  measurement of a target that is down, and losing that to an exception would
+  throw away the answer. The three cases shipped are `Invalid`, `Interrupted`
+  and `Failed`, which is the same question ("can I retry this") answered about
+  the things that can actually reach the channel. `ErrorsSpec` asserts the
+  refused case is a measurement rather than an error, so the finding is a test
+  and not a note.
+- **`ProofloadError` extends `Throwable`,** which is what lets the open question
+  about keeping a `Task` overload be answered without one. Two overloads
+  differing only in return type cannot exist; ZIO is covariant in its error
+  type, so `IO[ProofloadError, RunResult]` already *is* a `Task[RunResult]` and
+  0108's published signature still compiles.
 
 ## Acceptance
 

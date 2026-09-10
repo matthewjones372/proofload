@@ -1352,6 +1352,12 @@ class UnfilledPath : Reason
 ```text
 class Actions
     fun of(Consumer): Action
+class Feeders
+    fun combined(Feeder, Feeder): Feeder
+    fun fedBy(Search, Feeder): Search
+    fun fedBy(Simulation, Feeder): Simulation
+    fun fromList(SessionKey, List): Feeder
+    fun of(SessionKey, LongFunction): Feeder
 class Goals
     fun failureRateUnder(Double): Goal
     fun failureRateUnder(StepName, Double): Goal
@@ -1369,6 +1375,11 @@ class Https
     fun baseUrl(String): Http
     fun capturing(HttpAction, SessionKey, Function): HttpAction
     fun checking(HttpAction, String, Function): HttpAction
+class Offereds
+    fun asked(Offered): Rate
+    fun left(Offered): Rate
+    fun of(RunResult): Offered
+    fun over(Offered): Duration
 class Proofload
     fun create(): Proofload
 class Rates
@@ -1395,6 +1406,12 @@ class Scenarios.Builder
     fun exec(StepName, Action): Scenarios.Builder
     fun exec(String, Action): Scenarios.Builder
     fun pause(Duration): Scenarios.Builder
+class Searches
+    fun offered(Rung): Rate
+    fun rate(Capacity): Rate
+    fun rate(Rung): Rate
+    fun sustainable(Scenario, Rate, Duration, List): Search
+    fun warmingUp(Search, Duration): Search
 class SessionKeys
     fun of(Class, String): SessionKey
 class Shares
@@ -1402,6 +1419,7 @@ class Shares
 class Simulations
     fun at(Scenario, Rate, Duration): Simulation
     fun at(Scenario, Rate, Duration, Array<Goal>): Simulation
+    fun expecting(Simulation, Array<Goal>): Simulation
 class Steps
     fun named(String): StepName
 ```

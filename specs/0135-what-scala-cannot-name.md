@@ -68,10 +68,10 @@ path in the tool, which is the trade 0001 already refused.
 
 ## Stack
 
-- [ ] **`spec-0135-searches`** — `Searches`, its dependency test, and the Scala
+- [x] **`spec-0135-searches`** — `Searches`, its dependency test, and the Scala
       `sustainable`/`warmingUp` extensions.
       Done when: `examples-scala` runs a capacity search and reads its curve.
-- [ ] **`spec-0135-offered`** — `Offereds` and the Scala `offered` extension.
+- [x] **`spec-0135-offered`** — `Offereds` and the Scala `offered` extension.
       Done when: a Scala caller reads `asked` and `left` without arithmetic.
 - [ ] **`spec-0135-baselines`** — the Java-facing baselines assertion 0108's
       "Found while building" deferred, and `notWorseThan` from Scala.

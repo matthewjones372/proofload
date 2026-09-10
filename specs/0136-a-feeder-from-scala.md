@@ -72,13 +72,13 @@ generic would suggest otherwise.
 
 ## Stack
 
-- [ ] **`spec-0136-feeders`** — `Feeders`, its dependency test, and the `fedBy`
+- [x] **`spec-0136-feeders`** — `Feeders`, its dependency test, and the `fedBy`
       overloads.
       Done when: a Java load test sends a different id per user.
-- [ ] **`spec-0136-scala`** — `feed`, `feedFrom`, `+` and `fedBy` over the facade.
+- [x] **`spec-0136-scala`** — `feed`, `feedFrom`, `+` and `fedBy` over the facade.
       Done when: the scenario in Shape compiles in `examples-scala` and each
       user's request carries its own pair.
-- [ ] **`spec-0136-docs`** — the per-user-data section of `docs/from-scala.md`,
+- [x] **`spec-0136-docs`** — the per-user-data section of `docs/from-scala.md`,
       quoted from the compiled sample.
       Done when: the page's feeder lines are lines of a source a compiler reads.
 

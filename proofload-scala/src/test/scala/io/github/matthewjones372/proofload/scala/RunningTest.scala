@@ -1,9 +1,11 @@
 package io.github.matthewjones372.proofload.scala
 
 import com.sun.net.httpserver.HttpServer
+import io.github.matthewjones372.proofload.RunResultKt
 import io.github.matthewjones372.proofload.java.Results
 import java.net.InetSocketAddress
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import _root_.scala.concurrent.duration.DurationInt
@@ -40,4 +42,19 @@ class RunningTest:
       assertTrue(result(browse).responseTime.max >= result(browse).responseTime.p99)
       assertTrue(result(browse).serviceTime.p95 >= _root_.scala.concurrent.duration.Duration.Zero)
       assertEquals(Results.p99(result, browse), asJava(result(browse).responseTime.p99))
+
+      val offered = result.offered.get
+      assertEquals(20.0, offered.asked.getPerSecond)
+      assertTrue(offered.left.getPerSecond > 0.0, "nothing left, so nothing was offered")
+      assertTrue(offered.over > _root_.scala.concurrent.duration.Duration.Zero)
+      assertEquals(offered.left.getPerSecond / offered.asked.getPerSecond, offered.share)
+
+      assertEquals(RunResultKt.fellBehind(result), result.fellBehind)
+      assertEquals(RunResultKt.lostGround(result), result.lostGround)
+      assertFalse(result.ranOutOfRoom, "the injector ran out of its own room on ten requests")
+      result.concurrency match
+        case measured: Concurrency.Measured =>
+          assertEquals(measured.fromResponseTime - measured.fromServiceTime, measured.backlog)
+        case Concurrency.Absent(because) =>
+          assertTrue(because.nonEmpty, "a run the law cannot be asked of has to say why")
     finally server.stop(0)

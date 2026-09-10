@@ -118,9 +118,14 @@ service time can be met by a generator that never sent the load.
 
 ## What it does not cover
 
-The path a load test walks: scenarios, HTTP steps, running, goals, and reading
-a result. Capacity search, baselines, sharding and the exports are reachable as
-statics later. There is deliberately no Java `assertNotWorseThan`: `Difference`
+The path a load test walks: scenarios, HTTP steps, running, goals, reading a
+result, and the capacity search: `Searches.sustainable(checkout, upTo, holding,
+goals)` builds one, `Proofload.create().run(search)` sends it, and
+`Searches.rate` and `Searches.offered` read the rates its curve carries.
+`Offereds.of(result)` is what a run asked for beside what actually left, which
+is what a reader needs when the generator fell behind. `Feeders` gives each user
+its own data, which the `{name}` in a path or a body template is filled from.
+Baselines, sharding and the exports are reachable as statics later. There is deliberately no Java `assertNotWorseThan`: `Difference`
 is a baselines type, and wrapping it here would put JUnit on the classpath of
 every project that takes this module, which is what `proofload-junit5` exists to
 prevent. A facade that has to stay exhaustive is a facade that falls

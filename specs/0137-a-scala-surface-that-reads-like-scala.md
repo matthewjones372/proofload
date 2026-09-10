@@ -80,21 +80,38 @@ in every file, forever, and rc is when it is cheapest to fix.
 
 ## Stack
 
-- [ ] **`spec-0137-results`** — `fellBehind`, `lostGround`, `concurrency` and
+- [x] **`spec-0137-results`** — `fellBehind`, `lostGround`, `concurrency` and
       `offered` as extensions, with `Concurrency` as a Scala ADT.
       Done when: no `…Kt.` appears in `examples-scala`.
-- [ ] **`spec-0137-reports`** — `writeHtmlReport`, `markdown` and
+- [x] **`spec-0137-reports`** — `writeHtmlReport`, `markdown` and
       `appendToStepSummary` as extensions with Scala defaults, and no
       `kotlin.jvm.functions` in any signature a caller sees.
       Done when: a spec writes all three outputs in three lines.
-- [ ] **`spec-0137-goals`** — `p99`, `p95`, `failureRate`, `goodput` and `under`
+- [x] **`spec-0137-goals`** — `p99`, `p95`, `failureRate`, `goodput` and `under`
       as infix extensions over `Goals`.
       Done when: the Shape's `goals` compiles and equals what `Goals` builds.
+- [x] **`spec-0137-expecting`** — `Simulation.expecting`, so `at` and the goals
+      are one call in Scala rather than a Java static.
+      Done when: no `Simulations` static appears in `examples-scala`.
 - [ ] **`spec-0137-dsl`** — the package rename to `dsl`, one wildcard import
       carrying the givens, and `FiniteDuration` overloads replacing the
       conversions.
       Done when: `examples-scala` imports one wildcard, sets no language flag,
       and never writes `_root_.scala`.
+
+## Found while building
+
+- **`at` had no way to say what a run is judged against, so a Scala caller fell
+  back to `Simulations.at(scenario, rate, over, goals*)` for the one thing this
+  spec is about.** `Simulation.expecting` is core's own name for it and its
+  vararg crosses cleanly, so `expecting` landed beside `at` as
+  `spec-0137-expecting`. Found by rewriting the load test that prompted 0135
+  against this surface: it was the last Java static left in it.
+- **Two thirds of `spec-0137-dsl` arrived without the package rename.** Once the
+  goals took a `FiniteDuration` (`spec-0137-goals`) and `at` took the goals, no
+  line of `examples-scala` needed a conversion: both gate sources compile with
+  no `given` import and no `implicitConversions`. What is left of that entry is
+  the rename itself, which is the breaking half.
 
 ## Acceptance
 

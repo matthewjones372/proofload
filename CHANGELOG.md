@@ -58,6 +58,110 @@ enough to list, and long enough to matter.
   value-class hash and no extension method can reach them. It holds no number
   and computes none. [docs/from-scala.md](docs/from-scala.md) is the page.
 
+- **The capacity search, from Java and Scala.** `Searches.sustainable`,
+  `warmingUp`, and the rates a `Capacity` and a `Rung` carry. `Rate` is a value
+  class, so every core call that takes or returns one compiles to a name with a
+  hash in it: from Scala there was no capacity search at all, and a load test
+  written against `0.1.0-rc1` hand-rolled a rate ladder rather than call one.
+  Scala takes its goals as a vararg and hands back `Option[Rate]` and a `Seq`
+  for the curve; `proofload.run(search)` sends one from a zio-test spec on the
+  same blocking runner a simulation goes out on.
+
+- **What a run actually offered, from Java and Scala.** `Offereds` and
+  `result.offered`: the load the plan asked for beside the load that left, the
+  window it took, and the share of one that is. Both rates are `Rate`, so this
+  was the other thing a Scala caller could not read: the load test that
+  hand-rolled a ladder read `Offered.share`, the one getter with no hash in its
+  name, and multiplied it back out to recover `left`.
+
+- **Per-user data from Java.** `Feeders.of(key, user -> …)`, `fromList`,
+  `combined` and `fedBy` on a simulation or a search. `feed`, `feedFrom` and
+  `fedBy` appeared nowhere in `proofload-java`, so a caller outside Kotlin could
+  only send load that was identical for every user, which the cookbook itself
+  names as measuring the target's cache rather than the target. The value takes
+  a `LongFunction<T>` rather than the spec's `IntFunction<T>`: a user number is
+  a `Long` in core, and narrowing it in the facade would cap a run at two
+  billion users to save a cast.
+
+- **Per-user data from Scala.** `feed(key)(user => ...)` curried so the function
+  reads as a block, `feedFrom(key, values)` over a `Seq`, `+` to combine two,
+  and `fedBy` on a simulation or a search. A run whose users each ask about
+  their own pair is in `examples-scala`, which is where the endpoint that
+  prompted this spec could not be measured from before.
+
+- **A run read without naming a file class.** `result.fellBehind`,
+  `lostGround`, `ranOutOfRoom` and `concurrency`, the last as a sealed trait
+  whose `Absent` case carries the reason and whose `Measured` case holds no
+  number of its own. `RunResultKt` and `ConcurrencyKt` are how Kotlin happens to
+  compile a file, and both were in the source of a load test written against
+  0.1.0-rc1. `NoFileClassesTest` reads the consumer source set and fails on the
+  next one, and on `kotlin.jvm` beside it.
+
+- **The outputs, written from Scala.** `writeHtmlReport`, `toHtmlReport`,
+  `markdown`, `appendToStepSummary`, `writePagesIndex` and the capacity page, as
+  extensions with Scala defaults. Kotlin's default arguments do not cross the
+  boundary, so the rc1 version of the first was a file class, a path and three
+  hand-placed nulls in the right order, and the step summary took a
+  `kotlin.jvm.functions.Function1` in a signature a caller could see. Both
+  report modules are `compileOnly` on `proofload-scala`, the way
+  `proofload-zio-test` takes zio: asking for Scala does not hand anybody two
+  more jars.
+
+- **Goals as infix, from Scala.** `p99(placeOrder) under 200.millis` and
+  `failureRate under 1.percent`, with `p50`, `p95`, `p999` and `goodput …
+  atLeast` beside them. Kotlin has the infix form and Java cannot have it, which
+  left Scala, which does infix better than either, writing the Java statics.
+  Each is tested equal to the goal `Goals` builds, so it is a second spelling
+  rather than a second DSL.
+
+- **A ZIO caller writes its own durations.** `at`, `pause`, `sustainable`,
+  `warmingUp`, `under` and `goodput` take a `java.time.Duration` beside the
+  `FiniteDuration` they already took. `zio.Duration` is `java.time.Duration`, so
+  importing `zio.*` beside Scala's `DurationInt` made `15.seconds` ambiguous and
+  a load test resolved it by writing `FiniteDuration(15, TimeUnit.SECONDS)` by
+  hand. Overloads rather than a `zio.Duration` given: a given that silently
+  bridges two duration types is the ambiguity that caused the problem.
+
+- **A typed error channel for a run.** `proofload.run` fails with a
+  `ProofloadError`: `Invalid`, `Interrupted` or `Failed`, which is the question
+  "can I retry this" answered without matching on an exception class. It extends
+  `Throwable` and ZIO is covariant in its error type, so a caller who wrote
+  `Task[RunResult]` still compiles. The spec's fourth case, `Refused`, is not
+  there: a refused connection is recorded as a failed request rather than
+  thrown, so a run against a target that is down succeeds and carries the
+  measurement of a target that is down.
+
+- **The outputs as effects.** `proofload.writeHtmlReport`,
+  `appendToStepSummary`, `markdown` and `writePagesIndex`, on the blocking
+  executor the run already goes out on. A module that owns `attemptBlocking` for
+  the run owns it for the run's outputs, or a caller learns that some of the
+  library is effectful with no rule for telling which. Both report modules are
+  `compileOnly` here too, and `OutputsAreEffectsTest` reads the spec beside it
+  and fails when a hand-rolled wrapper appears in it.
+
+- **A spec that is already a load test.** `ProofloadSpec` is a
+  `ZIOSpecDefault` carrying `sequential` and `withLiveClock`, a `reportsTo`
+  directory, `measured(name)(simulation)` for the run and its outputs, and one
+  index written after the last test. A load spec written against 0.1.0-rc1 was
+  78 lines, of which roughly 50 were that assembly. `withLiveClock` is the sharp
+  one: without it any time the spec itself takes never advances and the spec
+  hangs rather than failing, while the run, which is on the wall clock, works
+  fine. No timeout is in there, because the right one is the length of what is
+  being run.
+
+- **`expecting` beside `at`.** `checkout.at(50.perSecond, over = 1.minute)
+  .expecting(p99(placeOrder) under 200.millis)` is what a Scala caller writes
+  now; the goals were a Java static before, because `at` had nowhere to put
+  them. With that and the goals taking a `FiniteDuration`, no line of
+  `examples-scala` needs a conversion any more: both sources compile with no
+  `given` import and no `implicitConversions` flag.
+
+- **Goals as `Assertion` values.** `assert(result)(failedNone && keptSchedule &&
+  metEveryGoal)`, beside `metItsGoals` rather than replacing it: that one
+  answers about a run and is a dead end, where these negate, join with `&&` and
+  report the half that failed. Each is core's own goal, judged, so an assertion
+  cannot disagree with the report about the same run.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

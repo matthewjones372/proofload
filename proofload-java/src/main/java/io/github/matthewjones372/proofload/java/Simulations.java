@@ -24,6 +24,11 @@ public final class Simulations {
 
     /** The same run, with the goals it is judged against. */
     public static Simulation at(Scenario scenario, Rate rate, Duration over, Goal... goals) {
-        return Judgements.expecting(at(scenario, rate, over), goals);
+        return expecting(at(scenario, rate, over), goals);
+    }
+
+    /** The goals a run already built is judged against, for a caller who builds the two separately. */
+    public static Simulation expecting(Simulation simulation, Goal... goals) {
+        return Judgements.expecting(simulation, goals);
     }
 }

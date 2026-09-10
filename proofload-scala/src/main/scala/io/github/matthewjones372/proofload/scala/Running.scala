@@ -1,5 +1,6 @@
 package io.github.matthewjones372.proofload.scala
 
+import io.github.matthewjones372.proofload.Goal
 import io.github.matthewjones372.proofload.Rate
 import io.github.matthewjones372.proofload.Scenario
 import io.github.matthewjones372.proofload.Simulation
@@ -8,6 +9,7 @@ import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.engine.Proofload as Engine
 import io.github.matthewjones372.proofload.java.Proofload as Runner
+import java.time.Duration as JavaDuration
 import _root_.scala.concurrent.duration.FiniteDuration
 
 /** HTTP steps, under the name the Kotlin DSL gives them. */
@@ -24,3 +26,15 @@ extension (scenario: Scenario)
 
   /** The rate the scenario is sent at and the window it is sent over: a run, as one value. */
   def at(rate: Rate, over: FiniteDuration): Simulation = Simulations.at(scenario, rate, asJava(over))
+
+  /** The same, in the duration a ZIO caller already holds: `zio.Duration` is `java.time.Duration`. */
+  def at(rate: Rate, over: JavaDuration): Simulation = Simulations.at(scenario, rate, over)
+
+extension (simulation: Simulation)
+
+  /**
+   * What this run is judged against, said after the run rather than inside the
+   * call that builds it: `at` takes what to send and `expecting` what it has to
+   * achieve, which is the order Kotlin says them in.
+   */
+  def expecting(goals: Goal*): Simulation = Simulations.expecting(simulation, goals*)

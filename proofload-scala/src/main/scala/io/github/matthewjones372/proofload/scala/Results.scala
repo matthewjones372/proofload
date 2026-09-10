@@ -1,7 +1,9 @@
 package io.github.matthewjones372.proofload.scala
 
 import io.github.matthewjones372.proofload.Clock
+import io.github.matthewjones372.proofload.LimitsKt
 import io.github.matthewjones372.proofload.RunResult
+import io.github.matthewjones372.proofload.RunResultKt
 import io.github.matthewjones372.proofload.StepName
 import io.github.matthewjones372.proofload.java.Results
 import _root_.scala.concurrent.duration.FiniteDuration
@@ -38,3 +40,12 @@ final class Measured private[scala] (result: RunResult, step: StepName, clock: C
 extension (result: RunResult)
 
   def apply(step: StepName): Measured = Measured(result, step, Clock.ResponseTime)
+
+  /** Whether the generator's own lateness is a material part of the tail this run reports. */
+  def fellBehind: Boolean = RunResultKt.fellBehind(result)
+
+  /** Whether it lost the schedule outright, which makes the rate on the page one nobody offered. */
+  def lostGround: Boolean = RunResultKt.lostGround(result)
+
+  /** Whether this process ran out of its own room, in which case the run measured the injector. */
+  def ranOutOfRoom: Boolean = LimitsKt.ranOutOfRoom(result)

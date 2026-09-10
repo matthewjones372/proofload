@@ -179,6 +179,7 @@ what is left is in the row.
 | [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, the outputs as effects, and composable assertions. Left: `watch`, which was last in the stack for a reason |
 | [0139](0139-the-scala-version-a-release-promises.md) | the LTS floor declared once and gated, after rc3 shipped TASTy no 3.8 consumer can read |
 | [0140](0140-a-spec-that-is-already-a-load-test.md) | a base class that carries the aspects and writes the report, so a load spec is only its measurement |
+| [0141](0141-the-clock-a-comparison-is-read-on.md) | the clock `against` reads a comparison on, and a report note that names it rather than assuming it |
 
 ## Known and unwritten
 

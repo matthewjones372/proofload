@@ -1,6 +1,8 @@
 package io.github.matthewjones372.proofload.java;
 
 import io.github.matthewjones372.proofload.Clock;
+import io.github.matthewjones372.proofload.Comparison;
+import io.github.matthewjones372.proofload.ComparisonKt;
 import io.github.matthewjones372.proofload.RunResult;
 import io.github.matthewjones372.proofload.StepName;
 import io.github.matthewjones372.proofload.Verdict;
@@ -74,4 +76,29 @@ public final class Results {
     public static Duration max(RunResult result, StepName step, Clock clock) {
         return Reads.max(result, step.getName(), clock);
     }
+
+    /**
+     * Every step of this run against the same step of {@code baseline}, at p99
+     * of response time.
+     *
+     * A null baseline is reported rather than ignored: a page with no
+     * comparison on it reads the same whether this was a first run or a cache
+     * key broke.
+     */
+    public static Comparison against(RunResult result, RunResult baseline) {
+        return ComparisonKt.against(result, baseline, P99, Clock.ResponseTime);
+    }
+
+    /**
+     * The same, at the percentile and on the clock named.
+     *
+     * Ask for {@link Clock#ServiceTime} where the generator fell behind: the
+     * response times of such a run carry a wait this tool caused, which the
+     * report says above the comparison table.
+     */
+    public static Comparison against(RunResult result, RunResult baseline, double percentile, Clock clock) {
+        return ComparisonKt.against(result, baseline, percentile, clock);
+    }
+
+    private static final double P99 = 99.0;
 }

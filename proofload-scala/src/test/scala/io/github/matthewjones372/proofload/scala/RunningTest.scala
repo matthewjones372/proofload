@@ -1,6 +1,8 @@
 package io.github.matthewjones372.proofload.scala
 
 import com.sun.net.httpserver.HttpServer
+import io.github.matthewjones372.proofload.Clock
+import io.github.matthewjones372.proofload.Comparison
 import io.github.matthewjones372.proofload.RunResultKt
 import io.github.matthewjones372.proofload.java.Results
 import java.net.InetSocketAddress
@@ -48,6 +50,13 @@ class RunningTest:
       assertTrue(offered.left.getPerSecond > 0.0, "nothing left, so nothing was offered")
       assertTrue(offered.over > _root_.scala.concurrent.duration.Duration.Zero)
       assertEquals(offered.left.getPerSecond / offered.asked.getPerSecond, offered.share)
+
+      val comparison = result.against(result).asInstanceOf[Comparison.Compared]
+      assertEquals("p99 of response time", comparison.getReadAt)
+      assertEquals(
+        "p50 of service time",
+        result.against(result, percentile = 50.0, of = Clock.ServiceTime).asInstanceOf[Comparison.Compared].getReadAt,
+      )
 
       assertEquals(RunResultKt.fellBehind(result), result.fellBehind)
       assertEquals(RunResultKt.lostGround(result), result.lostGround)

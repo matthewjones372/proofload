@@ -230,6 +230,7 @@ public final class io/github/matthewjones372/proofload/Change$Worse : io/github/
 public final class io/github/matthewjones372/proofload/Clock : java/lang/Enum {
 	public static final field ResponseTime Lio/github/matthewjones372/proofload/Clock;
 	public static final field ServiceTime Lio/github/matthewjones372/proofload/Clock;
+	public final fun getDescribed ()Ljava/lang/String;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/matthewjones372/proofload/Clock;
 	public static fun values ()[Lio/github/matthewjones372/proofload/Clock;
@@ -239,15 +240,17 @@ public abstract interface class io/github/matthewjones372/proofload/Comparison {
 }
 
 public final class io/github/matthewjones372/proofload/Comparison$Compared : io/github/matthewjones372/proofload/Comparison {
-	public fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;)V
-	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;DLio/github/matthewjones372/proofload/Clock;)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;DLio/github/matthewjones372/proofload/Clock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun component3 ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun component4 ()Lio/github/matthewjones372/proofload/Probe;
 	public final fun component5 ()Lio/github/matthewjones372/proofload/Probe;
-	public final fun copy (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;)Lio/github/matthewjones372/proofload/Comparison$Compared;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/Comparison$Compared;Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Comparison$Compared;
+	public final fun component6 ()D
+	public final fun component7 ()Lio/github/matthewjones372/proofload/Clock;
+	public final fun copy (Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;DLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/Comparison$Compared;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/Comparison$Compared;Ljava/util/List;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Probe;DLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Comparison$Compared;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBefore ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun getBeforeProbe ()Lio/github/matthewjones372/proofload/Probe;
@@ -255,6 +258,10 @@ public final class io/github/matthewjones372/proofload/Comparison$Compared : io/
 	public final fun getChanges ()Ljava/util/List;
 	public final fun getNow ()Lio/github/matthewjones372/proofload/Machine;
 	public final fun getNowProbe ()Lio/github/matthewjones372/proofload/Probe;
+	public final fun getOf ()Lio/github/matthewjones372/proofload/Clock;
+	public final fun getPercentile ()D
+	public final fun getPercentileNamed ()Ljava/lang/String;
+	public final fun getReadAt ()Ljava/lang/String;
 	public final fun getSlowdown ()Ljava/lang/Double;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -272,8 +279,8 @@ public final class io/github/matthewjones372/proofload/Comparison$NotComparable 
 }
 
 public final class io/github/matthewjones372/proofload/ComparisonKt {
-	public static final fun against (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;D)Lio/github/matthewjones372/proofload/Comparison;
-	public static synthetic fun against$default (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;DILjava/lang/Object;)Lio/github/matthewjones372/proofload/Comparison;
+	public static final fun against (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;DLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/Comparison;
+	public static synthetic fun against$default (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;DLio/github/matthewjones372/proofload/Clock;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/Comparison;
 }
 
 public final class io/github/matthewjones372/proofload/Completing {

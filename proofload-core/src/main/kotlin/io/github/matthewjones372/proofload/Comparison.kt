@@ -63,7 +63,18 @@ sealed interface Comparison {
         val beforeProbe: Probe? = null,
         /** What it took on the machine that made this run. */
         val nowProbe: Probe? = null,
+        /** The percentile the changes were read at, so a page can name it rather than assume it. */
+        val percentile: Double = P99,
+        /** The clock they were read on, for the same reason. */
+        val of: Clock = Clock.ResponseTime,
     ) : Comparison {
+
+        /** The percentile as this project names one: `p99`, `p50`, `p99.9`. */
+        val percentileNamed: String
+            get() = "p" + if (percentile % 1.0 == 0.0) percentile.toLong().toString() else percentile.toString()
+
+        /** Where the changes were read: `p99 of response time`. A page says this rather than assuming it. */
+        val readAt: String get() = "$percentileNamed of ${of.described}"
 
         /** How many times slower this machine ran the probe, or null where either run has none. */
         val slowdown: Double?
@@ -95,7 +106,13 @@ sealed interface Comparison {
 }
 
 /**
- * Every step of this run against the same step of [baseline], at [percentile].
+ * Every step of this run against the same step of [baseline], at [percentile]
+ * of [of].
+ *
+ * [of] defaults to response time for the reason a goal's clock does: a
+ * comparison read on service time can look level on a run that never sent the
+ * load. Ask for service time where the generator fell behind, which is the run
+ * whose response times this tool has already warned about.
  *
  * A null [baseline] is reported rather than ignored: a page with no comparison
  * on it reads the same whether this was a first run or a cache key broke. The
@@ -103,7 +120,11 @@ sealed interface Comparison {
  * because a baseline goes missing in as many ways as there are places to keep
  * one, and each of them wants the same sentence printed.
  */
-fun RunResult.against(baseline: RunResult?, percentile: Double = P99): Comparison {
+fun RunResult.against(
+    baseline: RunResult?,
+    percentile: Double = P99,
+    of: Clock = Clock.ResponseTime,
+): Comparison {
     if (baseline == null) {
         return Comparison.NotComparable(
             "no baseline to compare against: either this is the first run, or wherever it was kept did not have it",
@@ -123,13 +144,15 @@ fun RunResult.against(baseline: RunResult?, percentile: Double = P99): Compariso
             when {
                 before == null -> Change.Added(name)
                 now == null -> Change.Gone(name)
-                else -> compare(name, before.responseTime, now.responseTime, percentile)
+                else -> compare(name, before.timing(of), now.timing(of), percentile)
             }
         },
         before = baseline.machine,
         now = machine,
         beforeProbe = baseline.probe,
         nowProbe = probe,
+        percentile = percentile,
+        of = of,
     )
 }
 

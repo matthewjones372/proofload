@@ -1525,6 +1525,14 @@ supported way to adapt, because every rung is a separate, labelled run.
 `arrivals` says the same thing from the other side: the spacing the run actually
 produced, and its coefficient of variation.
 
+This is also the run to change the clock on when comparing against a baseline.
+`result.against(previous)` reads p99 of response time, which on a run that fell
+behind is the number the warning above the table is about;
+`result.against(previous, of = Clock.ServiceTime)` reads the target instead. The
+comparison says which it was read on, so the page and the number cannot drift
+apart. Java says it as `Results.against(result, previous, 99.0, Clock.ServiceTime)`
+and Scala as `result.against(previous, of = Clock.ServiceTime)`.
+
 Scala reads all of this without naming a file class: `result.fellBehind`,
 `result.lostGround`, `result.ranOutOfRoom`, `result.concurrency` for Little's
 law, and `result.offered` as an `Option[Offered]` whose `asked`, `left` and
@@ -1649,6 +1657,8 @@ fun main() {
     val result = proofload.run(paying.at(200.perSecond, over = 2.minutes)).calibratedBy(floor)
 
     val previous = baseline.takeIf { Files.exists(it) }?.let(::readBaseline)
+    // p99 of response time by default. Where the generator fell behind, ask for
+    // service time: `result.against(previous, of = Clock.ServiceTime)`.
     val comparison = result.against(previous)
 
     result.appendToStepSummary(comparison, floor)

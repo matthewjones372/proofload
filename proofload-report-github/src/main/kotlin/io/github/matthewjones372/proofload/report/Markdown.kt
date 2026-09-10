@@ -77,7 +77,7 @@ private fun Comparison?.blocks(floor: Floor?): List<String> {
         is Comparison.NotComparable -> listOf("> **Not compared to the last run.** ${why.escapeMarkdown()}")
 
         is Comparison.Compared -> if (changes.isEmpty()) emptyList() else
-            listOfNotNull(caveat?.let { "> **${it.escapeMarkdown()}**" }, headline(), changeTable(), COMPARISON_NOTE)
+            listOfNotNull(caveat?.let { "> **${it.escapeMarkdown()}**" }, headline(), changeTable(), comparisonNote())
     }
 }
 
@@ -715,8 +715,8 @@ private const val NANOS_PER_SECOND = 1_000_000_000L
 
 private const val PERCENT = 100.0
 
-private const val COMPARISON_NOTE: String =
-    "Compared at p99 of response time. A sampling interval bounds which sample the p99 landed on, given how " +
+private fun Comparison.Compared.comparisonNote(): String =
+    "Compared at $readAt. A sampling interval bounds which sample the $percentileNamed landed on, given how " +
         "many there were. It does not bound how far a repeat of this run would land from it, because two runs " +
         "of one unchanged target drift by the machine as well as by the code. So this says these samples " +
         "differ, not that the target did — repeated runs are what answers the second."

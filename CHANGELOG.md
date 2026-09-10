@@ -164,6 +164,15 @@ enough to list, and long enough to matter.
   `examples-scala` needs a conversion any more: both sources compile with no
   `given` import and no `implicitConversions` flag.
 
+- **A comparison says which clock it was read on, and takes one.**
+  `result.against(baseline, of = Clock.ServiceTime)` compares service time,
+  which is the honest clock on a run where the generator fell behind and the one
+  `against` had no way to ask for. `Compared` records the percentile and the
+  clock, so both reports name what they compared rather than printing a constant
+  that said "p99 of response time" whatever it had been handed. `Results.against`
+  and a Scala `against` come with it: the Scala surface could already render a
+  `Comparison` and had no way to build one.
+
 - **Goals as `Assertion` values.** `assert(result)(failedNone && keptSchedule &&
   metEveryGoal)`, beside `metItsGoals` rather than replacing it: that one
   answers about a run and is a dead end, where these negate, join with `&&` and

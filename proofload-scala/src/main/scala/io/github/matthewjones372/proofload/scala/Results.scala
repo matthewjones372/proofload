@@ -1,6 +1,7 @@
 package io.github.matthewjones372.proofload.scala
 
 import io.github.matthewjones372.proofload.Clock
+import io.github.matthewjones372.proofload.Comparison
 import io.github.matthewjones372.proofload.LimitsKt
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.RunResultKt
@@ -49,3 +50,17 @@ extension (result: RunResult)
 
   /** Whether this process ran out of its own room, in which case the run measured the injector. */
   def ranOutOfRoom: Boolean = LimitsKt.ranOutOfRoom(result)
+
+  /**
+   * Every step of this run against the same step of `baseline`, at `percentile`
+   * of `of`.
+   *
+   * Ask for `Clock.ServiceTime` where the generator fell behind: the response
+   * times of such a run carry a wait this tool caused, and the report says so
+   * above the table this renders into.
+   */
+  def against(
+    baseline: RunResult,
+    percentile: Double = 99.0,
+    of: Clock = Clock.ResponseTime,
+  ): Comparison = Results.against(result, baseline, percentile, of)

@@ -51,6 +51,8 @@ public final class io/github/matthewjones372/proofload/java/Rates {
 }
 
 public final class io/github/matthewjones372/proofload/java/Results {
+	public static fun against (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Comparison;
+	public static fun against (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/RunResult;DLio/github/matthewjones372/proofload/Clock;)Lio/github/matthewjones372/proofload/Comparison;
 	public static fun count (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/StepName;)J
 	public static fun failed (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/StepName;)J
 	public static fun max (Lio/github/matthewjones372/proofload/RunResult;Lio/github/matthewjones372/proofload/StepName;)Ljava/time/Duration;

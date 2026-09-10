@@ -19,6 +19,14 @@ The first release. Twenty-seven modules, published together and versioned togeth
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
+> **Do not use `0.1.0-rc3` from Scala.** It was published against Scala 3.9.0
+> by a grouped dependency bump, and its TASTy is 28.9, so any compiler below
+> 3.9 refuses it with `Forward incompatible TASTy file` and no dependency
+> override helps. `0.1.0-rc4` is back on the 3.3.x LTS line, where the module
+> was always documented to be, and a test now fails the build if the two ever
+> disagree again. The other twenty-six modules are unaffected: this is a Scala
+> packaging fault, not a code one.
+
 ### Added
 
 - **A load test that is a zio-test test.** `proofload-zio-test` is one method:

@@ -7,7 +7,10 @@ mean anything. This is that overhead, measured rather than claimed.
 
 - **Over a socket: at least 2,500 a second.** The shipped `proofload-http` step
   against a target on loopback. A **lower bound**: the target's own service
-  time is inside it.
+  time is inside it. With that target moved into a JVM of its own, a second
+  machine reached **at least 10,000 a second with nothing refused**, which is
+  the top of the ladder rather than a wall; see
+  [the target out of the way](#the-target-out-of-the-way-on-two-machines).
 - **Without a socket: 100,000 a second.** A step that returns immediately, so
   the row is this tool and nothing else. An upper bound, on a path nobody runs.
 
@@ -36,6 +39,9 @@ shows one.
 |---|---|:---|
 | the engine alone, no socket | yes | `:benchmarks:ceiling`: 100,000/s, an upper bound on a path nobody runs |
 | `proofload-http`, a request per step | yes | `:benchmarks:ceiling`: at least 2,500/s, a lower bound: loopback, target in this JVM |
+| the same, target out of this JVM | yes | `:benchmarks:ceilingApart`: at least 10,000/s on a second machine, named where that table is |
+| whether one `HttpClient` is the bound | yes | `:benchmarks:clientsAxis`: no, at 5,000/s on that machine. One client matches four |
+| why connection reuse collapses on some machines and not others | **no** | two machines disagree; the cause is not established |
 | `proofload-kafka` | partly | `:benchmarks:kafkaCeiling`: the adapter, with the broker, the accumulator and the sender thread taken out |
 | what a run retains | yes | `:benchmarks:footprint` and `:benchmarks:timelineCost`, on a different machine, named where those figures are |
 | `proofload-http` server-sent events | **no** | nothing sweeps a stream held open |
@@ -181,6 +187,77 @@ The consequence for anyone thinking of a faster client: `proofload-http`'s
 transport seam makes one easy to write, and this measurement is not a reason to.
 It is not evidence the client is slow. Getting evidence either way means
 measuring against a target that is not in the way.
+
+### The target out of the way, on two machines
+
+`:benchmarks:ceilingApart` runs the same sweep with the target in a JVM of its
+own, pinning the two ends to disjoint processors where the platform allows it.
+`:benchmarks:clientsAxis` runs one rate with the number of `HttpClient`s on the
+axis. Both report **requests per connection**, counted at the target as
+requests over the distinct client ports it answered on.
+
+Run on **Apple M3, 8 processors, 24 GB, macOS Darwin 25.5.0, JDK 21.0.9**,
+under a one-minute load average of 1.96 to 3.86, with a descriptor limit of
+1,048,576 and an ephemeral range of 16,384. Not pinned: macOS has no `taskset`,
+so both ends shared all eight processors. That is a different machine from the
+one the tables above come from, and the figures are not comparable to them
+except in shape.
+
+| Rate | Requests | Failed | Behind p50 | Behind p99 | Served p50 | Per conn | Files |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 100 | 500 | 0 | 1.990655ms | 2.572287ms | 218.111us | 166.67 | 28 |
+| 250 | 1,250 | 0 | 831.487us | 1.007615ms | 79.359us | 138.89 | 34 |
+| 500 | 2,500 | 0 | 411.647us | 497.663us | 27.391us | 138.89 | 43 |
+| 1,000 | 5,000 | 0 | 225.279us | 278.527us | 18.047us | 125.00 | 65 |
+| 2,500 | 12,500 | 0 | 87.551us | 97.279us | 9.087us | 135.87 | 117 |
+| 5,000 | 25,000 | 0 | 45.567us | 109.567us | 5.375us | 120.77 | 225 |
+| 10,000 | 50,000 | 0 | 25.599us | 978.943us | 4.671us | 84.89 | 225 |
+
+**At least ten thousand a second, with nothing refused at any rate.** That is
+the top rung of the ladder rather than the point where anything broke: the last
+row leaves the median departure 25 microseconds late against a budget of a
+thousand, so the ceiling on that machine is above ten thousand and this sweep
+cannot say by how much.
+
+`clientsAxis` on the same machine is a null result. At five thousand a second,
+over five alternating rounds, `behind.p50` is between 45 and 47 microseconds in
+every row whether the run holds one client or four. One `HttpClient` is not the
+bound there.
+
+### What the two machines disagree about
+
+Requests per connection behaves differently on them, and the disagreement is
+worth more than either reading alone.
+
+| | Linux amd64, 4 processors | Apple M3, 8 processors |
+|---|---|---|
+| descriptor limit | 20,000 | 1,048,576 |
+| ephemeral range | 28,232 | 16,384 |
+| per conn, up to 2,500/s | 20 to 60 | 125 to 167 |
+| per conn, at 5,000/s | about 2 | 121 |
+| per conn, at 10,000/s | about 2.4 | 85 |
+| raising `maxIdleConnections` | moves it, 2 to 17 at 5,000/s | changes nothing |
+
+So connection reuse can collapse, and it is not a property of
+`com.sun.net.httpserver` that it will. On the four-processor machine it falls
+away above a couple of thousand a second and the target's idle-connection cap
+is what moves it back; on the M3 it slopes gently and the cap is inert, and
+raising it there made reuse slightly *worse* rather than better, which is the
+opposite of the story the first machine told.
+
+An earlier version of this page named the cap as the cause. That was one
+machine's behaviour written as a general one, and the second machine does not
+support it. What is established is narrower: **a run whose reuse has collapsed
+is spending the machine's ephemeral range, and a client comparison made in that
+state would be measuring the target rather than either client.** Which machines
+get into that state, and why, is not answered here. The descriptor limits
+differ by a factor of fifty, and the four-processor run was against its limit at
+the rate where reuse was worst, but one pair of machines cannot separate that
+from core count, kernel or platform.
+
+`apart` forwards `proofload.targetFlags`, so a reader who suspects the target
+rather than the tool can settle it on their own machine rather than take this
+page's word for it.
 
 The pick is deliberately conservative. Five thousand a second kept the budget,
 a median departure 101 µs late, and is still not the ceiling, because three

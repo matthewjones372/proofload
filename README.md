@@ -17,7 +17,7 @@
      The number is in the URL rather than fetched from a file, because a shields
      endpoint reads that file anonymously and raw.githubusercontent.com will not
      serve one from a private repository. `coverage-badge` rewrites this line. -->
-[![coverage](https://img.shields.io/badge/coverage-92.8%25-brightgreen)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
+[![coverage](https://img.shields.io/badge/coverage-92.7%25-brightgreen)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21%2B-437291.svg?logo=openjdk&logoColor=white)](https://adoptium.net)
@@ -149,9 +149,9 @@ target was fast, not that the tool struggled.
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc4")
 }
 ```
 
@@ -174,7 +174,7 @@ a note on why it is those lines and not the obvious alternative:
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 
 > [!NOTE]
-> Early days. **`0.1.0-rc3` is the current release**, and every coordinate on
+> Early days. **`0.1.0-rc4` is the current release**, and every coordinate on
 > this page and under `docs/` is pinned to it. A release candidate, so signatures
 > and coordinates are real but the API may still move before `0.1.0`. `specs/`
 > tracks what is built and what is not.
@@ -188,7 +188,7 @@ behaviour to keep in step.
 It is on Maven Central, so adding it takes no clone and no build:
 
 ```bash
-claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc3
+claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc4
 ```
 
 The coordinate alone, because the published jar carries a `Main-Class`.
@@ -200,7 +200,7 @@ Two more routes need no launcher at all. One is a download from the GitHub relea
 carries a `.bat` and so is the Windows answer too, and a container:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc3
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc4
 ```
 
 That is the whole command: `benchmark`, `plan_schema`, `validate`, `preview`,

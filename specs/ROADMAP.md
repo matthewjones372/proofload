@@ -114,6 +114,10 @@ built. Each row links the spec that argued for it.
 | [0098](0098-a-benchmark-worth-committing.md) | the decisions behind a benchmark, written down where they can be argued with |
 | [0099](0099-kafka-in-a-plan.md) | a topic as a step, the answer on another topic as its latency, and a broker a fence can see |
 | [0100](0100-grpc-without-a-stub.md) | a method and a JSON body called with no generated stub — the library half; the plan keys its own stack leaves out |
+| [0118](0118-a-target-that-is-not-in-the-way.md) | the target in a JVM of its own, on its own processors where the platform allows, and requests per connection counted at it. At least 10,000/s on a second machine, named where that table is |
+| [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept. The rows are flat on both machines that have run it, so one client was never the bound and `striped(n)` is deliberately not shipped |
+| [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already existed. No virtual clock, which the spec recommended against |
+| [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants as `docs/invariants.md`, the tests that cite each, and `./gradlew invariants` gating them from `check`. Five still do not hold, and the page says which |
 
 Everything else drafted is built, bar the tails listed below and the three
 specs under "Drafted, not built".
@@ -130,30 +134,30 @@ what is left is tedium, and tedium is the shell loop in
 
 ## Drafted, not built
 
-Three specs about one gap: `docs/what-it-costs.md` publishes a socket ceiling
-measured with the target in the generator's way, at no concurrency, through one
-client, and cannot say which of those three the number belongs to.
+One spec left of three about the same gap: `docs/what-it-costs.md` published a
+socket ceiling measured with the target in the generator's way, at no
+concurrency, through one client. 0118 and 0120 answered the first and the third
+and are above; concurrency as an axis is what is left.
 
 | Spec | What it would get |
 |---|---|
-| [0118](0118-a-target-that-is-not-in-the-way.md) | the target in its own JVM on its own cores, and requests per connection, so the socket ceiling is the client's number rather than the arrangement's — **`spec-0118-apart` built**, the rest outstanding |
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
-| [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept — and shipped only if the sweep says the one it holds today was the bound |
 
 Fourteen more came out of one adversarial review of the tree, aimed at finding
 ways it could produce a plausible-looking but incorrect result. It found five.
 [HARDENING.md](HARDENING.md) is the index over them — what each settles, which
-are P0 for 1.0, and what is explicitly out of scope — and
-[0134](0134-the-statements-that-must-never-become-false.md) is the anchor: the
-sixteen statements that must never become false, and the five that do not hold
-today.
+are P0 for 1.0, and what is explicitly out of scope. Two of the fourteen are
+built and above: 0124, which HARDENING named as the cheapest, and
+[0134](0134-the-statements-that-must-never-become-false.md), the anchor, whose
+sixteen statements are now `docs/invariants.md` with a task that fails the
+build when one of them loses its last test. Five of the sixteen still do not
+hold, and most of the twelve below are what would fix them.
 
 | Spec | What it would get |
 |---|---|
 | [0121](0121-a-number-you-are-not-allowed-to-read-yet.md) | measurement validity as a value, and an API whose short path is the safe one |
 | [0122](0122-late-missed-or-never-asked-for.md) | one vocabulary for arrival, departure, lateness, missed, dropped and saturation — and the counts behind it |
 | [0123](0123-experiments-designed-to-break-it.md) | nine coordinated-omission experiments against an oracle, written to falsify rather than to pass |
-| [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already exist |
 | [0125](0125-correct-at-a-hundred-thousand.md) | the sharded recorder's correctness under load, independent of its speed |
 | [0126](0126-when-the-carrier-is-the-bottleneck.md) | carrier starvation and pinning, which today are reported as the target's latency |
 | [0127](0127-what-the-instruments-cost-the-measurement.md) | instrumented against uninstrumented, per departure, read at the tail |
@@ -163,7 +167,6 @@ today.
 | [0131](0131-the-bar-a-closed-model-would-have-to-clear.md) | the closed-model statement for 1.0, and the bar if it were ever to change |
 | [0132](0132-where-a-step-starts-and-stops.md) | what a step measures, made explicit and testable |
 | [0133](0133-the-documents-1-0-cannot-ship-without.md) | the documentation audit, and the seven pages 1.0 needs |
-| [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants, and which five do not hold |
 
 Six more came out of writing a load test against this tool from Scala and ZIO,
 in another repository, on `0.1.0-rc1` and `rc3`. Every row is something that

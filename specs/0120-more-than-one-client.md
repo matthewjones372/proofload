@@ -76,10 +76,16 @@ the promise is worth making.
       clients axis on the over-a-socket sweep.
       Done when: the sweep runs at 1, 2, 4 and 8 clients, each row reporting
       lateness, failures, descriptors and requests per connection.
-- [ ] **`spec-0120-record`** — `docs/what-it-costs.md` carrying what it found,
+- [x] **`spec-0120-record`** — `docs/what-it-costs.md` carrying what it found,
       including if what it found is nothing.
       Done when: the page says whether the number of clients moves the ceiling
       on this machine, and by how much.
+      #97. What it found is nothing, and the page says so: at five thousand a
+      second on an Apple M3, over five alternating rounds, `behind.p50` is
+      between 45 and 47 microseconds in every row whether the run holds one
+      client or four. Open question 4 asked what to do if the rows were flat.
+      They are flat on both machines that have run this, so `spec-0120-ship`
+      stays unbuilt, which is what that question recommended.
 - [ ] **`spec-0120-ship`** — `JdkHttpClient.striped(n)` in `proofload-http`,
       `apiDump`, CHANGELOG. **Only if the sweep says so.**
       Done when: a caller can write `over(JdkHttpClient.striped(4))`, the `.api`

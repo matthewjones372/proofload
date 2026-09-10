@@ -133,13 +133,17 @@ internal fun axisReport(rate: Int, arms: List<Arm>): String {
             "count rather than as a trend across the table, which is how the first run of this went",
             "wrong: swept once up and once down, the numbers tracked time and not clients.",
             "",
-            "**What this cannot say.** Requests per connection is `spec-0118-reuse` and is not",
-            "built, so a row that improved might have improved by opening more connections rather",
-            "than by having more selectors. Files and ports are machine-wide and cumulative.",
+            "**Per conn** is requests over the distinct client ports the target answered on,",
+            "counted at the far end of this run's own sockets. K clients hold K pools, so a row",
+            "that improved while its reuse also moved improved for two reasons and neither is",
+            "isolated. Files and ports beside it are machine-wide and cumulative.",
             "",
+            // Files and ports are two cells: `room` joins them with a pipe, and a
+            // header that called them one column was a row wider than its own
+            // heading in every report this task has ever written.
             "| Clients | Order | Requests | Failed | Behind p50 | Behind p99 | Served p50 | " +
-                "Per conn | Files / Ports | p50 within $SWEEP_BUDGET |",
-            "|---:|:---|---:|---:|---:|---:|---:|---:|---:|:---:|",
+                "Per conn | Files | Ports | p50 within $SWEEP_BUDGET |",
+            "|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|",
         ) + rows + footer(arms.map { it.measured })
         ).joinToString(separator = "\n")
 }

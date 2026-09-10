@@ -114,18 +114,27 @@ here, and it is the shape of thing 0086 declined for the same reason.
       page should carry — the one a stock `com.sun.net.httpserver` allows, or
       the one the generator reaches against a target that is not in the way —
       is a decision rather than a fix.
-- [ ] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
+- [x] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
       Done when: the paragraph that "cannot say whether the client or the target
       ran out first" either does, or names exactly what is still missing.
-      Half done in #95, and left unticked because the halves came apart. The
-      "done when" is met: the page now names what is missing, and names a piece
-      of it that was not known when this spec was written, which is that the
-      target stops reusing connections at `maxIdleConnections` long before the
-      client stops anything. The entry itself is not: there is no third table,
-      because `ceilingApart` and `clientsAxis` have only ever run on a cloud
-      container and a figure taken there is not a measurement of the machine
-      this page names. Running both on that machine is what closes this, and it
-      is the one thing here nobody can do from inside a session.
+      #97. The table is there, measured on an Apple M3 rather than on the
+      machine the other tables come from, and the page says so. At least ten
+      thousand a second with nothing refused at any rate, which is the top rung
+      of the ladder rather than a wall.
+
+      It also corrected this spec's own previous entry. `spec-0118-reuse` read a
+      reuse collapse on a four-processor Linux container as a property of
+      `com.sun.net.httpserver`, and the M3 does not reproduce it: reuse slopes
+      from 167 to 85 with no cliff, and raising `maxIdleConnections` there
+      changes nothing and slightly lowers reuse rather than raising it. The page
+      now carries both machines and says the cause is not established.
+
+      **Left open:** the ladder stops at ten thousand and the last row is 25
+      microseconds late against a millisecond budget, so the M3's real ceiling
+      is above what this sweep can see. `SOCKET_RATES` would need higher rungs
+      to find it, and that list is shared with the published `:benchmarks:ceiling`
+      sweep whose figure 0057 says must not move, so it is a change with a
+      consequence rather than a bigger number.
 
 ## Acceptance
 

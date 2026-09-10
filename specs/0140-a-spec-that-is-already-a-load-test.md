@@ -94,7 +94,7 @@ the zero-configuration case works and the opinionated case is one line.
 
 ## Stack
 
-- [ ] **`spec-0140-spec`** — `ProofloadSpec`, the `aspects` override, and
+- [x] **`spec-0140-spec`** — `ProofloadSpec`, the `aspects` override, and
       `reportsTo`.
       Done when: a spec extending it inherits both aspects, and a spec whose
       body retries on a `Schedule` does not hang.

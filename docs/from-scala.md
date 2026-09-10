@@ -16,6 +16,12 @@ Compiled against **Scala 3.3.8**, the LTS line. A published Scala library can
 only be read by a compiler at least as new as the one that built it, so this is
 deliberately not the newest release.
 
+The version is declared once, in `proofload-scala/build.gradle.kts`, and
+`TastyVersionTest` reads the header of the compiled output and fails the build
+where it is newer than the line above. 0.1.0-rc3 shipped TASTy 28.9 from Scala
+3.9.0 against this same paragraph, which no consumer below 3.9 could read; the
+test is there so the page and the jar cannot disagree again.
+
 ## Taking it
 
 ```kotlin

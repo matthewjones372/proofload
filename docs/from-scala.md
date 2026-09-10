@@ -115,11 +115,19 @@ own `RunResult`. It exists because `Timing`'s percentiles are
 `kotlin.time.Duration` properties, so their getters carry a value-class hash
 and no extension method can reach them.
 
+`result.offered` is the other half of reading a run, and an `Option`: it is
+what the run asked for beside what actually left, and it cannot be said of a
+closed run or of a result nobody ran. `asked`, `left`, `over` and `share` come
+off it. Reach for it when a run says it fell behind: the service times were
+measured from the departures that happened, so they describe the target at
+`left` rather than at `asked`, which is a smaller experiment than the one
+somebody asked for and a real one.
+
 ## What the module is
 
 `FiniteDuration` both ways, `perSecond` and `perMinute` on `Int` and `Double`,
 `sessionKey[T]`, `step`, `exec`, `pause`, `scenario`, `http.baseUrl`,
-`Proofload()`, `at`, the reader above, and the capacity search below. Nothing
+`Proofload()`, `at`, the readers above, and the capacity search below. Nothing
 else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
 static and is called directly, as the snippets here do.
 

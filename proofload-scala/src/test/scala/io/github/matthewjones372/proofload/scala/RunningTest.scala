@@ -40,4 +40,10 @@ class RunningTest:
       assertTrue(result(browse).responseTime.max >= result(browse).responseTime.p99)
       assertTrue(result(browse).serviceTime.p95 >= _root_.scala.concurrent.duration.Duration.Zero)
       assertEquals(Results.p99(result, browse), asJava(result(browse).responseTime.p99))
+
+      val offered = result.offered.get
+      assertEquals(20.0, offered.asked.getPerSecond)
+      assertTrue(offered.left.getPerSecond > 0.0, "nothing left, so nothing was offered")
+      assertTrue(offered.over > _root_.scala.concurrent.duration.Duration.Zero)
+      assertEquals(offered.left.getPerSecond / offered.asked.getPerSecond, offered.share)
     finally server.stop(0)

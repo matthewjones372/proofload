@@ -1369,6 +1369,11 @@ class Https
     fun baseUrl(String): Http
     fun capturing(HttpAction, SessionKey, Function): HttpAction
     fun checking(HttpAction, String, Function): HttpAction
+class Offereds
+    fun asked(Offered): Rate
+    fun left(Offered): Rate
+    fun of(RunResult): Offered
+    fun over(Offered): Duration
 class Proofload
     fun create(): Proofload
 class Rates

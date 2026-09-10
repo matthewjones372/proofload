@@ -67,6 +67,13 @@ enough to list, and long enough to matter.
   for the curve; `proofload.run(search)` sends one from a zio-test spec on the
   same blocking runner a simulation goes out on.
 
+- **What a run actually offered, from Java and Scala.** `Offereds` and
+  `result.offered`: the load the plan asked for beside the load that left, the
+  window it took, and the share of one that is. Both rates are `Rate`, so this
+  was the other thing a Scala caller could not read: the load test that
+  hand-rolled a ladder read `Offered.share`, the one getter with no hash in its
+  name, and multiplied it back out to recover `left`.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

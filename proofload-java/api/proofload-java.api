@@ -25,6 +25,13 @@ public final class io/github/matthewjones372/proofload/java/Https {
 	public static final fun checking (Lio/github/matthewjones372/proofload/http/HttpAction;Ljava/lang/String;Ljava/util/function/Function;)Lio/github/matthewjones372/proofload/http/HttpAction;
 }
 
+public final class io/github/matthewjones372/proofload/java/Offereds {
+	public static fun asked (Lio/github/matthewjones372/proofload/Offered;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun left (Lio/github/matthewjones372/proofload/Offered;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun of (Lio/github/matthewjones372/proofload/RunResult;)Lio/github/matthewjones372/proofload/Offered;
+	public static fun over (Lio/github/matthewjones372/proofload/Offered;)Ljava/time/Duration;
+}
+
 public final class io/github/matthewjones372/proofload/java/Proofload {
 	public static final field INSTANCE Lio/github/matthewjones372/proofload/java/Proofload;
 	public static final fun create ()Lio/github/matthewjones372/proofload/engine/Proofload;

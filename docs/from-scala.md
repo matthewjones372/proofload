@@ -138,6 +138,13 @@ which is what a load test written against `0.1.0-rc1` had in its source: a file
 class is how Kotlin happens to compile a file and has no business in a
 consumer's imports.
 
+`result.against(baseline)` compares two runs, and takes the clock the comparison
+should be read on: `result.against(baseline, of = Clock.ServiceTime)` where the
+generator fell behind, because the response times of such a run carry a wait
+this tool caused. The `Comparison` it hands back is what `writeHtmlReport` and
+`markdown` take, and it records which clock it was read on so the page says so
+rather than assuming.
+
 `result.offered` is the other half of reading a run, and an `Option`: it is
 what the run asked for beside what actually left, and it cannot be said of a
 closed run or of a result nobody ran. `asked`, `left`, `over` and `share` come

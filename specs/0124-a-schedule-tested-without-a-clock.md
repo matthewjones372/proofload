@@ -106,16 +106,21 @@ booked.offsets shouldBe booked.offsets.sorted()
 
 ## Stack
 
-- [ ] **`spec-0124-arrivals`** — invariants 1, 2, 3 and 7 as core tests over
+- [x] **`spec-0124-arrivals`** — invariants 1, 2, 3 and 7 as core tests over
       every `InjectionProfile` shape.
       Done when: each adversarial arrival-count case above is an assertion, and
       the boundary at `over` is stated as a test rather than as a comment.
-- [ ] **`spec-0124-booking`** — the `drive` helper and invariants 4 and 5.
+      #89. `ScheduleArithmeticTest` in core: the counting table, the half-open
+      boundary, and the seed's purity, over eleven shapes.
+- [x] **`spec-0124-booking`** — the `drive` helper and invariants 4 and 5.
       Done when: the late-fill case books its whole backlog in one call, in
       order, with nothing lost, and no test in the file reads a clock.
-- [ ] **`spec-0124-shards`** — invariant 6, over 1, 2, 3 and 7 shards.
+      #89. `ScheduleDeterminismTest` in engine, with `drive` over the existing
+      `fill`. The 50,000-a-second late fill books 249,999 in one call.
+- [x] **`spec-0124-shards`** — invariant 6, over 1, 2, 3 and 7 shards.
       Done when: the union is the identity for every N and the merge of the
       shards' results equals the single-injector run's counts.
+      #89. `ShardOwnershipTest` over 1, 2, 3 and 7 injectors.
 - [ ] **`spec-0124-lateness`** — lateness, `latePerSecond`, `heldScheduleFor`
       and `Offered` from stated departure instants.
       Done when: 0122's adversarial table is a table-driven test with no

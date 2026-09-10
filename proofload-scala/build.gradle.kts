@@ -7,17 +7,9 @@ plugins {
     `java-library`
 }
 
-// A published Scala library can only be read by a compiler at least as new as
-// the one that built it: TASTy is forward-compatible, not backward. So this is
-// the LTS line rather than the newest release, and moving it forward is a
-// breaking change for every consumer on an older compiler.
-//
-// Dependabot moved this to 3.9.0 once, inside a nineteen-update group, and
-// nothing failed: `docs/from-scala.md` still promised the LTS line while the
-// published module needed a compiler almost nobody runs. `.github/dependabot.yml`
-// now ignores this coordinate, and `ScalaVersionTest` beside this holds the
-// build and the page to the same number, because a comment did not.
-val scalaVersion = "3.3.8"
+// Declared in `buildSrc` so this module and `examples-scala` read one number,
+// and so the number has somewhere to carry what it means. See `ScalaLts`.
+val scalaVersion = ScalaLts.VERSION
 
 // Over the Java facade rather than over core: the unmangling is written once,
 // and a facade method missing from Java is missing from Scala in the same
@@ -41,9 +33,18 @@ tasks.test {
     inputs.dir(gate).withPropertyName("theSourceSetItQuotes")
     systemProperty("proofload.repoRoot", rootProject.projectDir.path)
 
-    // The compiler this module is built by, handed to the test that holds the
-    // page to it. A literal in the test would be a third place to change.
+    // The floor, handed to the tests that hold the page and the emitted TASTy
+    // to it. A literal in a test would be a third place to change.
     systemProperty("proofload.scalaVersion", scalaVersion)
+    systemProperty("proofload.tastyMajor", ScalaLts.TASTY_MAJOR.toString())
+    systemProperty("proofload.tastyMinor", ScalaLts.TASTY_MINOR.toString())
+
+    // This module's own compiled output, which is the only place the version a
+    // consumer actually hits can be read: the declared version catches a
+    // deliberate bump, and the emitted TASTy catches everything.
+    val emitted = layout.buildDirectory.dir("classes/scala/main")
+    inputs.dir(emitted).withPropertyName("theTastyThisModulePublishes")
+    systemProperty("proofload.classes", emitted.get().asFile.path)
 
     val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")

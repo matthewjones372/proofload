@@ -121,7 +121,7 @@ class ShardOwnershipTest {
             val mine = arms.schedule().ownedBy(shard(index, 3)).toList()
 
             arms.forEach { arm ->
-                val whole = arms.schedule().filter { it.arm === arm }.count()
+                val whole = arms.schedule().count { it.arm === arm }
                 val sent = mine.count { it.arm === arm }
                 withClue("injector $index sent its third of ${arm.scenario.name}") {
                     sent shouldBe whole / 3 + if (whole % 3 > index) 1 else 0

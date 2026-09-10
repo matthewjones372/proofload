@@ -24,7 +24,7 @@ user exactly once. Four injectors offer exactly the departures one JVM would.
 
 Nothing is coordinated during the run. Feeders and seeded arrivals are functions
 of the user number, so they follow the partition without being told about it,
-and every injector carries the **whole** plan unmodified — which is why the
+and every injector carries the **whole** plan unmodified, which is why the
 files merge at the end instead of refusing each other as four different
 experiments.
 
@@ -39,7 +39,7 @@ everywhere, because a merge superimposes them. The timeline's resolution is one
 second, so a hundred milliseconds of skew is a tenth of a bucket and NTP beats
 that comfortably: sub-second alignment buys the picture, not the honesty.
 
-Give them enough time to reach it — a host still loading classes when its
+Give them enough time to reach it. A host still loading classes when its
 neighbours depart is a host that smears the second they share. An injector
 handed an instant that has already passed refuses and writes nothing, rather
 than starting late and merging a different window into everyone else's.
@@ -60,7 +60,7 @@ for i in 0 1 2 3; do scp injector-$i:/var/proofload/*.proofload ./run/; done
 ```
 
 Each writes one file, named for when it started, which injector it was, and its
-pid — because four injectors given one instant start in the same millisecond by
+pid, because four injectors given one instant start in the same millisecond by
 design, and across four hosts they may hold the same pid.
 
 `examples/src/main/kotlin/.../OneInjector.kt` is the whole of the program those
@@ -100,13 +100,13 @@ the load that left.
   injector wrote nothing, so you know which host to go and look at.
 - **A clock that disagrees.** Every injector waits until *its own* clock reads
   the instant, so a host running three seconds fast starts three seconds early
-  and writes the same instant as everybody else — the file says nothing is
+  and writes the same instant as everybody else. The file says nothing is
   wrong. What it cannot write the same is the hold it computed against that
   instant, which is recorded on its shard and refused where two of them differ
   by more than `Shards.TOLERABLE_SKEW` (a hundred milliseconds, which is a
   tenth of a timeline bucket). The refusal says by how much and which injector
   held what. Pass `Shards(each, tolerating = ...)` where a set of hosts nobody
-  synchronises is still worth an answer from — a bound you state is a decision
+  synchronises is still worth an answer from, and a bound you state is a decision
   you made. A set with a version 7 baseline in it has no hold to compare and is
   not refused for want of a number.
 - **Unlike machines**, as `Runs` refuses them: a merged result has one machine,
@@ -118,8 +118,8 @@ the load that left.
 ## One host, four injectors
 
 Only for a test of the mechanism. The one-run-at-a-time lock is per host and is
-taken *before* the wait — queueing for a busy machine inside the alignment
-window would de-align the timeline — so four injectors on one host serialise
+taken *before* the wait, since queueing for a busy machine inside the alignment
+window would de-align the timeline, so four injectors on one host serialise
 unless you pass `-Dproofload.exclusive=false`. Four processes contending for four
 cores is also the arrangement all of this exists to escape.
 

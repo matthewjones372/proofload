@@ -104,7 +104,7 @@ val tail = result(placeOrder).responseTime.p99
 
 `result(placeOrder)` reaches `count`, `ok`, `failed` and `ran`, and
 `responseTime` or `serviceTime` reaches `p50`, `p95`, `p99` and `max`. It holds
-no number and computes none — every one is read through `Results`, on core's
+no number and computes none. Every one is read through `Results`, on core's
 own `RunResult`. It exists because `Timing`'s percentiles are
 `kotlin.time.Duration` properties, so their getters carry a value-class hash
 and no extension method can reach them.
@@ -124,12 +124,12 @@ Scala call reads like the Kotlin one rather than like the Java one.
 `scenario(...)` takes a vararg rather than returning a builder. Scala has no
 lambda-with-receiver problem to work around, and a builder imported from Java
 would read like Java. Each entry is what it does to the Java builder, which
-stays the one place a scenario's steps are frozen — so this is extension
+stays the one place a scenario's steps are frozen, so this is extension
 methods over the same values, not a second way to describe a run.
 
 ## What it deliberately is not
 
-**No effect-system integration in this module — no ZIO, no cats-effect, no
+**No effect-system integration in this module: no ZIO, no cats-effect, no
 Pekko.** An effect runtime is a scheduler, and a second scheduler inside a load
 generator means the tool measures its own queueing and reports it as the
 target's latency. A step body may call effectful code and run it itself; what
@@ -189,7 +189,7 @@ object CheckoutSpec extends ZIOSpecDefault:
 executor it runs on. It is `ZIO.attemptBlocking` around the same silent runner
 the other two framework modules build: the call holds its thread for the length
 of the run while the engine sends on virtual threads, and on ZIO's compute pool
-that is a starved runtime — which is a scheduler this tool would then measure
+that is a starved runtime, which is a scheduler this tool would then measure
 and report as the target's latency.
 
 Three things follow from that, and are worth knowing before you write one:
@@ -218,10 +218,10 @@ baselines module, which is a spec of its own.
 ## The gate
 
 [`examples-scala`](../examples-scala) is a module whose whole content is the
-two load tests above — one compiled by `./gradlew build`, one compiled and run
+two load tests above, one compiled by `./gradlew build` and one compiled and run
 by it. There is no `.api` dump for
 `proofload-scala` to move: what BCV records of a Scala module is
 `Durations$package$`, lazy-init closures and qualified-private members Scala
-emits as public bytecode — names no caller can type, moving on edits no caller
+emits as public bytecode: names no caller can type, moving on edits no caller
 can see. So the compiler is the gate, and `FromScalaDocTest` fails when a line
 on this page stops being a line of that source.

@@ -4,7 +4,7 @@ A run's numbers are, by default, in two formats this repository invented: the
 tab-separated lines a baseline is kept in, and the JSON the HTML report inlines
 in a `<script>`. Neither is readable by the Grafana, Prometheus, OpenTelemetry
 backend or `HistogramLogAnalyzer` a team already runs, so the comparison that
-matters — what the client observed against what the server recorded — gets done
+matters, what the client observed against what the server recorded, gets done
 by eye across two tabs.
 
 A fourth export answers a different question. The three metrics formats hand a
@@ -21,7 +21,7 @@ being measured.
 **A metrics export carries measurements. Judgement travels only in a document
 somebody reads whole.**
 
-This governs the three exports below — the histogram log, the OpenMetrics
+This governs the three exports below: the histogram log, the OpenMetrics
 exposition and the OTLP push. It does not govern the run document, which is a
 different shape with a different reader; the section on it says why.
 
@@ -50,21 +50,21 @@ result.writeJson(Path.of("build/run.json"))      // Density.Full, every step
 plan, whether the schedule held, every goal with what it measured and the margin
 it missed by, the steady segment, [Little's law](concepts.md#littles-law-and-what-it-catches), the counts, and the failures
 folded together by reason. `Full` adds the per-step timings and the timeline.
-Durations are the nanoseconds the histogram reported — the document holds the
+Durations are the nanoseconds the histogram reported. The document holds the
 measurement, the reader does the formatting.
 
 The `verdict` is ordered rather than scored, and the order is the claim:
 
 | | |
 |---|---|
-| `behind` | the generator lost its own schedule, so the numbers are not the target's — this outranks everything, including a goal that also missed |
+| `behind` | the generator lost its own schedule, so the numbers are not the target's. This outranks everything, including a goal that also missed |
 | `nothingAsked` | the run carried no goals. Not `met`: a run asked nothing met nothing |
 | `missed` | a goal missed, and `goals[].overBy` says by how much |
 | `cannotTell` | nothing missed, but something could not be judged at the resolution available; `cannotTell.wouldChangeIt` says what would fix that |
 | `met` | every goal asked was met |
 
 Beside the verdict is a **`remedy`**: one sentence saying what to do, chosen in
-the same order the verdict is — the schedule's if the generator lost it, then
+the same order the verdict is: the schedule's if the generator lost it, then
 the first goal that definitely missed. A refused goal's remedy is its own
 `wouldChangeIt` rather than a second sentence written beside it. No remedy
 names a rate nobody measured: a suggested number would be an estimate printed
@@ -77,14 +77,14 @@ version only moves when an existing one changes meaning.
 
 The shape is written down in [docs/schemas/run-1.json](schemas/run-1.json), and
 both documents above are validated against it on every build. It forbids
-undeclared properties, which is the producer's half of the promise — a field
+undeclared properties, which is the producer's half of the promise. A field
 Proofload emits without declaring is a build failure. That is not the reader's
 rule, which stays "ignore what you do not know".
 
 **Why the rule above does not reach here.** The rule exists because a
 time-series backend strips the sentence off a number. `proofload_behind_seconds`
 scraped into Prometheus and alerted on has lost "and therefore the tail below is
-not the target's" — so the caveat has to stay where the caveat is readable. A
+not the target's", so the caveat has to stay where the caveat is readable. A
 document is read whole, by one reader, with the caveat in the field beside the
 number. Splitting the verdict away from it there would not be caution; it would
 just be a document that cannot answer the question it was fetched for.
@@ -97,8 +97,8 @@ import io.github.matthewjones372.proofload.export.writeHistogramLog
 result.writeHistogramLog(Path.of("build/proofload/run.hlog"))
 ```
 
-One tagged line per step per side per clock — `pay.ok.service`,
-`pay.failed.response` — plus `behind` and `hiccups`. `HistogramLogAnalyzer` and
+One tagged line per step per side per clock (`pay.ok.service`,
+`pay.failed.response`) plus `behind` and `hiccups`. `HistogramLogAnalyzer` and
 `HistogramLogProcessor` read it directly.
 
 Nothing is re-bucketed. This tool's counter table *is* HdrHistogram's: 256
@@ -120,7 +120,7 @@ result.writeOpenMetrics(Path.of("/var/lib/node_exporter/proofload.prom"))
 ```
 
 For a Pushgateway or a textfile collector to pick up once the run is over,
-which is why there are no timestamps — both attach their own.
+which is why there are no timestamps. Both attach their own.
 
 ```
 proofload_latency_seconds_bucket{run="…",step="pay",outcome="ok",clock="service",le="0.020971519"} 2841
@@ -130,7 +130,7 @@ proofload_machine_info{cores="4",jdk="21.0.2+13",os="Linux",arch="aarch64"} 1
 ```
 
 **The caveat worth reading before you write a query.** These are explicit
-buckets, and they are the histogram's own — every sample is counted at the top
+buckets, and they are the histogram's own. Every sample is counted at the top
 of the bucket it fell in, so a quantile off them is good to 0.78% and no
 better. `histogram_quantile()` interpolates *inside* a bucket, which is the
 interpolation this tool refuses everywhere else. Read what it gives you as the
@@ -142,8 +142,8 @@ which is a number nobody measured printed with the same confidence as the
 counts beside it. That is the one place this leaves a strict reading of the
 OpenMetrics grammar, deliberately.
 
-A series per failure reason is safe rather than unbounded — a reason is a value
-and the recorder caps how many one step keeps — so this cannot become a series
+A series per failure reason is safe rather than unbounded, because a reason is a
+value and the recorder caps how many one step keeps, so this cannot become a series
 per request.
 
 ## An OpenTelemetry collector
@@ -169,7 +169,7 @@ one window with a start and an end the result already knows.
 
 **Explicit buckets, never an exponential histogram.** These boundaries are
 log-linear and an exponential histogram's are geometric, so the counts would
-have to be moved across boundaries that were measured — the same interpolation
+have to be moved across boundaries that were measured, the same interpolation
 as above, done at export time where nobody would see it.
 
 OTel's data model takes a mandatory sum, which nothing here measures. It is
@@ -185,7 +185,7 @@ put a second HTTP client, because the first one is the thing being measured.
 
 ## Telling runs apart
 
-Every export takes a `run` label, defaulting to when the run started — the only
+Every export takes a `run` label, defaulting to when the run started, the only
 thing a result carries that separates it from another. Ten runs on one
 dashboard have to be told apart, and a generated id would join to nothing else
 here.
@@ -196,7 +196,7 @@ result.writeOpenMetrics(path, run = System.getenv("GITHUB_SHA"))
 
 ## Which module
 
-`proofload-export` is core and the JDK only — the histogram log and the
+`proofload-export` is core and the JDK only. The histogram log and the
 exposition need nothing but `Deflater` and `Base64`. `proofload-otel` carries the
 SDK. Taking one does not bring the other, which is the whole point of them
 being two.

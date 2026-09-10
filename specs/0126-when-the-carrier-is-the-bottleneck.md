@@ -123,6 +123,11 @@ free.
       Done when: the pinning and CPU rows are not `Valid`, and the JDBC and
       think-time rows are.
 - [ ] **`spec-0126-jfr`** — the opt-in JFR layer naming the pinning site.
+      **Not recommended.** Detecting starvation is what the invariant needs;
+      naming the site is a profiler, and `-Djdk.tracePinnedThreads` and JFR
+      already do it outside the tool. The probe above answers "were the
+      carriers the bottleneck"; whoever gets a yes can reach for a profiler.
+      Left in the stack so the choice is recorded rather than silently dropped.
       Done when: the `synchronized` row names the method, and a run without the
       flag loses nothing but the name.
 - [ ] **`spec-0126-claims`** — the two lists above in `docs/concepts.md` and in

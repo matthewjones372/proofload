@@ -5,10 +5,10 @@ mean anything. This is that overhead, measured rather than claimed.
 
 `./gradlew :benchmarks:ceiling` runs two sweeps, and this page carries both:
 
-- **Over a socket — at least 2,500 a second.** The shipped `proofload-http` step
+- **Over a socket: at least 2,500 a second.** The shipped `proofload-http` step
   against a target on loopback. A **lower bound**: the target's own service
   time is inside it.
-- **Without a socket — 100,000 a second.** A step that returns immediately, so
+- **Without a socket: 100,000 a second.** A step that returns immediately, so
   the row is this tool and nothing else. An upper bound, on a path nobody runs.
 
 `./gradlew :benchmarks:kafkaCeiling` runs a third, over the Kafka adapter with
@@ -18,8 +18,8 @@ comparable to either of the two above without reading what is missing from it.
 Both come from one sweep on **Linux amd64, 4 processors, JDK 21.0.10**, under a
 one-minute load average of **0.41 to 1.29** across the sweep. That is a quiet
 machine, and it is what these figures describe. A busier one gives smaller
-numbers — an earlier sweep of this page ran at a load average near six and
-reached the same ceiling with far worse tails — so quoting either as general is
+numbers. An earlier sweep of this page ran at a load average near six and
+reached the same ceiling with far worse tails, so quoting either as general is
 the thing this page exists not to do.
 
 A rate kept its schedule when the median departure left within a millisecond of
@@ -34,9 +34,9 @@ shows one.
 
 | Path | Measured | Where, and what the number is |
 |---|---|:---|
-| the engine alone, no socket | yes | `:benchmarks:ceiling` — 100,000/s, an upper bound on a path nobody runs |
-| `proofload-http`, a request per step | yes | `:benchmarks:ceiling` — at least 2,500/s, a lower bound: loopback, target in this JVM |
-| `proofload-kafka` | partly | `:benchmarks:kafkaCeiling` — the adapter, with the broker, the accumulator and the sender thread taken out |
+| the engine alone, no socket | yes | `:benchmarks:ceiling`: 100,000/s, an upper bound on a path nobody runs |
+| `proofload-http`, a request per step | yes | `:benchmarks:ceiling`: at least 2,500/s, a lower bound: loopback, target in this JVM |
+| `proofload-kafka` | partly | `:benchmarks:kafkaCeiling`: the adapter, with the broker, the accumulator and the sender thread taken out |
 | what a run retains | yes | `:benchmarks:footprint` and `:benchmarks:timelineCost`, on a different machine, named where those figures are |
 | `proofload-http` server-sent events | **no** | nothing sweeps a stream held open |
 | `proofload-websocket` | **no** | nothing sweeps it |
@@ -45,7 +45,7 @@ shows one.
 
 **"No" means nobody measured it, not that it is slow.** An unswept adapter still
 reports `behind`, `hiccups` and `fellBehind()` on every run it is used in, so a
-user is not flying blind — what is missing is the sweep that says at which rate
+user is not flying blind. What is missing is the sweep that says at which rate
 that verdict starts turning over, which is the thing only a benchmark can say.
 
 **Every rate on this page was measured against a target that answers
@@ -76,7 +76,7 @@ Ceiling: **at least 2,500 a second**, on the machine named above.
 **Files** and **Ports** are this process's own ceilings, sampled once a second
 while each row ran: open descriptors against this JVM's limit, and sockets in
 TIME_WAIT against the ephemeral port range. They are what turns a failure count
-from a mystery into an attribution — see below. The port reading is machine-wide,
+from a mystery into an attribution; see below. The port reading is machine-wide,
 because `tw` counts every socket on the host, so it is read against a range that
 is machine-wide too.
 
@@ -90,8 +90,8 @@ departure left within a millisecond of when it was due. It asks whether the
 generator was, in the ordinary case, on time.
 
 **`fellBehind()`** is what the library reports on a run, and it asks a different
-question: whether the injector's *p99* lateness is more than `MATERIAL` — a
-twentieth — of the **worst** step's response-time p99. Against a target
+question: whether the injector's *p99* lateness is more than `MATERIAL`, a
+twentieth, of the **worst** step's response-time p99. Against a target
 answering in hundreds of microseconds that threshold is itself microseconds, so
 a run with any lateness at all trips it. Reading a `yes` there as "the tool
 cannot manage a hundred a second" is exactly backwards: it says the generator's
@@ -104,7 +104,7 @@ place and 0097 argues for the number.
 
 Both are in the table because a reader deserves to see the strict test rather
 than have this page quietly pick the flattering one. It says `no` at exactly one
-rate here — 2,500 a second, the ceiling — and `yes` everywhere else, which is
+rate here, 2,500 a second, the ceiling, and `yes` everywhere else, which is
 what a quiet machine looks like at this precision.
 
 ### Why "at least"
@@ -112,7 +112,7 @@ what a quiet machine looks like at this precision.
 `com.sun.net.httpserver` is not a fast server, and this sweep did not
 characterise it. So a rate the sweep failed to reach may be the target's limit
 rather than the client's, and the honest reading is that Proofload's HTTP step
-reaches *at least* this rate — not that it stops here. Making it an equality
+reaches *at least* this rate, not that it stops here. Making it an equality
 would mean measuring the server too, which is a second project about something
 nobody ships.
 
@@ -126,7 +126,7 @@ What a handler time cannot see is the connection path in front of it, and that
 is where this sweep ended: 3 requests failed at five thousand a second and 51 at
 ten thousand, refused or dropped before a handler ran. The Files and Ports
 columns say which end ran out. At ten thousand a second this process held 991
-descriptors of the 20,000 it was allowed — five per cent, nowhere near — while
+descriptors of the 20,000 it was allowed, five per cent, nowhere near, while
 sockets in TIME_WAIT reached 21,317 of a 28,232-port range, three quarters of
 it, up from 4,734 at half the rate. The failures at this end are ephemeral ports
 recycling too slowly, not descriptors, and not the target refusing work.
@@ -153,7 +153,7 @@ how the machine is configured*:
 
 As shipped it is ephemeral ports: sockets in TIME_WAIT go past the whole range
 while descriptors stay under one per cent of their limit. Told to hold its
-connections open instead — a wider idle-connection cap on the target — the same
+connections open instead, with a wider idle-connection cap on the target, the same
 rates exhaust *descriptors* rather than ports, at 14,589 of 20,000, and fail
 every request. Pinned to HTTP/1.1 rather than negotiating, they exhaust
 descriptors too, at 19,999 of 20,000.
@@ -166,13 +166,13 @@ single bottleneck with a name.
 it is worth being plain about why, because the served columns look like they
 answer it. They do not. `Served p99` is the time inside the target's handler:
 it stays near three hundred microseconds at every rate above, which says
-handler execution is not the limit — and says nothing about the target's accept
+handler execution is not the limit, and says nothing about the target's accept
 path, its connection handling, or the cores it is taking from the generator to
 do any of it. `com.sun.net.httpserver` runs in this same JVM on these same four
 cores and is not a server anyone tunes.
 
 Separating the two needs a target that is not competing with the generator for
-the machine — a real server, on other hardware, over a network this sweep
+the machine: a real server, on other hardware, over a network this sweep
 deliberately excludes. Until then the number stays a lower bound for the reason
 it always was, and the honest reading of the rows above is that this
 arrangement saturates, not that the JDK client does.
@@ -182,8 +182,8 @@ transport seam makes one easy to write, and this measurement is not a reason to.
 It is not evidence the client is slow. Getting evidence either way means
 measuring against a target that is not in the way.
 
-The pick is deliberately conservative. Five thousand a second kept the budget —
-a median departure 101 µs late — and is still not the ceiling, because three
+The pick is deliberately conservative. Five thousand a second kept the budget,
+a median departure 101 µs late, and is still not the ceiling, because three
 requests in twenty-five thousand failed. A refused request is not a request this
 tool sent at the rate it promised, and a lower bound is the right place to be
 strict about that.
@@ -192,7 +192,7 @@ strict about that.
 
 - **No network.** Loopback only. A ceiling measured across a LAN measures the
   LAN.
-- **No tuning.** The client exactly as `proofload-http` ships it — pooled,
+- **No tuning.** The client exactly as `proofload-http` ships it: pooled,
   shared, no executor swap, no connection-pool flags. The question is what a
   user gets, not what is achievable.
 - **No characterisation of the target.** That is what makes this a bound rather
@@ -237,13 +237,13 @@ and ten thousand.
 
 **The first rows are the coldest.** The low rates send the fewest requests, so
 they get the least JIT, and their medians are worse than rates a thousand times
-higher — 326 µs at a hundred a second against 61 µs at a hundred thousand. Read
+higher: 326 µs at a hundred a second against 61 µs at a hundred thousand. Read
 each table as a shape rather than a ranking.
 
 **The p99 column is not the same measurement.** Below twenty-five thousand a
 second it does not follow the rate at all: 8.2 ms at a hundred, 2.2 ms at two
 hundred and fifty, 12 ms at five hundred, and then 204 µs at five thousand.
-Above that it climbs — 31 ms at fifty thousand, 90 ms at a hundred thousand.
+Above that it climbs: 31 ms at fifty thousand, 90 ms at a hundred thousand.
 One run of each rate cannot say how much of that is backlog and how much is the
 machine, and this document does not pretend otherwise.
 
@@ -280,8 +280,8 @@ Memory is the other overhead. The figures in this section were measured on Mac
 OS X aarch64, 8 processors, JDK 21.0.9, which is not the machine the tables
 above were run on.
 
-A `Histogram` is a table of counters — 5,377 longs, 43,016 bytes, and 43,681
-bytes retained once the objects around it are counted — and a run keeps four per
+A `Histogram` is a table of counters (5,377 longs, 43,016 bytes, and 43,681
+bytes retained once the objects around it are counted) and a run keeps four per
 step: service time and response time, each split into the requests that worked
 and the requests that did not, plus one for the generator's own lateness. That
 is fixed per step and does not grow with the number of requests.
@@ -290,19 +290,19 @@ A recorder is kept per shard and the default shard count is
 `availableProcessors`, so a ten-step scenario on that eight-core machine holds
 forty histograms eight times over: **14.1 MiB**, measured by holding the
 recorders and reading the heap either side. Splitting a step into the two sides
-doubled that from roughly 7 MiB, and cost nothing on the timed path — a sample
+doubled that from roughly 7 MiB, and cost nothing on the timed path. A sample
 is still two counter increments, and the histograms describing the whole step
 are merged once, at freeze.
 
 `result.timeline` keeps one more per second per step, and that is the part that
 would grow: ten minutes of a three-step scenario is 1,800 of them, which at the
 full precision above is over seventy megabytes of counters for three line
-charts. A second's histogram is therefore coarse — thirty-two sub-buckets
-rather than two hundred and fifty-six, 5,384 bytes — with each second's
+charts. A second's histogram is therefore coarse, thirty-two sub-buckets
+rather than two hundred and fifty-six at 5,384 bytes, with each second's
 percentile good to 6.25% instead of 0.78%.
 
 A second splits its two sides the way a step does, and the table for what
-failed is allocated the first time something in that second does — so a second
+failed is allocated the first time something in that second does, so a second
 nothing failed in, which is most seconds of most runs, costs exactly what it
 cost before the split.
 
@@ -313,7 +313,7 @@ for one side are allocated together, since a request with a service time in a
 second has a response time in it too.
 
 That doubles the timeline, and the figure is measured rather than reasoned
-about — `./gradlew :benchmarks:timelineCost` holds the recorder and reads the
+about. `./gradlew :benchmarks:timelineCost` holds the recorder and reads the
 heap either side. On the run that costs the most, an hour of ten steps at
 twenty requests a second, which is 36,000 seconds of tables:
 
@@ -323,13 +323,13 @@ twenty requests a second, which is 36,000 seconds of tables:
 | recorder and frozen seconds | 221.5 MiB | 439.1 MiB |
 | per second of step, recording | 5,546 bytes | 11,005 bytes |
 
-Ten minutes of three steps — 1,800 seconds of tables — is 19 MiB of that, which
+Ten minutes of three steps, 1,800 seconds of tables, is 19 MiB of that, which
 is the case to hold in mind rather than the soak. If the soak figure ever stops
 being affordable, the fallback to argue is a timeline that keeps response time
 only while a response-time goal exists to need it, which the plan knows before
 the run starts.
 
-Freezing a second keeps the buckets that counted something and drops the rest —
+Freezing a second keeps the buckets that counted something and drops the rest,
 tens of them for a second of load, against the 673 the table has slots for.
 They are kept rather than only the percentiles read off them because a stretch
 of the run, the steady segment among them, has to be added up from buckets: a
@@ -341,7 +341,7 @@ sizes; neither is an estimate.
 
 Each frozen second keeps the buckets it counted in and not only its
 percentiles, because merging several runs' seconds means adding the buckets and
-reading the percentiles off the sum — `Runs.merged` has no other honest way to
+reading the percentiles off the sum. `Runs.merged` has no other honest way to
 answer. Only the non-empty buckets survive the freeze, so a second holds one
 per distinct latency it saw rather than the 672 slots the coarse table
 reserves, and the counter tables go with the recorder that owned them.
@@ -393,7 +393,7 @@ against the 2 GB the ceiling harness gives itself.
 A baseline taken from a cold JVM will make the next release look like an
 improvement. The first run in a process pays for class loading, JIT and opening
 connections, and in this repository's own regression test it measured a p99 of
-327 ms where every run after it measured 28 ms — a tenfold difference with no
+327 ms where every run after it measured 28 ms, a tenfold difference with no
 change to the target at all.
 
 Discard a run before keeping one. `proofload-baseline` does not do this for you,
@@ -402,7 +402,7 @@ be deciding which measurements count.
 
 The runner is the other half of this. A baseline records the machine it was
 measured on, and a comparison across two of them carries a caveat saying every
-delta may be the runner rather than the service — on shared CI that is most
+delta may be the runner rather than the service. On shared CI that is most
 runs, not an edge case. It is a warning rather than a refusal; a plan that
 differs is the refusal.
 
@@ -431,8 +431,8 @@ number or it is worse than useless.
 
 **The accumulator is not in it.** A real `KafkaProducer` batches into an
 accumulator, hands batches to a sender thread, and blocks up to `max.block.ms`
-when that fills. None of that is here. This bounds the adapter — the part this
-repository wrote — and says nothing whatever about what producing to a broker
+when that fills. None of that is here. This bounds the adapter, the part this
+repository wrote, and says nothing whatever about what producing to a broker
 costs. What a real producer costs is not measured anywhere yet.
 
 **Read the p99 column before the verdict.** The median rule is what names the
@@ -461,11 +461,11 @@ reads like it does.
 - **The port reading is machine-wide.** `tw` counts every socket in TIME_WAIT
   on the host, not just this process's, so a busy neighbour inflates it. It is
   read against the ephemeral range, which is machine-wide too, so the reading
-  and its ceiling describe the same thing — but it cannot prove a particular
+  and its ceiling describe the same thing, but it cannot prove a particular
   socket was Proofload's.
 - **What a real Kafka producer costs.** The adapter sweep above removes the
   broker with a producer that answers immediately, which also removes the
-  accumulator, the batching and the sender thread — the parts most likely to
+  accumulator, the batching and the sender thread, the parts most likely to
   decide what a Kafka run can drive. Measuring those needs a broker on a
   socket, and there is not one in this build.
 - **A footprint measured while something else held the machine.** The live-set

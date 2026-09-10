@@ -21,7 +21,7 @@ test that quietly asserts about a step nobody runs.
 
 ## Contents
 
-**Getting a run out of it** — [a first load test](#a-first-load-test) ·
+**Getting a run out of it**: [a first load test](#a-first-load-test) ·
 [the same thing in Kotest](#the-same-thing-in-kotest) ·
 [run on an engine of your own](#run-on-an-engine-of-your-own) ·
 [without a test framework](#without-a-test-framework) ·
@@ -29,24 +29,24 @@ test that quietly asserts about a step nobody runs.
 [know how long it will take](#know-how-long-it-will-take) ·
 [quieten the progress lines](#quieten-the-progress-lines)
 
-**The vocabulary** — [what a p99 is](concepts.md#what-a-percentile-is-and-why-not-an-average) ·
+**The vocabulary**: [what a p99 is](concepts.md#what-a-percentile-is-and-why-not-an-average) ·
 [why being late is a verdict](concepts.md#why-being-late-matters-enough-to-be-a-verdict) ·
 [what Little's law catches](concepts.md#littles-law-and-what-it-catches) ·
 [the two clocks](concepts.md#two-clocks-and-why-one-of-them-is-the-honest-one)
 
-**Shaping the load** — [flat, ramped, and staged](#flat-ramped-and-staged) ·
+**Shaping the load**: [flat, ramped, and staged](#flat-ramped-and-staged) ·
 [fifty users, looping](#fifty-users-looping) ·
 [stop sending on a metronome](#stop-sending-on-a-metronome) ·
 [think time](#think-time) ·
 [loops and conditions](#loops-and-conditions) ·
 [two journeys in one run](#two-journeys-in-one-run)
 
-**Giving users their own data** — [a function of the user number](#a-function-of-the-user-number) ·
+**Giving users their own data**: [a function of the user number](#a-function-of-the-user-number) ·
 [a fixed list](#a-fixed-list) · [a CSV file](#a-csv-file) ·
 [data you do not have](#data-you-do-not-have) ·
 [a token that expires mid-run](#a-token-that-expires-mid-run)
 
-**The requests themselves** — [chain two steps with a capture](#chain-two-steps-with-a-capture) ·
+**The requests themselves**: [chain two steps with a capture](#chain-two-steps-with-a-capture) ·
 [check the body, not just the status](#check-the-body-not-just-the-status) ·
 [sign in once and carry the cookie](#sign-in-once-and-carry-the-cookie) ·
 [follow a slow request into your traces](#follow-a-slow-request-into-your-traces) ·
@@ -57,13 +57,13 @@ test that quietly asserts about a step nobody runs.
 [work that finishes somewhere else](#work-that-finishes-somewhere-else) ·
 [Kafka, and the answer on another topic](#kafka-and-the-answer-on-another-topic)
 
-**Asking the question** — [assert, or declare goals](#assert-or-declare-goals) ·
+**Asking the question**: [assert, or declare goals](#assert-or-declare-goals) ·
 [ask what actually failed](#ask-what-actually-failed) ·
 [read only the part that settled](#read-only-the-part-that-settled) ·
 [find the rate it sustains](#find-the-rate-it-sustains) ·
 [did the generator keep up?](#did-the-generator-keep-up)
 
-**Keeping the answer** — [write an HTML report](#write-an-html-report) ·
+**Keeping the answer**: [write an HTML report](#write-an-html-report) ·
 [one run at a time, on the whole machine](#one-run-at-a-time-on-the-whole-machine) ·
 [a baseline in GitHub Actions](#a-baseline-in-github-actions) ·
 [more than one run, and a verdict worth having](#more-than-one-run-and-a-verdict-worth-having) ·
@@ -119,7 +119,7 @@ behind it.
 ## The same thing in Kotest
 
 `proofload()` is a suspend function that hands back the runner for the test it is
-called from. No spec base class, and nothing to register — called from a spec
+called from. No spec base class, and nothing to register: called from a spec
 that registered nothing it still works.
 
 ```kotlin
@@ -138,7 +138,7 @@ class CheckoutSpec : StringSpec({
 
 ## Run on an engine of your own
 
-Proofload runs on virtual threads and there is no second engine in the tree — but
+Proofload runs on virtual threads and there is no second engine in the tree, but
 core declares what a runner is, so the seam is real rather than promised:
 
 ```kotlin
@@ -169,7 +169,7 @@ and a Kotest spec names one by passing it:
 val result = proofload(Actors()).run(checkout.at(50.perSecond, over = 1.minutes))
 ```
 
-The engine you name is still wrapped so that one run has the machine at a time —
+The engine you name is still wrapped so that one run has the machine at a time,
 two tests that start together measure the target one after the other rather than
 measuring each other, whichever engine sends them. Wrapping an already-exclusive
 engine is safe: the lock notices the thread already holds it.
@@ -258,8 +258,8 @@ about this machine rather than about the target.
 
 ## Quieten the progress lines
 
-When the output is somebody else's report — a CI step that parses stdout, a test
-framework — hand it a quiet one:
+When the output is somebody else's report (a CI step that parses stdout, a test
+framework), hand it a quiet one:
 
 ```kotlin
 import io.github.matthewjones372.proofload.Progress
@@ -305,14 +305,14 @@ export uses:
 | Series | What it says |
 |---|---|
 | `proofload.departed` | users handed to a thread so far |
-| `proofload.in_flight` | users still running — a parked user counts here |
+| `proofload.in_flight` | users still running, a parked user counts here |
 | `proofload.requests` | requests recorded since the last push |
 | `proofload.failures` | failures recorded since the last push |
 | `proofload.behind.last` | how late the last departure was |
 
 Read `proofload.behind.last` before any of the counts. Where it is growing, the
 rate you named is no longer being offered and every number under it is about a
-lighter test than the one you asked for — which at minute four is a run worth
+lighter test than the one you asked for, which at minute four is a run worth
 stopping, and is the whole reason for watching one.
 
 **There is no live percentile, and that is deliberate.** A percentile is read
@@ -335,7 +335,7 @@ Two more things worth knowing:
 
 Pass the same `run` label to `sendOtlp` at the end and the live series and the
 finished one join on one dashboard. The live points carry no `step`, because a
-snapshot is the run rather than its steps — which is also what keeps them a
+snapshot is the run rather than its steps, which is also what keeps them a
 different series from the finished export's, so a run pushed live and then sent
 at the end is not counted twice.
 
@@ -375,7 +375,7 @@ profile.endRate       // 200.0/s
 
 ## Fifty users, looping
 
-The closed model — how most people describe load, and the one shape here that
+The closed model, which is how most people describe load and the one shape here that
 measures a queue of its own making:
 
 ```kotlin
@@ -394,7 +394,7 @@ here. The page says so at the top of a closed run and nowhere else.
 What a closed run does not report, because it never promised a departure:
 
 - **no lateness.** `behind` and the per-second lateness are empty rather than
-  zero — a generator is not late for a departure nobody promised, and zero
+  zero, because a generator is not late for a departure nobody promised, and zero
   would read as perfect punctuality;
 - **one clock, not two.** Response time counts from the departure the profile
   promised, and after each user's first journey there is none, so response time
@@ -405,7 +405,7 @@ What a closed run does not report, because it never promised a departure:
   order, and a population has none.
 
 What it does report is the rate it achieved, which is the only rate it has, and
-[Little's law](concepts.md#littles-law-and-what-it-catches) — which needs no promised
+[Little's law](concepts.md#littles-law-and-what-it-catches), which needs no promised
 departure and is the one check a fixed population makes better than an open
 run, because the concurrency it predicts is a number you chose.
 
@@ -459,8 +459,8 @@ val soak = checkout.at(50.perSecond, over = 10.minutes).thinkingFrom(seed = 2026
 ```
 
 `constant`, `exponential`, `lognormal(median, sigma)` and `uniform(from, until)`
-are the shapes. A scenario that draws is refused without a seed — an unseeded
-random run is not one anybody can reproduce — and a scenario of constants still
+are the shapes. A scenario that draws is refused without a seed, because an unseeded
+random run is not one anybody can reproduce, and a scenario of constants still
 needs none. Each user's waits come from that seed and its own user number, so
 user 4,001 parks the same tomorrow whatever the target did today, and the report
 names the distribution and the seed beside the arrivals line.
@@ -484,7 +484,7 @@ val peak = checkout.injecting(friday.replaying(from = 40.minutes, window = 10.mi
 captured minutes at twice the rate is five minutes of run.
 
 Scaling multiplies every gap by the same number, which leaves the coefficient of
-variation exactly where it was — that is what lets the report print the
+variation exactly where it was, and that is what lets the report print the
 capture's burstiness beside the run's and mean something. Proofload will not thin
 the arrivals to scale them: thinning drives a point process towards Poisson,
 which is the shape you replayed a capture to avoid.
@@ -524,7 +524,7 @@ ten times the samples.
 
 `during` reads its own clock between iterations rather than waiting on anything,
 so no thread is parked. A user still looping when the profile's window closes
-finishes its iteration and extends the run — the alternative is cutting a user
+finishes its iteration and extends the run, because the alternative is cutting a user
 off mid-journey and counting the half of it that happened.
 
 `doIf` asks the session and nothing else. A condition over what the target
@@ -558,7 +558,7 @@ proofload.run(simulation)
 ```
 
 The arms are merged into one departure schedule rather than booked one after
-another — a run that sent all of one arm and then all of the next would hand the
+another, because a run that sent all of one arm and then all of the next would hand the
 arrivals recorder a gap running backwards, and report a spacing nothing
 produced. Each arm is fed from its own feeder and numbers its users from zero,
 so `feed(customer) { "customer-$it" }` on two arms is two independent sequences.
@@ -601,8 +601,8 @@ exec(placeOrder, api.post("/orders").body("""{"customer":"{customer}","cart":"1 
 ```
 
 Ten thousand users sending one identical order measure whatever the target does
-with a duplicate — dedupes it, serves it from cache, collides on a unique index,
-takes the idempotency key at its word — and the page reports that as the latency
+with a duplicate, dedupes it, serves it from cache, collides on a unique index,
+takes the idempotency key at its word, and the page reports that as the latency
 of placing an order.
 
 Only an identifier between braces is a placeholder, so a JSON document's own
@@ -617,7 +617,7 @@ exec(upload, api.put("/uploads/{id}").bodyFrom(bytes = size) { Files.newInputStr
 ```
 
 The lambda is called once per attempt, so a retry and a redirect each get their
-own stream — a stream is read once, and a body that could only be sent once
+own stream, because a stream is read once, and a body that could only be sent once
 would arrive empty on every attempt after the first. Give `bytes` where you know
 the length and it is sent as `content-length`; leave it out and the request is
 chunked. Nothing fills `{name}` in a streamed body: the substitution reads a
@@ -663,7 +663,7 @@ checkout.at(50.perSecond, over = 1.minutes).fedBy(accounts.feeding(customer, tie
 Each key fills from the column the header gave the same name, so there is no
 second place to keep the mapping. A key naming a column the file does not have
 fails when the feeder is built, naming the column and listing the ones that are
-there — before the run departs anything, rather than on user one.
+there, before the run departs anything, rather than on user one.
 
 A CSV has no types, so a key that is not a `String` names its own conversion:
 
@@ -679,17 +679,17 @@ departure takes.
 Held in memory rather than streamed, for the reason everything else here is: a
 file read between a departure and the request it makes is measured as the
 target's latency. One session is built per row up front, so feeding a user is an
-index into a list — nothing allocated, nothing locked, and it wraps round rather
-than running out. The grammar is a deliberately small part of RFC 4180 — quoted
-fields and doubled quotes inside them — because core carries no dependencies and
+index into a list, nothing allocated, nothing locked, and it wraps round rather
+than running out. The grammar is a deliberately small part of RFC 4180 (quoted
+fields and doubled quotes inside them) because core carries no dependencies and
 anything wider is a CSV library.
 
 ## Data you do not have
 
 A thousand-row file cycled for a million users keeps every one of those rows in
 every cache the target has, so part of the p99 on the page is a hit rate the
-test invented. Drawing a key uniformly at random is wrong the other way — it
-misses every cache — and real traffic does neither. What decides the number is
+test invented. Drawing a key uniformly at random is wrong the other way: it
+misses every cache. Real traffic does neither. What decides the number is
 how many distinct keys there are and how unevenly they are asked for, and
 `proofload-arbs` is where both are said out loud:
 
@@ -716,7 +716,7 @@ dependencies {
 user's number, so a run replays, the value user 8,412 sent is re-derivable from
 its number, and fifty thousand virtual threads share no source to contend on.
 It is drawn where the feeder runs, before the departure, rather than inside a
-step body — a value made up on the measured path allocates there, and the
+step body, because a value made up on the measured path allocates there, and the
 collection pause it eventually buys is recorded in `hiccups` and read as the
 target's latency.
 
@@ -725,8 +725,8 @@ strings would have guessed your id scheme; `map` turns it into whatever yours
 is. `uniform` is the flat keyspace, `digits` and `uuids` are ids of a fixed
 shape, and `weighted` is a traffic mix stated as proportions.
 
-These are not kotest's `Arb`. That one leans towards edge cases — the empty
-string, `MIN_VALUE`, the boundary — because it is hunting bugs, which is the
+These are not kotest's `Arb`. That one leans towards edge cases (the empty
+string, `MIN_VALUE`, the boundary) because it is hunting bugs, which is the
 wrong bias for load.
 
 A `Feeder` is a function of the user's number and nothing else, so nothing
@@ -741,11 +741,11 @@ checkout.at(50.perSecond, over = 1.minutes)
     .drawing(customerId.shape, basket.shape)
 ```
 
-The shapes travel with the result, onto the report — `Data: zipf(keys=1000000,
+The shapes travel with the result, onto the report, `Data: zipf(keys=1000000,
 skew=1.1), seed 0.` beside the arrival process, on the HTML page and in the job
-summary — and into a baseline file. A comparison refuses two runs that named
+summary, and into a baseline file. A comparison refuses two runs that named
 different ones rather than reporting the cache hit rate one of them bought as a
-regression. A run that named none compares exactly as it did before — every baseline written so far has no shape in it, so the
+regression. A run that named none compares exactly as it did before: every baseline written so far has no shape in it, so the
 strict reading would refuse them all. The cost of that is stated rather than
 hidden: moving a CSV-fed run onto a generator is a change no comparison flags.
 
@@ -776,13 +776,13 @@ load:
 `{uniform: 500}` draws `0` to `499`; the `from`/`to` form draws the inclusive
 range a contract states. Every drawn value arrives as a string, because that is
 what a path reads. Each key is seeded from `seed` and its own name, so two keys
-never draw in step with one another — without that, customer 41 would always
+never draw in step with one another. Without that, customer 41 would always
 buy item 41 and nothing in the report would show it.
 
 `proofload from-openapi` writes the draw itself where the document bounds a
 parameter: `minimum: 1, maximum: 500` becomes `{uniform: {from: 1, to: 500}}`,
 and an `enum` becomes every value it lists. Where the document bounds nothing,
-one legal value is substituted as before — inventing a range it never stated
+one legal value is substituted as before. Inventing a range it never stated
 would be inventing the cardinality this section is about.
 
 `proofload emit` prints the Kotlin above, seeds included, so the file and the
@@ -815,7 +815,7 @@ val checkout = scenario("checkout") {
 token.stop()
 ```
 
-The first fetch happens when `refreshing` is called — before the run, so it
+The first fetch happens when `refreshing` is called, before the run, so it
 cannot land inside whichever virtual user reads it first. Every later fetch runs
 on a daemon thread no departure is submitted to. `current` is a volatile read of
 a value already in hand and allocates nothing.
@@ -837,7 +837,7 @@ proofload: 1 credential header(s) dropped, each left as a TODO
 ```
 
 The output is Kotlin source you edit and commit, not a `Scenario` read at run
-time. A recording is a first draft — most of it wants deleting — and a draft
+time. A recording is a first draft (most of it wants deleting) and a draft
 re-read on every run is one nobody edits, so the forty CDN requests and the
 expired token stay in it forever.
 
@@ -858,7 +858,7 @@ What it does with the recording:
   else's cache. `--include` and `--exclude` take a regex over the path.
 - **Every credential is dropped.** `authorization`, `cookie`, `set-cookie`,
   `x-api-key` and anything whose value parses as a JWT are replaced by a `TODO`
-  naming the header. There is no flag to turn this off — a switch somebody sets
+  naming the header. There is no flag to turn this off, because a switch somebody sets
   once and forgets is a token in a public repository. Put a real credential
   there, or fetch one off the measured path with `refreshing` (above).
 - **Think time is a comment.** The gaps between recorded requests are one
@@ -871,7 +871,7 @@ and a man-in-the-middle on somebody's laptop. Chrome, Firefox, Charles,
 mitmproxy and every API client already export HAR; this reads the file.
 
 `docs/examples/checkout.har` is the recording behind this book's own checkout,
-and `proofload-record/src/test/.../generated/Checkout.kt` is what it generates —
+and `proofload-record/src/test/.../generated/Checkout.kt` is what it generates,
 checked in, compiled and formatted by the same build as everything else, which
 is what keeps "the output compiles" from being a claim.
 
@@ -894,7 +894,7 @@ val checkout = scenario("checkout") {
 
 A key carries its type, so there is no cast to read one back and no string
 looked up in a map of `Any`. A capture that finds nothing fails the step it was
-declared on rather than the step that would have used the value — which is where
+declared on rather than the step that would have used the value, which is where
 you would have gone looking anyway.
 
 ## Check the body, not just the status
@@ -930,7 +930,7 @@ exec(download, api.get("/exports/{id}").discardingBody())
 ```
 
 The bytes are counted as they arrive and let go. `Response.bytes` is what came
-back and `Response.body` is empty — which is the finding worth having, because a
+back and `Response.body` is empty, which is the finding worth having, because a
 download that returned 4 KB instead of 200 MB took no time at all and otherwise
 reads as a very fast target.
 
@@ -943,12 +943,12 @@ charset.
 not at run time: both read a body that will not exist, and a step that silently
 checks an empty string is a green test about nothing. Drop one or the other.
 
-A redirect is still followed — a hop reads `Location` from the headers, not from
-the body — and so is a retry.
+A redirect is still followed (a hop reads `Location` from the headers, not from
+the body) and so is a retry.
 
 ## Retry, without burying the retry
 
-Real clients retry a 503. Proofload will too, if you ask — and asking is the
+Real clients retry a 503. Proofload will too, if you ask, and asking is the
 point, because a target that fails one request in ten looks perfect behind two
 retries:
 
@@ -984,15 +984,15 @@ rather than Proofload's. A caller who needs more hands in a transport:
 val api = http.baseUrl("https://orders.internal").over(FasterClient())
 ```
 
-A `Transport` is one method — a `Request` in, an `Exchange` out — and it lives
+A `Transport` is one method (a `Request` in, an `Exchange` out) and it lives
 on the `Http` value, so a run against two services can speed up one and leave
 the other alone.
 
 What a transport may **not** change is what a number means. The redirect walk,
 the per-user cookie jar, the `traceparent`, the status and the body checks all
 stay above the seam, and it is handed no `StepScope`, so it cannot write to a
-user's session. It owes exactly two failures — `TimedOut` where the target did
-not answer in time and `Threw(class)` for anything else — and no duration:
+user's session. It owes exactly two failures (`TimedOut` where the target did
+not answer in time and `Threw(class)` for anything else) and no duration:
 service time is measured by the engine around the step, and a clock inside a
 transport would be a third one to reconcile.
 
@@ -1014,14 +1014,14 @@ val signedIn = scenario("signed in") {
 
 The jar is in each user's own session, not on the client. There is one
 `HttpClient` for the whole run so that TLS handshakes are not measured, and
-`java.net.CookieHandler` hangs off the client — so a jar there would be one jar
+`java.net.CookieHandler` hangs off the client, so a jar there would be one jar
 shared by fifty thousand users taking turns being one logged-in person.
 
 Name and value only: no expiry, no path or domain matching, because a load test
 sends to one base URL. It is off unless asked for.
 
-Redirects are off unless asked for too — a 302 is the failure it was, under the
-step that got it — until `following()` says otherwise:
+Redirects are off unless asked for too: a 302 is the failure it was, under the
+step that got it, until `following()` says otherwise:
 
 ```kotlin
 exec(signIn, api.post("/session").body(credentials).following())
@@ -1070,7 +1070,7 @@ val ledger = scenario("ledger") {
 
 `fail` marks the step failed and returns a reason for the report; it does not
 throw, because a declared failure and a bug in the generator should not arrive
-by the same route. The first reason wins — a timeout that follows a 503 is the
+by the same route. The first reason wins: a timeout that follows a 503 is the
 503's doing, and renaming it loses which one to go and fix.
 
 ## WebSockets
@@ -1095,7 +1095,7 @@ val streaming = scenario("streaming") {
 streaming.at(200.perSecond, over = 5.minutes)
 ```
 
-`open` times the upgrade alone — from the request leaving to the server's 101
+`open` times the upgrade alone, from the request leaving to the server's 101
 completing it. It is not a first message and not the first byte of one: nothing
 here says when data starts to flow.
 
@@ -1121,7 +1121,7 @@ val streaming = scenario("streaming") {
 }
 ```
 
-`send` is timed for the write alone and waits for nothing — the sample ends when
+`send` is timed for the write alone and waits for nothing; the sample ends when
 the client reports the frame written. `awaiting` records **one sample per
 answer**, each measured from the send it answers, so `awaiting(count = 100)` is
 a hundred samples under one name and the report draws the messages' own
@@ -1143,7 +1143,7 @@ far end that hangs up fails the step at once instead of parking a user for the
 rest of the run.
 
 One caveat worth knowing: the samples are placed on the timeline at the moment
-the wait finished rather than each at the second its message arrived — the
+the wait finished rather than each at the second its message arrived, the
 client's reader thread counts from its own connection, not from the run. The
 durations are each message's own; only where they sit along the run is coarse.
 A wait that times out reports the answers that did arrive, and then fails.
@@ -1178,7 +1178,7 @@ val watching = scenario("watching") {
 }
 ```
 
-`open` ends when the response head arrives — the target agreeing to stream, not
+`open` ends when the response head arrives, the target agreeing to stream, not
 saying anything. `firstEvent` is the round trip to the first event, comparable
 with a plain request's latency. `cadence` is one sample per event after it, each
 measured from the event before: the rate the feed actually delivered at. A
@@ -1190,7 +1190,7 @@ rather than the target's speed; put in with the round trip, the two average into
 a figure describing neither. A `cadence` before any `firstEvent` fails with
 `NoFirstEvent` rather than handing the round trip out as the first gap.
 
-**A heartbeat is not an event.** A comment line — `:` and anything after it — is
+**A heartbeat is not an event.** A comment line (`:` and anything after it) is
 counted on the stream and satisfies no wait:
 
 ```kotlin
@@ -1218,7 +1218,7 @@ this process.
 ## Work that finishes somewhere else
 
 Some systems answer on another topic, another queue, or a webhook. The latency
-that matters is not the ack — it is the departure the profile promised to the
+that matters is not the ack but the departure the profile promised to the
 answer arriving.
 
 ```kotlin
@@ -1285,7 +1285,7 @@ val result = proofload.run(
 ```
 
 Each goal becomes a `Verdict` carrying what was measured and, where it missed,
-by what share of the target — "51% over" reads the same whether the limit was
+by what share of the target, "51% over" reads the same whether the limit was
 200 ms or two seconds, and tells you whether you are looking at tuning or at
 design.
 
@@ -1316,7 +1316,7 @@ One `Verdict` per stage, each naming the stage it is about, and the run meets it
 only where every stage does. The report puts each on the stage row it belongs
 to rather than in a list repeating the goal's name once per stage.
 
-Declare the plain goal beside it where you also want the aggregate — it is the
+Declare the plain goal beside it where you also want the aggregate, since it is the
 number people compare between builds, and it is a different question:
 
 ```kotlin
@@ -1355,7 +1355,7 @@ result[placeOrder].failedWith(Threw("ConnectException"))
 result[placeOrder].failedWith(CheckFailed("has an order id"))
 ```
 
-Which is the point of the type — a string could be counted and nothing else:
+Which is the point of the type: a string could be counted and nothing else:
 
 ```kotlin
 val serverErrors = result[placeOrder].failed.reasons
@@ -1373,7 +1373,7 @@ result[settle].failedWith(Said("ledger rejected it"))
 ```
 
 Declare your own where you do have a type. Any value implementing `Reason`
-works, and it must be a value — a data class or an object — because a reason is
+works, and it must be a value (a data class or an object) because a reason is
 a map key that gets merged across recording shards and again across runs:
 
 ```kotlin
@@ -1401,8 +1401,8 @@ result.steady[placeOrder].responseTime.p99
 
 Nothing is discarded by default: `result` still holds the whole run, and
 `steady` gives back the whole run where it never settled rather than an empty
-one. A goal that reads something a second does not keep — the generator's own
-backlog, a failure reason — is judged over the whole run instead, because
+one. A goal that reads something a second does not keep, the generator's own
+backlog, a failure reason, is judged over the whole run instead, because
 narrowing it to a segment nothing measured would be inventing the answer.
 
 ## Find the rate it sustains
@@ -1443,13 +1443,13 @@ result.behind.p99     // how late the late departures were
 ```
 
 Where `fellBehind()` is true, every latency in the run includes time spent
-waiting in a queue this tool created — coordinated omission, which is the
+waiting in a queue this tool created, coordinated omission, which is the
 default bug in a load generator rather than an exotic one. Response times are
 the ones that carry it, and a response-time goal on such a run fails; the
 failure is the finding.
 
 The run is not wasted. Service time was measured from the departure that
-actually happened, so it is still a true measurement of the target — at the
+actually happened, so it is still a true measurement of the target, at the
 load that reached it rather than the load you asked for:
 
 ```kotlin
@@ -1461,7 +1461,7 @@ result.latePerSecond[12].p99   // how late that second's departures were
 
 So the answer to "it fell behind, now what" is: re-run at a rate the machine
 held, and read the service times of this run as the target at `left` in the
-meantime. Proofload will not quietly lower the rate for you mid-run — a run that
+meantime. Proofload will not quietly lower the rate for you mid-run: a run that
 throttles itself measures a load it then does not report, which is the bug this
 tool exists to close. A [capacity search](#find-the-rate-it-sustains) is the
 supported way to adapt, because every rung is a separate, labelled run.
@@ -1471,7 +1471,7 @@ produced, and its coefficient of variation.
 
 ## Write an HTML report
 
-One self-contained file — the data, the stylesheet and the script inline — so it
+One self-contained file, with the data, the stylesheet and the script inline, so it
 opens from a `file://` URL and uploads as a CI artifact unchanged.
 
 ```kotlin
@@ -1515,7 +1515,7 @@ proofload: checkout — 30,000 users over 10m, 2 steps each
 ```
 
 A run that did not queue says nothing. The lock is a `FileLock` on a file under
-`java.io.tmpdir`, so the OS releases it when a process dies — a killed run frees
+`java.io.tmpdir`, so the OS releases it when a process dies, so a killed run frees
 the machine for the next one with nothing to clean up.
 
 It degrades rather than fails. A read-only temp directory, a container without
@@ -1532,8 +1532,8 @@ Four properties, all optional:
 | `proofload.exclusive.timeout` | none | Seconds to queue before giving up, failing with the holder's pid. Unset waits indefinitely. |
 | `proofload.resolution` | measured | A floor somebody already measured, skipping `calibrate()`. A floor named rather than measured carries no probe, so nothing can compare two machines by it. |
 
-Two containers on one host cannot serialise against each other this way — they
-do not share a temp directory — and no file can fix that. Nothing here pretends
+Two containers on one host cannot serialise against each other this way: they
+do not share a temp directory, and no file can fix that. Nothing here pretends
 otherwise.
 
 ## A baseline in GitHub Actions
@@ -1665,13 +1665,13 @@ and fetch the newest successful one before the run:
 ```
 
 The `||` matters. A missing baseline is a thing to report, not a thing to die
-of — and Proofload reports it, so let the step pass and let the summary say it.
+of, and Proofload reports it, so let the step pass and let the summary say it.
 
 ### Keeping it: a branch somebody reviews
 
 A cache and an artifact are both invisible until something breaks. Where the
-baseline is a number the team argues about — the rate a service is expected to
-hold — put it on an orphan branch and change it in a pull request:
+baseline is a number the team argues about, the rate a service is expected to
+hold, put it on an orphan branch and change it in a pull request:
 
 ```bash
 git switch --orphan proofload-baseline
@@ -1702,7 +1702,7 @@ nothing about how far a second would land from it, so a comparison of one run
 against one baseline can say what moved but not whether the move was real.
 
 `Runs` is several runs of one plan, and `against` compares two populations by
-resampling the runs that made them — so the spread it judges by is the observed
+resampling the runs that made them, so the spread it judges by is the observed
 spread of the thing being compared, rather than a number borrowed from
 somewhere else:
 
@@ -1731,7 +1731,7 @@ now.against(before, p99(placeOrder)) should NotWorseThan(10.percent)
 Five runs a side is the fewest it will make an interval out of; a bootstrap over
 three values is arithmetic wearing a lab coat. Below that it refuses and says so.
 
-The verdict is `Better`, `Worse`, or `CannotTell` — and the third is the feature.
+The verdict is `Better`, `Worse`, or `CannotTell`, and the third is the feature.
 A comparison that always answers better or worse is the last place in this tool
 where an unmeasured number gets printed. `CannotTell` carries both why and what
 would change it, because a refusal nobody can act on is one a team learns to
@@ -1761,8 +1761,8 @@ times, and two JVMs started together do not.
 
 ## More than one injector
 
-When one JVM cannot send the load — `docs/what-it-costs.md` puts that wall
-somewhere between ten and twenty-five thousand a second on four shared cores —
+When one JVM cannot send the load, `docs/what-it-costs.md` puts that wall
+somewhere between ten and twenty-five thousand a second on four shared cores,
 split the run across hosts. Each is given which one it is, how many there are,
 and the instant they all start on:
 
@@ -1785,8 +1785,8 @@ lateness and what one host can and cannot stand in for are in
 ## What a statistic has been doing
 
 A comparison is pairwise, and pairwise is blind to a creep by construction. A
-p99 drifting two percent a point sits inside every interval — a runner's own
-run-to-run spread is about that — so `against` answers "cannot tell" forty
+p99 drifting two percent a point sits inside every interval, because a runner's own
+run-to-run spread is about that, so `against` answers "cannot tell" forty
 times while the number moves a third.
 
 A trend is a directory of directories: one subdirectory per point, holding that
@@ -1850,7 +1850,7 @@ result[placeOrder].failedWith(GrpcStatus(Status.Code.UNAVAILABLE))
 result[placeOrder].failedWith(TimedOut)   // DEADLINE_EXCEEDED, under the one name every module uses
 ```
 
-`deadline(...)` is the budget a call gets when it sets none of its own — a call
+`deadline(...)` is the budget a call gets when it sets none of its own, a call
 with no deadline waits as long as the target likes, which in a load test is a
 user who never departs again. Your own `withDeadlineAfter` still wins.
 
@@ -1858,7 +1858,7 @@ user who never departs again. Your own `withDeadlineAfter` still wins.
 thread-safe pool, and one per user would measure TLS handshakes rather than the
 target. The cost is gRPC's known trap: one channel resolves to one subchannel,
 so a run can land on one backend with HTTP/2 capping concurrent streams. That
-is the generator's ceiling, not the target's — read `behind` and the injector's
+is the generator's ceiling rather than the target's; read `behind` and the injector's
 own limits before believing a gRPC number.
 
 **No transport here.** `grpc-netty-shaded` or `grpc-okhttp` is your choice and
@@ -1873,7 +1873,7 @@ awaiting(answers, count = 100, within = 30.seconds)
 ```
 
 `awaiting(count = 100)` is a hundred samples under one name, each timed from
-the message it answers — not one sample covering a hundred messages and the
+the message it answers, not one sample covering a hundred messages and the
 gaps between them. An answer arriving with nothing outstanding is counted as
 unsolicited and not timed: there is no departure to measure it from.
 
@@ -1896,7 +1896,7 @@ val watching = scenario("watching") {
 ```
 
 `firstAnswer` is one sample, from the call being opened to the first message
-arriving — a round trip, comparable with a unary call's latency. `cadence` is
+arriving: a round trip, comparable with a unary call's latency. `cadence` is
 one sample per message after that, each measured from the message before it:
 the rate the target actually delivered at. A hundred messages is `firstAnswer`
 plus `cadence(count = 99)`.
@@ -1906,7 +1906,7 @@ with *k* and the histogram fills with a number that describes the stream's
 length rather than the target's speed; put in with the round trip, the two
 average into a figure describing neither. So a `cadence` before any
 `firstAnswer` fails with `NoFirstAnswer` rather than handing the round trip out
-as the first gap — the one mistake nobody reading the report could catch.
+as the first gap, the one mistake nobody reading the report could catch.
 
 `send`, `awaiting` and `done` fail with `NotSending` here: the one request went
 out with the call.
@@ -1959,7 +1959,7 @@ checkout and the query together and calls the total the database's latency.
 That is `behind` all over again, one layer down: the generator's own queueing
 reported as the target's speed. With them apart, a report can say *the database
 answered in 3 ms and your users waited 400 ms for a connection*, which is a
-different bug with a different fix — and the one a team is more often actually
+different bug with a different fix, and the one a team is more often actually
 hitting. A pool that saturates at 40 connections is the ceiling the whole
 service hits.
 
@@ -1978,7 +1978,7 @@ saying `SQLException` under a class name. A driver that names no SQLSTATE gets
 
 **A word about carrier pinning.** JDBC is blocking, and each user runs on its
 own virtual thread. JDK 21 pins the carrier for the duration of a `synchronized`
-block, which several drivers still use on their hot paths — a run that pins is a
+block, which several drivers still use on their hot paths; a run that pins is a
 run whose concurrency is capped at the carrier pool rather than at the database.
 The PostgreSQL driver from 42.7 and the newer MariaDB and MySQL drivers unmount
 cleanly; older ones and several commercial drivers do not. Read the injector's
@@ -2026,12 +2026,12 @@ trades.at(5_000.perSecond, over = 5.minutes)
 
 The correlation is stated once, at the `emit`, and goes to both the departure
 the run counts and the header the record carries. The completion side reads
-that header and never touches the payload — which is why it needs no
+that header and never touches the payload, which is why it needs no
 deserializer, and why no schema registry is involved in reading an answer.
 
 `submitted` times the broker's ack, which is `acks` deep: an in-sync-replica
 round trip at `Acks.All` and nothing at all at `Acks.None`. `settled` is the
-number that matters — measured from the departure the profile promised, not
+number that matters, measured from the departure the profile promised, not
 from when the record reached the broker.
 
 **No serializer here, and no registry.** `io.confluent:kafka-avro-serializer`
@@ -2046,13 +2046,13 @@ A registry-backed serializer fetches a schema once per subject and caches it,
 so the first record pays an HTTP round trip. Because the cache is shared, any
 record departing while that fetch is in flight waits behind it.
 
-That cost lands in **the produce step's own latency** — the lambda runs inside
+That cost lands in **the produce step's own latency**: the lambda runs inside
 the step body, so it is timed as that step. It does *not* land in `behind`:
 every user runs on a thread of its own, so one blocked in a serializer holds up
 nobody else's departure. Reading that first spike as the broker being slow is
 the mistake to avoid.
 
-Read `result.steady` for the run without it — that is what the steady segment
+Read `result.steady` for the run without it; that is what the steady segment
 is for.
 
 ### Two more things worth knowing
@@ -2063,7 +2063,7 @@ figure would report a smoothness the broker never saw. If you raise it, that
 figure describes the injector rather than the broker.
 
 When the accumulator fills, `send` blocks up to `max.block.ms` on the calling
-thread. That is real backpressure and it is reported honestly — but it arrives
+thread. That is real backpressure and it is reported honestly, but it arrives
 as generator lateness in `behind`, not as target latency, so read [did the
 generator keep up?](#did-the-generator-keep-up) before concluding the cluster
 is fine.
@@ -2084,8 +2084,8 @@ result.sendOtlp("http://collector:4318/v1/metrics")
 ```
 
 All three read a frozen result after the run: nothing is scraped while requests
-are departing. All three carry the measurements — the latencies, the run's own
-lateness, the injector's stalls, the failures by reason — and none of them
+are departing. All three carry the measurements, the latencies, the run's own
+lateness, the injector's stalls, the failures by reason, and none of them
 carries the judgement, which stays where the sentence next to it survives.
 
 Read [exporting.md](exporting.md) before writing a query against them. The
@@ -2132,7 +2132,7 @@ it is not in CI is one people stop running locally.
 
 ## Bound what a run on this machine may do
 
-A rate arrives from somewhere — a person, a script, or a plan file a program
+A rate arrives from somewhere: a person, a script, or a plan file a program
 wrote. `proofload.toml` beside the build says what this machine permits, and
 `preview` says what a plan would do before it does any of it:
 
@@ -2159,7 +2159,7 @@ GitHub-hosted runners are shared machines. The same code, the same commit and
 the same rate measure differently between two runs of them, and this repository's
 own benchmark shows p99 tails dominated by machine stalls rather than by load. A
 threshold on p99 therefore fails some fraction of pull requests for reasons
-nobody can act on — and a gate that fails a third of the time gets deleted
+nobody can act on, and a gate that fails a third of the time gets deleted
 within a month, taking the failure and error checks with it.
 
 So:
@@ -2182,7 +2182,7 @@ So:
 
 and `Comparison.Compared` carries a `caveat` where the two runs are comparable
 but something about the machines argues against the numbers. A calibration
-probe — the same target-free measurement on both machines — is what turns "this
+probe (the same target-free measurement on both machines) is what turns "this
 might be the runner" into `slowdown: 2.0`. Past a quarter slower the caveat
 leads with it, above any step, because the runner is then the likelier
 explanation of everything under it.
@@ -2200,7 +2200,7 @@ runner whose spread you have already measured, name it instead:
 - run: ./gradlew :examples:againstTheBaseline -Dproofload.resolution=0.05
 ```
 
-That skips the measurement, and with it the probe — a floor somebody typed has
+That skips the measurement, and with it the probe: a floor somebody typed has
 no probe behind it, so nothing can compare the runner to the baseline's. Skip
 it where the runners are identical and known; measure it where they are not,
 which on hosted runners is most of the time.

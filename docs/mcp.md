@@ -23,8 +23,8 @@ told which class to run. `0.1.0-rc1` predates that and needs
 jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
 and a client parses it as-is.
 
-`java -jar` is not one of the ways. There is no fat jar — nothing has to be kept
-in step with the modules it would have shaded — so the jar carries no classpath
+`java -jar` is not one of the ways. There is no fat jar, so nothing has to be kept
+in step with the modules it would have shaded, and the jar carries no classpath
 and whatever starts it has to resolve the POM. That is the whole reason a
 launcher is named here rather than a download.
 
@@ -58,7 +58,7 @@ rather than its rate.
 
 **`run` is the one that needs a fence.** `docs/allowance.md` says an absent
 allowance means no limits, which is the right default for someone who installed a
-load generator themselves and the wrong one for an image a model drives — so the
+load generator themselves and the wrong one for an image a model drives, so the
 image sets `PROOFLOAD_REQUIRE_ALLOWANCE`, and `run` refuses until it finds a
 `proofload.toml` in the directory it was started from. Write one there and the mount
 above picks it up. A local install is unaffected and behaves as it always has.
@@ -117,16 +117,16 @@ directory, not yours.
 
 | Tool | Does | Sends |
 |---|---|---|
-| `benchmark` | **start here** — a target in, a plan out, previewed and smoked | one request per step |
+| `benchmark` | **start here**: a target in, a plan out, previewed and smoked | one request per step |
 | `plan_schema` | the shape of a `plan/1` document, with four worked plans | nothing |
 | `validate` | parses a plan, resolves its steps and goals, names the line of anything wrong | nothing |
-| `preview` | what the plan would send — users, requests, window, peak rate, hosts | nothing |
+| `preview` | what the plan would send: users, requests, window, peak rate, hosts | nothing |
 | `from_openapi` | reads an OpenAPI document, writes the plan it describes | nothing |
 | `smoke` | one request per step, so a typo is found here rather than at three thousand a second | one request per step |
 | `trace` | walks one user and says what each step sent and what came back | one journey |
 | `run` | starts the run, returns a `runId`, does not wait | **the load the plan asks for** |
 | `status` | what a run is doing, or the verdict and remedy of a finished one | nothing |
-| `explain` | the full document for a finished run — every step, the timeline | nothing |
+| `explain` | the full document for a finished run: every step, the timeline | nothing |
 | `report` | writes the run's self-contained HTML page, returns its path | nothing |
 | `summary` | what the run measured, as markdown a person reads in the chat | nothing |
 | `list_runs` | every run this server started, newest first | nothing |
@@ -135,8 +135,8 @@ directory, not yours.
 **Start with `benchmark`.** Everything else in this table is a verb on
 Proofload's own model, which is the shape a library has rather than the shape a
 question has. Nobody asks to validate a plan; they ask whether their service
-holds up. `benchmark` takes a target — an OpenAPI document, a plan you already
-have, or just a base URL — and does the whole safe half in one call: writes the
+holds up. `benchmark` takes a target (an OpenAPI document, a plan you already
+have, or just a base URL) and does the whole safe half in one call: writes the
 plan, validates it, previews it against the allowance, and sends one request per
 step.
 
@@ -171,15 +171,15 @@ It also says what it is guessing, and asks:
 ```
 This plan is guessing. Ask whoever wants the benchmark:
   - This only sends `GET /`, because a base URL is all it was given. Which paths
-    actually matter — a journey, a hot endpoint, a slow one?
-  - The rate is a placeholder — one a second, because nothing said otherwise.
+    actually matter: a journey, a hot endpoint, a slow one?
+  - The rate is a placeholder, one a second, because nothing said otherwise.
     What does this see at peak, and over how long?
 ```
 
 Every question is derived from that plan and that smoke, not read off a list. A
 credential is asked about because the target answered 401, not because targets
 often need one; paths are asked about because a bare URL was all it got. A plan
-somebody wrote themselves, with a rate and a goal they chose, is asked nothing —
+somebody wrote themselves, with a rate and a goal they chose, is asked nothing,
 a fixed list would query a decision that has already been made, and get ignored
 on the plan where it mattered.
 
@@ -194,7 +194,7 @@ documentation about it.
 
 **A request plan can draw its own values.** A `draw` block names a generator per
 key, and `{key}` in a path or a body is filled per user from it: `uniform`,
-`zipf`, `oneOf`, `digits` and `uuids`, with `zipf` the shape real traffic has — a
+`zipf`, `oneOf`, `digits` and `uuids`, with `zipf` the shape real traffic has: a
 few keys asked for constantly and a long tail asked for once. One id repeated
 measures one row and one cache line, and cardinality and skew are what move a
 p99, so `from_openapi` derives the draws from the contract's own schemas rather
@@ -217,7 +217,7 @@ steps:
 `plan_schema` carries the whole vocabulary and a worked plan for it.
 
 Every tool's description states what it sends before you have to find out. The
-first four send nothing, so they are free to call and free to get wrong — which
+first four send nothing, so they are free to call and free to get wrong, which
 is the point, because it lets a caller iterate against a parser instead of
 guessing.
 
@@ -258,13 +258,13 @@ goals:
 ```
 
 `produce` is the publish, timed as deep as `acks` makes it. `completes` is the
-answer arriving somewhere else, and what it records is the round trip — a row
+answer arriving somewhere else, and what it records is the round trip. A row
 of its own rather than folded into the publish, because folding them reports a
 round trip as though it were a write. `within` has no default: a run that waits
 forever for an answer that never comes reports no failure and no number.
 
 `baseUrl` and `brokers` are both optional, and a plan may mix requests and
-topics — a journey that is a request and then a record is one journey.
+topics: a journey that is a request and then a record is one journey.
 
 The correlation is the user's number, which is unique per departure and is the
 only value a *record* has without a lambda: `draw` and `{key}` templating are a
@@ -274,7 +274,7 @@ feeder goes there.
 
 A broker is a host. `preview` names every entry of the bootstrap list, and an
 allowance that does not permit the cluster refuses the plan the way it refuses
-a URL — shared infrastructure is exactly what a fence is for.
+a URL, because shared infrastructure is exactly what a fence is for.
 
 The client arrives with the module that reads plans rather than with
 `proofload-plan` itself: a project taking `proofload-plan` to read a plan of
@@ -283,7 +283,7 @@ requests gets no Kafka on its classpath. [modules.md](modules.md) has the row.
 ## What it will refuse
 
 A plan that does not read comes back as a tool result with `isError` set and the
-parser's own sentence in it — the line, and the keys that were allowed. That is
+parser's own sentence in it: the line, and the keys that were allowed. That is
 what a caller correcting itself needs; a stack trace buries it.
 
 `preview` also consults the machine's `proofload.toml`, so a plan over the rate,
@@ -308,8 +308,8 @@ Poll `status` with that id. A ten-minute run inside one tool call is a dead
 connection, a retry, and a second ten-minute run against the same target, which
 is why the two are separate.
 
-One run at a time. A second `run` while one is sending is refused by name —
-`r-1 is still sending` — rather than handed an id for a run that never started
+One run at a time. A second `run` while one is sending is refused by name,
+`r-1 is still sending`, rather than handed an id for a run that never started
 and could be polled forever.
 
 Runs live in the server's memory and are lost when it stops. That is the honest
@@ -322,12 +322,12 @@ disk, which is what `report` will be for.
 That split is the point: an agent reads the document, a person with a browser
 opens the page, and a person watching the chat reads the summary. Handing a model
 the page's bytes would be handing it inlined SVG to no purpose, and handing a
-person the JSON would be handing them the thing the charts were made from —
+person the JSON would be handing them the thing the charts were made from,
 which is what watching `status` does, and the reason `summary` exists.
 
 `summary` is the markdown a GitHub job summary already carries, from the same
 renderer. A chat-only one would be a second behaviour to keep in step, and the
-one thing that reader loses against the page is the distribution — so the
+one thing that reader loses against the page is the distribution, so the
 markdown draws it, for the steps worth looking at:
 
 ```

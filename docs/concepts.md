@@ -1,7 +1,7 @@
 # The ideas behind the numbers
 
 Every figure Proofload prints answers a question, and most of them answer a
-different question from the one people assume. This page is the vocabulary —
+different question from the one people assume. This page is the vocabulary:
 what a percentile is, why lateness is a verdict rather than a footnote, and what
 Little's law catches that nothing else does.
 
@@ -15,8 +15,8 @@ Every step is timed twice.
 **Service time** starts when the request goes out and stops when the answer
 comes back. It is what the target took.
 
-**Response time** starts when the request was *meant* to go out — the moment the
-schedule said — and stops at the same place. It is what a user would have felt.
+**Response time** starts when the request was *meant* to go out, the moment the
+schedule said, and stops at the same place. It is what a user would have felt.
 
 They are the same number only while the generator keeps up. The moment it falls
 behind, service time keeps looking healthy and response time does not:
@@ -29,7 +29,7 @@ behind, service time keeps looking healthy and response time does not:
 
 This is **coordinated omission**, and it is the bug this tool exists to close. A
 generator that waits for a response before sending the next request measures a
-queue it created — and worse, it *stops sending* while the target is slow, so
+queue it created. Worse, it *stops sending* while the target is slow, so
 the slow period is under-sampled by exactly the thing that made it slow. The
 tail looks fine because the requests that would have been in it were never sent.
 
@@ -49,15 +49,15 @@ service; it has measured itself.
 
 Two different questions get asked about it:
 
-- **Lost ground** — is the lateness large against the gap between departures? At
+- **Lost ground.** Is the lateness large against the gap between departures? At
   150/s the gap is 6.67 ms, so lateness of 40 ms means the load that left is not
   the load that was asked for. The plan itself did not happen.
-- **Fell behind** — is the lateness large against the tail it would inflate? A
+- **Fell behind.** Is the lateness large against the tail it would inflate? A
   5 ms delay hides inside a 356 ms response and is nothing; the same 5 ms
   against an 8 ms response is most of the number.
 
 The second is a judgement, and it is written down as one: `MATERIAL` is five
-percent of the tail. It was once the width of a histogram bucket — a figure that
+percent of the tail. It was once the width of a histogram bucket, a figure that
 says how small a difference this tool can *see*, doing the job of one that says
 whether a difference *matters*. It called a run behind on 1.4% of its tail while
 that run's own timeline was flat end to end. A verdict that fires on noise is one
@@ -102,7 +102,7 @@ L = λ × W
   W  time each one takes
 ```
 
-It is arithmetic, not a model — true of any queue that is not growing. Which
+It is arithmetic, not a model, and true of any queue that is not growing. Which
 makes it a free consistency check on a load test, and one nothing else provides.
 
 Proofload measures all three independently: it counts users in flight each second,
@@ -119,9 +119,9 @@ From the same run at 200/s:
 | ratio | 1.009 |
 
 Within one percent, so the numbers are consistent with each other. When the
-ratio drifts, something is queueing where nobody thinks it is — usually in the
+ratio drifts, something is queueing where nobody thinks it is, usually in the
 generator, occasionally in a connection pool. The gap between the two
-predictions — one from service time, one from response time — is the backlog,
+predictions, one from service time and one from response time, is the backlog,
 counted in requests.
 
 ## Steady state
@@ -141,14 +141,14 @@ floor: the smallest difference this machine can distinguish from noise.
 
 It matters when comparing runs. A 3% regression on a machine whose floor is 6%
 is not a regression, and a comparison that consults the floor can say **cannot
-tell** — which is a third answer most tools do not have, and the honest one more
+tell**, which is a third answer most tools do not have, and the honest one more
 often than people expect.
 
 ## Declared failures
 
 A `404` from an endpoint documented to return one is the service working as
 written. A `500` nobody wrote down is a defect. Every other load tool has to be
-told which statuses are acceptable, by hand, per step — and mostly is not, so
+told which statuses are acceptable, by hand, per step, and mostly is not, so
 both land in one failure count.
 
 Where a contract exists, Proofload reads it: a status the OpenAPI document or the
@@ -158,7 +158,7 @@ Pelican endpoint declares fails under its own reason, and the run separates
 ## Goodput
 
 Throughput counts requests. **Goodput counts the ones that were both fast enough
-and successful** — the share that actually did the job.
+and successful**: the share that actually did the job.
 
 A service answering 500/s where a fifth of them are errors and another fifth
 miss the latency target is doing 300/s of useful work, and reporting 500 is

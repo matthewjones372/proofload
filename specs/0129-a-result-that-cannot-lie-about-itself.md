@@ -1,5 +1,12 @@
 # 0129 — A result that cannot lie about itself
 
+> **Narrowed: this spec owns `check()`, not a list.** It was drafted with
+> twelve result invariants of its own, and 0134 was drafted with sixteen. Two
+> lists is one too many — the second to be written is the one that goes stale.
+> 0134 is the anchor and owns the enumeration; the numbered clauses below stay
+> as the argument for each check and are cited by their 0134 numbers, not
+> maintained as a parallel list.
+
 ## Problem
 
 `RunResult` is a good value and its invariants are enforced by construction in

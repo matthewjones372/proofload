@@ -119,6 +119,11 @@ Seven documents. Four are new, three are corrections.
       Done when: no page uses "behind" for two things.
 - [ ] **`spec-0133-new-pages`** — documents 1 to 4, each landing with the spec
       that owns it rather than in one commit.
+      **Not this spec's work.** Every one of the four is already a stack entry
+      elsewhere — `spec-0130-contract`, `spec-0131-statement`,
+      `spec-0132-contract` and `spec-0126-claims` — so what is left here is the
+      linking, and that is one line in each of those. Kept as a checklist of
+      what must exist before 1.0, built nowhere but there.
       Done when: each exists, is linked from the README's documentation list and
       from `llms.txt`, and ends with its claim-to-test table.
 

@@ -1391,6 +1391,8 @@ class Rates
     fun perMinute(Double): Rate
     fun perSecond(Double): Rate
 class Results
+    fun against(RunResult, RunResult): Comparison
+    fun against(RunResult, RunResult, Double, Clock): Comparison
     fun count(RunResult, StepName): Long
     fun failed(RunResult, StepName): Long
     fun max(RunResult, StepName): Duration

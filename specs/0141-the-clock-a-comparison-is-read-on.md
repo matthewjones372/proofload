@@ -105,11 +105,11 @@ file class 0137 exists to keep out of a consumer's source.
 
 ## Stack
 
-- [ ] **`spec-0141-clock`** — the `of` parameter, the two fields on `Compared`,
+- [x] **`spec-0141-clock`** — the `of` parameter, the two fields on `Compared`,
       and both report notes built from them.
       Done when: a comparison on service time reads service time, and the
       golden reports are unchanged for the defaults.
-- [ ] **`spec-0141-facades`** — `Results.against` in `proofload-java` and
+- [x] **`spec-0141-facades`** — `Results.against` in `proofload-java` and
       `against` in `proofload-scala`.
       Done when: a Scala caller builds a comparison without naming a file class.
 - [ ] **`spec-0141-docs`** — the cookbook recipe and `docs/from-scala.md`.

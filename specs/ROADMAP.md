@@ -175,7 +175,7 @@ Kotlin's file classes, and a release it could not resolve.
 | [0135](0135-what-scala-cannot-name.md) | a facade over the value-class mangling, so `sustainable`, `Offered` and `notWorseThan` are reachable |
 | [0136](0136-a-feeder-from-scala.md) | per-user data from Java and Scala, which 0015 gave Kotlin and the facade never carried |
 | [0137](0137-a-scala-surface-that-reads-like-scala.md) | extensions over the file classes, infix goals, one import, and the package that shadows `scala` |
-| [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, composable assertions, and a run you can watch |
+| [0138](0138-proofload-from-zio.md) | `java.time.Duration` overloads, a typed error channel, the reports as effects, composable assertions, and a run you can watch |
 | [0139](0139-the-scala-version-a-release-promises.md) | the LTS floor declared once and gated, after rc3 shipped TASTy no 3.8 consumer can read |
 
 ## Known and unwritten

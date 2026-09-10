@@ -18,6 +18,24 @@ refused the connection and a bug in a step body arrive as the same type, so a
 caller who wants to retry one and fail the others has to match on exception
 classes.
 
+**Everything except the run is the caller's problem to make effectful.** `run`
+wraps the engine in `attemptBlocking`, which is the hard part and is right. But
+writing a report, appending to a job summary and reading a baseline are blocking
+file I/O with no ZIO form, so a caller hand-rolls the wrapper the module already
+knows how to write:
+
+```scala
+ZIO.attemptBlocking {                                  // written by a caller
+  Files.createDirectories(into)
+  HtmlReportKt.writeHtmlReport(result, path, null, null, java.util.List.of())
+  StepSummaryKt.appendToStepSummary(result, null, null, fromEnvironment)
+}
+```
+
+A module that owns `attemptBlocking` for the run should own it for the run's
+outputs too, or the caller learns that some of this library is effectful and
+some is not, with no rule for telling which.
+
 **The assertions do not compose.** `metItsGoals` returns a `TestResult`, which
 is correct and is also a dead end: it cannot be negated, combined with `&&`, or
 reported through zio-test's own diffing. A ZIO user expects
@@ -57,6 +75,14 @@ Assertions that compose:
 assert(result)(p99Under(pay, 200.millis) && failedNone && keptSchedule)
 ```
 
+The outputs as effects, on the blocking executor the module already chose:
+
+```scala
+proofload.writeHtmlReport(result, path): Task[Path]
+proofload.appendToStepSummary(result): Task[StepSummary]
+proofload.markdown(result): UIO[String]
+```
+
 And a read-only progress stream, for a run somebody is watching:
 
 ```scala
@@ -88,6 +114,11 @@ open question against it.
 - [ ] **`spec-0138-errors`** — `ProofloadError`, and `run` returning `IO`.
       Done when: a refused connection and a step-body bug are distinguishable
       without matching on an exception class.
+- [ ] **`spec-0138-outputs`** — `writeHtmlReport`, `appendToStepSummary` and
+      `markdown` as effects, so no caller writes `attemptBlocking` around a
+      report.
+      Done when: a spec writes all three outputs with no `ZIO.attemptBlocking`
+      in its own source.
 - [ ] **`spec-0138-assertions`** — `Assertion[RunResult]` values for the goals,
       beside `metItsGoals` rather than replacing it.
       Done when: the Shape's `assert` compiles, and its negation reports which
@@ -110,6 +141,10 @@ open question against it.
   engine's recording side, and 0057 already argued about progress once.
 - **Should `run` keep a `Task` overload?** Recommend yes for one release, so
   0108's published signature does not break inside an rc line.
+- **Do the output effects belong in `proofload-zio-test`, which would make it
+  depend on both report modules?** Recommend `compileOnly` on the reports, as
+  zio-test itself already is there: a caller who writes no report should not
+  inherit two modules for the privilege.
 - **Is `keptSchedule` an assertion or a precondition?** Recommend an assertion
   for now, and note that 0121 may make it a validity gate instead, in which case
   this one should be deleted rather than kept beside it.

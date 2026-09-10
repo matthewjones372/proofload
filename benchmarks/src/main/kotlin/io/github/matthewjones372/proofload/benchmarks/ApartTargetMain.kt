@@ -17,6 +17,9 @@ fun main(args: Array<String>) {
         System.out.flush()
         // Until the parent closes it.
         System.`in`.readBytes()
-        Files.writeString(counts, servedLines(target.served()).joinToString(separator = "\n", postfix = "\n"))
+        Files.writeString(
+            counts,
+            servedLines(target.served(), target.connections()).joinToString(separator = "\n", postfix = "\n"),
+        )
     }
 }

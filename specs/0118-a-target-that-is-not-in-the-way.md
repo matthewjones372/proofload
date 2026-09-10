@@ -70,14 +70,50 @@ here, and it is the shape of thing 0086 declined for the same reason.
       Landed in [#84](https://github.com/matthewjones372/proofload/pull/84).
       Done when: a sweep run against the out-of-process target produces the same
       columns as today's, and the target's own `served()` is in them.
-- [ ] **`spec-0118-cores`** — disjoint CPU sets for generator and target, named
+- [x] **`spec-0118-cores`** — disjoint CPU sets for generator and target, named
       in the table, degrading to "not pinned" where the platform has no way.
       Done when: a pinned row says which cores each end had, and an unpinnable
       platform still produces the table and says it did not pin.
-- [ ] **`spec-0118-reuse`** — requests per connection, counted at the target as
+      #94. `Pinning` splits the processors in half, pins the generator with
+      `taskset -cp` and leaves the other half where `apart` picks it up for the
+      target's command. The page now reads "this sweep ran generator on cpu
+      0-1, target on cpu 2-3", or "not pinned" and how many processors the two
+      ends shared. `PinningTest` covers both wordings and the half-pinned case,
+      which reports as not pinned: one end pinned and the other loose is two
+      ends sharing the pinned half, which is worse than sharing everything and
+      would read as a pinned row.
+
+      Anything under four processors is deliberately left alone — half of two
+      is one core, and the row would measure that instead.
+
+      Not claimed: that pinning moved the numbers. It appeared to at 10,000 a
+      second, and the load average across that sweep was also a third of the
+      unpinned one's, and this session has already produced three effects that
+      turned out to be run order. Whether it helps is `spec-0118-record`'s to
+      answer on a machine where the question can be asked.
+- [x] **`spec-0118-reuse`** — requests per connection, counted at the target as
       requests over distinct client ports.
       Done when: a row whose ports peak near the range shows a low figure here,
       and one that reused its connections shows a high one.
+      #94. It does, and off a cliff: about 30 to 60 up to 2,500 a second, then
+      1.9 at 5,000 and 2.4 at 10,000. Counted inside the run rather than off
+      the machine-wide port reading, so unlike that column it is not at the
+      mercy of what the previous sweep left in TIME_WAIT.
+
+      What the column then found is that the cliff is the **target's**.
+      `com.sun.net.httpserver` closes idle connections past
+      `sun.net.httpserver.maxIdleConnections`, which defaults to 200. Handing
+      the target `-Dsun.net.httpserver.maxIdleConnections=20000` takes reuse at
+      5,000 a second from 1.9 and 4.7 across two runs to 16.8, and changes
+      nothing at 2,500 where the cap is never reached — a threshold, not a
+      speed-up. `apart` now forwards `proofload.targetFlags` so this is
+      settable rather than guessed at.
+
+      The sweep's default target is left alone. Raising the cap makes the
+      published figure better by changing the instrument, and which number a
+      page should carry — the one a stock `com.sun.net.httpserver` allows, or
+      the one the generator reaches against a target that is not in the way —
+      is a decision rather than a fix.
 - [ ] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
       Done when: the paragraph that "cannot say whether the client or the target
       ran out first" either does, or names exactly what is still missing.

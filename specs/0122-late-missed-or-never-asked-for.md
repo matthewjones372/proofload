@@ -129,6 +129,11 @@ after it stops.
       and a run interrupted mid-flight reads fewer departed than booked.
 - [ ] **`spec-0122-saturation`** — `schedule.saturated`: the first second after
       which per-second lateness p50 never returns under one interval.
+      **Not recommended.** `heldScheduleFor` (0043) already answers "when did
+      it stop keeping the schedule" off the same series, and a second derived
+      number over the same data is one more thing to keep in step for a
+      distinction nobody has asked for yet. Revisit if a real run produces a
+      recover-then-fail shape the existing number reads wrong.
       Done when: the recover row names a second and the never-recover row names
       an earlier one, both from a recorded series with no clock in the test.
 

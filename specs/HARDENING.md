@@ -72,14 +72,45 @@ change it** — which is what 0130, 0132 and 0133 are for.
 | [0124](0124-a-schedule-tested-without-a-clock.md) | scheduling arithmetic proven deterministically, using seams that already exist | **P0** |
 | [0125](0125-correct-at-a-hundred-thousand.md) | correctness of the sharded recorder under load, independent of speed | **P0** |
 | [0126](0126-when-the-carrier-is-the-bottleneck.md) | carrier starvation and pinning, and the claims virtual threads do not earn | **P0** |
-| [0127](0127-what-the-instruments-cost-the-measurement.md) | instrumented against uninstrumented, per departure, at the tail | P1 |
+| [0127](0127-what-the-instruments-cost-the-measurement.md) | instrumented against uninstrumented, per departure, at the tail | **deferred** |
 | [0128](0128-a-run-that-can-be-stopped.md) | the run lifecycle, cancellation, deadlines and what happens to in-flight work | **P0** |
-| [0129](0129-a-result-that-cannot-lie-about-itself.md) | twelve result invariants and a `check()` at every freeze, merge and read | P1 |
+| [0129](0129-a-result-that-cannot-lie-about-itself.md) | a `check()` at every freeze, merge and read — 0134 owns the list it checks | P1 |
 | [0130](0130-what-a-hundred-a-second-means.md) | the open model's arithmetic as a 1.0 contract | **P0** |
 | [0131](0131-the-bar-a-closed-model-would-have-to-clear.md) | the closed-model statement, and the bar if it were ever to change | P1 |
 | [0132](0132-where-a-step-starts-and-stops.md) | what a step measures, made explicit and testable | P1 |
-| [0133](0133-the-documents-1-0-cannot-ship-without.md) | the documentation audit and the seven pages 1.0 needs | P1 |
+| [0133](0133-the-documents-1-0-cannot-ship-without.md) | the documentation audit and the generated ROADMAP; the new pages land with the specs that own them | P1 |
 | [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants, and which five do not hold | **P0** |
+
+## What a first read cut
+
+Reviewed against cost rather than merit, because fourteen specs at four stack
+entries each is fifty-five pull requests and that number, not the quality of any
+one of them, is what decides whether this is a hardening pass or a release
+cycle. Nothing is deleted — `specs/README.md`'s rule is that a spec stays as the
+record of a decision, and an argued-against one keeps its argument, as `0086`
+and `0061-containers` already do.
+
+| Cut | Why |
+|---|---|
+| **0127** entirely | needs an uninstrumented arm it refuses to ship, and 0011 and 0093 already bound the question from two sides |
+| **0129**'s list | 0134 is the anchor and owns the enumeration; two lists means the second one goes stale |
+| **0133**'s new pages | all four are already stack entries in 0126, 0130, 0131 and 0132 |
+| **`spec-0126-jfr`** | detecting starvation is the invariant; naming the site is a profiler, and JFR is already one |
+| **`spec-0122-saturation`** | `heldScheduleFor` answers it off the same series |
+
+Eleven specs, about forty-four entries.
+
+## Build order, which is not priority order
+
+The dependencies are real and nobody wrote them down:
+
+1. **0124 and 0134 first.** 0124 is the cheapest thing here — no new
+   abstraction, pure seams that already exist, and it converts flaky wall-clock
+   tests into arithmetic, which makes everything after it cheaper to verify.
+   0134 gives the table to measure progress against.
+2. **Then 0121**, because 0126, 0128 and 0131 each add a case to its `Doubt`
+   sealed interface. Building them first means opening that type three times.
+3. **Then 0123**, then 0126 and 0128.
 
 ## Priority, and what it means
 
@@ -88,10 +119,13 @@ change it** — which is what 0130, 0132 and 0133 are for.
 untested". 0134 is the anchor: it names the five gaps and sets the release rule
 that no row may be a "no".
 
-**P1 — 1.0 is weaker without it and is not dishonest without it.** 0127, 0129,
-0131, 0132 and 0133 make claims precise, cheap to defend and hard to drift. They
-can follow 1.0 if they have to; the risk of deferring them is a claim nobody
-notices going stale, not a wrong number.
+**P1 — 1.0 is weaker without it and is not dishonest without it.** 0129, 0131,
+0132 and 0133 make claims precise, cheap to defend and hard to drift. They can
+follow 1.0 if they have to; the risk of deferring them is a claim nobody notices
+going stale, not a wrong number.
+
+**Deferred — 0127 only**, and past 1.0 rather than within it. See the cut table
+above and the note at the head of the spec.
 
 ## Explicitly out of scope
 
@@ -116,7 +150,15 @@ Named here so the boundary is a decision rather than an omission:
 
 ## Behaviour that needs a human decision before anything is built
 
-The open questions worth answering first, because several specs branch on them:
+**The one that decides the size of all of it** is 0134's third open question:
+does 1.0 ship with a "no" in the invariant table? 0134 recommends not, and says
+the honest alternative is to weaken the README's claim to match rather than
+ship the claim over the gap. Fixing five invariants is most of the work below;
+changing "a p99 you can trust" to something the code earns today is an
+afternoon. Both are defensible. Shipping the current claim over the current
+gaps is the option that is not.
+
+Then the questions several specs branch on:
 
 1. **Does reading a percentile from an invalid run throw, or merely flag?**
    0121 recommends both — a `validity` value and a `trusted()` gate — and

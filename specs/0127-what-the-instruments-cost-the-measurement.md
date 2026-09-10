@@ -1,5 +1,14 @@
 # 0127 — What the instruments cost the measurement
 
+> **Recommendation: not for 1.0.** The question is the deepest one a
+> measurement tool can ask of itself, and the cost is wrong for the answer it
+> would give. Measuring the delta needs an uninstrumented arm — a mode the
+> **Not doing** section below already refuses to ship — and the ground is
+> partly covered from two sides already: 0011 bounds what the scheduler costs
+> and 0093 what a run retains and allocates. Deferred rather than deleted,
+> because the gap is real and somebody will ask. `0086` and `0061-containers`
+> have the same shape and the same status.
+
 ## Problem
 
 0011 measured whether the scheduler keeps up. 0093 measured what a run retains

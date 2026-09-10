@@ -23,9 +23,21 @@ dependencies {
     testImplementation("dev.zio:zio_3:$zioVersion")
     testImplementation("dev.zio:zio-test_3:$zioVersion")
     testRuntimeOnly("dev.zio:zio-test-junit-engine_3:$zioVersion")
+
+    // The outputs are effects here, and the modules that produce them are
+    // `compileOnly` for the reason zio-test is: a spec that writes no report
+    // should not inherit two modules for the privilege.
+    compileOnly(project(":proofload-report-html"))
+    compileOnly(project(":proofload-report-github"))
+    testImplementation(project(":proofload-report-html"))
+    testImplementation(project(":proofload-report-github"))
 }
 
 tasks.test {
+    // `OutputsSpec` reads its own source to check nothing in it wraps a report
+    // by hand, which is the claim that entry is for.
+    systemProperty("proofload.repoRoot", rootProject.projectDir.path)
+
     val mainRuntime = configurations.runtimeClasspath
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(

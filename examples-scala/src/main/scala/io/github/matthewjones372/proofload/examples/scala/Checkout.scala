@@ -2,8 +2,10 @@ package io.github.matthewjones372.proofload.examples.scala
 
 import io.github.matthewjones372.proofload.java.Https
 import io.github.matthewjones372.proofload.java.Results
+import java.nio.file.Files
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.Proofload
+import io.github.matthewjones372.proofload.scala.appendToStepSummary
 import io.github.matthewjones372.proofload.scala.apply
 import io.github.matthewjones372.proofload.scala.exec
 import io.github.matthewjones372.proofload.scala.failureRate
@@ -16,6 +18,8 @@ import io.github.matthewjones372.proofload.scala.perSecond
 import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
+import io.github.matthewjones372.proofload.scala.writeHtmlReport
+import io.github.matthewjones372.proofload.scala.writePagesIndex
 import _root_.scala.concurrent.duration.DurationInt
 import _root_.scala.language.implicitConversions
 
@@ -60,6 +64,11 @@ object Checkout:
 
     Results.verdicts(result).forEach: verdict =>
       println(verdict.getGoal.getDescribed + (if verdict.getMet then " met" else " missed"))
+
+    val reports = Files.createTempDirectory("proofload")
+    result.writeHtmlReport(reports.resolve("checkout.html"))
+    result.appendToStepSummary()
+    writePagesIndex(reports)
 
     val tail = result(placeOrder).responseTime.p99
     println(s"${placeOrder.getName} p99 ${tail.toMillis}ms over ${result(placeOrder).count} requests, " +

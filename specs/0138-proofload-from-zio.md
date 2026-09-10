@@ -114,7 +114,7 @@ open question against it.
 - [x] **`spec-0138-errors`** — `ProofloadError`, and `run` returning `IO`.
       Done when: a refused connection and a step-body bug are distinguishable
       without matching on an exception class.
-- [ ] **`spec-0138-outputs`** — `writeHtmlReport`, `appendToStepSummary` and
+- [x] **`spec-0138-outputs`** — `writeHtmlReport`, `appendToStepSummary` and
       `markdown` as effects, so no caller writes `attemptBlocking` around a
       report.
       Done when: a spec writes all three outputs with no `ZIO.attemptBlocking`

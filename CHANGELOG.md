@@ -131,6 +131,14 @@ enough to list, and long enough to matter.
   thrown, so a run against a target that is down succeeds and carries the
   measurement of a target that is down.
 
+- **The outputs as effects.** `proofload.writeHtmlReport`,
+  `appendToStepSummary`, `markdown` and `writePagesIndex`, on the blocking
+  executor the run already goes out on. A module that owns `attemptBlocking` for
+  the run owns it for the run's outputs, or a caller learns that some of the
+  library is effectful with no rule for telling which. Both report modules are
+  `compileOnly` here too, and `OutputsAreEffectsTest` reads the spec beside it
+  and fails when a hand-rolled wrapper appears in it.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

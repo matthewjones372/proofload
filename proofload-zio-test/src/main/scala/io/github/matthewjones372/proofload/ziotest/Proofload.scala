@@ -7,7 +7,14 @@ import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Search
 import io.github.matthewjones372.proofload.Simulation
 import io.github.matthewjones372.proofload.engine.ExclusiveKt
+import io.github.matthewjones372.proofload.report.StepSummary
+import io.github.matthewjones372.proofload.scala.appendToStepSummary
+import io.github.matthewjones372.proofload.scala.markdown
+import io.github.matthewjones372.proofload.scala.writeHtmlReport
+import io.github.matthewjones372.proofload.scala.writePagesIndex as writeIndex
+import java.nio.file.Path
 import zio.IO
+import zio.UIO
 import zio.ZIO
 import io.github.matthewjones372.proofload.engine.Proofload as Runner
 
@@ -60,3 +67,34 @@ object proofload:
     sent(ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(search)))
 
   private def sent[A](effect: ZIO[Any, Throwable, A]): IO[ProofloadError, A] = effect.mapError(ProofloadError.of)
+
+  /**
+   * The run as a page, written on the blocking executor the run itself went
+   * out on. A module that owns `attemptBlocking` for the run owns it for the
+   * run's outputs too, or a caller has to learn which half of a library is
+   * effectful with no rule for telling.
+   */
+  def writeHtmlReport(result: RunResult, path: Path): IO[ProofloadError, Path] =
+    sent(ZIO.attemptBlocking(result.writeHtmlReport(path)))
+
+  /** The curve as a page, with the operating point marked. */
+  def writeHtmlReport(capacity: Capacity, path: Path): IO[ProofloadError, Path] =
+    sent(ZIO.attemptBlocking(capacity.writeHtmlReport(path)))
+
+  /** Appends the run's table to the job summary, and says `NotOnActions` where there is none. */
+  def appendToStepSummary(result: RunResult): IO[ProofloadError, StepSummary] =
+    sent(ZIO.attemptBlocking(result.appendToStepSummary()))
+
+  /** The same, reading the variable through [[environment]] rather than through the JVM's own. */
+  def appendToStepSummary(result: RunResult, environment: String => Option[String]): IO[ProofloadError, StepSummary] =
+    sent(ZIO.attemptBlocking(result.appendToStepSummary(environment = environment)))
+
+  /**
+   * The run as a table. No error channel: this reads what is already in hand
+   * and writes nothing, so a throw here is a bug in this library rather than
+   * something a caller can do anything about.
+   */
+  def markdown(result: RunResult): UIO[String] = ZIO.succeed(result.markdown)
+
+  /** An `index.html` listing every report in [[directory]], newest first. */
+  def writePagesIndex(directory: Path): IO[ProofloadError, Path] = sent(ZIO.attemptBlocking(writeIndex(directory)))

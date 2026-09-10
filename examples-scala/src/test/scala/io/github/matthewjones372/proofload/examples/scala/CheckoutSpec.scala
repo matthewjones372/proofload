@@ -3,7 +3,6 @@ package io.github.matthewjones372.proofload.examples.scala
 import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.proofload.java.Simulations
 import io.github.matthewjones372.proofload.scala.apply
-import io.github.matthewjones372.proofload.scala.appendToStepSummary
 import io.github.matthewjones372.proofload.scala.at
 import io.github.matthewjones372.proofload.scala.curve
 import io.github.matthewjones372.proofload.scala.exec
@@ -12,7 +11,6 @@ import io.github.matthewjones372.proofload.scala.feed
 import io.github.matthewjones372.proofload.scala.fedBy
 import io.github.matthewjones372.proofload.scala.given
 import io.github.matthewjones372.proofload.scala.http
-import io.github.matthewjones372.proofload.scala.markdown
 import io.github.matthewjones372.proofload.scala.offered
 import io.github.matthewjones372.proofload.scala.percent
 import io.github.matthewjones372.proofload.scala.perSecond
@@ -22,8 +20,6 @@ import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import io.github.matthewjones372.proofload.scala.sustainable
-import io.github.matthewjones372.proofload.scala.writeHtmlReport
-import io.github.matthewjones372.proofload.scala.writePagesIndex
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import java.net.InetSocketAddress
@@ -91,15 +87,15 @@ object CheckoutSpec extends ZIOSpecDefault:
           result <- proofload.run(
             Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent),
           )
-          reports <- ZIO.attemptBlocking(Files.createTempDirectory("proofload"))
-          _ <- ZIO.attemptBlocking:
-            result.writeHtmlReport(reports.resolve("checkout.html"))
-            result.appendToStepSummary()
-            writePagesIndex(reports)
+          reports <- ZIO.succeed(Files.createTempDirectory("proofload"))
+          _ <- proofload.writeHtmlReport(result, reports.resolve("checkout.html"))
+          _ <- proofload.appendToStepSummary(result)
+          _ <- proofload.writePagesIndex(reports)
+          table <- proofload.markdown(result)
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,
           result(browse).failed == 0L,
-          result.markdown.contains("browse"),
+          table.contains("browse"),
         ),
     test("hunts for the rate it holds that failure rate at"):
       ZIO.scoped:

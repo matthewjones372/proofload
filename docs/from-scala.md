@@ -181,10 +181,9 @@ search, which are the only two things a feeder attaches to.
 ## What it leaves behind
 
 ```scala
-_ <- ZIO.attemptBlocking:
-  result.writeHtmlReport(reports.resolve("checkout.html"))
-  result.appendToStepSummary()
-  writePagesIndex(reports)
+result.writeHtmlReport(reports.resolve("checkout.html"))
+result.appendToStepSummary()
+writePagesIndex(reports)
 ```
 
 `result.markdown` is the same table as text, `result.toHtmlReport()` the page as
@@ -317,6 +316,22 @@ Nothing the target did reaches that channel. A refused connection and a bug in a
 step body are both recorded as failed requests, with the reason each failed for,
 and the run succeeds: a target that refuses every connection is a measurement,
 and losing it to an exception would throw away the answer.
+
+The outputs are effects here rather than extensions, on the same blocking
+executor the run went out on:
+
+```scala
+_ <- proofload.writeHtmlReport(result, reports.resolve("checkout.html"))
+_ <- proofload.appendToStepSummary(result)
+_ <- proofload.writePagesIndex(reports)
+table <- proofload.markdown(result)
+```
+
+A module that owns `attemptBlocking` for the run should own it for the run's
+outputs too, or a caller learns that some of this library is effectful and some
+is not with no rule for telling which. `markdown` is a `UIO`: it reads what is
+already in hand and writes nothing, so a throw there is a bug here rather than
+something a caller can do anything about.
 
 `result.metItsGoals` is for when several numbers decide the test: it reads the
 run's own verdicts and fails naming every goal that missed and the remedy each

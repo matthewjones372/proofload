@@ -3,6 +3,14 @@ public final class io/github/matthewjones372/proofload/java/Actions {
 	public static final fun of (Ljava/util/function/Consumer;)Lio/github/matthewjones372/proofload/Action;
 }
 
+public final class io/github/matthewjones372/proofload/java/Feeders {
+	public static fun combined (Lio/github/matthewjones372/proofload/Feeder;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Feeder;
+	public static fun fedBy (Lio/github/matthewjones372/proofload/Search;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Search;
+	public static fun fedBy (Lio/github/matthewjones372/proofload/Simulation;Lio/github/matthewjones372/proofload/Feeder;)Lio/github/matthewjones372/proofload/Simulation;
+	public static fun fromList (Lio/github/matthewjones372/proofload/SessionKey;Ljava/util/List;)Lio/github/matthewjones372/proofload/Feeder;
+	public static fun of (Lio/github/matthewjones372/proofload/SessionKey;Ljava/util/function/LongFunction;)Lio/github/matthewjones372/proofload/Feeder;
+}
+
 public final class io/github/matthewjones372/proofload/java/Goals {
 	public static fun failureRateUnder (D)Lio/github/matthewjones372/proofload/Goal;
 	public static fun failureRateUnder (Lio/github/matthewjones372/proofload/StepName;D)Lio/github/matthewjones372/proofload/Goal;

@@ -74,6 +74,15 @@ enough to list, and long enough to matter.
   hand-rolled a ladder read `Offered.share`, the one getter with no hash in its
   name, and multiplied it back out to recover `left`.
 
+- **Per-user data from Java.** `Feeders.of(key, user -> …)`, `fromList`,
+  `combined` and `fedBy` on a simulation or a search. `feed`, `feedFrom` and
+  `fedBy` appeared nowhere in `proofload-java`, so a caller outside Kotlin could
+  only send load that was identical for every user, which the cookbook itself
+  names as measuring the target's cache rather than the target. The value takes
+  a `LongFunction<T>` rather than the spec's `IntFunction<T>`: a user number is
+  a `Long` in core, and narrowing it in the facade would cap a run at two
+  billion users to save a cast.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

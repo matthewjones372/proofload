@@ -1352,6 +1352,12 @@ class UnfilledPath : Reason
 ```text
 class Actions
     fun of(Consumer): Action
+class Feeders
+    fun combined(Feeder, Feeder): Feeder
+    fun fedBy(Search, Feeder): Search
+    fun fedBy(Simulation, Feeder): Simulation
+    fun fromList(SessionKey, List): Feeder
+    fun of(SessionKey, LongFunction): Feeder
 class Goals
     fun failureRateUnder(Double): Goal
     fun failureRateUnder(StepName, Double): Goal

@@ -72,7 +72,7 @@ generic would suggest otherwise.
 
 ## Stack
 
-- [ ] **`spec-0136-feeders`** — `Feeders`, its dependency test, and the `fedBy`
+- [x] **`spec-0136-feeders`** — `Feeders`, its dependency test, and the `fedBy`
       overloads.
       Done when: a Java load test sends a different id per user.
 - [ ] **`spec-0136-scala`** — `feed`, `feedFrom`, `+` and `fedBy` over the facade.

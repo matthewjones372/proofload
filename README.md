@@ -335,6 +335,7 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
 ## The rest
 
 - **[docs/what-it-costs.md](docs/what-it-costs.md)**: the tool's own measured overhead, so you can trust the numbers above it.
+- **[docs/invariants.md](docs/invariants.md)**: the sixteen statements a trustworthy measurement rests on, and the five that do not hold yet.
 - **[docs/modules.md](docs/modules.md)**: the modules and the coordinates to depend on them.
 - **[docs/mcp.md](docs/mcp.md)**: the MCP server in full: every tool, what each one sends, and what it refuses.
 - **[docs/allowance.md](docs/allowance.md)**: `proofload.toml`, the fence a run is held to, and why it is a fence rather than a sandbox.

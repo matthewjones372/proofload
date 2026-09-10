@@ -20,13 +20,13 @@ tasks.test {
     // read their outcome rather than the fixtures themselves.
     useJUnitPlatform { excludeTags("fixture") }
 
-    val mainRuntime = configurations.runtimeClasspath
+    val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.junit5.runtimeClasspath=" +
-                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.name },
             )
         },
     )

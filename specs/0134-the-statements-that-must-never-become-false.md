@@ -121,10 +121,13 @@ the honest statement of where 1.0 stands.
 
 ## Stack
 
-- [ ] **`spec-0134-list`** — the invariants as `docs/invariants.md`, each with
+- [x] **`spec-0134-list`** — the invariants as `docs/invariants.md`, each with
       its number, its owner spec, and its current status.
       Done when: the page exists, is linked from the README and `llms.txt`, and
       every row's status matches the tree.
+      #89. `llms.txt` was at its hundred-line ceiling, so the link cost a line;
+      the Cookbook entry was the one entry wrapped over two and is now one,
+      which is no content and makes it match its neighbours.
 - [ ] **`spec-0134-citations`** — each defending test names its invariant in its
       own name or KDoc, and a task checks every invariant has at least one
       citation.

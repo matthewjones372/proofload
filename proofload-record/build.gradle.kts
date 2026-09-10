@@ -45,13 +45,13 @@ tasks.test {
 
     // Hand the *main* runtime classpath to the test JVM, so the assertion about
     // what this module carries is about what a consumer would get.
-    val mainRuntime = configurations.runtimeClasspath
+    val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.record.runtimeClasspath=" +
-                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.name },
             )
         },
     )

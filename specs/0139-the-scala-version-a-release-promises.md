@@ -73,15 +73,28 @@ Scala module cannot use a 3.9 language feature. It uses none today.
 
 ## Stack
 
-- [ ] **`spec-0139-pin`** — `scalaLts` declared once, `proofload-scala` and
+- [x] **`spec-0139-pin`** — `scalaLts` declared once, `proofload-scala` and
       `examples-scala` built against it, and an rc4 that a 3.3 consumer can read.
       Done when: `proofload-scala`'s POM names `scala3-library_3:3.3.8` again.
-- [ ] **`spec-0139-gate`** — the TASTy header test.
+      #89. Declared as `ScalaLts` in `buildSrc` rather than in the root
+      `build.gradle.kts` the spec sketched: two scripts read it, and a
+      subproject reaching into the root script's properties is exactly the
+      capture that stops the configuration cache storing a task. The rc4 half
+      is a release decision and is not done; #91 holds it.
+- [x] **`spec-0139-gate`** — the TASTy header test.
       Done when: raising `scalaLts` to a version above the floor fails
       `./gradlew build` in this module rather than in a consumer's project.
-- [ ] **`spec-0139-docs`** — `docs/from-scala.md` states the floor and where it
+      #89. `TastyVersionTest` reads the magic number and the two naturals off
+      every `.tasty` this module compiles. The ceiling is written out rather
+      than derived from the version, which the spec did not say and the check
+      needs: derived, raising the compiler raises the ceiling with it and the
+      test proves nothing. The second open question's POM check is there too,
+      off the runtime classpath, because it names the cause in words.
+- [x] **`spec-0139-docs`** — `docs/from-scala.md` states the floor and where it
       is declared, so the page and the build cannot disagree.
       Done when: the page names the same constant the build reads.
+      #89. `ScalaVersionTest` holds the page's number to the build's, so they
+      cannot disagree silently the way they did through rc2 and rc3.
 
 ## Acceptance
 

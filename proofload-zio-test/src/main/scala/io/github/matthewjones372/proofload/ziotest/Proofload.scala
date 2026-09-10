@@ -96,5 +96,23 @@ object proofload:
    */
   def markdown(result: RunResult): UIO[String] = ZIO.succeed(result.markdown)
 
+  /**
+   * Run it, write its page under [[into]], and append its table to the job
+   * summary.
+   *
+   * One call because a run whose report is not written is a run nobody can
+   * read, and separating them means every caller writes the same `flatMap`. A
+   * caller who wants the result without a report still has [[run]].
+   *
+   * Here as well as on `ProofloadSpec` so a project that cannot change its base
+   * class still gets the reporting.
+   */
+  def measured(name: String, into: Path)(simulation: Simulation): IO[ProofloadError, RunResult] =
+    for
+      result <- run(simulation)
+      _ <- writeHtmlReport(result, into.resolve(s"$name.html"))
+      _ <- appendToStepSummary(result)
+    yield result
+
   /** An `index.html` listing every report in [[directory]], newest first. */
   def writePagesIndex(directory: Path): IO[ProofloadError, Path] = sent(ZIO.attemptBlocking(writeIndex(directory)))

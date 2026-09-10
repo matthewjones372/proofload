@@ -98,7 +98,7 @@ the zero-configuration case works and the opinionated case is one line.
       `reportsTo`.
       Done when: a spec extending it inherits both aspects, and a spec whose
       body retries on a `Schedule` does not hang.
-- [ ] **`spec-0140-measured`** — `measured`, over 0138's output effects.
+- [x] **`spec-0140-measured`** — `measured`, over 0138's output effects.
       Done when: a two-line test writes an HTML report and a job summary entry.
 - [ ] **`spec-0140-index`** — `writePagesIndex` once per spec, after the last
       test.

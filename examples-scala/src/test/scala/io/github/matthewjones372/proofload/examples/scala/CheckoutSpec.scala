@@ -20,13 +20,13 @@ import io.github.matthewjones372.proofload.scala.scenario
 import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import io.github.matthewjones372.proofload.scala.sustainable
+import io.github.matthewjones372.proofload.ziotest.ProofloadSpec
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import java.net.InetSocketAddress
-import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import zio.ZIO
-import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
 import _root_.scala.concurrent.duration.DurationInt
 import _root_.scala.language.implicitConversions
@@ -35,12 +35,18 @@ import _root_.scala.language.implicitConversions
  * A load test that is a zio-test test, and the gate on `proofload-zio-test`
  * being usable from outside its own module.
  *
+ * It declares no aspects and writes no report: `ProofloadSpec` brings the
+ * sequential and live-clock aspects, `measured` writes the page and the job
+ * summary, and the index is written on the way out.
+ *
  * It asserts nothing about how long a request took. A limit that holds on a
  * laptop and not on a shared runner is a test that gets deleted, so the
  * absolute numbers are on the page and in `Checkout`, which is compiled and
  * not run.
  */
-object CheckoutSpec extends ZIOSpecDefault:
+object CheckoutSpec extends ProofloadSpec:
+
+  override val reportsTo: Path = Path.of("build/proofload")
 
   private val browse = step("browse")
 
@@ -84,13 +90,8 @@ object CheckoutSpec extends ZIOSpecDefault:
           server <- serving
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
-          result <- proofload.run(
-            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent),
-          )
-          reports <- ZIO.succeed(Files.createTempDirectory("proofload"))
-          _ <- proofload.writeHtmlReport(result, reports.resolve("checkout.html"))
-          _ <- proofload.appendToStepSummary(result)
-          _ <- proofload.writePagesIndex(reports)
+          result <- measured("checkout"):
+            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent)
           table <- proofload.markdown(result)
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,

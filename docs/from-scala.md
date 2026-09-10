@@ -250,15 +250,17 @@ dependencies {
 ```
 
 ```scala
+import io.github.matthewjones372.proofload.ziotest.ProofloadSpec
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import zio.ZIO
-import zio.test.ZIOSpecDefault
 import zio.test.assertTrue
 ```
 
 ```scala
-object CheckoutSpec extends ZIOSpecDefault:
+object CheckoutSpec extends ProofloadSpec:
+
+  override val reportsTo: Path = Path.of("build/proofload")
 
   def spec = suite("checkout")(
     test("holds its failure rate at 20 a second"):
@@ -267,12 +269,13 @@ object CheckoutSpec extends ZIOSpecDefault:
           server <- serving
           api = http.baseUrl(s"http://localhost:${server.getAddress.getPort}")
           browsing = scenario("browsing")(exec(browse, api.get("/products").expecting(200)))
-          result <- proofload.run(
-            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent),
-          )
+          result <- measured("checkout"):
+            Simulations.at(browsing, 20.perSecond, 500.millis, failureRate under 0.1.percent)
+          table <- proofload.markdown(result)
         yield result.metItsGoals && assertTrue(
           result(browse).count > 0,
           result(browse).failed == 0L,
+          table.contains("browse"),
         ),
   )
 ```
@@ -318,14 +321,10 @@ and the run succeeds: a target that refuses every connection is a measurement,
 and losing it to an exception would throw away the answer.
 
 The outputs are effects here rather than extensions, on the same blocking
-executor the run went out on:
-
-```scala
-_ <- proofload.writeHtmlReport(result, reports.resolve("checkout.html"))
-_ <- proofload.appendToStepSummary(result)
-_ <- proofload.writePagesIndex(reports)
-table <- proofload.markdown(result)
-```
+executor the run went out on: `proofload.writeHtmlReport(result, path)`,
+`proofload.appendToStepSummary(result)`, `proofload.markdown(result)` and
+`proofload.writePagesIndex(directory)`. `measured` above is the first two of
+those with the run in front of them.
 
 A module that owns `attemptBlocking` for the run should own it for the run's
 outputs too, or a caller learns that some of this library is effectful and some

@@ -1,7 +1,10 @@
 package io.github.matthewjones372.proofload.ziotest
 
+import io.github.matthewjones372.proofload.RunResult
+import io.github.matthewjones372.proofload.Simulation
 import java.nio.file.Path
 import zio.Chunk
+import zio.IO
 import zio.test.TestAspect
 import zio.test.ZIOSpecDefault
 
@@ -29,3 +32,15 @@ abstract class ProofloadSpec extends ZIOSpecDefault:
 
   /** Where reports and the index are written. Per spec, because the index is per directory. */
   def reportsTo: Path = Path.of("target/proofload")
+
+  /**
+   * Run it, write its page under [[reportsTo]], and append its table to the job
+   * summary.
+   *
+   * One call because a run whose report is not written is a run nobody can
+   * read. A caller who wants the result without a report still has
+   * `proofload.run`, and a project that cannot change its base class has
+   * `proofload.measured`, which this is.
+   */
+  def measured(name: String)(simulation: Simulation): IO[ProofloadError, RunResult] =
+    proofload.measured(name, into = reportsTo)(simulation)

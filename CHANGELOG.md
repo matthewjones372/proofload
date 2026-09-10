@@ -58,6 +58,15 @@ enough to list, and long enough to matter.
   value-class hash and no extension method can reach them. It holds no number
   and computes none. [docs/from-scala.md](docs/from-scala.md) is the page.
 
+- **The capacity search, from Java and Scala.** `Searches.sustainable`,
+  `warmingUp`, and the rates a `Capacity` and a `Rung` carry. `Rate` is a value
+  class, so every core call that takes or returns one compiles to a name with a
+  hash in it: from Scala there was no capacity search at all, and a load test
+  written against `0.1.0-rc1` hand-rolled a rate ladder rather than call one.
+  Scala takes its goals as a vararg and hands back `Option[Rate]` and a `Seq`
+  for the curve; `proofload.run(search)` sends one from a zio-test spec on the
+  same blocking runner a simulation goes out on.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

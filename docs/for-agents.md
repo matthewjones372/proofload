@@ -1395,6 +1395,12 @@ class Scenarios.Builder
     fun exec(StepName, Action): Scenarios.Builder
     fun exec(String, Action): Scenarios.Builder
     fun pause(Duration): Scenarios.Builder
+class Searches
+    fun offered(Rung): Rate
+    fun rate(Capacity): Rate
+    fun rate(Rung): Rate
+    fun sustainable(Scenario, Rate, Duration, List): Search
+    fun warmingUp(Search, Duration): Search
 class SessionKeys
     fun of(Class, String): SessionKey
 class Shares

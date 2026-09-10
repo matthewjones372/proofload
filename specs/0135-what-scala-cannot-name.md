@@ -68,7 +68,7 @@ path in the tool, which is the trade 0001 already refused.
 
 ## Stack
 
-- [ ] **`spec-0135-searches`** — `Searches`, its dependency test, and the Scala
+- [x] **`spec-0135-searches`** — `Searches`, its dependency test, and the Scala
       `sustainable`/`warmingUp` extensions.
       Done when: `examples-scala` runs a capacity search and reads its curve.
 - [ ] **`spec-0135-offered`** — `Offereds` and the Scala `offered` extension.

@@ -62,6 +62,14 @@ public final class io/github/matthewjones372/proofload/java/Scenarios$Builder {
 	public fun pause (Ljava/time/Duration;)Lio/github/matthewjones372/proofload/java/Scenarios$Builder;
 }
 
+public final class io/github/matthewjones372/proofload/java/Searches {
+	public static fun offered (Lio/github/matthewjones372/proofload/Rung;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun rate (Lio/github/matthewjones372/proofload/Capacity;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun rate (Lio/github/matthewjones372/proofload/Rung;)Lio/github/matthewjones372/proofload/Rate;
+	public static fun sustainable (Lio/github/matthewjones372/proofload/Scenario;Lio/github/matthewjones372/proofload/Rate;Ljava/time/Duration;Ljava/util/List;)Lio/github/matthewjones372/proofload/Search;
+	public static fun warmingUp (Lio/github/matthewjones372/proofload/Search;Ljava/time/Duration;)Lio/github/matthewjones372/proofload/Search;
+}
+
 public final class io/github/matthewjones372/proofload/java/SessionKeys {
 	public static final field INSTANCE Lio/github/matthewjones372/proofload/java/SessionKeys;
 	public static final fun of (Ljava/lang/Class;Ljava/lang/String;)Lio/github/matthewjones372/proofload/SessionKey;

@@ -1,8 +1,10 @@
 package io.github.matthewjones372.proofload.ziotest
 
+import io.github.matthewjones372.proofload.Capacity
 import io.github.matthewjones372.proofload.Engine
 import io.github.matthewjones372.proofload.Progress
 import io.github.matthewjones372.proofload.RunResult
+import io.github.matthewjones372.proofload.Search
 import io.github.matthewjones372.proofload.Simulation
 import io.github.matthewjones372.proofload.engine.ExclusiveKt
 import zio.Task
@@ -41,3 +43,18 @@ object proofload:
   def run(simulation: Simulation, on: Engine): Task[RunResult] =
     val silent = Progress.Companion.getSilent
     ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(simulation))
+
+  /**
+   * The rate the scenario sustains, hunted rung by rung.
+   *
+   * A search is many runs and holds each rung for its whole window, so the
+   * test that calls this needs a timeout written against the search's own
+   * `worstCase` rather than against a run's.
+   */
+  def run(search: Search): Task[Capacity] =
+    ZIO.attemptBlocking(Runner(Progress.Companion.getSilent).run(search))
+
+  /** The same search, sent by [[on]] rather than by the default engine. */
+  def run(search: Search, on: Engine): Task[Capacity] =
+    val silent = Progress.Companion.getSilent
+    ZIO.attemptBlocking(Runner(ExclusiveKt.exclusive(on, silent), silent).run(search))

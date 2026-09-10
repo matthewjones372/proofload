@@ -73,13 +73,13 @@ Scala module cannot use a 3.9 language feature. It uses none today.
 
 ## Stack
 
-- [ ] **`spec-0139-pin`** — `scalaLts` declared once, `proofload-scala` and
+- [x] **`spec-0139-pin`** — `scalaLts` declared once, `proofload-scala` and
       `examples-scala` built against it, and an rc4 that a 3.3 consumer can read.
       Done when: `proofload-scala`'s POM names `scala3-library_3:3.3.8` again.
-- [ ] **`spec-0139-gate`** — the TASTy header test.
+- [x] **`spec-0139-gate`** — the TASTy header test.
       Done when: raising `scalaLts` to a version above the floor fails
       `./gradlew build` in this module rather than in a consumer's project.
-- [ ] **`spec-0139-docs`** — `docs/from-scala.md` states the floor and where it
+- [x] **`spec-0139-docs`** — `docs/from-scala.md` states the floor and where it
       is declared, so the page and the build cannot disagree.
       Done when: the page names the same constant the build reads.
 

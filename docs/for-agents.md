@@ -218,24 +218,29 @@ class Change.Worse : Change
 class Clock : Enum
     val ResponseTime: Clock
     val ServiceTime: Clock
+    val described: String
     val entries: EnumEntries
     fun valueOf(String): Clock
     fun values(): Array<Clock>
 interface Comparison
 class Comparison.Compared : Comparison
-    constructor(List, Machine, Machine, Probe, Probe)
+    constructor(List, Machine, Machine, Probe, Probe, Double, Clock)
     val before: Machine
     val beforeProbe: Probe
     val caveat: String
     val changes: List
     val now: Machine
     val nowProbe: Probe
+    val of: Clock
+    val percentile: Double
+    val percentileNamed: String
+    val readAt: String
     val slowdown: Double
 class Comparison.NotComparable : Comparison
     constructor(String)
     val why: String
 top-level in ComparisonKt
-    fun against(RunResult, RunResult, Double): Comparison
+    fun against(RunResult, RunResult, Double, Clock): Comparison
 class Completing
     val drainingFor: Long
     val from: Completions

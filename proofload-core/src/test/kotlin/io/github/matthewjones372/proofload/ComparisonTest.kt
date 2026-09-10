@@ -59,6 +59,52 @@ class ComparisonTest {
     private fun RunResult.changesAgainst(baseline: RunResult): List<Change> =
         against(baseline).shouldBeInstanceOf<Comparison.Compared>().changes
 
+    private fun timingOf(range: LongRange, samples: Int = 500): Timing = Histogram()
+        .apply { repeat(samples) { record(seeded.nextLong(range.first, range.last).milliseconds) } }
+        .timing()
+
+    /** A run whose two clocks disagree, which is every run where the generator fell behind. */
+    private fun runOfBothClocks(step: String, service: LongRange, response: LongRange): RunResult {
+        val serviceTime = timingOf(service)
+        val responseTime = timingOf(response)
+        return RunResult(
+            startedAt = Instant.parse("2026-08-26T09:00:00Z"),
+            steps = mapOf(
+                step to StepStats(step, Outcome(serviceTime, responseTime), Outcome.none, serviceTime, responseTime),
+            ),
+            behind = Histogram().timing(),
+            plan = Plan.none,
+            machine = here,
+        )
+    }
+
+    @Test
+    fun `a comparison reads the clock it was asked for`() {
+        val before = runOfBothClocks("pay", service = 80L..320L, response = 80L..320L)
+        val after = runOfBothClocks("pay", service = 80L..320L, response = 800L..1200L)
+
+        withClue("response time moved, and it is the default") {
+            after.against(before).shouldBeInstanceOf<Comparison.Compared>()
+                .changes.single().shouldBeInstanceOf<Change.Worse>()
+        }
+        withClue("service time did not, and that is the clock the target is on") {
+            after.against(before, of = Clock.ServiceTime).shouldBeInstanceOf<Comparison.Compared>()
+                .changes.single().shouldBeInstanceOf<Change.Indistinguishable>()
+        }
+    }
+
+    @Test
+    fun `a comparison says where it was read rather than leaving a page to assume`() {
+        val before = runOf(mapOf("pay" to 80L..320L))
+        val after = runOf(mapOf("pay" to 80L..320L))
+
+        after.against(before).shouldBeInstanceOf<Comparison.Compared>().readAt shouldBe "p99 of response time"
+        after.against(before, percentile = 50.0, of = Clock.ServiceTime)
+            .shouldBeInstanceOf<Comparison.Compared>().readAt shouldBe "p50 of service time"
+        after.against(before, percentile = 99.9).shouldBeInstanceOf<Comparison.Compared>()
+            .percentileNamed shouldBe "p99.9"
+    }
+
     @Test
     fun `two runs of the same target have not been shown to differ`() {
         val change = runOf(mapOf("pay" to 80L..320L)).changesAgainst(runOf(mapOf("pay" to 80L..320L))).single()

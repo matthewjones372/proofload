@@ -16,6 +16,10 @@ enum class Clock {
      * met by a generator that never sent the load.
      */
     ResponseTime,
+    ;
+
+    /** As a page says it, so a note can name the clock rather than assume one. */
+    val described: String get() = if (this == ServiceTime) "service time" else "response time"
 }
 
 /** A share of something, as a percentage. */

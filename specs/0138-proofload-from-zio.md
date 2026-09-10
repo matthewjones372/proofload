@@ -119,7 +119,7 @@ open question against it.
       report.
       Done when: a spec writes all three outputs with no `ZIO.attemptBlocking`
       in its own source.
-- [ ] **`spec-0138-assertions`** — `Assertion[RunResult]` values for the goals,
+- [x] **`spec-0138-assertions`** — `Assertion[RunResult]` values for the goals,
       beside `metItsGoals` rather than replacing it.
       Done when: the Shape's `assert` compiles, and its negation reports which
       half held.

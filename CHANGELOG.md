@@ -156,6 +156,12 @@ enough to list, and long enough to matter.
   `examples-scala` needs a conversion any more: both sources compile with no
   `given` import and no `implicitConversions` flag.
 
+- **Goals as `Assertion` values.** `assert(result)(failedNone && keptSchedule &&
+  metEveryGoal)`, beside `metItsGoals` rather than replacing it: that one
+  answers about a run and is a dead end, where these negate, join with `&&` and
+  report the half that failed. Each is core's own goal, judged, so an assertion
+  cannot disagree with the report about the same run.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

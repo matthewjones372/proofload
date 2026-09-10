@@ -251,9 +251,12 @@ dependencies {
 
 ```scala
 import io.github.matthewjones372.proofload.ziotest.ProofloadSpec
+import io.github.matthewjones372.proofload.ziotest.failedNone
+import io.github.matthewjones372.proofload.ziotest.metEveryGoal
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import zio.ZIO
+import zio.test.assert
 import zio.test.assertTrue
 ```
 
@@ -272,7 +275,8 @@ object CheckoutSpec extends ProofloadSpec:
           result <- measured("checkout"):
             browsing.at(20.perSecond, over = 500.millis).expecting(failureRate under 0.1.percent)
           table <- proofload.markdown(result)
-        yield result.metItsGoals && assertTrue(
+          held = assert(result)(failedNone && metEveryGoal)
+        yield held && result.metItsGoals && assertTrue(
           result(browse).count > 0,
           result(browse).failed == 0L,
           table.contains("browse"),
@@ -354,6 +358,14 @@ outputs too, or a caller learns that some of this library is effectful and some
 is not with no rule for telling which. `markdown` is a `UIO`: it reads what is
 already in hand and writes nothing, so a throw there is a bug here rather than
 something a caller can do anything about.
+
+The goals are also `Assertion` values, which is what `metItsGoals` cannot be:
+`assert(result)(failedNone && metEveryGoal)` is what a caller writes.
+`p50Under`, `p95Under`, `p99Under`, `failureRateUnder`, `failedNone`,
+`keptSchedule` and `metEveryGoal`, plus `meeting(goal)` for any goal at all.
+Each is core's own goal, judged: nothing there recomputes a number or invents a
+description, so an assertion cannot disagree with the report about the same run.
+They negate with `!`, join with `&&`, and zio-test names the half that failed.
 
 `result.metItsGoals` is for when several numbers decide the test: it reads the
 run's own verdicts and fails naming every goal that missed and the remedy each

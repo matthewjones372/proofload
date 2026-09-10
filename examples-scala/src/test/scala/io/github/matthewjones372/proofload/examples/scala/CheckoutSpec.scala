@@ -20,12 +20,15 @@ import io.github.matthewjones372.proofload.scala.sessionKey
 import io.github.matthewjones372.proofload.scala.step
 import io.github.matthewjones372.proofload.scala.sustainable
 import io.github.matthewjones372.proofload.ziotest.ProofloadSpec
+import io.github.matthewjones372.proofload.ziotest.failedNone
+import io.github.matthewjones372.proofload.ziotest.metEveryGoal
 import io.github.matthewjones372.proofload.ziotest.proofload
 import io.github.matthewjones372.proofload.ziotest.metItsGoals
 import java.net.InetSocketAddress
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import zio.ZIO
+import zio.test.assert
 import zio.test.assertTrue
 import _root_.scala.concurrent.duration.DurationInt
 
@@ -91,7 +94,8 @@ object CheckoutSpec extends ProofloadSpec:
           result <- measured("checkout"):
             browsing.at(20.perSecond, over = 500.millis).expecting(failureRate under 0.1.percent)
           table <- proofload.markdown(result)
-        yield result.metItsGoals && assertTrue(
+          held = assert(result)(failedNone && metEveryGoal)
+        yield held && result.metItsGoals && assertTrue(
           result(browse).count > 0,
           result(browse).failed == 0L,
           table.contains("browse"),

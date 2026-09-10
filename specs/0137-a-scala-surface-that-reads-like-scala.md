@@ -80,7 +80,7 @@ in every file, forever, and rc is when it is cheapest to fix.
 
 ## Stack
 
-- [ ] **`spec-0137-results`** — `fellBehind`, `lostGround`, `concurrency` and
+- [x] **`spec-0137-results`** — `fellBehind`, `lostGround`, `concurrency` and
       `offered` as extensions, with `Concurrency` as a Scala ADT.
       Done when: no `…Kt.` appears in `examples-scala`.
 - [ ] **`spec-0137-reports`** — `writeHtmlReport`, `markdown` and

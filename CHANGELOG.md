@@ -89,6 +89,14 @@ enough to list, and long enough to matter.
   their own pair is in `examples-scala`, which is where the endpoint that
   prompted this spec could not be measured from before.
 
+- **A run read without naming a file class.** `result.fellBehind`,
+  `lostGround`, `ranOutOfRoom` and `concurrency`, the last as a sealed trait
+  whose `Absent` case carries the reason and whose `Measured` case holds no
+  number of its own. `RunResultKt` and `ConcurrencyKt` are how Kotlin happens to
+  compile a file, and both were in the source of a load test written against
+  0.1.0-rc1. `NoFileClassesTest` reads the consumer source set and fails on the
+  next one, and on `kotlin.jvm` beside it.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

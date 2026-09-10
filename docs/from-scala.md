@@ -115,6 +115,18 @@ own `RunResult`. It exists because `Timing`'s percentiles are
 `kotlin.time.Duration` properties, so their getters carry a value-class hash
 and no extension method can reach them.
 
+`result.fellBehind`, `result.lostGround` and `result.ranOutOfRoom` are the three
+questions to ask before believing any of it: whether the generator's own
+lateness is a material part of the tail, whether it lost the schedule outright,
+and whether this process ran out of its own room. `result.concurrency` is
+Little's law over the segment the run settled into, as a sealed trait rather
+than a nullable: `Concurrency.Measured` carries `observed`, `ratio`, `backlog`
+and `agrees`, and `Concurrency.Absent(because)` says why the law could not be
+asked. All four are extensions rather than `RunResultKt.fellBehind(result)`,
+which is what a load test written against `0.1.0-rc1` had in its source: a file
+class is how Kotlin happens to compile a file and has no business in a
+consumer's imports.
+
 `result.offered` is the other half of reading a run, and an `Option`: it is
 what the run asked for beside what actually left, and it cannot be said of a
 closed run or of a result nobody ran. `asked`, `left`, `over` and `share` come

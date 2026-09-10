@@ -108,6 +108,77 @@ And for work that finishes somewhere else, where you publish now and match the
 reply that arrives on another channel later, the latency you measure is the real
 round trip rather than the ack.
 
+## What you get
+
+- **A verdict you can believe.** Every run tells you whether the generator kept
+  its own schedule. A green test on a generator that fell behind is the trap
+  Proofload exists to close.
+- **Real percentiles.** Bars are counted buckets, a percentile is the top of the
+  bucket a sample landed in, on a log axis. No smoothing, no interpolation. If a
+  number is on the page, something measured it.
+- **A report, not a web app.** One self-contained HTML file: data, styles and
+  charts inline. It opens straight from disk, uploads as a CI artifact as-is, and
+  does light and dark. [See a full one.](docs/assets/report-full-light.png)
+- **Answers before you run.** A scenario is a value, so
+  `checkout.at(50.perSecond, over = 1.minutes).profile.userCount()` is `3000`
+  before a single request goes out.
+- **A ceiling for the tool itself.** The shipped HTTP step sustains **at least
+  2,500 requests a second**, and a step that touches no socket sustains
+  **100,000**, on four cores shared with the target, over loopback, untuned.
+  [docs/what-it-costs.md](docs/what-it-costs.md) has the tables, the machine and
+  what each sweep left out.
+
+The HTTP figure is a deliberately conservative lower bound: 5,000/s kept the
+median departure inside a millisecond too, and was passed over because three
+requests in twenty-five thousand were refused. Neither number is a comparison
+with another tool. This repository publishes none, on purpose.
+
+**`fellBehind()` is not a capacity verdict.** It asks whether the generator's own
+p99 lateness is large enough to be visible beside the target's p99, which at
+microsecond latencies it usually is. A `yes` at a hundred a second says the
+target was fast, not that the tool struggled.
+
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/report-distribution-dark.png">
+  <img src="docs/assets/report-distribution-light.png" width="820" alt="A latency distribution: histogram bars with p50 and p99 markers.">
+</picture>
+</div>
+
+## Get started
+
+```kotlin
+dependencies {
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc3")
+}
+```
+
+Write the test above, then write the report:
+
+```kotlin
+result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
+```
+
+**[The cookbook](docs/cookbook.md) has the rest.** Each recipe a few lines, with
+a note on why it is those lines and not the obvious alternative:
+
+| | |
+|---|---|
+| **[The vocabulary](docs/concepts.md)** | what a p99 is and why not an average; why lateness is a verdict; what Little's law catches |
+| **Shaping load** | flat, ramped and staged profiles; Poisson arrivals; think time; a mix of journeys in one run |
+| **Per-user data** | feeders as a function of the user number; CSV; a token refreshed off the measured path |
+| **The requests** | captures, body checks, bodies filled per user or streamed from disk, cookies across redirects, W3C trace ids, WebSocket and SSE streams, gRPC, Kafka, work that finishes on another topic |
+| **Asking the question** | goals and goodput; steady state; capacity search; comparing runs against a baseline |
+| **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
+
+> [!NOTE]
+> Early days. **`0.1.0-rc3` is the current release**, and every coordinate on
+> this page and under `docs/` is pinned to it. A release candidate, so signatures
+> and coordinates are real but the API may still move before `0.1.0`. `specs/`
+> tracks what is built and what is not.
+
 ## Or hand the whole thing to an agent
 
 `proofload-mcp` is a stdio MCP server whose every tool is a call the CLI already
@@ -260,77 +331,6 @@ and request count.
 
 **[docs/mcp.md](docs/mcp.md)** is the reference: every tool, what it sends, what
 it refuses, and the `plan/1` format a model can ask for instead of guessing.
-
-## What you get
-
-- **A verdict you can believe.** Every run tells you whether the generator kept
-  its own schedule. A green test on a generator that fell behind is the trap
-  Proofload exists to close.
-- **Real percentiles.** Bars are counted buckets, a percentile is the top of the
-  bucket a sample landed in, on a log axis. No smoothing, no interpolation. If a
-  number is on the page, something measured it.
-- **A report, not a web app.** One self-contained HTML file: data, styles and
-  charts inline. It opens straight from disk, uploads as a CI artifact as-is, and
-  does light and dark. [See a full one.](docs/assets/report-full-light.png)
-- **Answers before you run.** A scenario is a value, so
-  `checkout.at(50.perSecond, over = 1.minutes).profile.userCount()` is `3000`
-  before a single request goes out.
-- **A ceiling for the tool itself.** The shipped HTTP step sustains **at least
-  2,500 requests a second**, and a step that touches no socket sustains
-  **100,000**, on four cores shared with the target, over loopback, untuned.
-  [docs/what-it-costs.md](docs/what-it-costs.md) has the tables, the machine and
-  what each sweep left out.
-
-The HTTP figure is a deliberately conservative lower bound: 5,000/s kept the
-median departure inside a millisecond too, and was passed over because three
-requests in twenty-five thousand were refused. Neither number is a comparison
-with another tool. This repository publishes none, on purpose.
-
-**`fellBehind()` is not a capacity verdict.** It asks whether the generator's own
-p99 lateness is large enough to be visible beside the target's p99, which at
-microsecond latencies it usually is. A `yes` at a hundred a second says the
-target was fast, not that the tool struggled.
-
-<div align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/report-distribution-dark.png">
-  <img src="docs/assets/report-distribution-light.png" width="820" alt="A latency distribution: histogram bars with p50 and p99 markers.">
-</picture>
-</div>
-
-## Get started
-
-```kotlin
-dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc3")
-}
-```
-
-Write the test above, then write the report:
-
-```kotlin
-result.writeHtmlReport(Path.of("build/reports/proofload/checkout.html"))
-```
-
-**[The cookbook](docs/cookbook.md) has the rest.** Each recipe a few lines, with
-a note on why it is those lines and not the obvious alternative:
-
-| | |
-|---|---|
-| **[The vocabulary](docs/concepts.md)** | what a p99 is and why not an average; why lateness is a verdict; what Little's law catches |
-| **Shaping load** | flat, ramped and staged profiles; Poisson arrivals; think time; a mix of journeys in one run |
-| **Per-user data** | feeders as a function of the user number; CSV; a token refreshed off the measured path |
-| **The requests** | captures, body checks, bodies filled per user or streamed from disk, cookies across redirects, W3C trace ids, WebSocket and SSE streams, gRPC, Kafka, work that finishes on another topic |
-| **Asking the question** | goals and goodput; steady state; capacity search; comparing runs against a baseline |
-| **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
-
-> [!NOTE]
-> Early days. **`0.1.0-rc3` is the current release**, and every coordinate on
-> this page and under `docs/` is pinned to it. A release candidate, so signatures
-> and coordinates are real but the API may still move before `0.1.0`. `specs/`
-> tracks what is built and what is not.
 
 ## The rest
 

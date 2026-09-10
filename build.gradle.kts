@@ -288,6 +288,35 @@ val apiDocCheck = tasks.register("apiDocCheck") {
 
 tasks.named("check") { dependsOn(apiDocCheck) }
 
+// The sixteen statements of `docs/invariants.md`, and the tests that defend
+// them. A claim with nothing running behind it is the thing 0134 exists to
+// stop, so losing the last test for a defended invariant fails the build here
+// rather than being noticed a release later.
+//
+// The locals are the same story as `apiDocDump` above: a `doLast` that reads a
+// script-level `val` carries the script, and the configuration cache will not
+// store one.
+val invariants = tasks.register("invariants") {
+    group = "verification"
+    description = "Lists the invariants of docs/invariants.md and the tests that defend each."
+    val page = file("docs/invariants.md")
+    val sources = files(
+        subprojects.map { module -> module.layout.projectDirectory.dir("src/test") },
+    ).asFileTree.matching { include("**/*.kt", "**/*.scala", "**/*.java") }
+    inputs.file(page).withPropertyName("thePageTheNumbersComeFrom")
+    inputs.files(sources).withPropertyName("theTestsThatCiteThem")
+    doLast {
+        val cited = Invariants.citations(sources.files.toList())
+        logger.lifecycle(Invariants.report(cited))
+        val missing = Invariants.undefended(cited)
+        if (missing.isNotEmpty()) {
+            throw GradleException(Invariants.complaint(missing))
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(invariants) }
+
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     repositories { mavenCentral() }

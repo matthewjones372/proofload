@@ -128,15 +128,24 @@ the honest statement of where 1.0 stands.
       #89. `llms.txt` was at its hundred-line ceiling, so the link cost a line;
       the Cookbook entry was the one entry wrapped over two and is now one,
       which is no content and makes it match its neighbours.
-- [ ] **`spec-0134-citations`** — each defending test names its invariant in its
+- [x] **`spec-0134-citations`** — each defending test names its invariant in its
       own name or KDoc, and a task checks every invariant has at least one
       citation.
       Done when: `./gradlew invariants` lists sixteen rows and fails on one with
       no test behind it.
-- [ ] **`spec-0134-gate`** — the check runs from `check`, so an invariant losing
+      #93. Sixteen rows, yes. "Fails on one with no test behind it" is a
+      ratchet rather than the literal rule: read literally it fails the day it
+      lands, because nine have no citing test and five of those describe
+      behaviour the tool does not have. It fails when one of the seven that
+      *are* defended loses its last test. `Invariants.REQUIRED` is that set,
+      and adding to it is how an invariant becomes gated.
+- [x] **`spec-0134-gate`** — the check runs from `check`, so an invariant losing
       its last test fails the build.
       Done when: deleting a defending test turns the build red with the
       invariant's number in the message.
+      #93. Verified by removing `LatenessTableTest`'s citation: the build fails
+      with "no test defends invariants 4 and 5", while 3 stays defended by the
+      two other tests that cite it.
 
 ## Acceptance
 

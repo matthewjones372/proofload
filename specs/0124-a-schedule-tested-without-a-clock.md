@@ -106,21 +106,32 @@ booked.offsets shouldBe booked.offsets.sorted()
 
 ## Stack
 
-- [ ] **`spec-0124-arrivals`** — invariants 1, 2, 3 and 7 as core tests over
+- [x] **`spec-0124-arrivals`** — invariants 1, 2, 3 and 7 as core tests over
       every `InjectionProfile` shape.
       Done when: each adversarial arrival-count case above is an assertion, and
       the boundary at `over` is stated as a test rather than as a comment.
-- [ ] **`spec-0124-booking`** — the `drive` helper and invariants 4 and 5.
+      #89. `ScheduleArithmeticTest` in core: the counting table, the half-open
+      boundary, and the seed's purity, over eleven shapes.
+- [x] **`spec-0124-booking`** — the `drive` helper and invariants 4 and 5.
       Done when: the late-fill case books its whole backlog in one call, in
       order, with nothing lost, and no test in the file reads a clock.
-- [ ] **`spec-0124-shards`** — invariant 6, over 1, 2, 3 and 7 shards.
+      #89. `ScheduleDeterminismTest` in engine, with `drive` over the existing
+      `fill`. The 50,000-a-second late fill books 249,999 in one call.
+- [x] **`spec-0124-shards`** — invariant 6, over 1, 2, 3 and 7 shards.
       Done when: the union is the identity for every N and the merge of the
       shards' results equals the single-injector run's counts.
-- [ ] **`spec-0124-lateness`** — lateness, `latePerSecond`, `heldScheduleFor`
+      #89. `ShardOwnershipTest` over 1, 2, 3 and 7 injectors.
+- [x] **`spec-0124-lateness`** — lateness, `latePerSecond`, `heldScheduleFor`
       and `Offered` from stated departure instants.
       Done when: 0122's adversarial table is a table-driven test with no
       elapsed time in it, and the wall-clock tests keep only the claims that
       need a real scheduler.
+      #93. `LatenessTableTest`, seven rows, no clock. Two departures from the
+      spec. The validity column is absent: `Valid`, `Partial` and `Invalid` are
+      0121's and 0121 is unbuilt. And the wall-clock tests did not shrink —
+      both of `ScheduleDriftTest`'s measure lateness a real scheduler produced,
+      which nothing deterministic can, so neither was made redundant. Weakening
+      a gate to tick this box would have been the wrong trade.
 
 ## Acceptance
 

@@ -2,7 +2,7 @@ name: build
 
 # `main` rather than every branch. This repository opens a pull request as it
 # creates a branch, so the `pull_request` event already builds every commit on
-# one, and `["**"]` was building each of them a second time — six jobs for one
+# one, and `["**"]` was building each of them a second time: six jobs for one
 # commit where three answer the same question. `baseline.yml` has always been
 # scoped this way.
 on:
@@ -54,7 +54,7 @@ jobs:
         run: ./gradlew :examples:timingTests --stacktrace
 
       # A load generator's own suites assert on timing, so a failure here is
-      # worth reading rather than guessing at — and a flake on a loaded runner
+      # worth reading rather than guessing at, and a flake on a loaded runner
       # looks exactly like a regression until someone opens the report.
       - name: Upload test reports
         if: failure()
@@ -94,7 +94,7 @@ jobs:
 
       # Written into the README rather than published for a shields endpoint to
       # fetch. An endpoint badge reads its file anonymously, and
-      # raw.githubusercontent.com does not serve one from a private repository — so
+      # raw.githubusercontent.com does not serve one from a private repository, so
       # the number goes in the URL, where shields needs to fetch nothing.
       - name: Write the number into the README
         env:

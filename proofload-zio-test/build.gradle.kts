@@ -34,17 +34,17 @@ dependencies {
 }
 
 tasks.test {
-    // `OutputsSpec` reads its own source to check nothing in it wraps a report
-    // by hand, which is the claim that entry is for.
+    // `OutputsAreEffectsTest` reads `OutputsSpec` to check nothing in it wraps
+    // a report by hand, which is the claim that entry is for.
     systemProperty("proofload.repoRoot", rootProject.projectDir.path)
 
-    val mainRuntime = configurations.runtimeClasspath
+    val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.ziotest.runtimeClasspath=" +
-                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.name },
             )
         },
     )

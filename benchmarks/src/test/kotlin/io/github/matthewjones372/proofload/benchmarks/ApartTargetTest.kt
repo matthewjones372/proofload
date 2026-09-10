@@ -30,22 +30,24 @@ class ApartTargetTest {
             repeat(SAMPLES / 50) { record(20.milliseconds) }
         }.timing()
 
-        val read = parseServed(servedLines(counted))
+        val read = parseServed(servedLines(counted, connections = CONNECTIONS))
 
-        withClue("wrote ${servedLines(counted).size} lines") {
-            read.count shouldBe counted.count
-            read.p50 shouldBe counted.p50
-            read.p99 shouldBe counted.p99
-            read.max shouldBe counted.max
-            read.precision shouldBe counted.precision
+        withClue("wrote ${servedLines(counted, CONNECTIONS).size} lines") {
+            read.timing.count shouldBe counted.count
+            read.timing.p50 shouldBe counted.p50
+            read.timing.p99 shouldBe counted.p99
+            read.timing.max shouldBe counted.max
+            read.timing.precision shouldBe counted.precision
+            read.connections shouldBe CONNECTIONS
         }
     }
 
     @Test
     fun `a target that answered nothing reads back as a timing that counted nothing`() {
-        val read = parseServed(servedLines(Histogram().timing()))
+        val read = parseServed(servedLines(Histogram().timing(), connections = 0))
 
-        read.count shouldBe 0L
+        read.timing.count shouldBe 0L
+        read.connections shouldBe 0L
     }
 
     @Test
@@ -60,6 +62,13 @@ class ApartTargetTest {
         withClue("the target reported ${run.served.count} service times for $ASKED requests") {
             run.served.count shouldBe ASKED.toLong()
         }
+        // Not a fixed number: how many connections a pooled client opens for a
+        // sequence of requests is its business. What has to hold is that the
+        // target answered on at least one and never on more than it was asked,
+        // because requests over this is the reuse figure a sweep publishes.
+        withClue("the target answered on ${run.connections} connections for $ASKED requests") {
+            (run.connections in 1..ASKED.toLong()) shouldBe true
+        }
     }
 
     private fun get(baseUrl: String): HttpResponse<String> =
@@ -72,5 +81,6 @@ class ApartTargetTest {
         const val ASKED = 25
         const val OK = 200
         const val SAMPLES = 1_000
+        const val CONNECTIONS = 37L
     }
 }

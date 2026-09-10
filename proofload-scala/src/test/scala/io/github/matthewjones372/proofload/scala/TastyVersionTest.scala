@@ -1,56 +1,102 @@
 package io.github.matthewjones372.proofload.scala
 
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import scala.jdk.StreamConverters.*
+import _root_.scala.jdk.StreamConverters.StreamHasToScala
 
 /**
- * The floor a consumer's compiler has to clear, read off the bytes they will
- * actually trip over.
+ * The TASTy this module publishes, read out of its own compiled output.
  *
- * TASTy is forward-incompatible: a 3.3 compiler cannot read what a 3.9 one
- * wrote, and no dependency override helps because the version is inside the
- * library. 0.1.0-rc3 shipped 28.9 against a page promising the LTS line, and
- * nothing in the build noticed, because compiling `examples-scala` with the
- * same toolchain is green whatever that toolchain is.
+ * This is the number a consumer actually hits. `ScalaVersionTest` beside this
+ * checks the version the build *declares*, which catches a deliberate bump and
+ * not a toolchain that resolves to something else; the bytes below cannot be
+ * wrong about what was emitted.
  *
- * The floor is written here rather than derived from `scalaVersion`, which
- * would make this test agree with any bump. Raising it is meant to be an edit
- * somebody makes on purpose, having thought about who can still read the jar.
+ * rc3 shipped TASTy 28.9. A consumer on 3.8.4 got
+ *
+ * {{{
+ * Forward incompatible TASTy file has version 28.9,
+ * produced by Scala 3.9.0-bin-nonbootstrapped,
+ * expected stable TASTy from 28.0 to 28.8
+ * }}}
+ *
+ * and no dependency override could help, because the version is in this
+ * module's own bytecode. Spec 0139.
  */
 class TastyVersionTest:
 
-  private val major = 28
+  /** `0x5CA1AB1F`, which is where a TASTy file says it is one. */
+  private val magic = 0x5ca1ab1f
 
-  private val minor = 3
+  private def property(name: String): String =
+    val value = System.getProperty(name)
+    assertNotNull(value, s"the build must pass -D$name; see build.gradle.kts")
+    value
 
-  private def tastyFiles(): List[Path] =
-    val raw = System.getProperty("proofload.scala.classes")
-    assertNotNull(raw, "the build must pass -Dproofload.scala.classes; see build.gradle.kts")
-    val root = Path.of(raw)
-    assertTrue(Files.isDirectory(root), s"no compiled output at $root")
-    Files.walk(root).toScala(List).filter(_.getFileName.toString.endsWith(".tasty"))
+  private def compiled: List[Path] =
+    val classes = File(property("proofload.classes")).toPath
+    assertTrue(Files.isDirectory(classes), s"$classes is not this module's compiled output")
+    val found = Files.walk(classes).toScala(List).filter(_.toString.endsWith(".tasty"))
+    assertTrue(found.nonEmpty, s"no .tasty under $classes, so there is nothing to check")
+    found
 
+  /**
+   * The major and minor at the head of a TASTy file.
+   *
+   * The header is the magic number then three naturals. A natural is base-128,
+   * most significant byte first, and the byte with its high bit set is the
+   * last one — so a value under 128 is a single byte and everything here is.
+   */
   private def versionOf(file: Path): (Int, Int) =
-    val header = Files.readAllBytes(file).take(6)
-    assertEquals(0x5ca1ab1fL, java.lang.Integer.toUnsignedLong(java.nio.ByteBuffer.wrap(header).getInt), s"$file is not TASTy")
-    (header(4) & 0x7f, header(5) & 0x7f)
+    val bytes = Files.readAllBytes(file)
+    val header = ((bytes(0) & 0xff) << 24) | ((bytes(1) & 0xff) << 16) |
+      ((bytes(2) & 0xff) << 8) | (bytes(3) & 0xff)
+    assertEquals(magic, header, s"$file does not start with the TASTy magic number")
+
+    var at = 4
+    def readNat(): Int =
+      var value = 0
+      var byte = 0
+      while
+        byte = bytes(at) & 0xff
+        at += 1
+        value = (value << 7) | (byte & 0x7f)
+        (byte & 0x80) == 0
+      do ()
+      value
+
+    (readNat(), readNat())
 
   @Test
-  def `every compiled class is readable by a compiler on the supported line`(): Unit =
-    val files = tastyFiles()
-    assertTrue(files.nonEmpty, "no .tasty files were compiled, so this test proves nothing")
+  def `every published class carries TASTy the declared floor can read`(): Unit =
+    val major = property("proofload.tastyMajor").toInt
+    val minor = property("proofload.tastyMinor").toInt
 
-    val tooNew = files.map(file => file -> versionOf(file)).filter { case (_, (got, _)) => got > major }
-      ++ files.map(file => file -> versionOf(file)).filter { case (_, (got, low)) => got == major && low > minor }
+    compiled.foreach { file =>
+      val (emittedMajor, emittedMinor) = versionOf(file)
+
+      assertEquals(major, emittedMajor, s"$file emitted TASTy major $emittedMajor")
+      assertTrue(
+        emittedMinor <= minor,
+        s"${file.getFileName} emitted TASTy $emittedMajor.$emittedMinor, above the $major.$minor floor " +
+          s"${property("proofload.scalaVersion")} promises. Every consumer on a compiler below that gets " +
+          "`Forward incompatible TASTy file`, and no dependency override helps them.",
+      )
+    }
+
+  @Test
+  def `the compiler on the runtime classpath is the declared one`(): Unit =
+    // The other half of the same promise, and the one that names the cause in
+    // words rather than in a version number: what a consumer resolves.
+    val classpath = property("proofload.scala.runtimeClasspath")
+    val expected = s"scala3-library_3-${property("proofload.scalaVersion")}.jar"
 
     assertTrue(
-      tooNew.isEmpty,
-      s"proofload-scala promises TASTy $major.$minor or lower, so a consumer on that line can read it. " +
-        s"These are newer, which means scalaVersion moved off the supported line: " +
-        tooNew.map { case (file, (hi, lo)) => s"${file.getFileName} is $hi.$lo" }.mkString(", "),
+      classpath.split(File.pathSeparator).contains(expected),
+      s"the published runtime classpath carries no $expected, only: $classpath",
     )

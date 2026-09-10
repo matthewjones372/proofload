@@ -12,15 +12,19 @@ unit attached.
 written once, and a facade method missing from Java is missing from Scala in
 the same commit rather than two months later.
 
-Compiled against **Scala 3.3.8**, the LTS line. A published Scala library can
-only be read by a compiler at least as new as the one that built it, so this is
-deliberately not the newest release.
+Compiled against **Scala 3.3.8**, the LTS line, and that number is a floor
+rather than a note: a published Scala library carries its own TASTy, TASTy is
+forward-incompatible, and so no compiler older than the one that built this
+module can read it. Any Scala 3.3 or newer works. Below that, and no dependency
+override helps, because the version is in the bytecode.
 
-The version is declared once, in `proofload-scala/build.gradle.kts`, and
-`TastyVersionTest` reads the header of the compiled output and fails the build
-where it is newer than the line above. 0.1.0-rc3 shipped TASTy 28.9 from Scala
-3.9.0 against this same paragraph, which no consumer below 3.9 could read; the
-test is there so the page and the jar cannot disagree again.
+It is declared once, in `buildSrc/src/main/kotlin/ScalaLts.kt`, next to the
+ceiling on the TASTy this module is allowed to emit. `TastyVersionTest` reads
+the header of the compiled output and fails the build here when it rises above
+that ceiling, and `ScalaVersionTest` fails when this page and the build stop
+agreeing. Both exist because `0.1.0-rc3` was published against 3.9.0 by a
+grouped dependency bump, emitted TASTy 28.9, and could not be read by anyone
+below Scala 3.9 while this paragraph still promised the LTS line.
 
 ## Taking it
 

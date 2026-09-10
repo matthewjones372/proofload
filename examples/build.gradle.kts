@@ -62,13 +62,14 @@ tasks.register<JavaExec>("againstTheBaseline") {
     // spending thirty seconds measuring one; see docs/cookbook.md for what
     // that costs.
     providers.gradleProperty("proofload.resolution").orNull?.let { systemProperty("proofload.resolution", it) }
+    // Held as locals so the argument provider closes over two `Provider`s
+    // rather than over `providers`, which is the project, which the
+    // configuration cache will not store. Still read at execution time, and a
+    // `-P` that changes either one still invalidates the entry.
+    val baseline = providers.gradleProperty("proofload.baseline").orElse("build/proofload/examples.proofload")
+    val over = providers.gradleProperty("proofload.over").orElse("5000")
     argumentProviders.add(
-        CommandLineArgumentProvider {
-            listOf(
-                providers.gradleProperty("proofload.baseline").getOrElse("build/proofload/examples.proofload"),
-                providers.gradleProperty("proofload.over").getOrElse("5000"),
-            )
-        },
+        CommandLineArgumentProvider { listOf(baseline.get(), over.get()) },
     )
 }
 

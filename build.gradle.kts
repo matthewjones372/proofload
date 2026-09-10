@@ -242,105 +242,27 @@ apiValidation {
 // removed it.
 val forAgents: File = file("docs/for-agents.md")
 
-val generatedFrom = "<!-- Rendered from the .api dumps by ./gradlew apiDocDump. Do not edit below. -->"
-val generatedTo = "<!-- End of the rendered surface. -->"
+// One entry per module whose surface is recorded, resolved here rather than in
+// the task action: a `File` serialises into the configuration cache and a
+// `Project` does not, and `ApiSurface` in `buildSrc` reads them without either.
+val apiDumps: Map<String, File> = surfaceRecorded.associateWith { file("$it/api/$it.api") }
 
-val jvmPrimitives = mapOf(
-    'V' to "Unit", 'Z' to "Boolean", 'B' to "Byte", 'C' to "Char", 'S' to "Short",
-    'I' to "Int", 'J' to "Long", 'F' to "Float", 'D' to "Double",
-)
-
-/** Written by `equals`, `copy`, `component1` and the value-class bridges, and read by nobody. */
-val boilerplate = Regex("""^(component\d*|copy|equals\d*|hashCode|toString|box|unbox|constructor|access.*)$""")
-
-val declaresClass = Regex("""^public (.*?)class (\S+)(?: : (.*))? \{$""")
-val declaresFun = Regex("""^\tpublic (.*?)fun (\S+) \(([^)]*)\)(.*)$""")
-val declaresField = Regex("""^\tpublic (.*?)field (\S+) (.*)$""")
-
-fun simpleName(binary: String): String = binary.substringAfterLast('/').replace('$', '.')
-
-/** A value class in a signature mangles the name it is in; the suffix is not part of the API. */
-fun demangled(name: String): String = name.substringBefore("\$default").substringBefore('-')
-
-fun readOneType(descriptor: String, from: Int): Pair<String, Int> {
-    val dimensions = descriptor.drop(from).takeWhile { it == '[' }.length
-    val at = from + dimensions
-    val (name, next) = when (descriptor[at]) {
-        'L' -> descriptor.indexOf(';', at).let { simpleName(descriptor.substring(at + 1, it)) to it + 1 }
-        else -> (jvmPrimitives[descriptor[at]] ?: "?") to at + 1
-    }
-    return "Array<".repeat(dimensions) + name + ">".repeat(dimensions) to next
-}
-
-fun typesIn(descriptors: String): List<String> = generateSequence(0 to "") { (at, _) ->
-    if (at >= descriptors.length) null else readOneType(descriptors, at).let { (name, next) -> next to name }
-}.drop(1).map { it.second }.toList()
-
-fun renderMember(line: String): String? {
-    if ("synthetic" in line) return null
-    declaresField.find(line)?.groupValues?.let { (_, _, name, type) ->
-        return if (name in setOf("Companion", "INSTANCE")) null else "val $name: ${typesIn(type).single()}"
-    }
-    val (_, _, raw, parameters, returns) = declaresFun.find(line)?.groupValues ?: return null
-    val name = demangled(raw)
-    if (boilerplate.matches(name)) return null
-    val arguments = typesIn(parameters).joinToString()
-    val returned = typesIn(returns).single()
-    return when {
-        name == "<init>" -> "constructor($arguments)"
-
-        arguments.isEmpty() && name.startsWith("get") && name.length > 3 ->
-            "val ${name[3].lowercaseChar()}${name.substring(4)}: $returned"
-
-        returned == "Unit" -> "fun $name($arguments)"
-
-        else -> "fun $name($arguments): $returned"
-    }
-}
-
-// The same rendering twice running is one declaration the compiler emitted two
-// ways — a boxed overload beside an unboxed one — not two a caller can pick from.
-fun renderDump(dump: String): List<String> = renderedLines(dump)
-    .let { lines -> lines.filterIndexed { at, line -> at == 0 || line != lines[at - 1] } }
-
-fun renderedLines(dump: String): List<String> = dump.lines().mapNotNull { line ->
-    declaresClass.find(line)?.let { found ->
-        val (modifiers, name, supertypes) = found.destructured
-        val declared = simpleName(name)
-        // A file facade is not a type: `ScenarioKt` is where `scenario` and
-        // `step` live, and a reader told it is a class will try to make one.
-        val kind = when {
-            declared.endsWith("Kt") -> "top-level in"
-            "interface" in modifiers -> "interface"
-            else -> "class"
-        }
-        val extends = supertypes.split(", ").filter { it.isNotBlank() }.joinToString { simpleName(it) }
-        "$kind $declared" + if (extends.isEmpty()) "" else " : $extends"
-    } ?: renderMember(line)?.let { "    $it" }
-}
-
-fun renderedSurface(): String = surfaceRecorded.sorted().joinToString(separator = "\n") { module ->
-    val rendered = renderDump(file("$module/api/$module.api").readText()).joinToString(separator = "\n")
-    "### `io.github.matthewjones372:$module`\n\n```text\n$rendered\n```\n"
-}
-
-fun forAgentsWithSurface(): String {
-    val document = forAgents.readText()
-    val before = document.substringBefore(generatedFrom, missingDelimiterValue = "")
-    val after = document.substringAfter(generatedTo, missingDelimiterValue = "")
-    if (before.isEmpty() || after.isEmpty()) {
-        throw GradleException("${forAgents.path} must hold the markers `$generatedFrom` and `$generatedTo`.")
-    }
-    return "$before$generatedFrom\n\n${renderedSurface()}\n$generatedTo$after"
-}
+// Both actions below copy `forAgents` and `apiDumps` into locals first. A
+// lambda that reads a script-level `val` reads a field of the script, so it
+// carries a reference to the script, and through it the `Project`, which is
+// what the configuration cache refuses. A local is captured by value.
 
 tasks.register("apiDocDump") {
     group = "documentation"
     description = "Renders the checked-in .api dumps into the signature section of docs/for-agents.md."
-    inputs.files(surfaceRecorded.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
-    inputs.file(forAgents).withPropertyName("theDocumentAroundThem")
-    outputs.file(forAgents)
-    doLast { forAgents.writeText(forAgentsWithSurface()) }
+    val document = forAgents
+    val dumps = apiDumps
+    inputs.files(dumps.values).withPropertyName("theDumpsApiCheckGates")
+    inputs.file(document).withPropertyName("theDocumentAroundThem")
+    outputs.file(document)
+    doLast {
+        document.writeText(ApiSurface.documentWithSurface(document.readText(), dumps, document.path))
+    }
 }
 
 // Fires from `check`, so a surface that moved without the documentation moving
@@ -348,13 +270,16 @@ tasks.register("apiDocDump") {
 val apiDocCheck = tasks.register("apiDocCheck") {
     group = "verification"
     description = "Fails when docs/for-agents.md no longer matches the .api dumps it is rendered from."
-    inputs.files(surfaceRecorded.map { file("$it/api/$it.api") }).withPropertyName("theDumpsApiCheckGates")
-    inputs.file(forAgents).withPropertyName("theDocumentRenderedFromThem")
+    val document = forAgents
+    val dumps = apiDumps
+    inputs.files(dumps.values).withPropertyName("theDumpsApiCheckGates")
+    inputs.file(document).withPropertyName("theDocumentRenderedFromThem")
     outputs.upToDateWhen { true }
     doLast {
-        if (forAgents.readText() != forAgentsWithSurface()) {
+        val rendered = document.readText()
+        if (rendered != ApiSurface.documentWithSurface(rendered, dumps, document.path)) {
             throw GradleException(
-                "${forAgents.path} no longer matches the .api dumps it is rendered from. " +
+                "${document.path} no longer matches the .api dumps it is rendered from. " +
                     "Run `./gradlew apiDocDump` and commit the diff beside the change that moved the surface.",
             )
         }
@@ -362,6 +287,35 @@ val apiDocCheck = tasks.register("apiDocCheck") {
 }
 
 tasks.named("check") { dependsOn(apiDocCheck) }
+
+// The sixteen statements of `docs/invariants.md`, and the tests that defend
+// them. A claim with nothing running behind it is the thing 0134 exists to
+// stop, so losing the last test for a defended invariant fails the build here
+// rather than being noticed a release later.
+//
+// The locals are the same story as `apiDocDump` above: a `doLast` that reads a
+// script-level `val` carries the script, and the configuration cache will not
+// store one.
+val invariants = tasks.register("invariants") {
+    group = "verification"
+    description = "Lists the invariants of docs/invariants.md and the tests that defend each."
+    val page = file("docs/invariants.md")
+    val sources = files(
+        subprojects.map { module -> module.layout.projectDirectory.dir("src/test") },
+    ).asFileTree.matching { include("**/*.kt", "**/*.scala", "**/*.java") }
+    inputs.file(page).withPropertyName("thePageTheNumbersComeFrom")
+    inputs.files(sources).withPropertyName("theTestsThatCiteThem")
+    doLast {
+        val cited = Invariants.citations(sources.files.toList())
+        logger.lifecycle(Invariants.report(cited))
+        val missing = Invariants.undefended(cited)
+        if (missing.isNotEmpty()) {
+            throw GradleException(Invariants.complaint(missing))
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(invariants) }
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")

@@ -95,25 +95,22 @@ here, and it is the shape of thing 0086 declined for the same reason.
       requests over distinct client ports.
       Done when: a row whose ports peak near the range shows a low figure here,
       and one that reused its connections shows a high one.
-      #94. It does, and off a cliff: about 30 to 60 up to 2,500 a second, then
-      1.9 at 5,000 and 2.4 at 10,000. Counted inside the run rather than off
-      the machine-wide port reading, so unlike that column it is not at the
-      mercy of what the previous sweep left in TIME_WAIT.
+      #94, and **corrected by #98 below: read that entry before this one.**
 
-      What the column then found is that the cliff is the **target's**.
-      `com.sun.net.httpserver` closes idle connections past
-      `sun.net.httpserver.maxIdleConnections`, which defaults to 200. Handing
-      the target `-Dsun.net.httpserver.maxIdleConnections=20000` takes reuse at
-      5,000 a second from 1.9 and 4.7 across two runs to 16.8, and changes
-      nothing at 2,500 where the cap is never reached — a threshold, not a
-      speed-up. `apart` now forwards `proofload.targetFlags` so this is
-      settable rather than guessed at.
+      What the column does is real: it counts requests over the distinct client
+      ports the target answered on, inside the run, so unlike the machine-wide
+      port reading beside it it is not at the mercy of what the previous sweep
+      left in TIME_WAIT.
 
-      The sweep's default target is left alone. Raising the cap makes the
-      published figure better by changing the instrument, and which number a
-      page should carry — the one a stock `com.sun.net.httpserver` allows, or
-      the one the generator reaches against a target that is not in the way —
-      is a decision rather than a fix.
+      What this entry originally concluded from it was wrong, and is not
+      repeated here. It read one machine, a four-processor Linux container with
+      a twenty-thousand descriptor limit, where reuse fell away above a couple
+      of thousand a second and the target's `maxIdleConnections` moved it back,
+      and wrote that up as a property of `com.sun.net.httpserver`. The M3 in
+      #98 reproduces none of it. Both machines and what they disagree about are
+      in `docs/what-it-costs.md`; the cause is not established, and no figure
+      from either belongs in a sentence that starts "the target does".
+
 - [x] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
       Done when: the paragraph that "cannot say whether the client or the target
       ran out first" either does, or names exactly what is still missing.

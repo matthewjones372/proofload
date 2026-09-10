@@ -123,12 +123,47 @@ measured from the departures that happened, so they describe the target at
 `left` rather than at `asked`, which is a smaller experiment than the one
 somebody asked for and a real one.
 
+## Data per user
+
+Ten thousand users sending one identical request measure whatever the target
+does with a duplicate. A feeder gives each user its own data, as a function of
+the user's number rather than a cursor over a source: a cursor is shared state
+on the path every departure takes, and a generator that locks to decide what to
+send is measuring itself. The number is also what makes a run repeatable, so
+user 4,001 gets the same value tomorrow and a failure that names a value can be
+looked at rather than reproduced by luck.
+
+```scala
+private val personId = sessionKey[String]("personId")
+
+private val target = sessionKey[String]("target")
+```
+
+```scala
+graph
+  .at(20.perSecond, over = 500.millis)
+  .fedBy(feed(personId)(user => (user % 82 + 1).toString) + feed(target)(user => (user % 61 + 7).toString)),
+```
+
+The value is picked up by the `{personId}` and `{target}` in the request:
+
+```scala
+graph = scenario("graph")(exec(pathTo, api.get("/people/{personId}/path-to/{target}").expecting(200)))
+```
+
+`feed` takes its function in a second parameter list so the lambda reads as a
+block, and `+` combines two feeders because that is what the Kotlin DSL calls
+it. `feedFrom(key, values)` indexes a `Seq` by the user's number and wraps round
+at the end: a feeder that ran out would end a load test for a reason that has
+nothing to do with the target. `fedBy` attaches one to a simulation or to a
+search, which are the only two things a feeder attaches to.
+
 ## What the module is
 
 `FiniteDuration` both ways, `perSecond` and `perMinute` on `Int` and `Double`,
 `sessionKey[T]`, `step`, `exec`, `pause`, `scenario`, `http.baseUrl`,
-`Proofload()`, `at`, the readers above, and the capacity search below. Nothing
-else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
+`Proofload()`, `at`, `feed`, `feedFrom`, `+`, `fedBy`, the readers above, and
+the capacity search below. Nothing else: everything else on `Goals`, `Https`, `Results` and `Simulations` is a Java
 static and is called directly, as the snippets here do.
 
 `sessionKey[T]` is the one call Scala does better than Java. `ClassTag`

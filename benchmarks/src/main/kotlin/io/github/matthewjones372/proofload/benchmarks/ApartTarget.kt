@@ -46,7 +46,7 @@ data class Apart<T>(val answered: T, val served: Timing, val connections: Long)
 fun <T> apart(block: (ApartTarget) -> T): Apart<T> {
     val counts = createTempFile("proofload-served", ".txt")
     val target = ProcessBuilder(
-        listOf(java()) + targetFlags() + listOf("-cp", classpath(), TARGET_MAIN, counts.toString()),
+        onCpus() + listOf(java()) + targetFlags() + listOf("-cp", classpath(), TARGET_MAIN, counts.toString()),
     )
         // Inherited, so a target that failed to start says so where the sweep
         // is being watched rather than into a pipe nobody reads.
@@ -115,6 +115,14 @@ private fun java(): String = Path.of(System.getProperty("java.home"), "bin", "ja
  * closes one makes the generator open another, and the reuse column cannot say
  * which end decided that. Settable rather than guessed at.
  */
+
+/**
+ * The command prefix that puts the target on its own processors, empty where
+ * nothing pinned anything. See [Pinning].
+ */
+private fun onCpus(): List<String> =
+    System.getProperty(Pinning.TARGET_CPUS)?.let { listOf("taskset", "-c", it) }.orEmpty()
+
 private fun targetFlags(): List<String> =
     System.getProperty("proofload.targetFlags").orEmpty()
         .split(' ')

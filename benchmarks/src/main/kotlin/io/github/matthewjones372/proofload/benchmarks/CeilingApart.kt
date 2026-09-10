@@ -21,9 +21,12 @@ import java.nio.file.Path
  * starts a process per rate takes long enough to be worth asking for on purpose.
  */
 fun main() {
+    // Before anything is measured: this pins the generator and leaves the
+    // target's processors where `apart` will find them.
+    val pinned = Pinning.apply()
     val measured = SOCKET_RATES.map(::measureApart)
 
-    val page = apartReport(measured)
+    val page = apartReport(measured, pinned)
     println(page)
 
     val into = Path.of("build/reports/proofload/ceiling-apart.md")
@@ -44,7 +47,7 @@ private fun measureApart(rate: Int): Measured {
     return Measured(rate, run.answered, loadAverage(), served = run.served, connections = run.connections)
 }
 
-internal fun apartReport(measured: List<Measured>): String {
+internal fun apartReport(measured: List<Measured>, pinned: Pinning.Pinned): String {
     val ceiling = measured.lastOrNull { it.keptSchedule && it.answeredEverything }
     val loads = measured.map { it.load }.filter { it >= 0.0 }
     return (
@@ -55,13 +58,15 @@ internal fun apartReport(measured: List<Measured>): String {
             "a rate kept its schedule when the median departure left within $SWEEP_BUDGET of when it",
             "was due — against a target in a JVM of its own rather than in this one.",
             "",
-            "**Still a lower bound, and still not the client's number.** The target no longer",
-            "shares this process's heap, its garbage collector or its JIT, and it is no longer",
-            "`com.sun.net.httpserver` running on the generator's own safepoints. It does still",
-            "share the machine's cores: nothing here pins anything, so a row is the two ends",
-            "competing for the same processors. That is `spec-0118-cores`, and until it lands",
-            "the honest reading of a difference between this table and the in-process one is",
-            "\"a JVM boundary was worth this much\", not \"the client reaches this rate\".",
+            "**Still a lower bound.** The target no longer shares this process's heap, its",
+            "garbage collector or its JIT, and it is no longer `com.sun.net.httpserver` running",
+            "on the generator's own safepoints. What it shares now is stated rather than assumed:",
+            "this sweep ran ${pinned.described}.",
+            "",
+            "**Per conn** is requests over the distinct client ports the target answered on,",
+            "counted at the far end of this run's own sockets. It is the column that says whether",
+            "a rate ran out of connections rather than out of anything else, and it is not the",
+            "machine-wide port reading beside it, which carries whatever the last sweep left.",
             "",
             "| Rate | Requests | Failed | Failed as | Behind p50 | Behind p99 | Behind max | " +
                 "Served p50 | Served p99 | Per conn | Files | Ports | p50 within $SWEEP_BUDGET | fellBehind() |",

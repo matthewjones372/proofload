@@ -149,9 +149,9 @@ target was fast, not that the tool struggled.
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc3")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc3")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc4")
 }
 ```
 
@@ -174,7 +174,7 @@ a note on why it is those lines and not the obvious alternative:
 | **Keeping the answer** | the HTML report, a GitHub job summary, and a baseline in CI |
 
 > [!NOTE]
-> Early days. **`0.1.0-rc3` is the current release**, and every coordinate on
+> Early days. **`0.1.0-rc4` is the current release**, and every coordinate on
 > this page and under `docs/` is pinned to it. A release candidate, so signatures
 > and coordinates are real but the API may still move before `0.1.0`. `specs/`
 > tracks what is built and what is not.
@@ -188,7 +188,7 @@ behaviour to keep in step.
 It is on Maven Central, so adding it takes no clone and no build:
 
 ```bash
-claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc3
+claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc4
 ```
 
 The coordinate alone, because the published jar carries a `Main-Class`.
@@ -200,7 +200,7 @@ Two more routes need no launcher at all. One is a download from the GitHub relea
 carries a `.bat` and so is the Windows answer too, and a container:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc3
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc4
 ```
 
 That is the whole command: `benchmark`, `plan_schema`, `validate`, `preview`,

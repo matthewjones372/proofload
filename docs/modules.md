@@ -69,7 +69,7 @@ of being found by a stranger. `./gradlew publishToMavenLocal` and then
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // `0.1.0-rc3` is the current release on Maven Central; anything newer is
+    // `0.1.0-rc4` is the current release on Maven Central; anything newer is
     // what you built with ./gradlew publishToMavenLocal.
     implementation("io.github.matthewjones372:proofload-core:$proofloadVersion")
     implementation("io.github.matthewjones372:proofload-engine:$proofloadVersion")

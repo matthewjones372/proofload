@@ -25,13 +25,13 @@ dependencies {
 }
 
 tasks.test {
-    val mainRuntime = configurations.runtimeClasspath
+    val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.kotest.runtimeClasspath=" +
-                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.name },
             )
         },
     )

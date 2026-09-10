@@ -35,13 +35,13 @@ tasks.test {
     inputs.dir(gate).withPropertyName("theSourceSetItQuotes")
     systemProperty("proofload.repoRoot", rootProject.projectDir.path)
 
-    val mainRuntime = configurations.runtimeClasspath
+    val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.scala.runtimeClasspath=" +
-                    mainRuntime.get().joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.name },
             )
         },
     )

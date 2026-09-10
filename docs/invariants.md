@@ -63,8 +63,27 @@ page exists to replace. Each one ends up with at least one of:
 - a **result check** run at every freeze and merge (0129).
 
 A test that defends one says so in its KDoc, in the words "Defends invariant N"
-or "Defends invariants N and M". Today that covers 1, 2, 3, 14 and 15, through
-`ScheduleArithmeticTest`, `ScheduleDeterminismTest` and `ShardOwnershipTest`.
+or "Defends invariants N and M". `./gradlew invariants` lists all sixteen with
+the tests behind each:
+
+```
+ 1  defended  ScheduleArithmeticTest.kt
+ 2  defended  ScheduleDeterminismTest.kt, ShardOwnershipTest.kt
+ 3  defended  LatenessTableTest.kt, ScheduleArithmeticTest.kt, ScheduleDeterminismTest.kt
+ 4  defended  LatenessTableTest.kt
+ 5  defended  LatenessTableTest.kt
+ 6  not yet   -
+...
+14  defended  ScheduleArithmeticTest.kt
+15  defended  ShardOwnershipTest.kt
+16  not yet   -
+```
+
+It runs from `check`, so the build goes red when a defended invariant loses its
+last test, naming the number. It is a **ratchet, not a floor**: it does not fail
+on the nine that have nothing behind them yet, because five of those describe
+behaviour the tool does not have. An invariant that gains a test is added to
+`Invariants.REQUIRED` in `buildSrc`; none may quietly lose one.
 
 ## The release rule
 

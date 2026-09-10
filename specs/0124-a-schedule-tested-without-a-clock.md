@@ -121,11 +121,17 @@ booked.offsets shouldBe booked.offsets.sorted()
       Done when: the union is the identity for every N and the merge of the
       shards' results equals the single-injector run's counts.
       #89. `ShardOwnershipTest` over 1, 2, 3 and 7 injectors.
-- [ ] **`spec-0124-lateness`** — lateness, `latePerSecond`, `heldScheduleFor`
+- [x] **`spec-0124-lateness`** — lateness, `latePerSecond`, `heldScheduleFor`
       and `Offered` from stated departure instants.
       Done when: 0122's adversarial table is a table-driven test with no
       elapsed time in it, and the wall-clock tests keep only the claims that
       need a real scheduler.
+      #93. `LatenessTableTest`, seven rows, no clock. Two departures from the
+      spec. The validity column is absent: `Valid`, `Partial` and `Invalid` are
+      0121's and 0121 is unbuilt. And the wall-clock tests did not shrink —
+      both of `ScheduleDriftTest`'s measure lateness a real scheduler produced,
+      which nothing deterministic can, so neither was made redundant. Weakening
+      a gate to tick this box would have been the wrong trade.
 
 ## Acceptance
 

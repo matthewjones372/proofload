@@ -95,37 +95,43 @@ here, and it is the shape of thing 0086 declined for the same reason.
       requests over distinct client ports.
       Done when: a row whose ports peak near the range shows a low figure here,
       and one that reused its connections shows a high one.
-      #94. It does, and off a cliff: about 30 to 60 up to 2,500 a second, then
-      1.9 at 5,000 and 2.4 at 10,000. Counted inside the run rather than off
-      the machine-wide port reading, so unlike that column it is not at the
-      mercy of what the previous sweep left in TIME_WAIT.
+      #94, and **corrected by #98 below: read that entry before this one.**
 
-      What the column then found is that the cliff is the **target's**.
-      `com.sun.net.httpserver` closes idle connections past
-      `sun.net.httpserver.maxIdleConnections`, which defaults to 200. Handing
-      the target `-Dsun.net.httpserver.maxIdleConnections=20000` takes reuse at
-      5,000 a second from 1.9 and 4.7 across two runs to 16.8, and changes
-      nothing at 2,500 where the cap is never reached — a threshold, not a
-      speed-up. `apart` now forwards `proofload.targetFlags` so this is
-      settable rather than guessed at.
+      What the column does is real: it counts requests over the distinct client
+      ports the target answered on, inside the run, so unlike the machine-wide
+      port reading beside it it is not at the mercy of what the previous sweep
+      left in TIME_WAIT.
 
-      The sweep's default target is left alone. Raising the cap makes the
-      published figure better by changing the instrument, and which number a
-      page should carry — the one a stock `com.sun.net.httpserver` allows, or
-      the one the generator reaches against a target that is not in the way —
-      is a decision rather than a fix.
-- [ ] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
+      What this entry originally concluded from it was wrong, and is not
+      repeated here. It read one machine, a four-processor Linux container with
+      a twenty-thousand descriptor limit, where reuse fell away above a couple
+      of thousand a second and the target's `maxIdleConnections` moved it back,
+      and wrote that up as a property of `com.sun.net.httpserver`. The M3 in
+      #98 reproduces none of it. Both machines and what they disagree about are
+      in `docs/what-it-costs.md`; the cause is not established, and no figure
+      from either belongs in a sentence that starts "the target does".
+
+- [x] **`spec-0118-record`** — `docs/what-it-costs.md` carrying the third table.
       Done when: the paragraph that "cannot say whether the client or the target
       ran out first" either does, or names exactly what is still missing.
-      Half done in #95, and left unticked because the halves came apart. The
-      "done when" is met: the page now names what is missing, and names a piece
-      of it that was not known when this spec was written, which is that the
-      target stops reusing connections at `maxIdleConnections` long before the
-      client stops anything. The entry itself is not: there is no third table,
-      because `ceilingApart` and `clientsAxis` have only ever run on a cloud
-      container and a figure taken there is not a measurement of the machine
-      this page names. Running both on that machine is what closes this, and it
-      is the one thing here nobody can do from inside a session.
+      #97. The table is there, measured on an Apple M3 rather than on the
+      machine the other tables come from, and the page says so. At least ten
+      thousand a second with nothing refused at any rate, which is the top rung
+      of the ladder rather than a wall.
+
+      It also corrected this spec's own previous entry. `spec-0118-reuse` read a
+      reuse collapse on a four-processor Linux container as a property of
+      `com.sun.net.httpserver`, and the M3 does not reproduce it: reuse slopes
+      from 167 to 85 with no cliff, and raising `maxIdleConnections` there
+      changes nothing and slightly lowers reuse rather than raising it. The page
+      now carries both machines and says the cause is not established.
+
+      **Left open:** the ladder stops at ten thousand and the last row is 25
+      microseconds late against a millisecond budget, so the M3's real ceiling
+      is above what this sweep can see. `SOCKET_RATES` would need higher rungs
+      to find it, and that list is shared with the published `:benchmarks:ceiling`
+      sweep whose figure 0057 says must not move, so it is a change with a
+      consequence rather than a bigger number.
 
 ## Acceptance
 

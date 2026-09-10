@@ -103,7 +103,7 @@ the zero-configuration case works and the opinionated case is one line.
 - [x] **`spec-0140-index`** — `writePagesIndex` once per spec, after the last
       test.
       Done when: a spec with four runs leaves one index linking four reports.
-- [ ] **`spec-0140-docs`** — the zio-test section of `docs/from-scala.md`
+- [x] **`spec-0140-docs`** — the zio-test section of `docs/from-scala.md`
       rewritten around it, quoted from `examples-scala`.
       Done when: the page's load spec is a compiled, run source.
 

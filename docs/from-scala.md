@@ -280,12 +280,35 @@ object CheckoutSpec extends ProofloadSpec:
   )
 ```
 
-`proofload.run` is the whole module, and the argument is entirely about which
-executor it runs on. It is `ZIO.attemptBlocking` around the same silent runner
-the other two framework modules build: the call holds its thread for the length
-of the run while the engine sends on virtual threads, and on ZIO's compute pool
-that is a starved runtime, which is a scheduler this tool would then measure
-and report as the target's latency.
+`ProofloadSpec` is a `ZIOSpecDefault` with the two aspects a load spec cannot
+forget, and `measured` is the run, its page and its job-summary entry in one
+call. What is left of the spec above is the measurement.
+
+**`withLiveClock` is the one to know about.** zio-test hands a spec a
+`TestClock`, so any time the *spec* takes (a readiness retry, a `Schedule`, a
+timeout) never advances and the spec hangs rather than failing. The run itself
+is on the wall clock and is fine, which is what makes it hard to find: the load
+works and the scaffolding around it stops. `sequential` is the other, so two
+load tests do not queue behind each other while their own readiness checks time
+out.
+
+**There is no timeout in there.** The right one is the length of what is being
+run, which a base class cannot know, and a wrong default is worse than none. Add
+`@@ TestAspect.timeout(...)` to the suite, written against the ladder you are
+climbing: a search's own `worstCase` is the number to use.
+
+`reportsTo` is where the page goes and defaults to `target/proofload`, relative
+to the working directory the test JVM runs in, which is the module directory
+under both Gradle and a forked sbt. It is per spec rather than per run because
+the index is per directory, and the index is written once, after the last test:
+a spec that measured nothing leaves nothing behind.
+
+`proofload.run` underneath is the whole of the original module, and its argument
+is entirely about which executor it runs on. It is `ZIO.attemptBlocking` around
+the same silent runner the other two framework modules build: the call holds its
+thread for the length of the run while the engine sends on virtual threads, and
+on ZIO's compute pool that is a starved runtime, which is a scheduler this tool
+would then measure and report as the target's latency.
 
 Three things follow from that, and are worth knowing before you write one:
 

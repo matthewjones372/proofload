@@ -139,6 +139,16 @@ enough to list, and long enough to matter.
   `compileOnly` here too, and `OutputsAreEffectsTest` reads the spec beside it
   and fails when a hand-rolled wrapper appears in it.
 
+- **A spec that is already a load test.** `ProofloadSpec` is a
+  `ZIOSpecDefault` carrying `sequential` and `withLiveClock`, a `reportsTo`
+  directory, `measured(name)(simulation)` for the run and its outputs, and one
+  index written after the last test. A load spec written against 0.1.0-rc1 was
+  78 lines, of which roughly 50 were that assembly. `withLiveClock` is the sharp
+  one: without it any time the spec itself takes never advances and the spec
+  hangs rather than failing, while the run, which is on the wall clock, works
+  fine. No timeout is in there, because the right one is the length of what is
+  being run.
+
 - **The plan format teaches drawing rather than the opposite.** `plan_schema`
   documents `draw` and `seed`, lists every generator, carries a fourth worked
   plan, and no longer claims a path may not contain braces — which stopped

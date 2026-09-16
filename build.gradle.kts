@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.4.10" apply false
+    kotlin("jvm") version "2.4.20" apply false
     id("com.diffplug.spotless") version "8.10.2"
     id("dev.detekt") version "2.0.0-alpha.6" apply false
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
@@ -345,7 +345,7 @@ subprojects {
         // Assertions only. The tests run on the JUnit platform — kotest is here
         // for its matchers and the failure messages they produce, not as a
         // second test framework.
-        "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
+        "testImplementation"("io.kotest:kotest-assertions-core:6.2.5")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 

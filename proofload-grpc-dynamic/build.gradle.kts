@@ -19,8 +19,8 @@ dependencies {
     // The descriptor types, and the JSON printer that turns what a plan wrote
     // into one of them. The reflection service arrives with the branch that
     // needs it, so each dependency claim is made where it can be argued with.
-    api("com.google.protobuf:protobuf-java:4.36.1")
-    api("com.google.protobuf:protobuf-java-util:4.36.1")
+    api("com.google.protobuf:protobuf-java:4.36.2")
+    api("com.google.protobuf:protobuf-java-util:4.36.2")
 
     // gRPC's own protobuf marshaller, so a dynamic call puts the same bytes on
     // the wire a generated stub would and this module is not the author of a

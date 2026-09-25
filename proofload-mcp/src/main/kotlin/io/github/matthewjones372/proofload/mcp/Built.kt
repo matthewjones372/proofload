@@ -1,5 +1,8 @@
 package io.github.matthewjones372.proofload.mcp
 
+import java.io.IOException
+import java.net.URISyntaxException
+import java.nio.file.FileSystemNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -17,10 +20,16 @@ import java.time.format.DateTimeFormatter
  * generated resource holding a clock changes on every build, which invalidates
  * the build cache to tell somebody something the filesystem already knows.
  */
-internal fun builtAt(): Instant? = runCatching {
-    val at = Server::class.java.protectionDomain?.codeSource?.location?.toURI()?.let(Path::of) ?: return null
-    Files.getLastModifiedTime(at).toInstant()
-}.getOrNull()
+internal fun builtAt(): Instant? = try {
+    Server::class.java.protectionDomain?.codeSource?.location?.toURI()?.let(Path::of)
+        ?.let { Files.getLastModifiedTime(it).toInstant() }
+} catch (_: URISyntaxException) {
+    null
+} catch (_: FileSystemNotFoundException) {
+    null
+} catch (_: IOException) {
+    null
+}
 
 /** For the `initialize` reply, where a client shows it, and for anyone wondering if they rebuilt. */
 internal fun describedBuild(): String = builtAt()

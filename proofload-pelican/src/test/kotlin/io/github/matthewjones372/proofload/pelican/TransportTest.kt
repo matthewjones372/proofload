@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer
 import io.github.matthewjones372.pelican.ClientRequest
 import io.github.matthewjones372.pelican.Method
 import io.github.matthewjones372.proofload.RunRecorder
+import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
@@ -103,11 +104,10 @@ class TransportTest {
         val recorder = RunRecorder(started)
         val transport = proofloadTransport(recorder = recorder, templates = listOf("/orders"))
 
-        val thrown = runCatching {
+        shouldThrowAny {
             transport.send(ClientRequest(Method.GET, "http://localhost:1/orders")).toCompletableFuture().join()
         }
 
-        thrown.isFailure shouldBe true
         recorder.freeze()["GET /orders"].failed.count shouldBe 1L
     }
 

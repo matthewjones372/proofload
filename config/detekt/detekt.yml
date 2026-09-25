@@ -148,6 +148,15 @@ style:
         value: 'java.lang.Thread.sleep'
     # Tests sleep to make a gap they can measure.
     excludes: ['**/test/**']
+  # A second instance, because the one above excludes tests and this holds
+  # everywhere. `runCatching` catches every Throwable, cancellation and errors
+  # included, and turns it into a second error model beside the declared one;
+  # catch the exception the call is known to throw instead. See AGENTS.md.
+  ForbiddenMethodCall/runCatching:
+    active: true
+    methods:
+      - reason: 'runCatching swallows every Throwable into a Result; catch the specific exception instead.'
+        value: 'kotlin.runCatching'
 
 # ------------------------------------------------------------- what is meant
 #

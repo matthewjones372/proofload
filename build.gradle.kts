@@ -371,6 +371,10 @@ subprojects {
     // ForbiddenMethodCall, for one — are silently skipped there. `check`
     // depends on the type-resolving pair instead.
     tasks.named("check") { dependsOn("detektMain", "detektTest") }
+    // A fixture is shared test code, and the forbidden calls hold there too.
+    pluginManager.withPlugin("java-test-fixtures") {
+        tasks.named("check") { dependsOn(tasks.matching { it.name == "detektTestFixtures" }) }
+    }
 
     apply(plugin = "com.diffplug.spotless")
     extensions.configure<com.diffplug.gradle.spotless.SpotlessExtension> {

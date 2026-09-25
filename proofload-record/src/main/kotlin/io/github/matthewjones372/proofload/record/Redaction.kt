@@ -21,8 +21,11 @@ fun String.looksLikeAJwt(): Boolean {
     val parts = removePrefix("Bearer ").trim().split(".")
     if (parts.size != SEGMENTS || parts.any { it.isEmpty() }) return false
     if (!parts.all { it.all { char -> char.isLetterOrDigit() || char == '-' || char == '_' } }) return false
-    val header = runCatching { java.util.Base64.getUrlDecoder().decode(parts[0].padded()) }.getOrNull()
-        ?: return false
+    val header = try {
+        java.util.Base64.getUrlDecoder().decode(parts[0].padded())
+    } catch (_: IllegalArgumentException) {
+        return false
+    }
     return header.decodeToString().trimStart().startsWith("{")
 }
 
@@ -87,9 +90,11 @@ private val SECRET_FIELD = Regex(
 /** What separates one candidate token from the text around it. */
 private val JWT_BOUNDARY = Regex("""(?<=[^A-Za-z0-9._-])|(?=[^A-Za-z0-9._-])""")
 
-private fun String.decoded(): String = runCatching {
+private fun String.decoded(): String = try {
     java.net.URLDecoder.decode(this, Charsets.UTF_8)
-}.getOrDefault(this)
+} catch (_: IllegalArgumentException) {
+    this
+}
 
 /** What a dropped value is replaced by, so a reader sees the shape of what was there. */
 const val REDACTED: String = "REDACTED"

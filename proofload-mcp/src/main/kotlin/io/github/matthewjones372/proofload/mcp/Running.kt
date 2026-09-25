@@ -17,6 +17,7 @@ import io.github.matthewjones372.proofload.plan.asYaml
 import io.github.matthewjones372.proofload.plan.kafka.kafkaLowerings
 import io.github.matthewjones372.proofload.plan.readPlan
 import io.github.matthewjones372.proofload.preview
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -160,11 +161,17 @@ internal class Registry(
     }
 
     /** Every id this process kept or was left, whether or not it is in memory. */
-    private fun kept(): List<String> =
-        runCatching { Files.list(runs).use { paths -> paths.toList() } }.getOrDefault(emptyList())
+    private fun kept(): List<String> {
+        val paths = try {
+            Files.list(runs).use { listing -> listing.toList() }
+        } catch (_: IOException) {
+            emptyList()
+        }
+        return paths
             .map { it.fileName.toString() }
             .filter { it.endsWith(KEPT) }
             .map { it.removeSuffix(KEPT) }
+    }
 
     /** What a run is doing, or what it concluded. */
     fun status(id: String?): String = when (val at = id?.let { at(it) }) {

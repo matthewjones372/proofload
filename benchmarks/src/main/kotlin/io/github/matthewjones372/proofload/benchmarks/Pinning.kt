@@ -1,5 +1,7 @@
 package io.github.matthewjones372.proofload.benchmarks
 
+import java.io.IOException
+
 /**
  * Disjoint processors for the generator and the target.
  *
@@ -51,14 +53,16 @@ internal object Pinning {
         return Pinned(generator, target)
     }
 
-    private fun pinSelfTo(cpus: String): Boolean = runCatching {
+    private fun pinSelfTo(cpus: String): Boolean = try {
         val pid = ProcessHandle.current().pid()
         ProcessBuilder("taskset", "-cp", cpus, "$pid")
             .redirectErrorStream(true)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .start()
             .waitFor() == 0
-    }.getOrDefault(false)
+    } catch (_: IOException) {
+        false
+    }
 
     /** Where the target's processor set is left for `apart` to read. */
     const val TARGET_CPUS = "proofload.targetCpus"

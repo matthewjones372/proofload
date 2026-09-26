@@ -2,6 +2,7 @@ package io.github.matthewjones372.proofload.mcp
 
 import org.snakeyaml.engine.v2.api.Load
 import org.snakeyaml.engine.v2.api.LoadSettings
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException
 
 /**
  * One JSON-RPC call, as far as this server cares about it.
@@ -27,9 +28,11 @@ internal data class Call(
  * one to read the envelope around them would be a second thing to keep current.
  */
 internal fun parse(line: String): Call? {
-    val message = runCatching { Load(LoadSettings.builder().build()).loadFromString(line) }
-        .getOrNull()
-        .asMap() ?: return null
+    val message = try {
+        Load(LoadSettings.builder().build()).loadFromString(line)
+    } catch (_: YamlEngineException) {
+        return null
+    }.asMap() ?: return null
 
     val method = message["method"] as? String ?: return null
     val parameters = message["params"].asMap().orEmpty()

@@ -137,7 +137,10 @@ Errors a caller was promised are values in the return type. Throwing is for
 what nobody declared — a broken assumption, a bug.
 
 Do not wrap work in `runCatching` and map the result into a failure. That
-produces a second error model beside the declared one.
+produces a second error model beside the declared one. It also catches every
+`Throwable`, cancellation and errors included. Catch the exception the call is
+known to throw. `ForbiddenMethodCall/runCatching` in `config/detekt/detekt.yml`
+fails the build on any use, in main, test and fixture sources alike.
 
 Never add an `else` to a `when` over a sealed type. The missing branch is the
 compiler naming a case that needs handling.

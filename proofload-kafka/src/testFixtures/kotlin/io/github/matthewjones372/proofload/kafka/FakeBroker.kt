@@ -16,9 +16,11 @@ import org.apache.kafka.common.protocol.ByteBufferAccessor
 import org.apache.kafka.common.protocol.Message
 import org.apache.kafka.common.protocol.ObjectSerializationCache
 import org.apache.kafka.common.record.internal.MemoryRecords
+import org.apache.kafka.common.requests.ListOffsetsRequest
 import org.apache.kafka.common.requests.RequestHeader
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
@@ -80,7 +82,11 @@ class FakeBroker : AutoCloseable {
 
     private val accepting = Thread.ofPlatform().daemon().start {
         while (!socket.isClosed) {
-            val connection = runCatching { socket.accept() }.getOrNull() ?: return@start
+            val connection = try {
+                socket.accept()
+            } catch (_: IOException) {
+                return@start
+            }
             Thread.ofPlatform().daemon().start { serve(connection) }
         }
     }
@@ -90,7 +96,11 @@ class FakeBroker : AutoCloseable {
             val from = DataInputStream(it.getInputStream().buffered())
             val to = DataOutputStream(it.getOutputStream().buffered())
             while (!it.isClosed) {
-                val size = runCatching { from.readInt() }.getOrNull() ?: return
+                val size = try {
+                    from.readInt()
+                } catch (_: IOException) {
+                    return
+                }
                 val frame = ByteArray(size).also(from::readFully)
                 val buffer = ByteBuffer.wrap(frame)
                 val header = RequestHeader.parse(buffer)
@@ -244,14 +254,15 @@ class FakeBroker : AutoCloseable {
                     .setName(topic.name())
                     .setPartitions(
                         topic.partitions().map { partition ->
+                            // Earliest is zero and latest is everything
+                            // produced so far, which is all a consumer
+                            // assigning a partition by hand needs.
+                            val earliest = partition.timestamp() == ListOffsetsRequest.EARLIEST_TIMESTAMP
                             ListOffsetsResponseData.ListOffsetsPartitionResponse()
                                 .setPartitionIndex(partition.partitionIndex())
                                 .setErrorCode(0)
                                 .setTimestamp(-1L)
-                                // Earliest is zero and latest is everything
-                                // produced so far, which is all a consumer
-                                // assigning a partition by hand needs.
-                                .setOffset(if (partition.timestamp() == -2L) 0L else produced.get())
+                                .setOffset(if (earliest) 0L else produced.get())
                                 .setLeaderEpoch(0)
                         },
                     )

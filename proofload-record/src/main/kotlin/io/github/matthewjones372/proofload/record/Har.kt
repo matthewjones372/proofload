@@ -1,5 +1,6 @@
 package io.github.matthewjones372.proofload.record
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -23,7 +24,12 @@ import kotlin.time.Duration.Companion.milliseconds
  * point of reading a file everybody already exports.
  */
 fun readHar(text: String): List<Recorded> {
-    val root = runCatching { lenient.parseToJsonElement(text) }.getOrNull() as? JsonObject
+    val parsed = try {
+        lenient.parseToJsonElement(text)
+    } catch (_: SerializationException) {
+        null
+    }
+    val root = parsed as? JsonObject
         ?: throw IllegalArgumentException("this is not JSON, so it is not a HAR")
     val entries = (root["log"] as? JsonObject)?.get("entries") as? JsonArray
         ?: throw IllegalArgumentException("no log.entries here, so this is JSON but not a HAR")

@@ -12,6 +12,7 @@ import io.github.matthewjones372.proofload.perSecond
 import io.github.matthewjones372.proofload.scenario
 import io.github.matthewjones372.proofload.sessionKey
 import io.github.matthewjones372.proofload.step
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -165,7 +166,7 @@ class ProduceTest {
 
     @Test
     fun `brokers nobody named is a refusal rather than a producer pointed at nothing`() {
-        val why = runCatching { kafka.producer }.exceptionOrNull()?.message.orEmpty()
+        val why = shouldThrow<IllegalArgumentException> { kafka.producer }.message.orEmpty()
 
         withClue(why) { why.contains("no brokers") shouldBe true }
     }

@@ -1,6 +1,7 @@
 package io.github.matthewjones372.proofload
 
 import java.time.Instant
+import java.time.format.DateTimeParseException
 import kotlin.math.sqrt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
@@ -145,7 +146,11 @@ fun arrivalsFrom(file: CsvFile, column: String, source: String = "a csv"): Arriv
     return arrivalsFrom(instants, source)
 }
 
-private fun String.asInstant(): Instant? = runCatching { Instant.parse(trim()) }.getOrNull()
+private fun String.asInstant(): Instant? = try {
+    Instant.parse(trim())
+} catch (_: DateTimeParseException) {
+    null
+}
 
 private fun Instant.until(later: Instant): Long =
     (later.epochSecond - epochSecond) * NANOS_PER_SECOND + (later.nano - nano)

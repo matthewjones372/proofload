@@ -32,8 +32,11 @@ fun readTrend(history: Path, statistic: Statistic, acceptable: Share = Share(0.0
         // Named rather than let through: `Runs` refuses an empty set and an
         // unlike one already, and its message is about runs. Which point they
         // were is the half a reader needs to go and look.
-        val runs = runCatching { Runs.readAll(directory) }
-            .getOrElse { why -> throw IllegalArgumentException("point '$label': ${why.message}", why) }
+        val runs = try {
+            Runs.readAll(directory)
+        } catch (why: IllegalArgumentException) {
+            throw IllegalArgumentException("point '$label': ${why.message}", why)
+        }
         Trend.Point(label, runs)
     }
 

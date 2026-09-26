@@ -4,6 +4,7 @@ import com.sun.management.OperatingSystemMXBean
 import com.sun.management.UnixOperatingSystemMXBean
 import io.github.matthewjones372.proofload.Headroom
 import io.github.matthewjones372.proofload.Limits
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -180,8 +181,11 @@ private fun cpu(): Room.Source? {
  * content is `32768\t60999`. A stream read asks the file rather than its
  * metadata.
  */
-private fun read(path: String): String? =
-    runCatching { Files.newInputStream(Path.of(path)).use { it.readBytes().decodeToString() } }.getOrNull()
+private fun read(path: String): String? = try {
+    Files.newInputStream(Path.of(path)).use { it.readBytes().decodeToString() }
+} catch (_: IOException) {
+    null
+}
 
 private fun roomThread(runnable: Runnable): Thread =
     Thread(runnable, "proofload-room").apply { isDaemon = true }

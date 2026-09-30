@@ -8,7 +8,7 @@
 // module.
 dependencies {
     api(project(":proofload-core"))
-    api("io.github.matthewjones372:pelican-core:1.0.0-RC1")
+    api("io.github.matthewjones372:pelican-core:1.0.0-RC3")
 }
 
 tasks.test {

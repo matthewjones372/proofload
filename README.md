@@ -45,6 +45,14 @@ passes, the numbers describe the target rather than the tool.
 and not from the tool. <a href="docs/assets/report-full-light.png">The whole page</a>.</sub>
 </div>
 
+The example below uses HTTP and JUnit 5, which is the shortest way in. The same
+scenarios can also send WebSocket, gRPC, Kafka and JDBC traffic, run inside
+Kotest or ZIO Test, and be written from Java or Scala. A scenario can start from
+a YAML plan, an OpenAPI document or a HAR recording, and a command-line tool runs
+plans without a Kotlin build. A run can be kept as a baseline to compare the next
+one against, and written out as an HTML page, GitHub markdown or metrics for
+other tools. [Modules](#modules) lists every part and what it is for.
+
 ## Writing a test
 
 A scenario is a plain Kotlin value. There is no base class to extend, no string
@@ -107,6 +115,172 @@ For work that finishes somewhere else (you publish now and match a reply that
 arrives later on another channel), the measured latency is the full round trip
 rather than the ack.
 
+Each protocol is a module of its own, so a project only takes the clients it
+uses:
+
+- **HTTP and server-sent events**: `proofload-http`, on the JDK's
+  `java.net.http` client. The client can be replaced through a transport
+  interface.
+- **WebSocket**: `proofload-websocket`. The handshake and the close are each
+  timed, and `send` and `awaiting` time a message and the answers to it.
+  [Cookbook](docs/cookbook.md#websockets).
+- **gRPC**: `proofload-grpc` calls through your own generated stubs and leaves
+  the transport (Netty or OkHttp) to you. `proofload-grpc-dynamic` makes the same
+  calls with a JSON body, from a descriptor set or the server's reflection
+  service, for when you have no stubs. A plan file can't name a gRPC call yet,
+  so for now the dynamic module is only usable from Kotlin.
+  [Cookbook](docs/cookbook.md#grpc).
+- **Kafka**: `proofload-kafka` produces records and can read the answer off
+  another topic by a correlation header. It brings no serializer and no schema
+  registry: the value is a lambda that calls your own serializer.
+  [Cookbook](docs/cookbook.md#kafka-and-the-answer-on-another-topic).
+- **JDBC**: `proofload-jdbc` runs statements over your own `DataSource`. It
+  holds no transaction across steps and sends no batches.
+  [Cookbook](docs/cookbook.md#database-steps).
+- **Pelican**: `proofload-pelican` runs a generated Pelican client on
+  Proofload's transport, with no Pekko.
+
+A database step, with the driver and pool your service already uses:
+
+```kotlin
+val orderId = sessionKey<Int>("orderId")
+val byId = step("select an order")
+val orders = jdbc.on(dataSource)
+
+val reading = scenario("reading") {
+    exec(byId, orders.query("select id, sku from orders where id = ?").binding { listOf(it[orderId]) })
+}
+
+// after the run
+result[byId].serviceTime.p99   // what the database took
+result[byId].waitedForPool.p99 // what users spent waiting for a connection
+```
+
+Only the HTTP path, and part of the Kafka path, have a measured overhead.
+WebSocket, server-sent events, gRPC and JDBC have not been benchmarked yet.
+[docs/what-it-costs.md](docs/what-it-costs.md#what-has-a-number-and-what-has-none)
+says which numbers exist.
+
+## Test frameworks
+
+`proofload-junit5` provides the `@LoadTest` above. `proofload-kotest` does the
+same in a Kotest spec, with no base class and nothing to register:
+
+```kotlin
+class CheckoutSpec : StringSpec({
+
+    "checkout holds up at fifty a second" {
+        val result = proofload().run(checkout.at(50.perSecond, over = 1.minutes))
+
+        result[placeOrder].responseTime.p99 shouldBeLessThan 200.milliseconds
+    }
+})
+```
+
+`proofload-zio-test` runs a load test as a zio-test test. Extending
+`ProofloadSpec` gives a spec that runs sequentially on the live clock, and the
+run itself goes on ZIO's blocking executor. Kotest and zio-test are
+`compileOnly` in these modules, so neither arrives on your classpath through
+Proofload. [The cookbook](docs/cookbook.md#the-same-thing-in-a-zio-test-spec)
+has a spec, and [a test framework is optional](docs/cookbook.md#without-a-test-framework).
+
+## From Java and Scala
+
+`proofload-java` builds the same scenario values from Java, with static methods,
+builders and `java.time.Duration`. It covers scenarios, HTTP steps, running,
+goals, reading a result and the capacity search. Baselines, sharding and the
+exports are not in it yet.
+
+```java
+Scenario checkout = Scenarios.named("checkout")
+    .exec(BROWSE, api.get("/products"))
+    .exec(PLACE_ORDER, Https.capturing(
+        api.post("/orders").body("{\"cart\":\"1 anvil\"}").expecting(201),
+        ORDER_ID,
+        response -> response.header("location")))
+    .pause(Duration.ofSeconds(1))
+    .build();
+```
+
+`proofload-scala` is a Scala 3 layer over the Java facade, with
+`FiniteDuration` in both directions, `50.perSecond` and `sessionKey[T]`. It is
+compiled against Scala 3.3 LTS so that any later Scala 3 compiler can read it.
+Don't use `0.1.0-rc3` from Scala: it was built with Scala 3.9 by mistake.
+
+[examples-java](examples-java/src/main/java/io/github/matthewjones372/proofload/examples/java/Checkout.java)
+and [examples-scala](examples-scala/src/main/scala/io/github/matthewjones372/proofload/examples/scala/Checkout.scala)
+each hold a complete load test that the build compiles, and examples-scala has a
+[zio-test spec](examples-scala/src/test/scala/io/github/matthewjones372/proofload/examples/scala/CheckoutSpec.scala)
+that the build runs. [docs/from-java.md](docs/from-java.md) and
+[docs/from-scala.md](docs/from-scala.md) walk through them.
+
+## Plans, recordings and contracts
+
+A scenario doesn't have to start as Kotlin.
+
+**A plan file.** `proofload-plan` reads `plan/1`, a YAML or JSON description of
+a scenario, its load and its goals, and turns it into the same values the Kotlin
+DSL builds. A plan can send HTTP requests and produce to Kafka topics
+(`proofload-plan-kafka` supplies the Kafka half, so `proofload-plan` carries no
+Kafka client), and can draw per-user values with `draw`. When a plan outgrows
+the format, `emit` prints it as Kotlin.
+
+```yaml
+proofload:  plan/1
+baseUrl:  https://orders.internal
+scenario: checkout
+steps:
+  - name: browse
+    get:  /products
+  - name: place order
+    post: /orders
+    body: '{"cart":"1 anvil"}'
+    expecting: 201
+load:
+  rate: 50/s
+  over: 1m
+goals:
+  - step: place order
+    p99:  200ms
+```
+
+**The command line.** `proofload-cli` has five commands: `validate`, `preview`,
+`run`, `emit` and `from-openapi`. Only `run` sends load, and it is held to a
+`proofload.toml` in the working directory if there is one
+([docs/allowance.md](docs/allowance.md)). The exit code is the verdict: 0 met,
+1 missed a goal, 2 the generator fell behind, 3 refused, 4 unusable. The
+published jar names its main class, so [JBang](https://www.jbang.dev) can start
+it from the coordinate:
+
+```bash
+jbang io.github.matthewjones372:proofload-cli:0.1.0-rc4 preview checkout.yaml
+jbang io.github.matthewjones372:proofload-cli:0.1.0-rc4 run checkout.yaml
+```
+
+**OpenAPI.** `proofload-openapi` reads an OpenAPI document and writes a plan,
+drawing parameter values from the ranges and enums the document declares. The
+CLI's `from-openapi` and the MCP server's `from_openapi` both use it;
+[the MCP section](#using-it-from-an-agent-mcp) below has an example.
+
+**Pelican endpoints.** `proofload-contract` writes a plan from Pelican endpoint
+values. It is build-time tooling, and what it writes is a first draft: one step
+per GET endpoint in the order they were declared, a smoke-sized load and a
+placeholder p99 goal per step, all for you to edit. Reading an OpenAPI document
+through Pelican's importer is planned and not built.
+
+**A HAR recording.** `proofload-record` reads a HAR file, as exported by a
+browser or a proxy, into Kotlin source that you edit and commit. A value one
+response produced and a later request used becomes a capture, repeated paths
+collapse into one step, static assets are left out, and every credential is
+replaced by a `TODO`. It doesn't record traffic itself.
+[Cookbook](docs/cookbook.md#start-from-traffic-you-already-have).
+
+**Generated data.** `proofload-arbs` has generators that are a function of the
+user's number: uniform, Zipf, a list of values, weighted choices, digits and
+UUIDs. Cardinality and skew are then something you choose, and a run can be
+repeated exactly. A plan's `draw` uses the same generators.
+[Cookbook](docs/cookbook.md#data-you-do-not-have).
+
 ## Features
 
 - **Schedule check.** Every run reports whether the generator kept its own
@@ -143,6 +317,45 @@ the target was fast, not that the tool struggled.
 </picture>
 </div>
 
+## Baselines, reports and exports
+
+`proofload-report-html` writes the page shown above. The other modules here
+keep a run or pass its numbers on:
+
+- **GitHub**: `proofload-report-github` renders a run as a markdown table,
+  appends it to the Actions job summary, and writes an index page over a
+  directory of reports for GitHub Pages.
+- **Baselines**: `proofload-baseline` writes a run to a file and reads it back,
+  so the next run can be compared with it. Each step comes back better, worse,
+  indistinguishable, added or gone. Two runs of different plans are refused, and
+  runs from different machines come with a warning. It can also read a
+  directory of runs as one population, and a series of baselines as a trend.
+- **Exports**: `proofload-export` writes a run as a JSON document, an
+  HdrHistogram log or an OpenMetrics exposition.
+  [docs/exporting.md](docs/exporting.md).
+- **OpenTelemetry**: `proofload-otel` sends a run's measurements to a collector
+  over OTLP/HTTP, and can push counts while a run is going. Percentiles are only
+  sent once the run is over.
+- **Several injectors**: a run can be split across machines with
+  `sharded(index, of, startingAt)` and the pieces merged back into one result.
+  There is no coordinator; you start each injector yourself.
+  [docs/more-than-one-injector.md](docs/more-than-one-injector.md).
+
+A baseline in CI, from the
+[example the build compiles](examples/src/main/kotlin/io/github/matthewjones372/proofload/examples/AgainstTheBaseline.kt):
+
+```kotlin
+val previous = baseline.takeIf { Files.exists(it) }?.let(::readBaseline)
+val comparison = result.against(previous)
+
+result.appendToStepSummary(comparison, floor)
+result.writeBaseline(baseline)
+```
+
+A comparison reads p99 of response time. On `main`, and not yet released,
+`result.against(previous, of = Clock.ServiceTime)` compares service time
+instead, which is the better reading of a run where the generator fell behind.
+
 ## Get started
 
 ```kotlin
@@ -153,6 +366,7 @@ dependencies {
 }
 ```
 
+The other modules are added the same way; [Modules](#modules) lists them.
 Write the test above, then write the report:
 
 ```kotlin
@@ -176,6 +390,94 @@ with a note on why it is written that way rather than the obvious alternative:
 > this page and under `docs/` is pinned to it. It is a release candidate, so the
 > API may still change before `0.1.0`. `specs/` tracks what is built and what
 > is not.
+>
+> `main` has changes made since `v0.1.0-rc4` that are not on Maven Central.
+> [CHANGELOG.md](CHANGELOG.md) lists everything under `0.1.0` without
+> separating the two, so `git log v0.1.0-rc4..main` is the way to tell. On
+> `main`, release candidates after rc4 are set to publish to Central's snapshot
+> repository, which drops them after 90 days.
+
+## Modules
+
+Every library module below is on Maven Central at `0.1.0-rc4`, under the group
+`io.github.matthewjones372`, and they are versioned together.
+`proofload-core` depends on the Kotlin standard library and nothing else. The
+other modules sit beside it, and each one has a test that checks what is on its
+classpath. [docs/modules.md](docs/modules.md) has the dependencies of each.
+
+**Core**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-core` | Scenarios, load profiles, goals and results, all as values | yes |
+| `proofload-engine` | Runs a simulation on virtual threads, departing on a schedule; `Proofload` is here | yes |
+
+**Protocols**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-http` | HTTP steps on the JDK client, and server-sent event streams | yes |
+| `proofload-websocket` | WebSocket steps on the JDK's WebSocket client | yes |
+| `proofload-grpc` | gRPC steps through your own generated stubs | yes |
+| `proofload-grpc-dynamic` | gRPC calls with no stubs, from a descriptor set or server reflection; not usable from a plan yet | yes |
+| `proofload-kafka` | Kafka produce steps, and answers read off another topic | yes |
+| `proofload-jdbc` | Statements over your own `DataSource`, with the pool wait counted apart | yes |
+| `proofload-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | yes |
+
+**Test frameworks**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-junit5` | `@LoadTest`: a load test that is a JUnit 5 test | yes |
+| `proofload-kotest` | The same in a Kotest spec | yes |
+| `proofload-zio-test` | The same in a zio-test spec | yes |
+
+**Languages**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-java` | A Java facade: static methods, builders and `java.time.Duration`; covers scenarios, HTTP, running and goals | yes |
+| `proofload-scala` | A Scala 3 layer over the Java facade, with `FiniteDuration` | yes |
+
+**Building scenarios**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-plan` | Reads a `plan/1` file into a scenario, and prints one back as Kotlin | yes |
+| `proofload-plan-kafka` | Lets a plan produce to Kafka topics | yes |
+| `proofload-openapi` | Writes a plan from an OpenAPI document | yes |
+| `proofload-contract` | Writes a draft plan from Pelican endpoint values; OpenAPI through Pelican is not built yet | yes |
+| `proofload-record` | Reads a HAR recording into Kotlin source to edit and commit | yes |
+| `proofload-arbs` | Per-user generators with a stated cardinality and skew | yes |
+
+**Running and reporting**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-cli` | `validate`, `preview`, `run`, `emit` and `from-openapi` from a shell, with the verdict as the exit code | yes |
+| `proofload-report-html` | One self-contained HTML report | yes |
+| `proofload-report-github` | Markdown, the Actions job summary and a Pages index | yes |
+| `proofload-baseline` | A run kept in a file and compared with the next one | yes |
+| `proofload-export` | JSON, HdrHistogram log and OpenMetrics output | yes |
+| `proofload-otel` | Measurements sent to an OpenTelemetry collector | yes |
+
+**Agents**
+
+| Module | What it is for | On Central |
+|---|---|---|
+| `proofload-mcp` | The CLI's calls as an MCP server, [described below](#using-it-from-an-agent-mcp) | yes |
+
+**Examples and checks**
+
+These are part of the repository and are not published.
+
+| Directory | What it is for | On Central |
+|---|---|---|
+| `examples` | Tests where the modules are used together, including the plan and Kotlin examples the docs quote | no |
+| `examples-java` | A load test in Java, so a Java compiler checks the facade | no |
+| `examples-scala` | A load test and a zio-test spec in Scala, compiled and run by the build | no |
+| `smoke` | A separate Gradle build that depends on the published coordinates, to catch a broken POM or a missing jar | no |
+| `benchmarks` | Measures the tool's own overhead for [docs/what-it-costs.md](docs/what-it-costs.md) | no |
 
 ## Using it from an agent (MCP)
 
@@ -341,6 +643,10 @@ it refuses, and the `plan/1` format a model can ask for instead of guessing.
 - **[docs/for-agents.md](docs/for-agents.md)**: every public signature, rendered from the `.api` dumps, for handing to a model.
 - **[docs/from-java.md](docs/from-java.md)**: writing a load test in Java, and why the facade is a module rather than annotations on core.
 - **[docs/from-scala.md](docs/from-scala.md)**: the same from Scala 3, over the Java facade, with `FiniteDuration` both ways, and a load test that is a zio-test test.
+- **[docs/cookbook.md](docs/cookbook.md)**: recipes from a first test to Kafka, gRPC and a baseline in CI.
+- **[CHANGELOG.md](CHANGELOG.md)**: what changed, and the current limitations.
+- **[specs/ROADMAP.md](specs/ROADMAP.md)**: which specs are built and which are only drafted.
+- **[llms.txt](llms.txt)**: a one-page summary for a model to read first.
 - **[AGENTS.md](AGENTS.md)**: read this first if you want to work on Proofload itself.
 
 ```bash

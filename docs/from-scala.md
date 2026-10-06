@@ -143,7 +143,8 @@ should be read on: `result.against(baseline, of = Clock.ServiceTime)` where the
 generator fell behind, because the response times of such a run carry a wait
 this tool caused. The `Comparison` it hands back is what `writeHtmlReport` and
 `markdown` take, and it records which clock it was read on so the page says so
-rather than assuming.
+rather than assuming. Choosing the clock is on `main` and not yet in a release:
+in `0.1.0-rc4`, `against` always reads response time.
 
 `result.offered` is the other half of reading a run, and an `Option`: it is
 what the run asked for beside what actually left, and it cannot be said of a

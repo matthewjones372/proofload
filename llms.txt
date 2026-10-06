@@ -10,8 +10,8 @@
 Facts worth having before anything else:
 
 - Kotlin 2.4, JVM 21+, Apache 2.0. Virtual threads on the JDK's own HTTP client.
-- Nothing is on Maven Central yet; `./gradlew publishToMavenLocal` is how to get
-  it today. Coordinates are `io.github.matthewjones372:proofload-core` and its
+- Release candidates are on Maven Central; the current one is `0.1.0-rc4`.
+  `./gradlew publishToMavenLocal` gets what is on `main` since then. Coordinates are `io.github.matthewjones372:proofload-core` and its
   siblings — `proofload-http`, `proofload-junit5`, `proofload-report-html` and the rest
   under Docs below. `proofload-core` depends on the Kotlin standard library and
   nothing else, and a test enforces it; every client, broker, test framework and

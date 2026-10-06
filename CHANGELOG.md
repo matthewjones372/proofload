@@ -16,6 +16,10 @@ one.
 
 The first release. Twenty-seven modules, published together and versioned together.
 
+Release candidates `0.1.0-rc1` to `0.1.0-rc4` are on Maven Central. The entries
+below cover what is in them and what is on `main` since `v0.1.0-rc4`; `git log
+v0.1.0-rc4..main` lists the latter.
+
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.
 
@@ -1153,12 +1157,3 @@ commit this section was written on, not planned or assumed.
   major bump — what changed is that it is now a line removed from a file a
   reviewer is already looking at, rather than something somebody remembered to
   write here.
-- **CI is not running, and the Actions tab says otherwise.** GitHub Actions is
-  blocked at the account level: a push still *creates* a run, and the run fails
-  in a few seconds with no runner assigned — `runner_id: 0`, no runner name, no
-  steps, and no logs to download. So nothing here is backed by a green tick,
-  and the repository's Actions tab is several hundred red runs that look like a
-  broken build and are a build that never started. `./gradlew build` on a
-  developer machine is what these modules have been checked with. The workflows
-  themselves are fine — the action versions they pin all exist, and runs
-  succeeded before the block.

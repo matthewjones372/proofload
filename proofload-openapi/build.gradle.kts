@@ -7,7 +7,7 @@
 // a schema's facets into a value the service will accept.
 dependencies {
     api(project(":proofload-plan"))
-    implementation("org.snakeyaml:snakeyaml-engine:3.1.1")
+    implementation("org.snakeyaml:snakeyaml-engine:3.2")
 }
 
 tasks.test {

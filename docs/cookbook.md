@@ -68,7 +68,8 @@ a line of a source set the build compiles.
 [ask what actually failed](#ask-what-actually-failed) ·
 [read only the part that settled](#read-only-the-part-that-settled) ·
 [find the rate it sustains](#find-the-rate-it-sustains) ·
-[did the generator keep up?](#did-the-generator-keep-up)
+[did the generator keep up?](#did-the-generator-keep-up) ·
+[catch a leak with JFR beside the soak](#catch-a-leak-with-jfr-beside-the-soak)
 
 **Keeping the answer**: [write an HTML report](#write-an-html-report) ·
 [one run at a time, on the whole machine](#one-run-at-a-time-on-the-whole-machine) ·
@@ -1539,6 +1540,153 @@ Scala reads all of this without naming a file class: `result.fellBehind`,
 `result.lostGround`, `result.ranOutOfRoom`, `result.concurrency` for Little's
 law, and `result.offered` as an `Option[Offered]` whose `asked`, `left` and
 `over` are the numbers above.
+
+## Catch a leak with JFR beside the soak
+
+Proofload sees the target from outside: latency, counts, failures. A leak is
+memory that grows while the load stays flat, and only the target's own JVM can
+say that. So the test holds the load still with proofload and asks Java Flight
+Recorder for the heap at both ends of the soak:
+
+```kotlin
+import io.github.matthewjones372.proofload.at
+import io.github.matthewjones372.proofload.engine.Proofload
+import io.github.matthewjones372.proofload.http.exec
+import io.github.matthewjones372.proofload.http.http
+import io.github.matthewjones372.proofload.junit5.LoadTest
+import io.github.matthewjones372.proofload.perSecond
+import io.github.matthewjones372.proofload.scenario
+import io.kotest.matchers.longs.shouldBeLessThan
+import java.net.ConnectException
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+import jdk.jfr.consumer.RecordingFile
+import kotlin.io.path.createTempDirectory
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+
+class OrdersLeakTest {
+
+    private val api = http.baseUrl("http://localhost:8080")
+
+    private val checkout = scenario("checkout") {
+        exec(browse, api.get("/products"))
+        exec(placeOrder, api.post("/orders").body("""{"cart":"1 anvil"}""").expecting(201))
+    }
+
+    @LoadTest
+    fun `an hour of checkout leaves the heap where it found it`(proofload: Proofload) {
+        val jfr = createTempDirectory("leak").resolve("orders.jfr")
+        val orders = ProcessBuilder(
+            "java",
+            "-XX:StartFlightRecording=filename=$jfr,settings=profile,dumponexit=true,path-to-gc-roots=true",
+            "-jar", "build/libs/orders.jar",
+        ).inheritIO().start()
+        awaitUp("http://localhost:8080/health")
+
+        proofload.run(checkout.at(50.perSecond, over = 2.minutes))   // warm: JIT, pools, caches
+        fullGc(orders)
+        proofload.run(checkout.at(50.perSecond, over = 1.hours))
+        fullGc(orders)
+
+        orders.destroy()                                             // a clean exit writes the recording
+        orders.waitFor(1, TimeUnit.MINUTES)
+
+        val (before, after) = liveHeapAtEachFullGc(jfr).let { it.first() to it.last() }
+        (after - before) shouldBeLessThan 32L * 1024 * 1024
+    }
+}
+
+private fun fullGc(target: Process) {
+    val jcmd = Path.of(System.getProperty("java.home"), "bin", "jcmd").toString()
+    ProcessBuilder(jcmd, target.pid().toString(), "GC.run").inheritIO().start().waitFor()
+}
+
+/** Heap used after each collection that `jcmd GC.run` asked for, in the order they ran. */
+private fun liveHeapAtEachFullGc(jfr: Path): List<Long> {
+    val events = RecordingFile.readAllEvents(jfr)
+    val asked = events
+        .filter { it.eventType.name == "jdk.GarbageCollection" && it.getString("cause") == "Diagnostic Command" }
+        .map { it.getInt("gcId") }
+        .toSet()
+    return events
+        .filter { it.eventType.name == "jdk.GCHeapSummary" && it.getString("when") == "After GC" }
+        .filter { it.getInt("gcId") in asked }
+        .sortedBy { it.startTime }
+        .map { it.getLong("heapUsed") }
+}
+
+private fun awaitUp(url: String) {
+    val client = HttpClient.newHttpClient()
+    val ping = HttpRequest.newBuilder(URI(url)).build()
+    repeat(120) {
+        try {
+            if (client.send(ping, BodyHandlers.discarding()).statusCode() == 200) return
+        } catch (notYet: ConnectException) {
+            // not listening yet
+        }
+        Thread.sleep(500)
+    }
+    error("$url never came up")
+}
+```
+
+```groovy
+dependencies {
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
+    testImplementation("io.kotest:kotest-assertions-core:6.2.4")
+}
+```
+
+**Why a full collection at each end, and not the heap over time.** Heap used
+between collections is mostly garbage nobody has collected yet, and even the
+reading after a young collection still carries old-generation garbage waiting
+for a concurrent cycle. A collection that `jcmd GC.run` asks for is a full
+one, recorded with the cause `Diagnostic Command`, so what is left after it
+is what is still reachable. A target started with
+`-XX:+ExplicitGCInvokesConcurrent` runs a concurrent cycle instead, and the
+reading is no longer a floor. Two of those
+readings, before and after an hour of the same load, are a measurement: nothing
+fitted, no slope. The warm-up comes before the first one so that caches and
+pools filling up count as the baseline rather than as growth.
+
+**Why the target is its own process.** Run the target inside the test JVM and
+the heap holds proofload's histograms and timeline too. They are bounded
+([what it costs](what-it-costs.md)), but a leak verdict should not have to
+subtract anything.
+
+**The threshold is yours.** 32 MB is a placeholder. Set it from a run you
+trust: a target that does not leak still moves its live set by a few megabytes
+between two full collections, and that wobble is the floor, as it is for
+[latency](#more-than-one-run-and-a-verdict-worth-having).
+
+**When it fails**, the culprit is already in the recording.
+`path-to-gc-roots=true` makes the recorder keep a sample of old, still-live
+objects with the stack that allocated each one and the chain of references
+keeping it alive:
+
+```bash
+jfr print --events jdk.OldObjectSample orders.jfr
+```
+
+Or open the file in JDK Mission Control, whose Memory page groups the same
+samples by class. Walking the roots costs a pause when the recording is
+written, which is why it happens once, at exit, after the load has stopped.
+
+A leak shows up in the proofload result too, though it does not prove one: p99
+climbing through `result.timeline` while the rate stays flat, or a
+`result.steadyState` of `NeverSettled`. To watch both sides live during a long
+soak, [push the run to a collector](#watch-a-two-hour-soak-from-a-dashboard)
+that already scrapes the target's JVM metrics.
+
+`destroy()` asks the process to stop. On Windows it kills the process
+instead, and no recording is written; run `jcmd <pid> JFR.dump` before
+stopping it there.
 
 ## Write an HTML report
 

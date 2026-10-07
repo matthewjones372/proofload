@@ -546,6 +546,26 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **`cs launch` on the server's coordinate starts the server.** Coursier keys
+  every `Main-Class` it finds on a resolved classpath by
+  (`Implementation-Vendor-Id`, `Specification-Title`), both defaulting to the
+  empty string, and keeps one of any two that key alike. `proofload-mcp` and
+  `proofload-cli` both carry a main and neither named itself, so
+  `cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4` started the
+  command line: usage text and exit code 4 where a client expected JSON-RPC.
+  jbang reads the manifest of the jar it was asked for and was never affected,
+  so the two launchers `docs/mcp.md` called interchangeable were not.
+
+  Every published jar now names its coordinate in its manifest — every one
+  rather than the two that carry a main, because the collision is between jars
+  and a third entry point would bring it back. `LaunchingTest` opens the jars
+  this coordinate resolves and fails when two carry a main under the same name
+  or when coursier's own rule picks anything but `ServerKt`, and the release
+  workflow runs the real launcher against a repository built from the tag.
+  **`0.1.0-rc4` and earlier are not fixed by this** and cannot be: the manifests
+  are published. From coursier, those versions need
+  `-M io.github.matthewjones372.proofload.mcp.ServerKt`.
+
 - **A run's id no longer counts, and a finished run survives a restart.** Ids
   came from an `AtomicInteger`, so two replicas started together both answered
   `r-1` and a caller polling one was handed the other's run — and the count

@@ -392,6 +392,25 @@ subprojects {
         apply(plugin = "com.vanniktech.maven.publish")
         apply(plugin = "org.jetbrains.dokka")
 
+        // What a launcher matches a `Main-Class` against. Coursier keys every
+        // main it finds on the resolved classpath by
+        // (`Implementation-Vendor-Id`, `Specification-Title`), both defaulting
+        // to the empty string, and where two jars key alike it keeps one of
+        // them. `proofload-mcp` and `proofload-cli` both carry a main and
+        // neither named itself, so `cs launch` on the server's coordinate
+        // started the command line instead — usage text and exit code 4 where a
+        // client expected JSON-RPC. Every published jar names its coordinate,
+        // rather than only the two that carry a main, because the collision is
+        // between jars and a third one would bring it back.
+        tasks.named<Jar>("jar") {
+            manifest {
+                attributes(
+                    "Implementation-Vendor-Id" to project.group.toString(),
+                    "Specification-Title" to project.name,
+                )
+            }
+        }
+
         extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             // Sources are not an optional extra for a library someone else has
             // to debug, and Maven Central will not accept a release without a

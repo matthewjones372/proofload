@@ -118,6 +118,7 @@ built. Each row links the spec that argued for it.
 | [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept. The rows are flat on both machines that have run it, so one client was never the bound and `striped(n)` is deliberately not shipped |
 | [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already existed. No virtual clock, which the spec recommended against |
 | [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants as `docs/invariants.md`, the tests that cite each, and `./gradlew invariants` gating them from `check`. Five still do not hold, and the page says which |
+| [0142](0142-the-start-command-in-the-documentation.md) | every published jar naming its coordinate, so a launcher starts the server rather than the command line, and the documented download checked against the release |
 
 Everything else drafted is built, bar the tails listed below and the three
 specs under "Drafted, not built".

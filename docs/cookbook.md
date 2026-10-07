@@ -1531,7 +1531,9 @@ behind is the number the warning above the table is about;
 `result.against(previous, of = Clock.ServiceTime)` reads the target instead. The
 comparison says which it was read on, so the page and the number cannot drift
 apart. Java says it as `Results.against(result, previous, 99.0, Clock.ServiceTime)`
-and Scala as `result.against(previous, of = Clock.ServiceTime)`.
+and Scala as `result.against(previous, of = Clock.ServiceTime)`. Choosing the
+clock is on `main` and not yet in a release: in `0.1.0-rc4`, `against` always
+reads response time.
 
 Scala reads all of this without naming a file class: `result.fellBehind`,
 `result.lostGround`, `result.ranOutOfRoom`, `result.concurrency` for Little's

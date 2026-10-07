@@ -631,6 +631,19 @@ count.
 **[docs/mcp.md](docs/mcp.md)** is the reference: every tool, what it sends, what
 it refuses, and the `plan/1` format a model can ask for instead of guessing.
 
+## Used in
+
+- [tweet-street](https://github.com/matthewjones372/tweet-street), a bank in four
+  services: its [`lark-bank/loadtest`](https://github.com/matthewjones372/tweet-street/tree/main/lark-bank/loadtest)
+  scenarios produce the README's numbers, run in Docker Compose or as a Job in a
+  kind cluster, with screening on and off.
+- [petshop](https://github.com/matthewjones372/petshop): `./gradlew loadTest`
+  starts the whole service in-process and holds it at 200 requests a second,
+  asserting correctness under load as well as latency.
+- [starwars-api](https://github.com/matthewjones372/starwars-api), from Scala: its
+  [`load-test`](https://github.com/matthewjones372/starwars-api/tree/main/load-test)
+  module, with what the runs found written up in `FINDINGS.md`.
+
 ## Further reading
 
 - **[docs/what-it-costs.md](docs/what-it-costs.md)**: the tool's own measured overhead.

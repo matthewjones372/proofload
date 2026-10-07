@@ -492,9 +492,10 @@ claude mcp add proofload -- jbang io.github.matthewjones372:proofload-mcp:0.1.0-
 ```
 
 The coordinate is enough because the published jar has a `Main-Class`.
-[Coursier](https://get-coursier.io) works too, with `cs launch`. `java -jar` does
-not work: the jar is thin and has no classpath, so whatever starts it has to
-resolve the POM.
+[Coursier](https://get-coursier.io) works too, with `cs launch`, from the release
+after `0.1.0-rc4`; `docs/mcp.md` has the flag that one and earlier need.
+`java -jar` does not work: the jar is thin and has no classpath, so whatever
+starts it has to resolve the POM.
 
 Two other routes need no launcher. One is a download from the GitHub release,
 which includes a `.bat` and so also works on Windows. The other is a container:

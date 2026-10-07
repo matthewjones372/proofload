@@ -566,6 +566,14 @@ enough to list, and long enough to matter.
   are published. From coursier, those versions need
   `-M io.github.matthewjones372.proofload.mcp.ServerKt`.
 
+- **The download `docs/mcp.md` names is checked against the release.** The
+  `0.1.0-rc4` zip was built and attached, but its release was left drafted while
+  the modules went to Maven Central, so the documented URL was a 404 against an
+  asset sitting under an `untagged-…` path. The release is published and the URL
+  is served; `downloads.yml` fails when any `releases/download/` URL in the
+  README or `docs/` is not 200, on publication and on a daily schedule, because
+  nothing in `./gradlew build` can check an asset that does not exist yet.
+
 - **A run's id no longer counts, and a finished run survives a restart.** Ids
   came from an `AtomicInteger`, so two replicas started together both answered
   `r-1` and a caller polling one was handed the other's run — and the count

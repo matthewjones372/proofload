@@ -40,6 +40,28 @@ jobs:
       - name: Build and test
         run: ./gradlew build --stacktrace
 
+      # The command `docs/mcp.md` tells a reader to run, against the bytes about
+      # to be published rather than against the last release's. `LaunchingTest`
+      # proves the jars name themselves; only a launcher proves what it then
+      # does with them, and rc4 shipped a coordinate that started the command
+      # line. `--no-default` with the local repository named first, so this
+      # resolves what this tag built rather than a same-numbered artifact
+      # already on Central.
+      - name: Start it the way the documentation says to
+        run: |
+          ./gradlew publishAllPublicationsToLocalRepository
+          curl -fsSL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz \
+            | gzip -d > cs
+          chmod +x cs
+          answer=$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+            | ./cs launch --no-default -r "file://$PWD/build/repo" -r central \
+                "io.github.matthewjones372:proofload-mcp:${GITHUB_REF_NAME#v}")
+          echo "$answer"
+          case "$answer" in
+            *'"name":"benchmark"'*) ;;
+            *) echo "the coordinate alone did not start the MCP server"; exit 1 ;;
+          esac
+
       # Uploads a bundle to the Central Portal and leaves it staged. Releasing
       # it is a click there: a staged bundle can be dropped, a released one is
       # permanent. Set `mavenCentralAutomaticPublishing` to skip the click.

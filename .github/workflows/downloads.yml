@@ -1,0 +1,43 @@
+name: downloads
+
+# A URL in the documentation is a promise, and this one is only kept after
+# somebody publishes the release the tag drafted. `0.1.0-rc4` reached Maven
+# Central and its release sat drafted, so `docs/mcp.md` pointed at a 404 while
+# every coordinate beside it resolved. Nothing in `./gradlew build` can catch
+# that — the asset does not exist when the tests run — so the check runs when a
+# release is published, and again on the clock for the day somebody forgets.
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Every download the documentation names is served
+        run: |
+          urls=$(grep -rhoE \
+            'https://github\.com/matthewjones372/proofload/releases/download/[^)`"[:space:]]+' \
+            README.md docs/*.md | sort -u)
+          # An empty list is the check having stopped checking, not a pass: the
+          # page could have been reworded around the pattern.
+          if [ -z "$urls" ]; then
+            echo "no download URL found in README.md or docs/ — has the pattern moved?"
+            exit 1
+          fi
+          status=0
+          for url in $urls; do
+            code=$(curl -sSL -o /dev/null -w '%{http_code}' "$url")
+            echo "$code $url"
+            [ "$code" = 200 ] || status=1
+          done
+          exit $status

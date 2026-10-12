@@ -39,7 +39,7 @@ class RunRecorder(
     // Beside the run's own seconds rather than each step's: a departure is
     // late once, for the user, not once per step it goes on to make. One
     // coarse table a second at run level, which is what makes it affordable.
-    private val lateness = Lateness()
+    private val lateness = lateness()
 
     /**
      * How long this run has been going, on the monotonic clock this recorder
@@ -98,7 +98,7 @@ class RunRecorder(
             behind.record(schedulingDelay)
             lateness.record(at, schedulingDelay)
         }
-        steps.getOrPut(step) { StepRecorder() }
+        stepCalled(step)
             .record(failure, serviceTime, serviceTime + schedulingDelay, at, reached, visit, attempts, trace)
     }
 
@@ -113,7 +113,7 @@ class RunRecorder(
      * neither.
      */
     fun aside(step: String, queued: Duration, produced: Long) {
-        steps.getOrPut(step) { StepRecorder() }.aside(queued, produced)
+        stepCalled(step).aside(queued, produced)
     }
 
     /**
@@ -128,19 +128,41 @@ class RunRecorder(
      */
     fun arrived(step: String, latency: Duration, at: Duration) {
         require(at >= Duration.ZERO) { "an answer cannot have arrived before the run began, but arrived at $at" }
-        steps.getOrPut(step) { StepRecorder() }.record(failure = null, service = latency, response = latency, at = at)
+        stepCalled(step).record(failure = null, service = latency, response = latency, at = at)
     }
 
     /** What the sink never answered for, once the drain window has closed. */
     fun outstanding(step: String, outstanding: Outstanding) {
-        steps.getOrPut(step) { StepRecorder() }.leftOver(outstanding)
+        stepCalled(step).leftOver(outstanding)
     }
 
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
         lateness.merge(other.lateness)
-        other.steps.forEach { (name, theirs) -> steps.getOrPut(name) { StepRecorder() }.merge(theirs) }
+        other.steps.forEach { (name, theirs) -> stepCalled(name).merge(theirs) }
     }
+
+    /**
+     * Folds every second before [before] into what [freeze] would make of it,
+     * and lets its tables go.
+     *
+     * The caller says when, because only the engine knows the oldest departure
+     * still in flight. Told too early, nothing is lost: a record for a closed
+     * second is counted beside it and folded in at the next close.
+     */
+    fun close(before: Duration) {
+        val second = before.inWholeSeconds.toInt()
+        lateness.close(second)
+        steps.values.forEach { it.seconds.close(second) }
+    }
+
+    /** How many per-second tables are live, which is what [close] exists to keep down. */
+    internal val tablesHeld: Int get() = lateness.held + steps.values.sumOf { it.seconds.held }
+
+    // A step first seen late starts closed where the others are, rather than
+    // allocating a table for every quiet second before it.
+    private fun stepCalled(name: String): StepRecorder =
+        steps.getOrPut(name) { StepRecorder().also { it.seconds.close(lateness.before) } }
 
     fun freeze(): RunResult = RunResult(
         startedAt = startedAt,
@@ -156,7 +178,7 @@ class RunRecorder(
      * second's count kept twice is two numbers that can disagree.
      */
     private fun everySecond(): Seconds {
-        val all = Seconds()
+        val all = seconds()
         steps.values.forEach { all.merge(it.seconds) }
         return all
     }
@@ -204,7 +226,7 @@ private class StepRecorder {
     // request counted it.
     private var produced = 0L
 
-    val seconds = Seconds()
+    val seconds = seconds()
 
     fun record(
         failure: Reason?,
@@ -288,24 +310,24 @@ private class StepRecorder {
  * makes a quiet second a zero the reader can see instead of a key nobody
  * wrote.
  */
-private class Seconds {
+private typealias Seconds = Closing<SecondRecorder, Second>
 
-    private val counted = ArrayList<SecondRecorder>()
+private fun seconds(): Seconds = Closing(
+    open = ::SecondRecorder,
+    fold = SecondRecorder::freeze,
+    absorb = SecondRecorder::merge,
+    add = { mine, theirs ->
+        Second(
+            okServiceTime = listOf(mine.okServiceTime, theirs.okServiceTime).merged(),
+            failedServiceTime = listOf(mine.failedServiceTime, theirs.failedServiceTime).merged(),
+            okResponseTime = listOf(mine.okResponseTime, theirs.okResponseTime).merged(),
+            failedResponseTime = listOf(mine.failedResponseTime, theirs.failedResponseTime).merged(),
+        )
+    },
+)
 
-    fun record(at: Duration, failure: Reason?, service: Duration, response: Duration) =
-        reaching(at.inWholeSeconds.toInt()).record(failure, service, response)
-
-    fun merge(other: Seconds) = other.counted.forEachIndexed { index, theirs -> reaching(index).merge(theirs) }
-
-    fun freeze(): List<Second> = counted.map { it.freeze() }
-
-    // The only allocation on the recording path, and it happens when a second
-    // starts rather than when a request does.
-    private fun reaching(second: Int): SecondRecorder {
-        while (counted.size <= second) counted.add(SecondRecorder())
-        return counted[second]
-    }
-}
+private fun Seconds.record(at: Duration, failure: Reason?, service: Duration, response: Duration) =
+    at(at.inWholeSeconds.toInt()).record(failure, service, response)
 
 /**
  * How late the departures of each second were, from the run's start.
@@ -316,21 +338,82 @@ private class Seconds {
  * is a few kilobytes a minute, where one per step per second is what 0025
  * refused to pay for a second time.
  */
-private class Lateness {
+private typealias Lateness = Closing<Histogram, Timing>
 
-    private val counted = ArrayList<Histogram>()
+private fun lateness(): Lateness = Closing(
+    open = Histogram::coarse,
+    fold = Histogram::timing,
+    absorb = Histogram::merge,
+    add = { mine, theirs -> listOf(mine, theirs).merged() },
+)
 
-    fun record(at: Duration, schedulingDelay: Duration) =
-        reaching(at.inWholeSeconds.toInt()).record(schedulingDelay)
+private fun Lateness.record(at: Duration, schedulingDelay: Duration) =
+    at(at.inWholeSeconds.toInt()).record(schedulingDelay)
 
-    fun merge(other: Lateness) = other.counted.forEachIndexed { index, theirs -> reaching(index).merge(theirs) }
+/**
+ * A table a second, each folded into its frozen form once it is closed.
+ *
+ * Closed seconds are a prefix: what can still land is what departed at or
+ * after the oldest departure in flight, so seconds are closed in order and a
+ * live table is only ever one of the last few. Buckets add, so a second frozen
+ * here and added to later is the second [RunRecorder.freeze] would have made of it.
+ */
+private class Closing<R, F>(
+    private val open: () -> R,
+    private val fold: (R) -> F,
+    private val absorb: (R, R) -> Unit,
+    private val add: (F, F) -> F,
+) {
 
-    fun freeze(): List<Timing> = counted.map { it.timing() }
+    // The accumulators AGENTS.md allows a builder, frozen into the result:
+    // seconds 0 until frozen.size, then the live ones after them.
+    private val frozen = ArrayList<F>()
+    private val live = ArrayDeque<R>()
 
-    private fun reaching(second: Int): Histogram {
-        while (counted.size <= second) counted.add(Histogram.coarse())
-        return counted[second]
+    // A record for a second already closed, which the engine's bound says
+    // cannot happen and a body's own sample time can still do.
+    private val late = HashMap<Int, R>()
+
+    /** Every second under this is closed, whether or not anything reached it yet. */
+    var before = 0
+        private set
+
+    val held: Int get() = live.size + late.size
+
+    // The only allocation on the recording path, and it happens when a second
+    // starts rather than when a request does. A quiet second below the close
+    // is the frozen form of an empty table, so it allocates nothing either.
+    fun at(second: Int): R {
+        if (second < frozen.size) return late.getOrPut(second, open)
+        while (frozen.size + live.size <= second) {
+            if (live.isEmpty() && frozen.size < before) frozen.add(quiet) else live.addLast(open())
+        }
+        return if (second < frozen.size) late.getOrPut(second, open) else live[second - frozen.size]
     }
+
+    private val quiet: F by lazy { fold(open()) }
+
+    fun close(before: Int) {
+        this.before = maxOf(this.before, before)
+        late.forEach { (second, table) -> frozen[second] = add(frozen[second], fold(table)) }
+        late.clear()
+        while (live.isNotEmpty() && frozen.size < this.before) frozen.add(fold(live.removeFirst()))
+    }
+
+    fun merge(other: Closing<R, F>) {
+        close(other.before)
+        other.frozen.forEachIndexed { second, theirs ->
+            while (frozen.size <= second) frozen.add(quiet)
+            frozen[second] = add(frozen[second], theirs)
+        }
+        other.late.forEach { (second, table) -> absorb(at(second), table) }
+        other.live.forEachIndexed { index, table -> absorb(at(other.frozen.size + index), table) }
+        close(before)
+    }
+
+    fun freeze(): List<F> =
+        frozen.mapIndexed { second, closed -> late[second]?.let { add(closed, fold(it)) } ?: closed } +
+            live.map(fold)
 }
 
 private class SecondRecorder {

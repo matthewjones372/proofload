@@ -666,6 +666,7 @@ class RunRecorder
     constructor(Instant, Boolean)
     fun arrived(String, Long, Long)
     fun aside(String, Long, Long)
+    fun close(Long)
     fun freeze(): RunResult
     fun merge(RunRecorder)
     fun outstanding(String, Outstanding)

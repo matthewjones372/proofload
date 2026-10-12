@@ -105,6 +105,11 @@ ten-minute restarts, with a flat heap.
   the engine to report it to the recorder. A fixed lag (a second closes after the
   scenario's longest timeout) is simpler and can be wrong. Recommended: the
   oldest departure in flight.
+  **Settled in `spec-0143-freeze-closed`:** the oldest departure in flight. The
+  engine counts users out by the second they departed in, and the progress
+  sampler closes everything before the oldest once a second. Being wrong costs
+  memory, not a number: a record for a closed second is counted beside it and
+  folded in at the next close.
 - **Does a widened timeline change any verdict?** Steady-state detection reads
   per-second variance. Recommended: it reads variance per slot, scaled by
   width, and a test pins that a day-long steady run is judged steady.

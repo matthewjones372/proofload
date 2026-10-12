@@ -546,6 +546,18 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A second's tables are let go once nothing in flight can land in it.** A run
+  kept a coarse histogram pair per second per step, and a lateness table per
+  second, until `freeze()`, so its memory grew with its length: an hour of ten
+  steps held about 400 MiB while recording, and three steps left running as a
+  demo's background traffic ran out of heap in under two hours. The engine now
+  tells the recorder the oldest departure still in flight once a second, and
+  `RunRecorder.close(before)` folds every earlier second into the buckets
+  `freeze()` would have kept. The same hour now holds about 61 MiB while
+  recording. The frozen result is unchanged, and a record that lands in a
+  second already closed is still counted there. Memory is now small per
+  second but still linear; spec 0143's next entry bounds it.
+
 - **`cs launch` on the server's coordinate starts the server.** Coursier keys
   every `Main-Class` it finds on a resolved classpath by
   (`Implementation-Vendor-Id`, `Specification-Title`), both defaulting to the

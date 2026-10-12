@@ -144,6 +144,13 @@ and are above; concurrency as an axis is what is left.
 |---|---|
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
 
+One from running Proofload as a demo's background traffic for a day, which ran
+out of heap in under two hours.
+
+| Spec | What it would get |
+|---|---|
+| [0143](0143-a-run-that-does-not-grow-with-its-length.md) | a second frozen once nothing in flight can land in it, and a timeline of fixed slots that widen, so a day holds what an hour does |
+
 Fourteen more came out of one adversarial review of the tree, aimed at finding
 ways it could produce a plausible-looking but incorrect result. It found five.
 [HARDENING.md](HARDENING.md) is the index over them — what each settles, which

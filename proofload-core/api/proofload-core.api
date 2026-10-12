@@ -1316,6 +1316,7 @@ public final class io/github/matthewjones372/proofload/RunRecorder {
 	public synthetic fun <init> (Ljava/time/Instant;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun arrived-5qebJ5I (Ljava/lang/String;JJ)V
 	public final fun aside-8Mi8wO0 (Ljava/lang/String;JJ)V
+	public final fun close-LRDsOJo (J)V
 	public final fun freeze ()Lio/github/matthewjones372/proofload/RunResult;
 	public final fun merge (Lio/github/matthewjones372/proofload/RunRecorder;)V
 	public final fun outstanding (Ljava/lang/String;Lio/github/matthewjones372/proofload/Outstanding;)V

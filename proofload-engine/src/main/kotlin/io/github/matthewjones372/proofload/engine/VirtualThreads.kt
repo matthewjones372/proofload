@@ -94,6 +94,10 @@ private fun Simulation.send(progress: Progress): RunResult {
     val users = Departures()
     val departed = Departed()
     val watching = watchProgress(progress, runStart) { ended ->
+        // On the sampler's thread once a second, which no request is timed on:
+        // a second is closed once no user still out could record into it.
+        val now = (System.nanoTime() - runStart).nanoseconds
+        recorders.close(before = users.outbound.oldest()?.coerceAtMost(now) ?: now)
         // The whole run's window, which is the longest arm's: a mix is over
         // when its last arm is.
         val (requests, failed) = recorders.counts()
@@ -223,7 +227,7 @@ private fun Simulation.departPopulation(
             Thread.ofVirtual().start {
                 users.departed()
                 try {
-                    goRound(arm, index, population, sink, runStart, closesAt, drain, departed)
+                    goRound(arm, index, population, sink, runStart, closesAt, drain, departed, users.outbound)
                 } finally {
                     users.finished()
                 }
@@ -254,6 +258,7 @@ private fun goRound(
     closesAt: Long,
     drain: Drain?,
     departed: Departed,
+    outbound: Outbound,
 ) {
     var lap = 0L
     while (System.nanoTime() - runStart < closesAt) {
@@ -264,18 +269,23 @@ private fun goRound(
         // has no such thread, and fifty of them writing to it is a race whose
         // symptom is a spacing figure quietly wrong rather than a crash.
         departed.left(0L)
-        arm.scenario.runOneUser(
-            sink,
-            runStart,
-            // Nothing promised this journey a departure, so there is no
-            // lateness to carry. The recorder drops it rather than counting a
-            // zero, and the two clocks become one.
-            schedulingDelay = Duration.ZERO,
-            departure = at,
-            started = arm.feeder.forUser(lap * population + index),
-            drain = drain,
-            thinking = arm.thinkingFor(lap * population + index),
-        )
+        outbound.left(at)
+        try {
+            arm.scenario.runOneUser(
+                sink,
+                runStart,
+                // Nothing promised this journey a departure, so there is no
+                // lateness to carry. The recorder drops it rather than counting a
+                // zero, and the two clocks become one.
+                schedulingDelay = Duration.ZERO,
+                departure = at,
+                started = arm.feeder.forUser(lap * population + index),
+                drain = drain,
+                thinking = arm.thinkingFor(lap * population + index),
+            )
+        } finally {
+            outbound.back(at)
+        }
         lap++
     }
 }
@@ -362,20 +372,16 @@ private fun Scenario.depart(
         // Counted here rather than where it was booked: until this thread is
         // mounted, nothing has left.
         users.departed()
+        // Read here rather than on the scheduler: what the report calls
+        // lateness is how late the user's first request left, and until the
+        // virtual thread is mounted nothing has left. Read before the user is
+        // counted out, so counting it is not part of the lateness.
+        val late = lateness(runStart, departure)
         try {
-            // Read here rather than on the scheduler: what the report calls
-            // lateness is how late the user's first request left, and until the
-            // virtual thread is mounted nothing has left.
-            runOneUser(
-                sink,
-                runStart,
-                lateness(runStart, departure),
-                departure,
-                session,
-                drain,
-                thinking = thinking,
-            )
+            users.outbound.left(departure)
+            runOneUser(sink, runStart, late, departure, session, drain, thinking = thinking)
         } finally {
+            users.outbound.back(departure)
             users.finished()
         }
     }
@@ -484,6 +490,9 @@ private class Departures {
     private val outstanding = AtomicLong(1)
     private val running = AtomicLong()
     private val allFinished = CountDownLatch(1)
+
+    /** Which seconds the users still running departed in, so the recorder knows what it can close. */
+    val outbound = Outbound()
 
     /** Booked, and owed a departure: the run cannot end until this user has run. */
     fun booked() {

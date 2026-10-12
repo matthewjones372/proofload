@@ -1,6 +1,7 @@
 package io.github.matthewjones372.proofload.benchmarks
 
 import io.github.matthewjones372.proofload.RunRecorder
+import io.github.matthewjones372.proofload.RunResult
 import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.util.Locale
@@ -30,33 +31,60 @@ private const val BYTES_A_MIB = 1024.0 * 1024.0
 fun main() {
     val idle = settledHeap()
 
-    val recorder = RunRecorder(Instant.now())
-    repeat(SOAK_SECONDS) { second ->
-        repeat(STEPS) { step ->
-            repeat(EACH_SECOND) { request ->
-                recorder.record(
-                    step = "step $step",
-                    failure = null,
-                    serviceTime = (10 + request).milliseconds,
-                    schedulingDelay = 5.milliseconds,
-                    at = second.seconds + (request * 50).milliseconds,
-                )
-            }
-        }
-    }
+    val recorder = RunRecorder(Instant.now()).also { soak(it, closing = true) }
     val recording = settledHeap() - idle
 
     val result = recorder.freeze()
     val withFrozen = settledHeap() - idle
     val seconds = result.steps.values.sumOf { it.timeline.size }
+    val frozen = frozenAlone()
 
     println("a $SOAK_SECONDS-second run of $STEPS steps at $EACH_SECOND requests a second")
     println("  seconds of tables:   $seconds")
     println("  recording:           ${recording.mib()} MiB")
     println("  recorder and frozen: ${withFrozen.mib()} MiB")
+    println("  frozen alone:        ${frozen.mib()} MiB")
     println("  per second of step:  ${recording / seconds} bytes recording")
     // Read after the last measurement so nothing above can be collected early.
     println("  (counted ${result.count} requests)")
+}
+
+private fun soak(recorder: RunRecorder, closing: Boolean) = repeat(SOAK_SECONDS) { second ->
+    // What the engine does once a second. Every request here completes in the
+    // second it left in, so all the seconds before this one are finished.
+    if (closing) recorder.close(before = second.seconds)
+    repeat(STEPS) { step ->
+        repeat(EACH_SECOND) { request ->
+            recorder.record(
+                step = "step $step",
+                failure = null,
+                serviceTime = (10 + request).milliseconds,
+                schedulingDelay = 5.milliseconds,
+                at = second.seconds + (request * 50).milliseconds,
+            )
+        }
+    }
+}
+
+/**
+ * The same hour frozen with no recorder left holding it, through the path that
+ * never closes: the figure a recorder that closes its seconds should come in near.
+ */
+private fun frozenAlone(): Long {
+    val idle = settledHeap()
+    val result = frozenHour()
+    val held = settledHeap() - idle
+    // Read after the measurement, so the result cannot be collected before it.
+    check(result.count == SOAK_SECONDS.toLong() * STEPS * EACH_SECOND)
+    return held
+}
+
+// A function of its own so the recorder dies with its frame: a local in the
+// caller would keep its tables reachable through the measurement.
+private fun frozenHour(): RunResult {
+    val recorder = RunRecorder(Instant.now())
+    soak(recorder, closing = false)
+    return recorder.freeze()
 }
 
 private fun settledHeap(): Long {

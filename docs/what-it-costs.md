@@ -406,6 +406,13 @@ being affordable, the fallback to argue is a timeline that keeps response time
 only while a response-time goal exists to need it, which the plan knows before
 the run starts.
 
+Those figures are a recorder that holds every second's tables until the run
+ends. Since 0143 the engine closes a second once no user still out departed
+in it, and a closed second is held as the buckets it froze to. The same hour,
+both clocks, now holds 60.8 MiB while recording against 64.4 MiB for the
+frozen seconds alone: about 1,770 bytes a second of step rather than 11,005.
+Still linear in the run's length, which the rest of 0143 is for.
+
 Freezing a second keeps the buckets that counted something and drops the rest,
 tens of them for a second of load, against the 673 the table has slots for.
 They are kept rather than only the percentiles read off them because a stretch

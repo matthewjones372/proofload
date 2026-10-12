@@ -150,9 +150,36 @@ internal class Recorders(
      * claims no shard: there is only ever the one writer, and it is not on the
      * path a step is timed on.
      */
-    fun arrived(step: String, latency: Duration, at: Duration) = completions.arrived(step, latency, at)
+    fun arrived(step: String, latency: Duration, at: Duration) {
+        completions.arrived(step, latency, at)
+        // Its one writer records at the time it observes, which only moves
+        // forward, so every second before this one is finished.
+        completions.close(before = at)
+    }
 
     fun outstanding(step: String, outstanding: Outstanding) = completions.outstanding(step, outstanding)
+
+    /**
+     * Folds every second before [before] in each shard, so a run holds tables
+     * only for the seconds a request in flight can still land in.
+     *
+     * Each shard is claimed the way a writer claims one. A writer finding it
+     * taken moves on to the next, so this never holds a request up.
+     */
+    tailrec fun close(before: Duration, index: Int = 0) {
+        if (index == slots.length()) return
+        val claimed = slots.getAndSet(index, null)
+        if (claimed == null) {
+            Thread.onSpinWait()
+            return close(before, index)
+        }
+        try {
+            claimed.close(before)
+        } finally {
+            slots.set(index, claimed)
+        }
+        close(before, index + 1)
+    }
 
     fun freeze(plan: Plan, arrivals: Arrivals): RunResult {
         val merged = first.shard()

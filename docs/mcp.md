@@ -17,8 +17,17 @@ The coordinate alone: the published jar carries a `Main-Class`, so nothing has t
 told which class to run. `0.1.0-rc1` predates that and needs
 `--main io.github.matthewjones372.proofload.mcp.ServerKt` if you pin it.
 
-[Coursier](https://get-coursier.io) is the same shape:
-`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4`.
+[Coursier](https://get-coursier.io) is the same shape from the release after
+`0.1.0-rc4`. Up to and including it, the coordinate alone starts the *command
+line*: coursier picks a main by the coordinate each jar's manifest claims,
+`proofload-mcp` and `proofload-cli` both carried one and claimed neither, so it
+kept whichever it saw last and answered a client with usage text and exit code
+4. Pinning one of those versions means naming the class:
+
+```bash
+cs launch -M io.github.matthewjones372.proofload.mcp.ServerKt \
+  io.github.matthewjones372:proofload-mcp:0.1.0-rc4
+```
 
 jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
 and a client parses it as-is.

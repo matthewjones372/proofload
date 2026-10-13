@@ -137,6 +137,7 @@ interface Action
 top-level in ActionKt
     fun action(Function1): Action
 class Allowance
+    constructor()
     fun allows(String): Boolean
     val hosts: List
     val maxDuration: Duration

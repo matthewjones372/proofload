@@ -673,6 +673,7 @@ class RunRecorder
     fun aside(String, Long, Long)
     fun close(Long)
     fun freeze(): RunResult
+    fun inFlight(Long, Long)
     fun merge(RunRecorder)
     fun outstanding(String, Outstanding)
     fun record(String, Reason, Long, Long, Long, Boolean, Boolean, Int, String)

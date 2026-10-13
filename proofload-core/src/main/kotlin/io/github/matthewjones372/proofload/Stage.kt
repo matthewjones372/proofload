@@ -129,8 +129,7 @@ internal fun RunResult.during(stage: Stage): RunResult {
         hiccups = Timing.none,
         timeline = timeline.window(from, until),
         latePerSecond = latePerSecond.window(from, until),
-        // Sampled once a second whatever the slots are.
-        usersInFlight = usersInFlight.window(stage.from.inWholeSeconds.toInt(), stage.until.inWholeSeconds.toInt()),
+        usersInFlight = usersInFlight.window(from, until),
     )
 }
 

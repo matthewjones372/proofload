@@ -84,6 +84,13 @@ internal class Recorders(
 
     private val completions = first.shard()
 
+    // Written only by the progress sampler's thread, and read at freeze once
+    // it has stopped. Locked anyway: stopping waits a bounded time, and the
+    // lock is on a thread no request is timed on.
+    private val sampled = first.shard()
+
+    fun inFlight(at: Duration, users: Long) = synchronized(sampled) { sampled.inFlight(at, users) }
+
     // One counter per shard, written only by the thread holding that shard and
     // read approximately by the ticker. Single-writer, so a plain volatile
     // store is enough and no reader can tear one; adding them up is the
@@ -188,6 +195,7 @@ internal class Recorders(
             merged.merge(checkNotNull(slots.get(index)) { "a shard was still in use when the run ended" })
         }
         merged.merge(completions)
+        synchronized(sampled) { merged.merge(sampled) }
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 

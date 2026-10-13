@@ -1323,6 +1323,7 @@ public final class io/github/matthewjones372/proofload/RunRecorder {
 	public final fun aside-8Mi8wO0 (Ljava/lang/String;JJ)V
 	public final fun close-LRDsOJo (J)V
 	public final fun freeze ()Lio/github/matthewjones372/proofload/RunResult;
+	public final fun inFlight-VtjQ1oo (JJ)V
 	public final fun merge (Lio/github/matthewjones372/proofload/RunRecorder;)V
 	public final fun outstanding (Ljava/lang/String;Lio/github/matthewjones372/proofload/Outstanding;)V
 	public final fun record-5wlj91o (Ljava/lang/String;Lio/github/matthewjones372/proofload/Reason;JJJZZILjava/lang/String;)V

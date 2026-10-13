@@ -3,7 +3,6 @@ package io.github.matthewjones372.proofload
 import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Whether a run reached a steady state, and where.
@@ -100,7 +99,7 @@ private fun StepStats.from(offset: Duration): StepStats {
 }
 
 /** A step's own seconds can run out before the run's, which is that step having stopped rather than a gap. */
-private fun List<Second>.secondsFrom(offset: Duration): List<Second> = drop(offset.inWholeSeconds.toInt())
+private fun List<Second>.secondsFrom(offset: Duration): List<Second> = drop((offset / slotWidth).toInt())
 
 /**
  * The earliest second after which no later window is materially better than
@@ -110,9 +109,13 @@ private fun List<Second>.secondsFrom(offset: Duration): List<Second> = drop(offs
  * A pure function of the seconds it is handed, so a verdict is a property of
  * what a run recorded rather than of when it was asked.
  *
- * The signal is each second's p99, which is where a cold JVM shows up and what
- * the report leads with. A second nothing ran in is left out of a window's
+ * The signal is each slot's p99, which is where a cold JVM shows up and what
+ * the report leads with. A slot nothing ran in is left out of a window's
  * mean rather than averaged in: a zero second is not a fast second.
+ *
+ * A widened slot is one reading, as a second is: its p99 is read off every
+ * request in it, so the tolerance is the same and only the offsets and window
+ * lengths are scaled by its width.
  */
 fun List<Second>.steadyState(): SteadyState {
     if (isEmpty()) {
@@ -120,13 +123,13 @@ fun List<Second>.steadyState(): SteadyState {
     }
     if (size < SteadyState.LEAST_INTERVALS) {
         return SteadyState.NeverSettled(
-            "a run of $size s has nothing to detect: a verdict needs at least " +
+            "a run of ${span.inWholeSeconds} s has nothing to detect: a verdict needs at least " +
                 "${SteadyState.LEAST_INTERVALS} intervals",
         )
     }
 
     val window = size / WINDOWS_IN_A_RUN
-    return latencies().levelsOver(window).verdict(window)
+    return latencies().levelsOver(window).verdict(window, slotWidth)
 }
 
 /** Each second's p99 in nanoseconds, and null for a second nothing ran in. */
@@ -140,22 +143,23 @@ private fun List<Double?>.levelsOver(window: Int): List<Double?> =
         if (live.isEmpty()) null else live.average()
     }
 
-private fun List<Double?>.verdict(window: Int): SteadyState {
-    val last = last() ?: return SteadyState.NeverSettled("nothing ran in the last $window s, so nothing held")
-    val first = first() ?: return SteadyState.NeverSettled("nothing ran in the first $window s, so nothing held")
+private fun List<Double?>.verdict(window: Int, width: Duration): SteadyState {
+    val seconds = (width * window).inWholeSeconds
+    val last = last() ?: return SteadyState.NeverSettled("nothing ran in the last $seconds s, so nothing held")
+    val first = first() ?: return SteadyState.NeverSettled("nothing ran in the first $seconds s, so nothing held")
 
     // Before the search rather than inside it: a run that ends slower than it
     // began has a flat tail to find, and reporting that as a steady state
     // would bury the finding under an offset.
     if (last > first * (1 + SteadyState.TOLERANCE)) {
         return SteadyState.NeverSettled(
-            "the last $window s were ${last.overBy(first)}% slower than the first $window s: " +
+            "the last $seconds s were ${last.overBy(first)}% slower than the first $seconds s: " +
                 "this run got slower and stayed slower",
         )
     }
 
     val settled = (0..lastIndex - window).firstOrNull { held(from = it, last = last) }
-    return settled?.let { SteadyState.From(it.seconds) } ?: SteadyState.NeverSettled(stillMoving(window, last))
+    return settled?.let { SteadyState.From(width * it) } ?: SteadyState.NeverSettled(stillMoving(window, seconds, last))
 }
 
 /**
@@ -173,10 +177,10 @@ private fun List<Double?>.held(from: Int, last: Double): Boolean {
     return levels.all { it >= last * (1 - SteadyState.TOLERANCE) && abs(it - mean) <= mean * SteadyState.TOLERANCE }
 }
 
-private fun List<Double?>.stillMoving(window: Int, last: Double): String {
-    val before = this[lastIndex - window] ?: return "no $window s of this run held still to the end of it"
+private fun List<Double?>.stillMoving(window: Int, seconds: Long, last: Double): String {
+    val before = this[lastIndex - window] ?: return "no $seconds s of this run held still to the end of it"
     val direction = if (last < before) "faster" else "slower"
-    return "the last $window s were still ${last.overBy(before)}% $direction than the $window s before them"
+    return "the last $seconds s were still ${last.overBy(before)}% $direction than the $seconds s before them"
 }
 
 /** How far this is from [other], as a share of it, rounded for a sentence to carry. */

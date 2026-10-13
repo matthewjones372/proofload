@@ -662,8 +662,13 @@ top-level in RemedyKt
     fun getScheduleRemedy(RunResult): String
 class RunRecorder
     val MAX_REASONS_PER_STEP: Int
+    val SLOTS: Int
+    constructor(Instant)
+    constructor(Instant, Long)
     constructor(Instant, Long, Boolean)
+    constructor(Instant, Long, Boolean, Int)
     constructor(Instant, Boolean)
+    constructor(Instant, Boolean, Int)
     fun arrived(String, Long, Long)
     fun aside(String, Long, Long)
     fun close(Long)
@@ -704,6 +709,8 @@ top-level in RunResultKt
     fun getInFlight(RunResult): Long
     fun getOwnInterval(RunResult): Long
     fun getPrecision(RunResult): Double
+    fun getSlotWidth(List): Long
+    fun getSpan(List): Long
     fun getTimelinePrecision(RunResult): Double
     fun getUnanswered(RunResult): List
     fun getUnmatched(RunResult): Long
@@ -794,6 +801,7 @@ class Second
     val p99: Long
     val responseTime: Timing
     val serviceTime: Timing
+    val width: Long
 class Session
     fun get(SessionKey): Object
     fun set(SessionKey, Object): Session
@@ -832,7 +840,12 @@ class Share
     val percent: Double
 class Simulation
     constructor(Scenario, InjectionProfile, Feeder, List, Completing, WarmUp)
+    constructor(List)
+    constructor(List, List)
+    constructor(List, List, Completing)
+    constructor(List, List, Completing, WarmUp)
     constructor(List, List, Completing, WarmUp, Shard)
+    constructor(List, List, Completing, WarmUp, Shard, Int)
     val arms: List
     val completing: Completing
     val feeder: Feeder
@@ -840,6 +853,7 @@ class Simulation
     val over: Long
     val profile: InjectionProfile
     val shard: Shard
+    val slots: Int
     val warmUp: WarmUp
 top-level in SimulationKt
     fun at(Scenario, InjectionProfile.ClosedUsers): Simulation
@@ -852,6 +866,7 @@ top-level in SimulationKt
     fun getPerMinute(Number): Double
     fun getPerSecond(Number): Double
     fun injecting(Scenario, InjectionProfile): Simulation
+    fun keepingSlots(Simulation, Int): Simulation
     fun plan(Simulation): Plan
     fun plus(Simulation, Simulation): Simulation
     fun requireSeededThinking(Simulation)

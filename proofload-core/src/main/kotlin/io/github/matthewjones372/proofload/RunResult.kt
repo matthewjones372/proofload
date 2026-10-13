@@ -213,7 +213,9 @@ private fun List<Bucket>.bucketAtRank(rank: Long): Bucket =
         .second
 
 /**
- * One second of a run, counted from the run's start.
+ * One slot of a run, counted from the run's start: a second, until a run
+ * outgrows [RunRecorder.SLOTS] and neighbours are merged so that every slot is
+ * [width] wide. Each list of these holds one width.
  *
  * A second nothing ran in is present and zero rather than missing: a gap in a
  * line is information and a dropped point is a lie about the shape.
@@ -234,11 +236,12 @@ private fun List<Bucket>.bucketAtRank(rank: Long): Bucket =
  * second of shed load is a second of fast rejections, and one distribution
  * holding both would report a percentile nobody experienced.
  */
-data class Second(
+data class Second @JvmOverloads constructor(
     val okServiceTime: Timing,
     val failedServiceTime: Timing,
     val okResponseTime: Timing,
     val failedResponseTime: Timing,
+    val width: Duration = 1.seconds,
 ) {
 
     val ok: Long get() = okServiceTime.count
@@ -259,6 +262,40 @@ data class Second(
     val p50: Duration get() = serviceTime.p50
 
     val p99: Duration get() = serviceTime.p99
+}
+
+/** How many seconds of the run these slots cover. */
+val List<Second>.span: Duration get() = slotWidth * size
+
+/** How wide these slots are, and one second where there are none. */
+val List<Second>.slotWidth: Duration get() = firstOrNull()?.width ?: 1.seconds
+
+/** These slots as one, [width] wide: buckets add, so the sum is exact. */
+internal fun List<Second>.added(width: Duration): Second = Second(
+    okServiceTime = map { it.okServiceTime }.merged(),
+    failedServiceTime = map { it.failedServiceTime }.merged(),
+    okResponseTime = map { it.okResponseTime }.merged(),
+    failedResponseTime = map { it.failedResponseTime }.merged(),
+    width = width,
+)
+
+/** These slots with neighbours added until each is [width] wide, as a recorder past its slots does. */
+internal fun List<Second>.widenedTo(width: Duration): List<Second> {
+    val by = widening(slotWidth, width)
+    return if (by == 1) this else chunked(by) { it.added(width) }
+}
+
+/** Lateness slots [from] wide, added until each is [to] wide. */
+internal fun List<Timing>.widened(from: Duration, to: Duration): List<Timing> {
+    val by = widening(from, to)
+    return if (by == 1) this else chunked(by) { it.merged() }
+}
+
+private fun widening(from: Duration, to: Duration): Int {
+    require(to >= from && to.inWholeNanoseconds % from.inWholeNanoseconds == 0L) {
+        "a slot $from wide cannot be added into slots $to wide: a timeline only widens by whole slots"
+    }
+    return (to / from).toInt()
 }
 
 /**
@@ -362,7 +399,7 @@ data class StepStats(
     val unmatched: Long = 0L,
     /** Records the run stopped waiting for, having left too late to be given the whole drain window. */
     val inFlight: Long = 0L,
-    /** This step second by second, from the run's start. */
+    /** This step slot by slot, from the run's start, in the run's slots. */
     val timeline: List<Second> = emptyList(),
 ) {
     val count: Long get() = ok.count + failed.count
@@ -502,12 +539,12 @@ data class RunResult(
      */
     val hiccups: Timing = Timing.none,
 
-    /** Every step together, second by second, from the run's start. */
+    /** Every step together, slot by slot, from the run's start. */
     val timeline: List<Second> = emptyList(),
 
     /**
-     * How late that second's departures were, second by second, from the run's
-     * start.
+     * How late that slot's departures were, slot by slot, from the run's
+     * start, in [timeline]'s slots.
      *
      * [behind] over the whole run says a schedule was lost and cannot say
      * when, which leaves a reader with "lower the rate" and no idea which rate
@@ -681,8 +718,9 @@ val RunResult.heldScheduleFor: Duration?
         val interval = ownInterval
         if (interval <= Duration.ZERO || latePerSecond.isEmpty()) return null
 
+        // Lateness is kept in the timeline's slots, so it is that wide.
         val lost = latePerSecond.indexOfFirst { it.count > 0L && it.p99 > interval }
-        return if (lost < 0) latePerSecond.size.seconds else lost.seconds
+        return timeline.slotWidth * if (lost < 0) latePerSecond.size else lost
     }
 
 /**

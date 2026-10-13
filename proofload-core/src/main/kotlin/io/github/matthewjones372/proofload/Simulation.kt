@@ -64,13 +64,15 @@ data class Arm(
 )
 
 /** The arms sent together, what they have to achieve and the sink they are drained into: a run, as one value. */
-data class Simulation(
+data class Simulation @JvmOverloads constructor(
     val arms: List<Arm>,
     val goals: List<Goal> = emptyList(),
     val completing: Completing? = null,
     val warmUp: WarmUp? = null,
     /** Which injector this is, where the run is split across several. */
     val shard: Shard? = null,
+    /** How many slots the timeline holds before they widen: see [keepingSlots]. */
+    val slots: Int = RunRecorder.SLOTS,
 ) {
 
     constructor(
@@ -84,6 +86,7 @@ data class Simulation(
 
     init {
         require(arms.isNotEmpty()) { "a simulation sends at least one arm" }
+        require(slots > 0) { "a timeline holds at least one slot, but slots was $slots" }
         val shared = arms
             .flatMap { arm -> arm.scenario.stepNames.distinct().map { step -> step to arm.scenario.name } }
             .groupBy({ (step, _) -> step }, { (_, scenario) -> scenario })
@@ -209,6 +212,15 @@ fun Simulation.requireSeededThinking() {
  */
 fun Simulation.thinkingFrom(seed: Long): Simulation =
     copy(arms = arms.mapIndexed { index, arm -> arm.copy(thinkSeed = seed + index) })
+
+/**
+ * The same run, with a timeline of [slots] before its slots widen.
+ *
+ * Past that many seconds, neighbouring slots are added in pairs and each is
+ * twice as wide, so a run holds the same tables however long it goes. More
+ * slots is finer resolution on a long run, paid for in memory.
+ */
+fun Simulation.keepingSlots(slots: Int): Simulation = copy(slots = slots)
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })

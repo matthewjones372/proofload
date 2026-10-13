@@ -4,6 +4,7 @@ import io.github.matthewjones372.proofload.Histogram
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.StepStats
 import io.github.matthewjones372.proofload.Timing
+import io.github.matthewjones372.proofload.span
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter
@@ -89,7 +90,7 @@ public fun RunResult.sendOtlp(
  */
 public fun RunResult.metricData(run: String = startedAt.toString()): List<MetricData> {
     val window = startedAt.toEpochMilli() * NANOS_PER_MILLI
-    val ends = window + timeline.size * NANOS_PER_SECOND
+    val ends = window + timeline.span.inWholeNanoseconds
     val runLabel = Attributes.of(RUN, run)
 
     return steps.values.sortedBy { it.name }

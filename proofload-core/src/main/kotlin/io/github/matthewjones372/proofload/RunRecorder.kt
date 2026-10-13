@@ -3,6 +3,7 @@ package io.github.matthewjones372.proofload
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Where an engine writes what it saw. Deliberately not thread-safe: each
@@ -10,7 +11,7 @@ import kotlin.time.Duration.Companion.nanoseconds
  * shared structure puts a lock on the path being timed and the tool starts
  * measuring itself.
  */
-class RunRecorder(
+class RunRecorder @JvmOverloads constructor(
     private val startedAt: Instant,
     private val origin: Long,
     /**
@@ -23,6 +24,8 @@ class RunRecorder(
      * a question that does not apply.
      */
     private val keepingSchedule: Boolean = true,
+    /** How many slots the timeline holds before neighbours are merged and every slot widens. */
+    private val slots: Int = SLOTS,
 ) {
 
     /**
@@ -30,16 +33,25 @@ class RunRecorder(
      * asked of a caller, because the object that holds a run's measurements is
      * the one place a run's zero point can live without being agreed.
      */
-    constructor(startedAt: Instant, keepingSchedule: Boolean = true) :
-        this(startedAt, System.nanoTime(), keepingSchedule)
+    @JvmOverloads
+    constructor(startedAt: Instant, keepingSchedule: Boolean = true, slots: Int = SLOTS) :
+        this(startedAt, System.nanoTime(), keepingSchedule, slots)
+
+    init {
+        require(slots > 0) { "a timeline holds at least one slot, but slots was $slots" }
+    }
 
     private val steps = LinkedHashMap<String, StepRecorder>()
     private val behind = Histogram()
 
+    // One width for every table this recorder keeps, so a step's slots, the
+    // run's and the lateness beside them always line up.
+    private val width = Width(slots)
+
     // Beside the run's own seconds rather than each step's: a departure is
     // late once, for the user, not once per step it goes on to make. One
     // coarse table a second at run level, which is what makes it affordable.
-    private val lateness = lateness()
+    private val lateness = lateness(width)
 
     /**
      * How long this run has been going, on the monotonic clock this recorder
@@ -61,7 +73,7 @@ class RunRecorder(
      * the agreement is by construction rather than by how close together they
      * happened to be built.
      */
-    fun shard(): RunRecorder = RunRecorder(startedAt, origin, keepingSchedule)
+    fun shard(): RunRecorder = RunRecorder(startedAt, origin, keepingSchedule, slots)
 
     /**
      * @param schedulingDelay how late the request left against the departure the
@@ -162,13 +174,13 @@ class RunRecorder(
     // A step first seen late starts closed where the others are, rather than
     // allocating a table for every quiet second before it.
     private fun stepCalled(name: String): StepRecorder =
-        steps.getOrPut(name) { StepRecorder().also { it.seconds.close(lateness.before) } }
+        steps.getOrPut(name) { StepRecorder(width).also { it.seconds.close(lateness.before) } }
 
     fun freeze(): RunResult = RunResult(
         startedAt = startedAt,
         steps = steps.mapValues { (name, recorder) -> recorder.freeze(name) },
         behind = behind.timing(),
-        timeline = everySecond().freeze(),
+        timeline = everySecond().frozen(),
         latePerSecond = lateness.freeze(),
     )
 
@@ -178,7 +190,7 @@ class RunRecorder(
      * second's count kept twice is two numbers that can disagree.
      */
     private fun everySecond(): Seconds {
-        val all = seconds()
+        val all = seconds(width)
         steps.values.forEach { all.merge(it.seconds) }
         return all
     }
@@ -190,10 +202,13 @@ class RunRecorder(
          * into a list of one-offs.
          */
         const val MAX_REASONS_PER_STEP: Int = 20
+
+        /** An hour at one second a slot, and a day at thirty-two. */
+        const val SLOTS: Int = 3_600
     }
 }
 
-private class StepRecorder {
+private class StepRecorder(width: Width) {
 
     // Four histograms rather than two, and no fifth: the whole-step timings are
     // these merged at freeze, so they cannot drift from the sides they sum.
@@ -226,7 +241,7 @@ private class StepRecorder {
     // request counted it.
     private var produced = 0L
 
-    val seconds = seconds()
+    val seconds = seconds(width)
 
     fun record(
         failure: Reason?,
@@ -290,7 +305,7 @@ private class StepRecorder {
         produced = produced,
         unmatched = outstanding.unmatched,
         inFlight = outstanding.inFlight,
-        timeline = seconds.freeze(),
+        timeline = seconds.frozen(),
     )
 
     private fun countFailure(reason: Reason, seen: Long) {
@@ -304,15 +319,15 @@ private class StepRecorder {
 }
 
 /**
- * One coarse histogram per second of the run so far, from the run's start.
+ * One coarse histogram per slot of the run so far, from the run's start.
  *
- * The list is grown to reach a second rather than keyed by one, which is what
- * makes a quiet second a zero the reader can see instead of a key nobody
- * wrote.
+ * The list is grown to reach a slot rather than keyed by one, which is what
+ * makes a quiet slot a zero the reader can see instead of a key nobody wrote.
  */
 private typealias Seconds = Closing<SecondRecorder, Second>
 
-private fun seconds(): Seconds = Closing(
+private fun seconds(width: Width): Seconds = Closing(
+    width = width,
     open = ::SecondRecorder,
     fold = SecondRecorder::freeze,
     absorb = SecondRecorder::merge,
@@ -329,6 +344,10 @@ private fun seconds(): Seconds = Closing(
 private fun Seconds.record(at: Duration, failure: Reason?, service: Duration, response: Duration) =
     at(at.inWholeSeconds.toInt()).record(failure, service, response)
 
+// Stamped here rather than kept on every slot as it is merged: until the
+// freeze, the width is the recorder's and one number.
+private fun Seconds.frozen(): List<Second> = freeze().map { it.copy(width = slotWidth.seconds) }
+
 /**
  * How late the departures of each second were, from the run's start.
  *
@@ -340,7 +359,8 @@ private fun Seconds.record(at: Duration, failure: Reason?, service: Duration, re
  */
 private typealias Lateness = Closing<Histogram, Timing>
 
-private fun lateness(): Lateness = Closing(
+private fun lateness(width: Width): Lateness = Closing(
+    width = width,
     open = Histogram::coarse,
     fold = Histogram::timing,
     absorb = Histogram::merge,
@@ -351,14 +371,38 @@ private fun Lateness.record(at: Duration, schedulingDelay: Duration) =
     at(at.inWholeSeconds.toInt()).record(schedulingDelay)
 
 /**
- * A table a second, each folded into its frozen form once it is closed.
+ * How many seconds a slot is, shared by every table of one recorder.
  *
- * Closed seconds are a prefix: what can still land is what departed at or
- * after the oldest departure in flight, so seconds are closed in order and a
- * live table is only ever one of the last few. Buckets add, so a second frozen
- * here and added to later is the second [RunRecorder.freeze] would have made of it.
+ * A power of two, doubled whenever a second would land past the last of
+ * [slots]. The tables catch up when next touched, by merging neighbours.
+ */
+private class Width(private val slots: Int) {
+
+    // The accumulator AGENTS.md allows a builder: it only grows, and the
+    // frozen result carries it as each slot's width.
+    var seconds = 1
+        private set
+
+    fun reach(second: Int) {
+        while (second / seconds >= slots) seconds *= 2
+    }
+
+    fun atLeast(other: Int) {
+        seconds = maxOf(seconds, other)
+    }
+}
+
+/**
+ * A table a slot, each folded into its frozen form once it is closed.
+ *
+ * Closed slots are a prefix: what can still land is what departed at or
+ * after the oldest departure in flight, so slots are closed in order and a
+ * live table is only ever one of the last few. Buckets add, so a slot frozen
+ * here and added to later, or merged with its neighbour when the timeline
+ * widens, is the slot [RunRecorder.freeze] would have made of it.
  */
 private class Closing<R, F>(
+    private val width: Width,
     private val open: () -> R,
     private val fold: (R) -> F,
     private val absorb: (R, R) -> Unit,
@@ -366,13 +410,16 @@ private class Closing<R, F>(
 ) {
 
     // The accumulators AGENTS.md allows a builder, frozen into the result:
-    // seconds 0 until frozen.size, then the live ones after them.
+    // slots 0 until frozen.size, then the live ones after them.
     private val frozen = ArrayList<F>()
     private val live = ArrayDeque<R>()
 
-    // A record for a second already closed, which the engine's bound says
+    // A record for a slot already closed, which the engine's bound says
     // cannot happen and a body's own sample time can still do.
     private val late = HashMap<Int, R>()
+
+    // How wide this table's slots are now, which trails [width] until touched.
+    private var mine = 1
 
     /** Every second under this is closed, whether or not anything reached it yet. */
     var before = 0
@@ -380,40 +427,88 @@ private class Closing<R, F>(
 
     val held: Int get() = live.size + late.size
 
-    // The only allocation on the recording path, and it happens when a second
-    // starts rather than when a request does. A quiet second below the close
+    /** How many seconds a slot is, once this table has caught up. */
+    val slotWidth: Int
+        get() {
+            widen()
+            return mine
+        }
+
+    // The only allocation on the recording path, and it happens when a slot
+    // starts rather than when a request does. A quiet slot below the close
     // is the frozen form of an empty table, so it allocates nothing either.
     fun at(second: Int): R {
-        if (second < frozen.size) return late.getOrPut(second, open)
-        while (frozen.size + live.size <= second) {
-            if (live.isEmpty() && frozen.size < before) frozen.add(quiet) else live.addLast(open())
+        width.reach(second)
+        widen()
+        val slot = second / mine
+        if (slot < frozen.size) return late.getOrPut(slot, open)
+        while (frozen.size + live.size <= slot) {
+            if (live.isEmpty() && frozen.size < before / mine) frozen.add(quiet) else live.addLast(open())
         }
-        return if (second < frozen.size) late.getOrPut(second, open) else live[second - frozen.size]
+        return if (slot < frozen.size) late.getOrPut(slot, open) else live[slot - frozen.size]
     }
 
     private val quiet: F by lazy { fold(open()) }
 
     fun close(before: Int) {
+        widen()
         this.before = maxOf(this.before, before)
-        late.forEach { (second, table) -> frozen[second] = add(frozen[second], fold(table)) }
+        late.forEach { (slot, table) -> frozen[slot] = add(frozen[slot], fold(table)) }
         late.clear()
-        while (live.isNotEmpty() && frozen.size < this.before) frozen.add(fold(live.removeFirst()))
+        while (live.isNotEmpty() && frozen.size < this.before / mine) frozen.add(fold(live.removeFirst()))
     }
 
     fun merge(other: Closing<R, F>) {
-        close(other.before)
-        other.frozen.forEachIndexed { second, theirs ->
-            while (frozen.size <= second) frozen.add(quiet)
-            frozen[second] = add(frozen[second], theirs)
+        width.atLeast(other.slotWidth)
+        widen()
+        // Rounded up to a whole slot of this width, so every slot the other
+        // closed lands in one closed here. Closing early costs a late table at
+        // most, never a number.
+        close((other.before + mine - 1) / mine * mine)
+        other.frozen.forEachIndexed { index, theirs ->
+            val slot = index * other.mine / mine
+            while (frozen.size <= slot) frozen.add(quiet)
+            frozen[slot] = add(frozen[slot], theirs)
         }
-        other.late.forEach { (second, table) -> absorb(at(second), table) }
-        other.live.forEachIndexed { index, table -> absorb(at(other.frozen.size + index), table) }
+        other.late.forEach { (slot, table) -> absorb(at(slot * other.mine), table) }
+        other.live.forEachIndexed { index, table -> absorb(at((other.frozen.size + index) * other.mine), table) }
         close(before)
     }
 
-    fun freeze(): List<F> =
-        frozen.mapIndexed { second, closed -> late[second]?.let { add(closed, fold(it)) } ?: closed } +
+    fun freeze(): List<F> {
+        widen()
+        return frozen.mapIndexed { slot, closed -> late[slot]?.let { add(closed, fold(it)) } ?: closed } +
             live.map(fold)
+    }
+
+    private fun widen() {
+        while (mine < width.seconds) halve()
+    }
+
+    /**
+     * Neighbours merged in pairs. A pair of one closed slot and one live
+     * table becomes a closed slot with the table beside it as a late one,
+     * and the close moves up to cover it.
+     */
+    private fun halve() {
+        val closed = frozen.chunked(2) { pair -> pair.reduce(add) }
+        val tables = if (frozen.size % 2 == 1 && live.isNotEmpty()) live.drop(1) else live.toList()
+        val straddling = live.firstOrNull()?.takeIf { frozen.size % 2 == 1 }
+        val moved = late.entries.map { (slot, table) -> slot / 2 to table }
+
+        frozen.clear()
+        frozen.addAll(closed)
+        live.clear()
+        tables.chunked(2).forEach { pair ->
+            pair.drop(1).forEach { absorb(pair[0], it) }
+            live.addLast(pair[0])
+        }
+        late.clear()
+        straddling?.let { late[frozen.lastIndex] = it }
+        moved.forEach { (slot, table) -> late[slot]?.let { absorb(it, table) } ?: late.put(slot, table) }
+        mine *= 2
+        before = maxOf(before, frozen.size * mine)
+    }
 }
 
 private class SecondRecorder {

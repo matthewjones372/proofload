@@ -1,7 +1,6 @@
 package io.github.matthewjones372.proofload
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * The load a run asked for beside the load that actually left, and the window
@@ -44,7 +43,7 @@ val RunResult.offered: Offered?
         if (plan.closed) return null
 
         val window = plan.plannedWindow
-        val took = timeline.size.seconds
+        val took = timeline.span
         if (window <= Duration.ZERO || took <= Duration.ZERO) return null
 
         val counted = timeline.sumOf { it.count }

@@ -1,7 +1,6 @@
 package io.github.matthewjones372.proofload
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * One stage of a staged run, and what the run measured while it was running.
@@ -13,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
  * than two — and [Timing.precision] carries it rather than leaving a reader to
  * assume a step's.
  *
- * @property from the first whole second of the timeline summed here.
+ * @property from where the first slot of the timeline summed here starts.
  * @property until one past the last, so `until - from` is what was actually
  *   summed.
  * @property planned what the profile asked this stage for, which differs from
@@ -60,20 +59,21 @@ val RunResult.stages: List<Stage>
         if (timeline.isEmpty()) return emptyList()
         val staged = plan.profile?.staged() ?: return emptyList()
 
+        val width = timeline.slotWidth
         var opened = Duration.ZERO
         return staged.mapIndexed { index, stage ->
             val from = opened
             opened += stage.over
-            // The seconds whose own start falls inside this stage's window.
-            // Half-open at the top, so a boundary landing exactly on a second
+            // The slots whose own start falls inside this stage's window.
+            // Half-open at the top, so a boundary landing exactly on a slot
             // opens the next stage rather than closing this one twice.
-            val seconds = timeline.indices.filter { it.seconds >= from && it.seconds < opened }
+            val seconds = timeline.indices.filter { width * it >= from && width * it < opened }
             Stage(
                 index = index,
                 of = staged.size,
                 profile = stage,
-                from = (seconds.minOrNull() ?: 0).seconds,
-                until = (seconds.maxOrNull()?.plus(1) ?: 0).seconds,
+                from = width * (seconds.minOrNull() ?: 0),
+                until = width * (seconds.maxOrNull()?.plus(1) ?: 0),
                 planned = stage.over,
                 serviceTime = seconds.map { timeline[it].serviceTime }.merged(),
                 responseTime = seconds.map { timeline[it].responseTime }.merged(),
@@ -117,8 +117,8 @@ private fun InjectionProfile.staged(): List<InjectionProfile>? = when (this) {
  * whose ramp found the ceiling, and the aggregate answer hides exactly that.
  */
 internal fun RunResult.during(stage: Stage): RunResult {
-    val from = stage.from.inWholeSeconds.toInt()
-    val until = stage.until.inWholeSeconds.toInt()
+    val from = (stage.from / timeline.slotWidth).toInt()
+    val until = (stage.until / timeline.slotWidth).toInt()
     return RunResult(
         startedAt = startedAt.plusSeconds(stage.from.inWholeSeconds),
         steps = steps.mapValues { (_, step) -> step.during(from, until) },
@@ -129,7 +129,8 @@ internal fun RunResult.during(stage: Stage): RunResult {
         hiccups = Timing.none,
         timeline = timeline.window(from, until),
         latePerSecond = latePerSecond.window(from, until),
-        usersInFlight = usersInFlight.window(from, until),
+        // Sampled once a second whatever the slots are.
+        usersInFlight = usersInFlight.window(stage.from.inWholeSeconds.toInt(), stage.until.inWholeSeconds.toInt()),
     )
 }
 

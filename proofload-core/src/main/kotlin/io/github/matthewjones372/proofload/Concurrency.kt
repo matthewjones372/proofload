@@ -63,7 +63,7 @@ val RunResult.concurrency: Concurrency
             )
         }
         val settled = steady
-        val window = settled.timeline.size.toDouble()
+        val window = settled.timeline.span.toDouble(DurationUnit.SECONDS)
         if (window <= 0.0) return Concurrency.Absent("nothing was recorded second by second, so there is no window")
 
         val readings = usersInFlight.drop(usersInFlight.size - settled.usersInFlight.size).filterNotNull()

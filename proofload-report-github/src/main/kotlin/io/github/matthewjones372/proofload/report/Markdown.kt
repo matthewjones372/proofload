@@ -22,6 +22,7 @@ import io.github.matthewjones372.proofload.offered
 import io.github.matthewjones372.proofload.precision
 import io.github.matthewjones372.proofload.ranOutOfRoom
 import io.github.matthewjones372.proofload.seeds
+import io.github.matthewjones372.proofload.span
 import io.github.matthewjones372.proofload.stages
 import io.github.matthewjones372.proofload.startRate
 import io.github.matthewjones372.proofload.unanswered
@@ -30,7 +31,6 @@ import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 /**
@@ -250,7 +250,7 @@ private fun Plan.warmed(): String {
  */
 private fun RunResult.cutShortWarning(): String? {
     val asked = plan.plannedWindow
-    val recorded = timeline.size.seconds
+    val recorded = timeline.span
     if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return null
 
     return "> **Cut short:** the schedule asked for ${asked.report()} and the run recorded ${recorded.report()}. " +

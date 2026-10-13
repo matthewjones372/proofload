@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.4.10"
+    kotlin("jvm") version "2.4.20"
 }
 
 // An untagged commit publishes `0.1.0-SNAPSHOT`, so the default matches what

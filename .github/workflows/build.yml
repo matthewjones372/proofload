@@ -66,6 +66,29 @@ jobs:
             **/build/test-results/
           retention-days: 7
 
+  # Hands GitHub the resolved Gradle graph, so Dependabot alerts cover the
+  # libraries proofload actually depends on. Without it the dependency graph
+  # only sees the Actions in these workflows: the build's coordinates are not
+  # anywhere a static manifest scan can read them.
+  #
+  # `main` only, like the badge: the graph that matters is the one that ships.
+  dependency-graph:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/dependency-submission@v6
+
   # The number the badge shows, published where a badge service can read it.
   #
   # `main` only: a pull request that moved the badge would show a number for code

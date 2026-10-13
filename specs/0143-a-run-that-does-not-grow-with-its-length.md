@@ -74,17 +74,17 @@ where warm-up and most schedule losses are. Recommended: freeze and widen.
 
 ## Stack
 
-- [ ] **`spec-0143-freeze-closed`**: seconds frozen into their sparse form once
+- [x] **`spec-0143-freeze-closed`**: seconds frozen into their sparse form once
       no request that departed in them is in flight; lateness too.
       Done when: `:benchmarks:timelineCost`'s recording figure for the hour of
       ten steps is within a few percent of the frozen figure, rather than the
       full tables', and the frozen result is unchanged.
-- [ ] **`spec-0143-widen`**: a fixed number of slots with widening by merging
+- [x] **`spec-0143-widen`**: a fixed number of slots with widening by merging
       pairs, `Second.width`, and every reader of the timeline using it.
       Done when: a run of a simulated day holds the same number of slots as an
       hour; merging a widened run with one that is not gives the coarser of the
       two; steady state and stages pass their tests on widened timelines.
-- [ ] **`spec-0143-cost`**: `docs/what-it-costs.md` and `:benchmarks:timelineCost`
+- [x] **`spec-0143-cost`**: `docs/what-it-costs.md` and `:benchmarks:timelineCost`
       gain the day-long run.
       Done when: the doc states what a day-long run holds, measured.
 

@@ -119,6 +119,7 @@ built. Each row links the spec that argued for it.
 | [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already existed. No virtual clock, which the spec recommended against |
 | [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants as `docs/invariants.md`, the tests that cite each, and `./gradlew invariants` gating them from `check`. Five still do not hold, and the page says which |
 | [0142](0142-the-start-command-in-the-documentation.md) | every published jar naming its coordinate, so a launcher starts the server rather than the command line, and the documented download checked against the release |
+| [0143](0143-a-run-that-does-not-grow-with-its-length.md) | a second frozen once nothing in flight can land in it, a timeline and users in flight of fixed slots that widen, and a day measured: 47.85 MiB recording for ten steps, less than an hour's 60.97 |
 
 Everything else drafted is built, bar the tails listed below and the three
 specs under "Drafted, not built".
@@ -143,13 +144,6 @@ and are above; concurrency as an axis is what is left.
 | Spec | What it would get |
 |---|---|
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
-
-One from running Proofload as a demo's background traffic for a day, which ran
-out of heap in under two hours.
-
-| Spec | What it would get |
-|---|---|
-| [0143](0143-a-run-that-does-not-grow-with-its-length.md) | a second frozen once nothing in flight can land in it, and a timeline of fixed slots that widen, so a day holds what an hour does |
 
 Fourteen more came out of one adversarial review of the tree, aimed at finding
 ways it could produce a plausible-looking but incorrect result. It found five.

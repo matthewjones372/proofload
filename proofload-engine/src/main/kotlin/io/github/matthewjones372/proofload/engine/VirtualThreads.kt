@@ -93,7 +93,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     val runStart = System.nanoTime() - recorders.sinceStart().inWholeNanoseconds
     val users = Departures()
     val departed = Departed()
-    val watching = watchProgress(progress, runStart) { ended ->
+    val watching = watchProgress(progress, runStart, recorders::inFlight) { ended ->
         // On the sampler's thread once a second, which no request is timed on:
         // a second is closed once no user still out could record into it.
         val now = (System.nanoTime() - runStart).nanoseconds
@@ -115,12 +115,10 @@ private fun Simulation.send(progress: Progress): RunResult {
     departAll(recorders, users, departed, arrivals, drain, runStart)
     drain?.close()
     watching.stop()
-    val sampled = watching.usersInFlight()
     return recorders.freeze(plan(), arrivals.freeze())
         .copy(
             hiccups = watch.stop(),
             limits = room.stop(),
-            usersInFlight = sampled,
             // The shard the caller declared, plus the hold this host actually
             // computed: the only thing a merge can read a disagreeing clock off.
             shard = shard?.copy(heldFor = held),

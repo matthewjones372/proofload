@@ -113,3 +113,9 @@ ten-minute restarts, with a flat heap.
 - **Does a widened timeline change any verdict?** Steady-state detection reads
   per-second variance. Recommended: it reads variance per slot, scaled by
   width, and a test pins that a day-long steady run is judged steady.
+- **What of the users in flight, sampled once a second?**
+  **Settled in `spec-0143-cost`:** kept one reading a slot, the first taken in
+  it, and widened with the timeline. A second each, a day's readings were
+  6.2 MiB, against 47.9 MiB for the whole timeline of ten steps and 7.0 MiB for
+  the demo's three. A reading is kept rather than averaged, so `Concurrency`
+  still averages counts the sampler took.

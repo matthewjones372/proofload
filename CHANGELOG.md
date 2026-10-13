@@ -546,6 +546,16 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **The users in flight are kept one reading a slot.** The engine sampled them
+  once a second into a map it held for the whole run, 86,400 entries and about
+  6 MiB for a day. `RunResult.usersInFlight` is now indexed by the timeline's
+  slots and widens with them, keeping the first reading taken in each, so a
+  day holds 2,700 rather than 86,400. The engine hands each reading to the new
+  `RunRecorder.inFlight(at, users)`. Steady state, stages and `Runs.merged`
+  read it by slot. `docs/what-it-costs.md` gives what an hour and a day of ten
+  steps hold, and a day of the petshop demo's three, measured by
+  `:benchmarks:timelineCost`.
+
 - **A timeline holds a fixed number of slots, which widen as a run outgrows
   them.** Past 3,600 slots, neighbours are added in pairs and every slot is
   twice as wide: one second, then two, then four. Buckets add, so a widened

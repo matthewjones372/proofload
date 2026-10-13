@@ -390,34 +390,47 @@ for one side are allocated together, since a request with a service time in a
 second has a response time in it too.
 
 That doubles the timeline, and the figure is measured rather than reasoned
-about. `./gradlew :benchmarks:timelineCost` holds the recorder and reads the
-heap either side. On the run that costs the most, an hour of ten steps at
-twenty requests a second, which is 36,000 seconds of tables:
+about. `./gradlew :benchmarks:timelineCost` fills a recorder the way the engine
+does, closing seconds once a second and counting the users in flight, and reads
+the heap either side. It takes under a minute and is run by hand, not in CI.
 
-| | one clock | both |
-|---|---|---|
-| recording | 190.4 MiB | 377.8 MiB |
-| recorder and frozen seconds | 221.5 MiB | 439.1 MiB |
-| per second of step, recording | 5,546 bytes | 11,005 bytes |
+| | an hour of ten steps | a day of ten steps | a day of the demo |
+|---|---|---|---|
+| steps, requests a second each | 10, 20 | 10, 20 | 3, 5 |
+| slots, every step | 36,000 of 1 s | 27,000 of 32 s | 8,100 of 32 s |
+| recording | 61.0 MiB | 47.9 MiB | 7.0 MiB |
+| recorder and frozen | 68.6 MiB | 53.6 MiB | 9.2 MiB |
+| frozen alone | 65.0 MiB | 48.5 MiB | 7.8 MiB |
+| per slot, recording | 1,775 bytes | 1,858 bytes | 899 bytes |
+| users in flight, on their own | 0.13 MiB | 0.11 MiB | 0.11 MiB |
 
-Ten minutes of three steps, 1,800 seconds of tables, is 19 MiB of that, which
-is the case to hold in mind rather than the soak. If the soak figure ever stops
-being affordable, the fallback to argue is a timeline that keeps response time
-only while a response-time goal exists to need it, which the plan knows before
-the run starts.
+Mac OS X aarch64, 8 processors, JDK 21.0.9. The demo is the petshop's
+background traffic, three steps at five requests a second each. Frozen alone is the same run
+through a recorder that never closes a second, with nothing held but the
+result: the figure a recorder that closes should come in near.
 
-Those figures are a recorder that holds every second's tables until the run
-ends. Since 0143 the engine closes a second once no user still out departed
-in it, and a closed second is held as the buckets it froze to. The same hour,
-both clocks, now holds 60.8 MiB while recording against 64.4 MiB for the
-frozen seconds alone: about 1,770 bytes a second of step rather than 11,005.
-Still linear in the run's length, which the rest of 0143 is for.
+**A day holds no more than an hour.** A second is full tables only until no
+user still out departed in it. Then it is folded into the buckets that counted
+something and its tables are let go. And past 3,600 slots a step's timeline
+stops growing: neighbouring slots are added in pairs and every slot doubles in
+width, so an hour is 3,600 slots of a second and a day 2,700 of thirty-two
+seconds. Buckets add, so a widened slot is the seconds it holds exactly, at a
+coarser resolution in time. A day holds fewer slots than an hour, and a slot of
+thirty-two seconds keeps hardly more buckets than a slot of one, so the day
+comes in under the hour. `Simulation.keepingSlots(n)` trades that resolution
+for memory.
 
-Past 3,600 slots the timeline stops growing: neighbouring slots are added in
-pairs and every slot doubles in width, so an hour is 3,600 slots of a second
-and a day 2,700 of thirty-two seconds. Buckets add, so a widened slot is the
-seconds it holds exactly, at a coarser resolution in time.
-`Simulation.keepingSlots(n)` trades that resolution for memory.
+**A slot costs its buckets**, about 1,800 bytes at twenty requests a second and
+900 at five, because a busier slot sees more distinct latencies. Past the
+first hour the number of slots is fixed, so that is the figure to multiply.
+
+**The users in flight are kept by slot too.** The engine counts the users
+running once a second, the measured half of `result.concurrency`, and keeps the
+first reading taken in each slot, so the readings widen with the timeline. A
+reading is kept rather than averaged, so every number in `usersInFlight` is a
+count the sampler took; a day's steady segment rests on one every thirty-two
+seconds. The last row is that sample on its own, held in a recorder with
+nothing else in it.
 
 Freezing a second keeps the buckets that counted something and drops the rest,
 tens of them for a second of load, against the 673 the table has slots for.

@@ -80,11 +80,11 @@ data class Runs(val each: List<RunResult>) {
             // every run is second n here, so the lateness of second n is every
             // run's lateness in that second pooled.
             latePerSecond = each.map { it.latePerSecond.widened(it.timeline.slotWidth, width) }.superimposedLateness(),
-            // Added second by second, as the timeline is superimposed: second
-            // n of ten runs held the users of ten runs, and that is the
-            // concurrency the merged throughput and latency predict. A second
-            // no run sampled stays absent.
-            usersInFlight = each.map { it.usersInFlight }.superimposedInFlight(),
+            // Added slot by slot, as the timeline is superimposed: slot n of
+            // ten runs held the users of ten runs, and that is the concurrency
+            // the merged throughput and latency predict. A slot no run
+            // sampled stays absent.
+            usersInFlight = each.map { it.usersInFlight.thinned(it.timeline.slotWidth, width) }.superimposedInFlight(),
             // The worst each run came to its own ceiling. A mean would say a
             // set was comfortable because most of its runs were, when the
             // question is whether any of them was measuring this process.
@@ -158,7 +158,7 @@ private fun List<StepStats>.merged(width: Duration): StepStats = StepStats(
  * landed, which the plan check has already seen.
  */
 
-/** Second *n* of every run's in-flight count added together, absent where no run sampled it. */
+/** Slot *n* of every run's in-flight count added together, absent where no run sampled it. */
 private fun List<List<Long?>>.superimposedInFlight(): List<Long?> {
     if (all { it.isEmpty() }) return emptyList()
     return (0 until maxOf { it.size }).map { second ->

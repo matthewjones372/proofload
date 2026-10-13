@@ -291,6 +291,12 @@ internal fun List<Timing>.widened(from: Duration, to: Duration): List<Timing> {
     return if (by == 1) this else chunked(by) { it.merged() }
 }
 
+/** Readings [from] apart, one kept a slot [to] wide, as a recorder past its slots keeps them. */
+internal fun List<Long?>.thinned(from: Duration, to: Duration): List<Long?> {
+    val by = widening(from, to)
+    return if (by == 1) this else chunked(by) { slot -> slot.firstNotNullOfOrNull { it } }
+}
+
 private fun widening(from: Duration, to: Duration): Int {
     require(to >= from && to.inWholeNanoseconds % from.inWholeNanoseconds == 0L) {
         "a slot $from wide cannot be added into slots $to wide: a timeline only widens by whole slots"
@@ -554,11 +560,11 @@ data class RunResult(
     val latePerSecond: List<Timing> = emptyList(),
 
     /**
-     * How many users were running in each second of the run, sampled once a
-     * second on the scheduler's side.
+     * How many users were running in each slot of [timeline], sampled once a
+     * second on the scheduler's side and kept as the first reading in a slot.
      *
      * The measured half of Little's law: throughput and latency come off the
-     * histograms, and this is the count they predict. A second the sampler
+     * histograms, and this is the count they predict. A slot the sampler
      * missed is absent rather than zero, because nothing counted no users — it
      * counted nothing.
      */

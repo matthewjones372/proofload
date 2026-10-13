@@ -53,6 +53,8 @@ class RunRecorder @JvmOverloads constructor(
     // coarse table a second at run level, which is what makes it affordable.
     private val lateness = lateness(width)
 
+    private val sampled = Readings(width)
+
     /**
      * How long this run has been going, on the monotonic clock this recorder
      * was made with.
@@ -148,8 +150,15 @@ class RunRecorder @JvmOverloads constructor(
         stepCalled(step).leftOver(outstanding)
     }
 
+    /**
+     * How many [users] a sampler counted running [at] this point in the run,
+     * kept one reading a slot so a day holds no more of them than an hour.
+     */
+    fun inFlight(at: Duration, users: Long) = sampled.take(at.inWholeSeconds.toInt(), users)
+
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
+        sampled.merge(other.sampled)
         lateness.merge(other.lateness)
         other.steps.forEach { (name, theirs) -> stepCalled(name).merge(theirs) }
     }
@@ -182,6 +191,7 @@ class RunRecorder @JvmOverloads constructor(
         behind = behind.timing(),
         timeline = everySecond().frozen(),
         latePerSecond = lateness.freeze(),
+        usersInFlight = sampled.freeze(),
     )
 
     /**
@@ -389,6 +399,45 @@ private class Width(private val slots: Int) {
 
     fun atLeast(other: Int) {
         seconds = maxOf(seconds, other)
+    }
+}
+
+/**
+ * One reading a slot, the first taken in it.
+ *
+ * Widened by keeping one of each pair rather than averaging them, so every
+ * entry is still a count somebody took and `Concurrency` averages readings.
+ */
+private class Readings(private val width: Width) {
+
+    // The accumulator AGENTS.md allows a builder, frozen into the result.
+    private val taken = ArrayList<Long?>()
+    private var mine = 1
+
+    fun take(second: Int, users: Long) {
+        width.reach(second)
+        widen()
+        val slot = second / mine
+        while (taken.size <= slot) taken.add(null)
+        if (taken[slot] == null) taken[slot] = users
+    }
+
+    fun merge(other: Readings) {
+        other.taken.forEachIndexed { slot, users -> users?.let { take(slot * other.mine, it) } }
+    }
+
+    fun freeze(): List<Long?> {
+        widen()
+        return taken.toList()
+    }
+
+    private fun widen() {
+        while (mine < width.seconds) {
+            val kept = taken.chunked(2) { pair -> pair.firstNotNullOfOrNull { it } }
+            taken.clear()
+            taken.addAll(kept)
+            mine *= 2
+        }
     }
 }
 

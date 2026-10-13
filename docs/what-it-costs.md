@@ -413,6 +413,12 @@ both clocks, now holds 60.8 MiB while recording against 64.4 MiB for the
 frozen seconds alone: about 1,770 bytes a second of step rather than 11,005.
 Still linear in the run's length, which the rest of 0143 is for.
 
+Past 3,600 slots the timeline stops growing: neighbouring slots are added in
+pairs and every slot doubles in width, so an hour is 3,600 slots of a second
+and a day 2,700 of thirty-two seconds. Buckets add, so a widened slot is the
+seconds it holds exactly, at a coarser resolution in time.
+`Simulation.keepingSlots(n)` trades that resolution for memory.
+
 Freezing a second keeps the buckets that counted something and drops the rest,
 tens of them for a second of load, against the 673 the table has slots for.
 They are kept rather than only the percentiles read off them because a stretch

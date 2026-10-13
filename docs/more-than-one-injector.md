@@ -36,7 +36,7 @@ injector's own `System.nanoTime()`, which is honest with no shared clock at all.
 
 What alignment buys is a timeline whose second thirty is the same second thirty
 everywhere, because a merge superimposes them. The timeline's resolution is one
-second, so a hundred milliseconds of skew is a tenth of a bucket and NTP beats
+second until a run outgrows its slots, so a hundred milliseconds of skew is a tenth of a bucket and NTP beats
 that comfortably: sub-second alignment buys the picture, not the honesty.
 
 Give them enough time to reach it. A host still loading classes when its

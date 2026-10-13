@@ -68,12 +68,13 @@ internal class Recorders(
     shards: Int = defaultShards,
     /** False for a closed run, which promised no departures and so records no lateness. */
     keepingSchedule: Boolean = true,
+    slots: Int = RunRecorder.SLOTS,
 ) : StepSink {
 
     // One origin for the run, spawned rather than read again per shard: shards
     // are merged into one timeline at the end, and three recorders that each
     // read the clock are three zero points that pool into a smear.
-    private val first = RunRecorder(startedAt, keepingSchedule)
+    private val first = RunRecorder(startedAt, keepingSchedule, slots)
 
     // The mutable accumulator this whole class is about: the alternative is an
     // allocation per request on the path the report calls the target's latency.

@@ -546,6 +546,24 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **A timeline holds a fixed number of slots, which widen as a run outgrows
+  them.** Past 3,600 slots, neighbours are added in pairs and every slot is
+  twice as wide: one second, then two, then four. Buckets add, so a widened
+  slot is exact. An hour keeps a slot a second and a day keeps 2,700 of
+  thirty-two seconds, so what a run holds stops growing with its length.
+  Lateness widens with the timeline. `Second.width` says how wide a slot is,
+  `List<Second>.span` how long a timeline covers, and `slotWidth` how wide its
+  slots are. Steady state, stages, `Concurrency`, `offered`,
+  `heldScheduleFor`, the report's charts and the exports read slots by their
+  width rather than as seconds; the charts draw a widened slot's counts as a
+  rate a second, and the JSON carries `width` on every slot. `Runs.merged`
+  and `Shards.merged` add a narrower run's slots up into the widest one's.
+  `Simulation.keepingSlots(n)` and `RunRecorder(..., slots = n)` set the
+  count. Breaking for a caller compiled against the old shapes:
+  `Second.copy` and `Simulation.copy` take the new field, and the
+  default-argument constructors of `Second`, `Simulation` and `RunRecorder`
+  changed signature. The constructors without defaults are kept.
+
 - **A second's tables are let go once nothing in flight can land in it.** A run
   kept a coarse histogram pair per second per step, and a lateness table per
   second, until `freeze()`, so its memory grew with its length: an hour of ten

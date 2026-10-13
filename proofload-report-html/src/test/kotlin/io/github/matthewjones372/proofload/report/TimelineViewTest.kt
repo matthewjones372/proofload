@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class TimelineViewTest {
 
@@ -76,6 +77,20 @@ class TimelineViewTest {
         withClue("points come in pairs at one height: $counts") {
             counts.chunked(2).all { (left, right) -> left == right } shouldBe true
         }
+    }
+
+    @Test
+    fun `a widened run is drawn as a rate a second, and the note says how wide a point is`() {
+        val recorder = RunRecorder(Instant.parse("2026-08-26T09:00:00Z"), slots = 4)
+        repeat(16) { second -> repeat(10) { recorder.pay(at = second.seconds + (it * 90).milliseconds) } }
+
+        val page = recorder.freeze().toHtmlReport()
+
+        withClue("forty requests a slot of four seconds is ten a second") {
+            page shouldContain "requests a second — peak 10<"
+        }
+        page shouldContain "One point every 4"
+        heights(page, "count").size shouldBe 8
     }
 
     @Test

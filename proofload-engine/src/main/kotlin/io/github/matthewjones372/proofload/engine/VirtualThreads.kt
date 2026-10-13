@@ -84,7 +84,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     // long it waited. Nothing else is coordinated — a sample is two readings
     // of this injector's own monotonic clock.
     val held = shard?.let { waitFor(it, progress) }
-    val recorders = Recorders(Instant.now(), keepingSchedule = !closed)
+    val recorders = Recorders(Instant.now(), keepingSchedule = !closed, slots = slots)
     val watch = watchForHiccups()
     val room = watchForRoom()
     // The recorder's origin rather than a second reading of the clock: a

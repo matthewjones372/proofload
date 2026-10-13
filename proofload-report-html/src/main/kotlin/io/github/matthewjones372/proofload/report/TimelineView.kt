@@ -2,10 +2,14 @@ package io.github.matthewjones372.proofload.report
 
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.precision
+import io.github.matthewjones372.proofload.slotWidth
+import io.github.matthewjones372.proofload.span
 import io.github.matthewjones372.proofload.timelinePrecision
 import java.util.Locale
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 /**
  * The run second by second: what left, how long the target took, and what
@@ -26,16 +30,16 @@ internal fun RunResult.timelineLines(): List<String> {
         """  <section class="timeline" aria-label="Over time">""",
         "    <h2>Over time</h2>",
     ) + throughputChart() + latencyChart() + latenessChart() + failureChart() +
-        noteLines(timelinePrecision, precision) + listOf("  </section>")
+        noteLines(timeline.slotWidth, timelinePrecision, precision) + listOf("  </section>")
 }
 
 private fun RunResult.throughputChart(): List<String> {
-    val counts = timeline.map { it.count.toDouble() }
+    val counts = timeline.map { it.count.perSecondOf(it.width) }
     return chart(
         caption = "requests a second — peak ${counts.max().toLong().grouped()}",
         label = "requests a second",
         series = listOf("count" to counts),
-        over = timeline.size,
+        over = timeline.span,
     )
 }
 
@@ -47,7 +51,7 @@ private fun RunResult.latencyChart(): List<String> {
             """<span class="key p50">p50</span> at ${p50.max().asDuration()}""",
         label = "service time each second",
         series = listOf("p50" to p50, "p99" to p99),
-        over = timeline.size,
+        over = timeline.span,
     )
 }
 
@@ -67,22 +71,27 @@ private fun RunResult.latenessChart(): List<String> {
         caption = "how late departures were — p99 peaks at ${late.max().asDuration()}",
         label = "lateness each second",
         series = listOf("late" to late),
-        over = latePerSecond.size,
+        over = timeline.slotWidth * latePerSecond.size,
     )
 }
 
 /** Absent when nothing failed: a line pinned to zero for the whole run is a chart that says what the totals said. */
 private fun RunResult.failureChart(): List<String> {
-    val failed = timeline.map { it.failed.toDouble() }
+    val failed = timeline.map { it.failed.perSecondOf(it.width) }
     return chart(
         caption = "failures a second — peak ${failed.max().toLong().grouped()}",
         label = "failures a second",
         series = listOf("failed" to failed),
-        over = timeline.size,
+        over = timeline.span,
     )
 }
 
-private fun chart(caption: String, label: String, series: List<Pair<String, List<Double>>>, over: Int): List<String> {
+private fun chart(
+    caption: String,
+    label: String,
+    series: List<Pair<String, List<Double>>>,
+    over: Duration,
+): List<String> {
     val peak = series.maxOf { (_, values) -> values.max() }.takeIf { it > 0.0 } ?: return emptyList()
 
     return listOf(
@@ -93,7 +102,7 @@ private fun chart(caption: String, label: String, series: List<Pair<String, List
         """        <polyline class="series $name" points="${stepped(values, peak)}"></polyline>"""
     } + listOf(
         """        <text class="tick-label series-start" x="0" y="$HEIGHT">0</text>""",
-        """        <text class="tick-label series-end" x="$WIDTH" y="$HEIGHT">${over.seconds.forPlan()}</text>""",
+        """        <text class="tick-label series-end" x="$WIDTH" y="$HEIGHT">${over.forPlan()}</text>""",
         "      </svg>",
         "    </figure>",
     )
@@ -115,8 +124,8 @@ private fun stepped(values: List<Double>, peak: Double): String =
  * constants the recorder chose with: a page that knows statically which
  * numbers came from which histogram is one refactor away from being wrong.
  */
-private fun noteLines(coarse: Double?, full: Double?): List<String> = listOf(
-    """    <p class="note">One point a second, counted from the run's start, and a second nothing ran in is """ +
+private fun noteLines(width: Duration, coarse: Double?, full: Double?): List<String> = listOf(
+    """    <p class="note">${pointEvery(width)}, counted from the run's start, and a second nothing ran in is """ +
         "drawn as the zero it was. These percentiles come from a coarse histogram" +
         widths(coarse, full) +
         " because a full one a second per step is tens of megabytes of counters. Read a shape here and " +
@@ -128,6 +137,16 @@ private fun widths(coarse: Double?, full: Double?): String = when {
     full == null -> " — good to ${coarse.asPercent()} —"
     else -> " — good to ${coarse.asPercent()}, against ${full.asPercent()} for the table above —"
 }
+
+/** A widened run's counts are a slot's, drawn as the rate a second they averaged so the axis means one thing. */
+private fun Long.perSecondOf(width: Duration): Double = this / width.toDouble(DurationUnit.SECONDS)
+
+private fun pointEvery(width: Duration): String =
+    if (width == 1.seconds) {
+        "One point a second"
+    } else {
+        "One point every ${width.forPlan()}, the run having outgrown a slot a second, with counts averaged over it"
+    }
 
 private fun Double.asDuration(): String = toLong().nanoseconds.forReport()
 

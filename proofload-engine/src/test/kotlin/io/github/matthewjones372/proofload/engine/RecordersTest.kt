@@ -102,6 +102,20 @@ class RecordersTest {
     }
 
     @Test
+    fun `every shard widens to the slots the run was given, and the completions with them`() {
+        val recorders = Recorders(Instant.now(), shards = 2, slots = 2)
+        repeat(SECONDS) { at ->
+            recorders.record("browse", null, 1.milliseconds, Duration.ZERO, at.seconds, false, true, 1, null)
+        }
+        recorders.arrived("settled", 3.milliseconds, 1.seconds)
+
+        val result = recorders.freeze(Plan.none, Arrivals.none)
+
+        result.timeline.map { it.width to it.count } shouldBe listOf(2.seconds to 3L, 2.seconds to 2L)
+        result["settled"].timeline.map { it.width } shouldBe listOf(2.seconds)
+    }
+
+    @Test
     fun `there is one recorder per processor, not one per virtual user`() {
         Recorders.defaultShards shouldBe Runtime.getRuntime().availableProcessors()
     }

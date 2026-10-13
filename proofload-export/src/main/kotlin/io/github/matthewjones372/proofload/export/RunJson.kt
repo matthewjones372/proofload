@@ -359,6 +359,8 @@ private fun Outcome.toJson(depth: Int): String = jsonObject(
 private fun Second.toJson(depth: Int): String = jsonObject(
     depth = depth,
     fields = listOf(
+        // On every slot rather than once, so a slot read out of the array alone still says how long it was.
+        "width" to width.inWholeNanoseconds.toString(),
         "count" to count.toString(),
         "ok" to ok.toString(),
         "failed" to failed.toString(),

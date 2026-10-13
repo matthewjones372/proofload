@@ -32,6 +32,13 @@ dependencies {
     // wire against a real producer and a real consumer inside `./gradlew build`,
     // everywhere, for no dependency, which is what 0061 already argued.
     api("org.apache.kafka:kafka-clients:4.3.1")
+    // kafka-clients 4.3.1 brings lz4-java 1.10.2, which has open advisories
+    // (native library extraction to a shared temp directory, unvalidated
+    // length allocations). It is on every consumer's runtime classpath, so the
+    // constraint is `api` and goes out in the published metadata with it.
+    constraints {
+        api("at.yawk.lz4:lz4-java:1.11.4")
+    }
 
     // An engine to run the scenarios these tests build, and nothing that is a
     // broker: whether a cluster is sized right needs the caller's cluster.

@@ -11,7 +11,7 @@
 dependencies {
     api(project(":proofload-plan"))
     api(project(":proofload-openapi"))
-    api("io.github.matthewjones372:pelican-core:1.0.0-RC1")
+    api("io.github.matthewjones372:pelican-core:1.0.0-RC3")
 }
 
 tasks.test {

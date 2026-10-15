@@ -145,6 +145,12 @@ and are above; concurrency as an axis is what is left.
 |---|---|
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
 
+And one from a run that measured the generator instead: petshop at 50,000 a second, where the injector's own backlog took its cores and heap before the target was busy.
+
+| Spec | What it would get |
+|---|---|
+| [0144](0144-a-generator-that-refuses-rather-than-collapses.md) | an opt-in cap on users in flight, every arrival past it counted as refused, and a run that refused any read as void |
+
 Fourteen more came out of one adversarial review of the tree, aimed at finding
 ways it could produce a plausible-looking but incorrect result. It found five.
 [HARDENING.md](HARDENING.md) is the index over them — what each settles, which

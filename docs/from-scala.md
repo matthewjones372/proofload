@@ -1,30 +1,18 @@
 # Proofload from Scala
 
-Scala 3 reads Kotlin bytecode, so a Scala caller is in the position
-[from-java.md](from-java.md) describes and one step worse. The value-class
-hashes and the erased `@JvmInline` types are there identically, and on top of
-them Scala brings its own duration: a Scala codebase writes `1.minute` and
-means a `scala.concurrent.duration.FiniteDuration`, while every Proofload
-signature takes a `kotlin.time.Duration` that arrives as a bare `Long` with no
-unit attached.
+`proofload-scala` lets Scala 3 code build and run the same scenarios the Kotlin
+DSL builds, with `FiniteDuration` in and out. Calling core directly from Scala
+has the problems [from-java.md](from-java.md) describes (mangled names for
+value-class parameters, durations as a bare `Long`), so this module is a layer
+over `proofload-java`, with report and comparison helpers of its own.
 
-`proofload-scala` sits on `proofload-java` rather than on core. The unmangling is
-written once, and a facade method missing from Java is missing from Scala in
-the same commit rather than two months later.
+Compiled against **Scala 3.3.8**, the LTS line. That is a floor: a Scala
+compiler cannot read TASTy from a newer compiler, so any Scala 3.3 or newer can
+use this module and nothing older can, whatever the dependency overrides.
 
-Compiled against **Scala 3.3.8**, the LTS line, and that number is a floor
-rather than a note: a published Scala library carries its own TASTy, TASTy is
-forward-incompatible, and so no compiler older than the one that built this
-module can read it. Any Scala 3.3 or newer works. Below that, and no dependency
-override helps, because the version is in the bytecode.
-
-It is declared once, in `buildSrc/src/main/kotlin/ScalaLts.kt`, next to the
-ceiling on the TASTy this module is allowed to emit. `TastyVersionTest` reads
-the header of the compiled output and fails the build here when it rises above
-that ceiling, and `ScalaVersionTest` fails when this page and the build stop
-agreeing. Both exist because `0.1.0-rc3` was published against 3.9.0 by a
-grouped dependency bump, emitted TASTy 28.9, and could not be read by anyone
-below Scala 3.9 while this paragraph still promised the LTS line.
+`TastyVersionTest` fails the build if the compiled output's TASTy version rises
+above that line, and `ScalaVersionTest` fails if this page and the build stop
+agreeing. Do not use `0.1.0-rc3` from Scala ([versions.md](versions.md)).
 
 ## Taking it
 
@@ -32,9 +20,8 @@ below Scala 3.9 while this paragraph still promised the LTS line.
 // build.gradle.kts
 dependencies {
     // Brings proofload-java, and proofload-core, proofload-engine and proofload-http
-    // with it. No Scala suffix on the coordinate while there is one supported
-    // Scala version; a suffix invented early is one to keep publishing forever.
-    implementation("io.github.matthewjones372:proofload-scala:$proofloadVersion")
+    // with it. The coordinate has no Scala version suffix.
+    implementation("io.github.matthewjones372:proofload-scala:0.1.0-rc4")
 }
 ```
 
@@ -133,18 +120,15 @@ and whether this process ran out of its own room. `result.concurrency` is
 Little's law over the segment the run settled into, as a sealed trait rather
 than a nullable: `Concurrency.Measured` carries `observed`, `ratio`, `backlog`
 and `agrees`, and `Concurrency.Absent(because)` says why the law could not be
-asked. All four are extensions rather than `RunResultKt.fellBehind(result)`,
-which is what a load test written against `0.1.0-rc1` had in its source: a file
-class is how Kotlin happens to compile a file and has no business in a
-consumer's imports.
+asked. All four are Scala extensions, so no Kotlin file class appears in your imports.
 
 `result.against(baseline)` compares two runs, and takes the clock the comparison
 should be read on: `result.against(baseline, of = Clock.ServiceTime)` where the
 generator fell behind, because the response times of such a run carry a wait
 this tool caused. The `Comparison` it hands back is what `writeHtmlReport` and
 `markdown` take, and it records which clock it was read on so the page says so
-rather than assuming. Choosing the clock is on `main` and not yet in a release:
-in `0.1.0-rc4`, `against` always reads response time.
+rather than assuming. Choosing the clock is not in `0.1.0-rc4`
+([versions.md](versions.md)).
 
 `result.offered` is the other half of reading a run, and an `Option`: it is
 what the run asked for beside what actually left, and it cannot be said of a
@@ -199,10 +183,8 @@ writePagesIndex(reports)
 
 `result.markdown` is the same table as text, `result.toHtmlReport()` the page as
 a string, and `capacity.writeHtmlReport(path)` draws the curve with the
-operating point marked. Every optional argument is a Scala default rather than a
-hand-placed `null`: Kotlin's defaults do not cross the boundary, so the rc1
-version of these calls was `HtmlReportKt.writeHtmlReport(result, path, null,
-null, java.util.List.of())` and the caller had to know the order. The step
+operating point marked. Every optional argument is a Scala default, because
+Kotlin's default arguments do not cross the language boundary. The step
 summary's environment reader is a `String => Option[String]`, so nothing here
 puts `kotlin.jvm.functions.Function1` in a signature a caller sees, and
 `appendToStepSummary` answers `NotOnActions` off Actions rather than throwing:
@@ -257,7 +239,7 @@ and `proofload-kotest`.
 // build.gradle.kts
 dependencies {
     // zio-test is compileOnly here: the spec that uses this already has it.
-    testImplementation("io.github.matthewjones372:proofload-zio-test:$proofloadVersion")
+    testImplementation("io.github.matthewjones372:proofload-zio-test:0.1.0-rc4")
 }
 ```
 
@@ -319,8 +301,7 @@ under both Gradle and a forked sbt. It is per spec rather than per run because
 the index is per directory, and the index is written once, after the last test:
 a spec that measured nothing leaves nothing behind.
 
-`proofload.run` underneath is the whole of the original module, and its argument
-is entirely about which executor it runs on. It is `ZIO.attemptBlocking` around
+`proofload.run` is `ZIO.attemptBlocking` around
 the same silent runner the other two framework modules build: the call holds its
 thread for the length of the run while the engine sends on virtual threads, and
 on ZIO's compute pool that is a starved runtime, which is a scheduler this tool
@@ -343,9 +324,8 @@ Durations are zio's here and nothing has to be converted. `zio.Duration` *is*
 `java.time.Duration`, and `at`, `pause`, `sustainable`, `warmingUp`, `under` and
 `goodput` each take one beside the `FiniteDuration` they already took. So a spec
 that imports `zio.*` writes `1.minute`, needs no `DurationInt`, and sets no
-language flag. Importing both spellings is what makes `15.seconds` ambiguous,
-and a load test on `0.1.0-rc1` resolved that by dropping `import zio.*` and
-writing `FiniteDuration(15, TimeUnit.SECONDS)` by hand.
+language flag. Importing both spellings makes `15.seconds` ambiguous, so import
+one of them.
 
 `proofload.run` fails with a `ProofloadError`: `Invalid` where the simulation
 could not be run as written, `Interrupted` where the run did not finish, and
@@ -418,18 +398,13 @@ offered, and the gap between them is what makes a rung void. Both are read
 through `Searches`, because `Rate` is a value class and every core call that
 takes or returns one compiles to a name with a hash in it.
 
-There is no `notWorseThan` for comparing against a baseline. `Difference
-.notWorseThan` takes a `Share`, so its JVM name carries a value-class hash and
-no Scala caller can name it; the facade that would fix that is a Java-facing
-baselines module, which is a spec of its own.
+There is no `notWorseThan` for comparing several runs against a baseline from
+Scala: `Difference.notWorseThan` takes a `Share`, so its JVM name is mangled.
 
 ## The gate
 
 [`examples-scala`](../examples-scala) is a module whose whole content is the
 two load tests above, one compiled by `./gradlew build` and one compiled and run
-by it. There is no `.api` dump for
-`proofload-scala` to move: what BCV records of a Scala module is
-`Durations$package$`, lazy-init closures and qualified-private members Scala
-emits as public bytecode: names no caller can type, moving on edits no caller
-can see. So the compiler is the gate, and `FromScalaDocTest` fails when a line
-on this page stops being a line of that source.
+by it. `proofload-scala` has no `.api` dump, so the Scala compiler is the check,
+and `FromScalaDocTest` fails when a line of Scala on this page stops being a
+line of that source.

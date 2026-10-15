@@ -1,15 +1,12 @@
-# What a run on this machine may do
+# Limiting what a run may do
 
-A rate is a number, and a number arrives from somewhere. Somebody types it,
-or a script computes it, or, under [0089](../specs/0089-a-plan-without-a-compiler.md)
-and [0092](../specs/0092-proofload-over-mcp.md), a program writes it into a plan
-file. `checkout.at(50000.perSecond, over = 8.hours)` is a legal value whichever
-of those wrote it, and without a fence the first thing that says it was wrong
-is the target.
+A rate arrives from somewhere: a person types it, a script computes it, or a
+program writes it into a plan file, as the CLI and the MCP server accept.
+`checkout.at(50000.perSecond, over = 8.hours)` is a legal value, and without a
+limit the first thing to notice a mistake is the target. `proofload.toml`
+states what runs on a machine may do.
 
 ## This is a fence, not a sandbox
-
-Read this paragraph before the rest of the page.
 
 An `Allowance` stops a mistake: a typo, a misplaced decimal point, a program
 that computed a rate nobody read. It does not stop somebody holding the jar. A
@@ -36,9 +33,9 @@ Every key is optional and an absent one bounds nothing. `*.staging.internal`
 covers a subdomain and not the domain itself. A malformed value names its line
 rather than quietly defaulting.
 
-**No file means no limits.** A tool that fails closed on an unconfigured
-machine is one people delete the configuration to use, which turns the fence
-off everywhere instead of off once.
+**No file means no limits.** The MCP server's container image is the exception:
+it requires a file before `run` will send anything ([mcp.md](mcp.md#starting-it)).
+The CLI and the MCP server read the file from their working directory.
 
 ## Asking before you fire
 
@@ -76,18 +73,16 @@ when (val ran = Proofload().runWithin(Allowance.fromFile(), plan)) {
 }
 ```
 
-A refused run departs nothing. The check happens before the first departure,
-and the engine's own test proves it by counting what the action was asked to do
-rather than by believing the runner.
+A refused run departs nothing: the check happens before the first departure,
+and `RunWithinTest` in `proofload-engine` checks that the action was never
+called.
 
-`run` itself consults no allowance. A library call you wrote by hand is your
-decision; the fence is for the callers that are programs, and making the method
-everything goes through read a file it was never passed would be action at a
-distance.
+`run` itself consults no allowance. Use `runWithin` where the simulation comes
+from a program rather than from code you wrote.
 
 ## Not to be confused with `Limits`
 
-`Limits` is the other direction, and older: what the *injector* ran into while
-it measured: descriptors, ephemeral ports, its share of the cores. That one is
-observed during a run and travels in the result. This one is declared before a
-run and decides whether there is one.
+`Limits` is the other direction: what the injector ran into while it measured,
+such as file descriptors and ephemeral ports. It is observed during a run and
+travels in the result (`result.limits`, `result.ranOutOfRoom()`). An allowance
+is declared before a run and decides whether there is one.

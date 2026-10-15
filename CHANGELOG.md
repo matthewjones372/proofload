@@ -46,6 +46,13 @@ enough to list, and long enough to matter.
   constructor parameter, so their constructors and `copy` changed signature;
   source that names its arguments compiles unchanged.
 
+  `RunResult.generatorSaturated()` asks whether the generator rather than the
+  target set what a run measured: a refusal, running out of room, or losing
+  its own schedule. A search rung that refused any arrival is void and its
+  line names the count; the HTML page and the markdown summary print "not
+  sent: generator saturated" beside the failures with a warning above them;
+  the JSON headline reads `behind` and its schedule remedy names the refusals.
+
 - **A load test that is a zio-test test.** `proofload-zio-test` is one method:
   `ZIO.attemptBlocking` around the same silent, exclusive runner
   `proofload-junit5` and `proofload-kotest` build. Blocking rather than compute,

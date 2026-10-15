@@ -535,6 +535,27 @@ class MarkdownTest {
     }
 
     @Test
+    fun `the summary says how many arrivals the generator refused, apart from the failures`() {
+        val result = RunResult(
+            startedAt = startedAt,
+            steps = mapOf("browse" to browse),
+            behind = timingOf(nothing),
+            refusedPerSecond = listOf(0L, 41_250L),
+        )
+
+        result.markdown() shouldContain "The generator was saturated:"
+        result.markdown() shouldContain "41,250 arrivals were not sent"
+        result.markdown() shouldContain "not sent: generator saturated, 41,250"
+    }
+
+    @Test
+    fun `a summary of a run that refused nothing says nothing about saturation`() {
+        val result = RunResult(startedAt = startedAt, steps = mapOf("browse" to browse), behind = timingOf(nothing))
+
+        result.markdown() shouldNotContain "saturated"
+    }
+
+    @Test
     fun `a summary of a run with room to spare says nothing about it`() {
         val result = RunResult(
             startedAt = startedAt,

@@ -67,6 +67,14 @@ data class Limits(
  */
 fun RunResult.ranOutOfRoom(): Boolean = listOf(limits.openFiles, limits.ports).any { it.tight() }
 
+/**
+ * Whether the generator, rather than the target, set what this run measured:
+ * it refused an arrival at its cap on users in flight, ran out of room, or
+ * lost its own schedule. One refusal is enough, because a run that refused
+ * any did not offer the load its profile named.
+ */
+fun RunResult.generatorSaturated(): Boolean = refused > 0L || ranOutOfRoom() || lostGround()
+
 private fun Headroom.tight(): Boolean = when (this) {
     is Headroom.Measured -> used >= TIGHT
     is Headroom.Absent -> false

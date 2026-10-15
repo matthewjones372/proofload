@@ -494,6 +494,7 @@ class Limits.Companion
     val none: Limits
 top-level in LimitsKt
     val TIGHT: Double
+    fun generatorSaturated(RunResult): Boolean
     fun ranOutOfRoom(RunResult): Boolean
 class Machine
     constructor(Int, String, String, String)

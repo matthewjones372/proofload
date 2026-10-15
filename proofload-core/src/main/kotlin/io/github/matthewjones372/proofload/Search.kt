@@ -66,10 +66,10 @@ data class Rung(val rate: Rate, val result: RunResult) {
 
     val outcome: Outcome
         get() = when {
-            // Two ways to learn nothing about the target: the schedule was not
-            // kept, or this process ran out of its own room. A rung that
-            // exhausted the injector's descriptors measured the injector.
-            result.lostGround() || result.ranOutOfRoom() -> Outcome.Void
+            // Three ways to learn nothing about the target: the schedule was
+            // not kept, this process ran out of its own room, or it refused
+            // arrivals at its cap. Each measured the injector.
+            result.generatorSaturated() -> Outcome.Void
 
             verdicts.all { it.met } -> Outcome.Passed
 

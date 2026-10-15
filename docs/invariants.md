@@ -41,8 +41,11 @@ that a property holds.
 
 ## Where a property does not fully hold
 
-**2: arrivals that are not sent are not all counted.** Every scheduled arrival
-is started; none is dropped by the scheduler. But when a step fails, that user's
+**2: arrivals that are not sent are not all counted.** Without a cap, every
+scheduled arrival is started. With `inFlightAtMost(n)`, an arrival that falls
+due while `n` users are in flight is refused instead: never started, and
+counted in `result.refused` by the slot it was due in, apart from the target's
+failures. A run that refused any is void (`generatorSaturated()`). But when a step fails, that user's
 remaining steps are not run and not counted as anything. The HTML report states
 the gap between planned and sent requests; the `RunResult` has no counter for
 it. Compare `result[step].count` with the plan when it matters.
@@ -97,7 +100,7 @@ properties that have no test yet.
 | # | Tests that cite it | What they check |
 |---|---|---|
 | 1 | `ScheduleArithmeticTest` | departure counts, the half-open window, ordering, determinism for the same seed |
-| 2 | `ScheduleDeterminismTest`, `ShardOwnershipTest` | every departure is booked exactly once, in order; the injectors of a sharded run together send every user exactly once |
+| 2 | `ScheduleDeterminismTest`, `ShardOwnershipTest`, `InFlightCapTest` | every departure is booked exactly once, in order; the injectors of a sharded run together send every user exactly once; under a cap, sent and refused add up to every arrival |
 | 3 | `ScheduleArithmeticTest`, `ScheduleDeterminismTest`, `LatenessTableTest` | a late fill books its whole backlog at once and paces nothing |
 | 4, 5 | `LatenessTableTest` | for runs built from known departure lateness and service time, the per-second lateness, the time the schedule held, the offered rate and the schedule checks all tell one consistent story, and lateness never changes the recorded service time |
 | 14 | `ScheduleArithmeticTest` | partial arrivals are dropped, not rounded |

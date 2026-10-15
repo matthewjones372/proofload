@@ -20,6 +20,9 @@ import kotlin.time.Duration.Companion.seconds
 private val user = sessionKey<Long>("user")
 
 /**
+ * Defends invariant 2. Under a cap, the arrivals sent and refused add up to
+ * every arrival the profile named.
+ *
  * The gate is a latch opened once the schedule's window has passed, so every
  * arrival falls due while the first ones are still held: the counts are exact
  * however fast the machine is.

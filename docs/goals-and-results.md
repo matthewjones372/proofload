@@ -161,10 +161,14 @@ Ask this before reading any latency:
 result.fellBehind()   // generator lateness is a material part of the tail
 result.lostGround()   // departures were late by more than the planned gap between them
 result.behind.p99     // how late the late departures were
+result.refused        // arrivals refused at an inFlightAtMost cap, never sent
+result.generatorSaturated()   // any of the above, or the process ran out of room
 ```
 
-[measurement.md](measurement.md#the-schedule-checks) defines both checks. Where
-either is true, response times include time spent queued inside the generator,
+[measurement.md](measurement.md#the-schedule-checks) defines both checks, and
+[the cap](measurement.md#a-cap-on-users-in-flight) explains refusals. A run that
+refused any arrival did not offer the load it asked for, and is void. Where
+either check is true, response times include time spent queued inside the generator,
 and a response-time goal that missed may have missed for that reason.
 
 The run is not wasted. Service time was measured from when each step actually

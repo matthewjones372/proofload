@@ -154,6 +154,8 @@ Related readings:
 | `result.latePerSecond` | lateness per second, at coarse precision |
 | `result.hiccups` | how late a 1 ms tick ran on the injector's JVM, measured on a platform thread that runs no requests. A tail of the same size as the target's is this machine, not the target |
 | `result.ranOutOfRoom()` | whether this process came close to its limit on open files or ephemeral ports |
+| `result.refused` | arrivals refused because the cap on users in flight was full; `refusedPerSecond` says when. Zero without a cap |
+| `result.generatorSaturated()` | whether the generator rather than the target set what the run measured: it refused an arrival, ran out of room, or lost ground |
 
 ### Where each surface reports the schedule
 
@@ -166,8 +168,9 @@ it to.**
 | `keptSchedule` goal | met when `fellBehind()` is false. It does not consult `lostGround()`. You must declare it |
 | `result.metEveryGoal` | reads only the goals you declared. With no goals it is `true` |
 | JUnit, Kotest, zio-test modules | do not fail a test for falling behind. Assert it, or declare `keptSchedule` and assert `metEveryGoal` |
-| HTML report | shows a "behind schedule" banner when `fellBehind()` is true |
-| JSON run document (`proofload-export`) | `schedule.kept` is true only when neither check fired, and its `verdict` is `behind` ahead of any goal result |
+| HTML report | shows a "behind schedule" banner when `fellBehind()` is true, and a "generator was saturated" one with a "not sent" tile when any arrival was refused |
+| Markdown summary | the same two warnings, and "not sent: generator saturated, N" in its totals |
+| JSON run document (`proofload-export`) | `schedule.kept` is true only when neither check fired and nothing was refused, and its `verdict` is `behind` ahead of any goal result |
 | CLI `run` | exits 2 when the generator fell behind or lost ground, ahead of a missed goal (1) |
 | MCP `status` | the same document as the JSON export |
 
@@ -196,8 +199,36 @@ The run is not wasted, but read it differently:
   ([more-than-one-injector.md](more-than-one-injector.md)). Proofload does not
   lower the rate for you mid-run; a [capacity search](goals-and-results.md#find-the-rate-it-sustains)
   is the supported way to look for the highest rate, and it marks a rung as void
-  when the generator lost ground or the process ran short of file descriptors
-  or ports.
+  when the generator lost ground, the process ran short of file descriptors
+  or ports, or it refused arrivals at its cap.
+
+### A cap on users in flight
+
+Without a cap, every arrival that falls due starts a virtual thread, whatever
+is already running. That is right while the target keeps up. Once it falls
+behind, each waiting user is a thread, a stack and a place in a client's
+queue, and the backlog grows on the generator's side. At 50,000 requests a
+second, petshop's load test lost its injector three times this way: ephemeral
+ports, then 120,000 threads queued on one lock in the HTTP client, then a
+semaphore whose timed waiters kept every carrier busy. The target sat idle
+each time.
+
+```kotlin
+checkout.at(50_000.perSecond, over = 2.minutes)
+    .inFlightAtMost(20_000)
+```
+
+With a cap, an arrival that falls due while that many users are in flight is
+refused at once. It is not queued, because waiting for a free place is the
+coordinated omission the open model exists to avoid. It is counted in
+`result.refused`, kept apart from the target's failures, and the run reads as
+void in a search, the page and the summary. A refused user keeps its number,
+so a feeder gives the next user the same data it would have had.
+
+Set it when a run is meant to find where the target breaks rather than to
+pass: a cap a little above rate times the slowest response you expect keeps a
+saturated run cheap enough to report what happened. A closed workload ignores
+it, because its population is already its cap.
 
 ## Percentiles
 

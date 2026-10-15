@@ -1,13 +1,13 @@
 # More than one injector
 
-One JVM sends what one JVM can send. `docs/what-it-costs.md` measures the
-shipped path saturating somewhere between ten and twenty-five thousand requests
-a second on four shared cores, and whichever resource runs out first, the
-answer is the same: a second host brings its own ports, descriptors and cores.
+One JVM sends what one JVM can send. [what-it-costs.md](what-it-costs.md) shows
+the HTTP path saturating between ten and twenty-five thousand requests a second
+on one four-processor machine. A second host brings its own ports, descriptors
+and cores.
 
-Four JVMs by hand is four plans nobody proved alike, four sets of percentiles
-that cannot honestly be pooled, and four timelines whose second thirty is not
-the same second thirty. This is how to run four and still have one experiment.
+Four JVMs started by hand are four separate experiments: their percentiles
+cannot be pooled and their timelines do not line up. Sharding runs one
+simulation across several injectors and reads the pieces back as one run.
 
 ## The three scalars
 
@@ -31,13 +31,13 @@ experiments.
 ## The instant
 
 `startingAt` is a wall-clock instant each injector waits for on its own clock,
-after it has warmed up and taken its host's lock. Everything else is that
-injector's own `System.nanoTime()`, which is honest with no shared clock at all.
+after it has warmed up and taken its host's lock. Everything else is measured
+on that injector's own `System.nanoTime()`, which needs no shared clock.
 
 What alignment buys is a timeline whose second thirty is the same second thirty
 everywhere, because a merge superimposes them. The timeline's resolution is one
-second until a run outgrows its slots, so a hundred milliseconds of skew is a tenth of a bucket and NTP beats
-that comfortably: sub-second alignment buys the picture, not the honesty.
+second, so a hundred milliseconds of skew is a tenth of a bucket, which NTP
+comfortably beats. Alignment affects the timeline picture, not the percentiles.
 
 Give them enough time to reach it. A host still loading classes when its
 neighbours depart is a host that smears the second they share. An injector
@@ -94,26 +94,21 @@ the load that left.
 
 ## What it refuses
 
-- **An incomplete set.** Exactly injectors `0` until `N`, of one `N`, given one
-  instant. Three quarters of a run is a smaller experiment than the one you
-  asked for, and nothing in the numbers says so. The refusal names which
-  injector wrote nothing, so you know which host to go and look at.
-- **A clock that disagrees.** Every injector waits until *its own* clock reads
-  the instant, so a host running three seconds fast starts three seconds early
-  and writes the same instant as everybody else. The file says nothing is
-  wrong. What it cannot write the same is the hold it computed against that
-  instant, which is recorded on its shard and refused where two of them differ
-  by more than `Shards.TOLERABLE_SKEW` (a hundred milliseconds, which is a
-  tenth of a timeline bucket). The refusal says by how much and which injector
-  held what. Pass `Shards(each, tolerating = ...)` where a set of hosts nobody
-  synchronises is still worth an answer from, and a bound you state is a decision
-  you made. A set with a version 7 baseline in it has no hold to compare and is
-  not refused for want of a number.
+- **An incomplete set.** It needs exactly injectors `0` until `N`, of one `N`,
+  given one instant. Three quarters of a run is a smaller experiment than the
+  one asked for. The refusal names the injector that wrote nothing.
+- **A clock that disagrees.** Every injector waits until its own clock reads the
+  instant, so a host running three seconds fast starts three seconds early. Each
+  shard records how long it held before starting, and a set whose holds differ
+  by more than `Shards.TOLERABLE_SKEW` (a hundred milliseconds) is refused,
+  saying by how much. Pass `Shards(each, tolerating = ...)` to accept a wider
+  skew. Shard files from older baseline formats carry no hold and are not
+  checked.
 - **Unlike machines**, as `Runs` refuses them: a merged result has one machine,
   one probe and one resolution.
-- **`Runs.readAll` on a directory of injectors.** Handed four of them it would
-  offer an interval across four quarters of one run and call it the variance
-  between processes. *N* shards make a `RunResult`; *M* of those make a `Runs`.
+- **`Runs.readAll` on a directory of injectors.** That would treat four quarters
+  of one run as four runs. *N* shards make a `RunResult`; *M* of those make a
+  `Runs`.
 
 ## One host, four injectors
 
@@ -123,5 +118,5 @@ window would de-align the timeline, so four injectors on one host serialise
 unless you pass `-Dproofload.exclusive=false`. Four processes contending for four
 cores is also the arrangement all of this exists to escape.
 
-`examples/src/test/kotlin/.../FourInjectorsTest.kt` does exactly this, and is
-what proves the partition adds up.
+`examples/src/test/kotlin/.../FourInjectorsTest.kt` does exactly this, and
+checks that the partition adds up.

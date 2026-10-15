@@ -1,8 +1,10 @@
 # Proofload over MCP
 
-A stdio server whose every tool is a call `proofload-cli` already makes. What a
-program can do here is what a person at a terminal can do, and there is no
-second behaviour to keep in step.
+`proofload-mcp` is a stdio MCP server. Its tools are the operations
+`proofload-cli` performs on [plans](plans.md), plus tools for polling a run and
+reading its results, so a model can write a plan, check it, send a single
+request per step, and then run it within the limits of the machine's
+[allowance](allowance.md).
 
 ## Starting it
 
@@ -13,27 +15,20 @@ the server without a clone or a build:
 jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc4
 ```
 
-The coordinate alone: the published jar carries a `Main-Class`, so nothing has to be
-told which class to run. `0.1.0-rc1` predates that and needs
-`--main io.github.matthewjones372.proofload.mcp.ServerKt` if you pin it.
-
-[Coursier](https://get-coursier.io) is the same shape:
-`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4`.
+The published jar names its main class, so the coordinate is enough.
+[Coursier](https://get-coursier.io) works too: with `0.1.0-rc4`, run
+`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4 -M io.github.matthewjones372.proofload.mcp.ServerKt`
+([versions.md](versions.md) has the details).
 
 jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
 and a client parses it as-is.
 
-`java -jar` is not one of the ways. There is no fat jar, so nothing has to be kept
-in step with the modules it would have shaded, and the jar carries no classpath
-and whatever starts it has to resolve the POM. That is the whole reason a
-launcher is named here rather than a download.
+`java -jar` does not work: the jar carries no classpath, so whatever starts it
+has to resolve the POM.
 
-Two more routes need no launcher. Both arrived with `0.1.0-rc3`, the first release the
-workflow builds them in.
-
-The repository is public, so the download is served to anyone and needs no
-account. The image is the exception: its GHCR package is still private, so
-`docker` needs `docker login ghcr.io` until that package is made public.
+Two more routes need no launcher. The release download needs no account. The
+container image's GHCR package is private, so `docker` needs
+`docker login ghcr.io`.
 
 A download, for anyone who wants no launcher. It carries `bin/proofload-mcp` and
 `bin/proofload-mcp.bat`, so it is also the Windows answer:
@@ -56,18 +51,16 @@ Nothing else is needed to start. `benchmark`, `plan_schema`, `validate`, `previe
 `smoke` and `trace` all work as they are, because the plan's shape bounds them
 rather than its rate.
 
-**`run` is the one that needs a fence.** `docs/allowance.md` says an absent
-allowance means no limits, which is the right default for someone who installed a
-load generator themselves and the wrong one for an image a model drives, so the
-image sets `PROOFLOAD_REQUIRE_ALLOWANCE`, and `run` refuses until it finds a
-`proofload.toml` in the directory it was started from. Write one there and the mount
-above picks it up. A local install is unaffected and behaves as it always has.
+**`run` needs an allowance in the container.** Elsewhere an absent
+`proofload.toml` means no limits. The image sets `PROOFLOAD_REQUIRE_ALLOWANCE`,
+so `run` refuses until it finds a `proofload.toml` in the directory it was
+started from. Write one there and the mount above picks it up. A local install
+does not require one.
 
-**Mount the directory, not the file.** `-v "$PWD/proofload.toml:/work/proofload.toml:ro"`
-reads better and is a trap: where the file does not exist yet, Docker creates a
-*directory* of that name in your working directory, which can never be read as an
-allowance and has to be deleted by hand. Mounting the directory has no such state to
-get wrong, and a plan on disk becomes readable at the same time.
+**Mount the directory, not the file.** With `-v "$PWD/proofload.toml:/work/proofload.toml:ro"`,
+if the file does not exist yet Docker creates a *directory* of that name in your
+working directory, which cannot be read as an allowance and has to be deleted by
+hand. Mounting the directory avoids that, and makes plans on disk readable too.
 
 `report` writes into the container, where its path is no use to you. `summary`
 answers with the run itself and needs no filesystem, which is the one to reach for
@@ -129,13 +122,11 @@ directory, not yours.
 | `explain` | the full document for a finished run: every step, the timeline | nothing |
 | `report` | writes the run's self-contained HTML page, returns its path | nothing |
 | `summary` | what the run measured, as markdown a person reads in the chat | nothing |
+| `write_spec` | writes the reasoning, the measured baseline and the plan as one markdown file to commit | nothing |
 | `list_runs` | every run this server started, newest first | nothing |
 | `compare` | one finished run against another: better, worse, or cannot tell | nothing |
 
-**Start with `benchmark`.** Everything else in this table is a verb on
-Proofload's own model, which is the shape a library has rather than the shape a
-question has. Nobody asks to validate a plan; they ask whether their service
-holds up. `benchmark` takes a target (an OpenAPI document, a plan you already
+**Start with `benchmark`.** `benchmark` takes a target (an OpenAPI document, a plan you already
 have, or just a base URL) and does the whole safe half in one call: writes the
 plan, validates it, previews it against the allowance, and sends one request per
 step.
@@ -176,21 +167,16 @@ This plan is guessing. Ask whoever wants the benchmark:
     What does this see at peak, and over how long?
 ```
 
-Every question is derived from that plan and that smoke, not read off a list. A
-credential is asked about because the target answered 401, not because targets
-often need one; paths are asked about because a bare URL was all it got. A plan
-somebody wrote themselves, with a rate and a goal they chose, is asked nothing,
-a fixed list would query a decision that has already been made, and get ignored
-on the plan where it mattered.
+Every question is derived from that plan and that smoke test. A credential is
+asked about only if the target answered 401; paths are asked about because a
+bare URL was all it got. A plan with a rate and goals somebody chose is asked
+nothing.
 
-Edit the plan with the answers, raise the rate on purpose, and pass it to `run`. The load is
-never sent by the tool that prepared it, so the gate the allowance exists to
-create is the only way through rather than a step you have to remember.
+Edit the plan with the answers, set the rate, and pass it to `run`. The tool
+that prepares a plan never sends its load.
 
-**Ask `plan_schema`** when you want to write a plan by hand. It is the tool the others depend on: a caller who
-can ask for the format writes a valid plan on the first attempt rather than a
-plausible one, and what comes back is the shape the parser enforces rather than
-documentation about it.
+**Ask `plan_schema`** when you want to write a plan by hand. It returns the shape
+the parser enforces, with worked examples.
 
 **A request plan can draw its own values.** A `draw` block names a generator per
 key, and `{key}` in a path or a body is filled per user from it: `uniform`,
@@ -216,17 +202,13 @@ steps:
 
 `plan_schema` carries the whole vocabulary and a worked plan for it.
 
-Every tool's description states what it sends before you have to find out. The
-first four send nothing, so they are free to call and free to get wrong, which
-is the point, because it lets a caller iterate against a parser instead of
-guessing.
+Every tool's description states what it sends. `plan_schema`, `validate`,
+`preview` and `from_openapi` send nothing, so a caller can iterate against the
+parser.
 
-`smoke` and `trace` are the debug loop, and both are bounded by the plan's shape
-rather than its rate: a plan asking for five thousand a second for ten minutes
-still sends one request per step. A plan answering 400s produces a run full of
-them and the run says only that they were 400s; `trace` says what was actually
-sent. Finding a typo in a path by firing three thousand requests is the other
-half of the same mistake.
+`smoke` and `trace` are bounded by the plan's shape rather than its rate: a plan
+asking for five thousand a second for ten minutes still sends one request per
+step. When a run is full of 400s, `trace` shows what was actually sent.
 
 ## A plan whose steps are topics
 
@@ -258,10 +240,8 @@ goals:
 ```
 
 `produce` is the publish, timed as deep as `acks` makes it. `completes` is the
-answer arriving somewhere else, and what it records is the round trip. A row
-of its own rather than folded into the publish, because folding them reports a
-round trip as though it were a write. `within` has no default: a run that waits
-forever for an answer that never comes reports no failure and no number.
+answer arriving on another topic, recorded as the round trip on a row of its
+own. `within` is required. [plans.md](plans.md#kafka-steps) has the format.
 
 `baseUrl` and `brokers` are both optional, and a plan may mix requests and
 topics: a journey that is a request and then a record is one journey.
@@ -276,24 +256,21 @@ A broker is a host. `preview` names every entry of the bootstrap list, and an
 allowance that does not permit the cluster refuses the plan the way it refuses
 a URL, because shared infrastructure is exactly what a fence is for.
 
-The client arrives with the module that reads plans rather than with
-`proofload-plan` itself: a project taking `proofload-plan` to read a plan of
-requests gets no Kafka on its classpath. [modules.md](modules.md) has the row.
+The Kafka client comes from `proofload-plan-kafka`, which the CLI and the MCP
+server include; `proofload-plan` alone carries no Kafka client.
 
 ## What it will refuse
 
-A plan that does not read comes back as a tool result with `isError` set and the
-parser's own sentence in it: the line, and the keys that were allowed. That is
-what a caller correcting itself needs; a stack trace buries it.
+A plan that does not parse comes back as a tool result with `isError` set and
+the parser's message in it: the line, and the keys that were allowed.
 
 `preview` also consults the machine's `proofload.toml`, so a plan over the rate,
 window, request count or host list this machine permits is refused before
 anything is sent. See [allowance.md](allowance.md), and read the paragraph there
 about a fence not being a sandbox.
 
-A method the server does not serve is a JSON-RPC *error*, not a tool result. A
-client has to be able to tell a call it cannot make from a tool that ran and
-said no; confusing the two makes it retry something that will never work.
+A method the server does not serve is a JSON-RPC *error*, not a tool result, so
+a client can tell a call it cannot make from a tool that ran and refused.
 
 ## Running one
 
@@ -304,31 +281,24 @@ send:
 {"runId":"r-1","sending":"3000 requests over 1m to orders.internal"}
 ```
 
-Poll `status` with that id. A ten-minute run inside one tool call is a dead
-connection, a retry, and a second ten-minute run against the same target, which
-is why the two are separate.
+Poll `status` with that id. `run` does not block for the length of the run,
+because a long tool call is likely to time out and be retried.
 
-One run at a time. A second `run` while one is sending is refused by name,
-`r-1 is still sending`, rather than handed an id for a run that never started
-and could be polled forever.
+One run at a time: a second `run` while one is sending is refused with
+`r-1 is still sending`.
 
-Runs live in the server's memory and are lost when it stops. That is the honest
-scope for a server a client starts and stops; anything meant to survive goes to
-disk, which is what `report` will be for.
+Runs live in the server's memory and are lost when it stops. Use `report` or
+`write_spec` to keep anything on disk.
 
 ## Three readers, three artefacts
 
-`explain` returns JSON, `report` returns a path, and `summary` returns markdown.
-That split is the point: an agent reads the document, a person with a browser
-opens the page, and a person watching the chat reads the summary. Handing a model
-the page's bytes would be handing it inlined SVG to no purpose, and handing a
-person the JSON would be handing them the thing the charts were made from,
-which is what watching `status` does, and the reason `summary` exists.
+`explain` returns JSON for a program, `report` returns the path of the HTML page
+for a person with a browser, and `summary` returns markdown for a person reading
+the chat. `status` returns the [run document](exporting.md#the-run-itself-as-a-document),
+with the verdict and the remedy.
 
-`summary` is the markdown a GitHub job summary already carries, from the same
-renderer. A chat-only one would be a second behaviour to keep in step, and the
-one thing that reader loses against the page is the distribution, so the
-markdown draws it, for the steps worth looking at:
+`summary` is the markdown a GitHub job summary carries, from the same renderer,
+followed by a text histogram for the steps worth looking at:
 
 ```
 checkout  p50 10.0ms  p99 2.00s
@@ -337,12 +307,10 @@ checkout  p50 10.0ms  p99 2.00s
    1s  #  100
 ```
 
-Nine in ten answered in 10 ms and the rest took two seconds. The p99 alone is
-that of a step which is merely slow; the shape is what says otherwise. Bars are
-the counted buckets collapsed to decades, the count printed beside each so the
-bar never has to be trusted, and a decade that counted nothing left blank rather
-than smoothed.
+Nine in ten answered in 10 ms and the rest took two seconds. A p99 of 2 s alone
+would suggest a uniformly slow step; the shape shows a fast path and a slow one.
+Bars are the counted buckets grouped by decade, with the count beside each, and
+an empty decade is left blank.
 
-`compare` answers in three, not two. "Cannot tell" is the one that matters: a
-comparison that only ever says better or worse will say one of them about noise,
-and a caller acting on that chases a regression nobody introduced.
+`compare` answers better, worse, or cannot tell, so noise is not reported as a
+regression.

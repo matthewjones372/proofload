@@ -4,11 +4,16 @@ The long form of [`llms.txt`](../llms.txt), for a model that has room for more
 than a screenful. It carries two things the other documents do not: the public
 surface of every published module, and the mistakes a model makes here.
 
-It does not repeat the recipes. [The cookbook](cookbook.md) is where the code
-is: profiles, feeders, captures, goals, gRPC, Kafka, JDBC, WebSockets,
-baselines and reports, each a few lines with the reason it is those lines.
-[Modules](modules.md) says which coordinates carry what, and the
-[README](../README.md) says what the library is for.
+It does not repeat the guides. [Getting started](getting-started.md) has a
+complete first test; [workload](workload.md), [data](data.md),
+[protocols](protocols.md), [goals and results](goals-and-results.md),
+[plans](plans.md) and [reports and baselines](reports-and-baselines.md) have the
+code for each task; [modules](modules.md) says which coordinates carry what.
+
+Before reading any latency off a result, read
+[measurement.md](measurement.md#where-each-surface-reports-the-schedule):
+nothing fails a run for falling behind unless `keptSchedule` is declared, and
+`metEveryGoal` is true for a run with no goals.
 
 ## Written wrong, written right
 
@@ -30,7 +35,7 @@ compiles. Every call in the right-hand column is checked against `examples` by
 
 Rendered from the `.api` dumps that `apiCheck` gates, by `./gradlew apiDocDump`,
 so a method that leaves the library leaves this section in the commit that
-removed it. Read it for *what exists*; read the cookbook for how it is called.
+removed it. Read it for *what exists*; read the guides for how it is called.
 
 A dump records the JVM signature, which is less than the source says. Parameter
 names are not in it. An extension function appears as a top-level function whose

@@ -1,15 +1,14 @@
 # Proofload from Java
 
-Proofload is JVM bytecode, so a Java caller can reach all of it. What it reaches
-is not an API: `proofload-core` publishes 245 functions whose names carry a
-value-class hash (`p99-_FgASpo`, `goodput-_E9U6aE`) because `StepName`,
-`Share` and `Rate` are `@JvmInline`. Every duration arrives as a bare `long`
-whose unit the type no longer states, and `sessionKey<T>` is `reified inline`,
-which compiles to no method at all.
+`proofload-java` lets Java code build and run the same scenarios the Kotlin DSL
+builds. Calling `proofload-core` directly from Java is impractical: functions
+that take `StepName`, `Share` or `Rate` (Kotlin inline value classes) have
+mangled JVM names such as `p99-_FgASpo`, durations arrive as a bare `long`, and
+`sessionKey<T>` compiles to no method at all.
 
-`proofload-java` is the seam. It builds core's own values and computes nothing:
-the `Scenario` a Java builder hands the engine is the `Scenario` the Kotlin DSL
-builds, and the `RunResult` that comes back is the one both languages read.
+The facade builds core's own values and computes nothing of its own: the
+`Scenario` a Java builder produces is the `Scenario` the Kotlin DSL builds, and
+the `RunResult` that comes back is the one both languages read.
 
 ## Taking it
 
@@ -17,7 +16,7 @@ builds, and the `RunResult` that comes back is the one both languages read.
 // build.gradle.kts
 dependencies {
     // Brings proofload-core, proofload-engine and proofload-http with it.
-    implementation("io.github.matthewjones372:proofload-java:$proofloadVersion")
+    implementation("io.github.matthewjones372:proofload-java:0.1.0-rc4")
 }
 ```
 
@@ -28,7 +27,9 @@ import io.github.matthewjones372.proofload.RunResult;
 import io.github.matthewjones372.proofload.Scenario;
 import io.github.matthewjones372.proofload.SessionKey;
 import io.github.matthewjones372.proofload.StepName;
+import io.github.matthewjones372.proofload.Verdict;
 import io.github.matthewjones372.proofload.http.Http;
+import io.github.matthewjones372.proofload.java.Goals;
 import io.github.matthewjones372.proofload.java.Https;
 import io.github.matthewjones372.proofload.java.Proofload;
 import io.github.matthewjones372.proofload.java.Rates;
@@ -116,26 +117,25 @@ The infix form has no Java spelling, and every call that builds a goal takes a
 defaults to response time in both languages, because a goal written against
 service time can be met by a generator that never sent the load.
 
-## What it does not cover
+## What it covers
 
-The path a load test walks: scenarios, HTTP steps, running, goals, reading a
-result, and the capacity search: `Searches.sustainable(checkout, upTo, holding,
+Scenarios with `exec` and `pause` steps, HTTP steps, running, goals, reading a
+result, comparing against a baseline result with `Results.against`, and the
+capacity search: `Searches.sustainable(checkout, upTo, holding,
 goals)` builds one, `Proofload.create().run(search)` sends it, and
 `Searches.rate` and `Searches.offered` read the rates its curve carries.
 `Offereds.of(result)` is what a run asked for beside what actually left, which
 is what a reader needs when the generator fell behind. `Feeders` gives each user
 its own data, which the `{name}` in a path or a body template is filled from.
-Baselines, sharding and the exports are reachable as statics later. There is deliberately no Java `assertNotWorseThan`: `Difference`
-is a baselines type, and wrapping it here would put JUnit on the classpath of
-every project that takes this module, which is what `proofload-junit5` exists to
-prevent. A facade that has to stay exhaustive is a facade that falls
-behind and lies about it.
+
+Not covered from Java: loops, conditions and `emit` in a scenario, other
+protocols, reading and writing baseline files, sharding, and the exports. There
+is no Java `assertNotWorseThan`, because it would put JUnit on the classpath of
+every project that takes this module.
 
 ## The gate
 
-[`examples-java`](../examples-java) is a module whose whole content is the load
-test above, compiled by `./gradlew build`. `apiCheck` records the Kotlin surface
-and cannot see whether that surface is *callable* from Java. Only a Java
-compiler knows, so a facade method that goes fails the build there rather than
-in your project. Every snippet on this page is a line from that source, and
-`FromJavaDocTest` fails when it stops being one.
+[`examples-java`](../examples-java) contains the load test above, compiled by
+`./gradlew build`, so a facade method that stops being callable from Java fails
+the build. Every line of Java on this page is a line from that source, and
+`FromJavaDocTest` fails when one stops being so.

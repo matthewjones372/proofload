@@ -33,6 +33,19 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **A cap on users in flight.** `Simulation.inFlightAtMost(n)` refuses any
+  arrival that falls due while `n` users are already in flight, rather than
+  starting a virtual thread for it. Without one, a target that falls behind
+  hands its backlog to the generator: petshop at 50,000 a second left 120,000
+  threads queued in its client and took the injector's cores and heap while
+  the target sat idle. A refusal is never sent, never deferred and never the
+  target's failure; `RunResult.refused` counts them and
+  `RunResult.refusedPerSecond` says when, and merges, stages and the steady
+  segment carry both. Off unless set, and ignored by a closed population
+  (spec 0144). A binary break: `RunResult` and `Simulation` each gained a
+  constructor parameter, so their constructors and `copy` changed signature;
+  source that names its arguments compiles unchanged.
+
 - **A load test that is a zio-test test.** `proofload-zio-test` is one method:
   `ZIO.attemptBlocking` around the same silent, exclusive runner
   `proofload-junit5` and `proofload-kotest` build. Blocking rather than compute,

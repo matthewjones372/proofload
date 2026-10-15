@@ -55,6 +55,8 @@ class RunRecorder @JvmOverloads constructor(
 
     private val sampled = Readings(width)
 
+    private val refusals = Tally(width)
+
     /**
      * How long this run has been going, on the monotonic clock this recorder
      * was made with.
@@ -156,9 +158,13 @@ class RunRecorder @JvmOverloads constructor(
      */
     fun inFlight(at: Duration, users: Long) = sampled.take(at.inWholeSeconds.toInt(), users)
 
+    /** An arrival due [at] this point in the run was refused, because the cap on users in flight was full. */
+    fun refused(at: Duration) = refusals.add(at.inWholeSeconds.toInt(), 1L)
+
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
         sampled.merge(other.sampled)
+        refusals.merge(other.refusals)
         lateness.merge(other.lateness)
         other.steps.forEach { (name, theirs) -> stepCalled(name).merge(theirs) }
     }
@@ -192,6 +198,7 @@ class RunRecorder @JvmOverloads constructor(
         timeline = everySecond().frozen(),
         latePerSecond = lateness.freeze(),
         usersInFlight = sampled.freeze(),
+        refusedPerSecond = refusals.freeze(),
     )
 
     /**
@@ -436,6 +443,40 @@ private class Readings(private val width: Width) {
             val kept = taken.chunked(2) { pair -> pair.firstNotNullOfOrNull { it } }
             taken.clear()
             taken.addAll(kept)
+            mine *= 2
+        }
+    }
+}
+
+/** A count a slot, widened by adding each pair. Empty until something is counted. */
+private class Tally(private val width: Width) {
+
+    // The accumulator AGENTS.md allows a builder, frozen into the result.
+    private val counted = ArrayList<Long>()
+    private var mine = 1
+
+    fun add(second: Int, count: Long) {
+        width.reach(second)
+        widen()
+        val slot = second / mine
+        while (counted.size <= slot) counted.add(0L)
+        counted[slot] += count
+    }
+
+    fun merge(other: Tally) {
+        other.counted.forEachIndexed { slot, count -> if (count > 0L) add(slot * other.mine, count) }
+    }
+
+    fun freeze(): List<Long> {
+        widen()
+        return counted.toList()
+    }
+
+    private fun widen() {
+        while (mine < width.seconds) {
+            val kept = counted.chunked(2) { it.sum() }
+            counted.clear()
+            counted.addAll(kept)
             mine *= 2
         }
     }

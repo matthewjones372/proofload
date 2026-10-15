@@ -166,19 +166,28 @@ private fun Simulation.departAll(
                 users.booked()
                 scheduler.schedule(
                     {
-                        // Each arm's own feeder, asked for its own user number:
-                        // an arm's data is then reproducible whatever rate the
-                        // arms beside it are being sent at.
-                        departure.arm.scenario.depart(
-                            sink,
-                            runStart,
-                            departure.offset,
-                            users,
-                            departure.arm.feeder.forUser(departure.user),
-                            drain,
-                            departed,
-                            departure.arm.thinkingFor(departure.user),
-                        )
+                        // Checked here, at the instant it falls due, so a cap
+                        // never defers an arrival: it starts now or not at all.
+                        if (users.admitted(inFlightCap)) {
+                            // Each arm's own feeder, asked for its own user number:
+                            // an arm's data is then reproducible whatever rate the
+                            // arms beside it are being sent at.
+                            departure.arm.scenario.depart(
+                                sink,
+                                runStart,
+                                departure.offset,
+                                users,
+                                departure.arm.feeder.forUser(departure.user),
+                                drain,
+                                departed,
+                                departure.arm.thinkingFor(departure.user),
+                            )
+                        } else {
+                            // Recorded before it is released, so the run cannot
+                            // freeze between the two.
+                            sink.refused(departure.offset)
+                            users.refused()
+                        }
                     },
                     // Relative to now, but the offset is from the run's start
                     // and a pump books partway through it. Subtracting what has
@@ -222,6 +231,7 @@ private fun Simulation.departPopulation(
         val population = (arm.profile as InjectionProfile.ClosedUsers).count
         repeat(population) { index ->
             users.booked()
+            users.admitted(cap = null)
             Thread.ofVirtual().start {
                 users.departed()
                 try {
@@ -305,6 +315,7 @@ private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
                 ?: hold(arm.profile.startRate, over = warmUp.over)
             arm.copy(profile = warming)
         },
+        inFlightCap = inFlightCap,
     )
 
 /**
@@ -487,6 +498,11 @@ private class Departures {
     // target's latency.
     private val outstanding = AtomicLong(1)
     private val running = AtomicLong()
+
+    // A third, for the cap: threads started and not finished, counted on the
+    // scheduler before the thread exists. `running` is too late, because a
+    // thread waiting for a carrier is the cost the cap bounds.
+    private val started = AtomicLong()
     private val allFinished = CountDownLatch(1)
 
     /** Which seconds the users still running departed in, so the recorder knows what it can close. */
@@ -502,7 +518,18 @@ private class Departures {
         running.incrementAndGet()
     }
 
+    /** Whether a thread may start for the next user, counting it as started if so. Scheduler only. */
+    fun admitted(cap: Int?): Boolean {
+        if (cap != null && started.get() >= cap) return false
+        started.incrementAndGet()
+        return true
+    }
+
+    /** Booked and never started: owed nothing more. */
+    fun refused() = release()
+
     fun finished() {
+        started.decrementAndGet()
         running.decrementAndGet()
         release()
     }

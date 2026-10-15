@@ -297,6 +297,12 @@ internal fun List<Long?>.thinned(from: Duration, to: Duration): List<Long?> {
     return if (by == 1) this else chunked(by) { slot -> slot.firstNotNullOfOrNull { it } }
 }
 
+/** Counts slots [from] wide, added until each is [to] wide. */
+internal fun List<Long>.summed(from: Duration, to: Duration): List<Long> {
+    val by = widening(from, to)
+    return if (by == 1) this else chunked(by) { it.sum() }
+}
+
 private fun widening(from: Duration, to: Duration): Int {
     require(to >= from && to.inWholeNanoseconds % from.inWholeNanoseconds == 0L) {
         "a slot $from wide cannot be added into slots $to wide: a timeline only widens by whole slots"
@@ -608,6 +614,15 @@ data class RunResult(
      * how many there were, and this is not consulted.
      */
     val injectors: Int = 1,
+
+    /**
+     * Arrivals refused because the cap on users in flight was full when they
+     * fell due, in [timeline]'s slots and counted in the slot each was due in.
+     *
+     * Never sent, so in no step's count and not the target's failure. Empty
+     * where nothing was refused, which is every run without a cap.
+     */
+    val refusedPerSecond: List<Long> = emptyList(),
 ) {
     init {
         require(injectors > 0) { "a run is sent by at least one injector, but injectors was $injectors" }
@@ -618,6 +633,9 @@ data class RunResult(
     val ok: Long get() = steps.values.sumOf { it.ok.count }
 
     val failed: Long get() = count - ok
+
+    /** Arrivals the generator refused rather than sent: see [refusedPerSecond]. */
+    val refused: Long get() = refusedPerSecond.sum()
 
     operator fun get(step: String): StepStats = requireNotNull(steps[step]) {
         "no step named '$step' ran; this simulation had ${steps.keys.sorted()}"

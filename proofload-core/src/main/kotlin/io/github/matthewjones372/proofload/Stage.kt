@@ -130,6 +130,7 @@ internal fun RunResult.during(stage: Stage): RunResult {
         timeline = timeline.window(from, until),
         latePerSecond = latePerSecond.window(from, until),
         usersInFlight = usersInFlight.window(from, until),
+        refusedPerSecond = refusedPerSecond.window(from, until),
     )
 }
 

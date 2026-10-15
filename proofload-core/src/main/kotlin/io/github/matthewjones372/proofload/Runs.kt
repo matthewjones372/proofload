@@ -85,6 +85,11 @@ data class Runs(val each: List<RunResult>) {
             // the merged throughput and latency predict. A slot no run
             // sampled stays absent.
             usersInFlight = each.map { it.usersInFlight.thinned(it.timeline.slotWidth, width) }.superimposedInFlight(),
+            // Added slot by slot like the timeline: a refusal in any run is one
+            // the merged run made, and dropping it would read as none.
+            refusedPerSecond = each
+                .map { it.refusedPerSecond.summed(it.timeline.slotWidth, width) }
+                .superimposedCounts(),
             // The worst each run came to its own ceiling. A mean would say a
             // set was comfortable because most of its runs were, when the
             // question is whether any of them was measuring this process.
@@ -165,6 +170,12 @@ private fun List<List<Long?>>.superimposedInFlight(): List<Long?> {
         val counted = mapNotNull { it.getOrNull(second) }
         if (counted.isEmpty()) null else counted.sum()
     }
+}
+
+/** Slot *n* of every run's counts added together. */
+private fun List<List<Long>>.superimposedCounts(): List<Long> {
+    if (all { it.isEmpty() }) return emptyList()
+    return (0 until maxOf { it.size }).map { slot -> sumOf { it.getOrElse(slot) { 0L } } }
 }
 
 /**

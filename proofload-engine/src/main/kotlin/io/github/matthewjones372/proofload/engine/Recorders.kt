@@ -44,6 +44,9 @@ internal fun interface StepSink {
      * stays a lambda. Only a step with something to say reaches it.
      */
     fun aside(step: String, queued: Duration, produced: Long) {}
+
+    /** An arrival due [at] was refused because the cap on users in flight was full. Only the scheduler calls it. */
+    fun refused(at: Duration) {}
 }
 
 /**
@@ -90,6 +93,12 @@ internal class Recorders(
     private val sampled = first.shard()
 
     fun inFlight(at: Duration, users: Long) = synchronized(sampled) { sampled.inFlight(at, users) }
+
+    // Written only on the scheduler's thread, and read at freeze after the
+    // run's latch, which every refusal releases after writing here.
+    private val refusals = first.shard()
+
+    override fun refused(at: Duration) = refusals.refused(at)
 
     // One counter per shard, written only by the thread holding that shard and
     // read approximately by the ticker. Single-writer, so a plain volatile
@@ -196,6 +205,7 @@ internal class Recorders(
         }
         merged.merge(completions)
         synchronized(sampled) { merged.merge(sampled) }
+        merged.merge(refusals)
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 

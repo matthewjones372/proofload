@@ -683,11 +683,12 @@ class RunRecorder
     fun merge(RunRecorder)
     fun outstanding(String, Outstanding)
     fun record(String, Reason, Long, Long, Long, Boolean, Boolean, Int, String)
+    fun refused(Long)
     fun shard(): RunRecorder
     fun sinceStart(): Long
 class RunRecorder.Companion
 class RunResult
-    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int)
+    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int, List)
     fun get(String): StepStats
     val arrivals: Arrivals
     val behind: Timing
@@ -702,6 +703,8 @@ class RunResult
     val ok: Long
     val plan: Plan
     val probe: Probe
+    val refused: Long
+    val refusedPerSecond: List
     val shard: Shard
     val startedAt: Instant
     val steps: Map
@@ -853,10 +856,12 @@ class Simulation
     constructor(List, List, Completing, WarmUp)
     constructor(List, List, Completing, WarmUp, Shard)
     constructor(List, List, Completing, WarmUp, Shard, Int)
+    constructor(List, List, Completing, WarmUp, Shard, Int, Integer)
     val arms: List
     val completing: Completing
     val feeder: Feeder
     val goals: List
+    val inFlightCap: Integer
     val over: Long
     val profile: InjectionProfile
     val shard: Shard
@@ -872,6 +877,7 @@ top-level in SimulationKt
     fun getClosed(Simulation): Boolean
     fun getPerMinute(Number): Double
     fun getPerSecond(Number): Double
+    fun inFlightAtMost(Simulation, Int): Simulation
     fun injecting(Scenario, InjectionProfile): Simulation
     fun keepingSlots(Simulation, Int): Simulation
     fun plan(Simulation): Plan

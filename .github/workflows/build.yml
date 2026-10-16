@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     strategy:
       fail-fast: false
@@ -74,7 +74,7 @@ jobs:
   # `main` only, like the badge: the graph that matters is the one that ships.
   dependency-graph:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     permissions:
       contents: write
@@ -97,7 +97,7 @@ jobs:
   coverage-badge:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     permissions:
       contents: write

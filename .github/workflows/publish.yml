@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     # Job-level rather than per-step: the credentials are the same for every
     # step that needs any of them.
@@ -94,7 +94,7 @@ jobs:
   # to do damage.
   release:
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     permissions:
       contents: write
@@ -144,7 +144,7 @@ jobs:
   # write packages and nothing else.
   image:
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     # `contents: read` as well as the write it needs: naming any permission sets
     # every unnamed one to none, and a checkout of a private repository needs

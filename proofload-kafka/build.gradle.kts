@@ -37,7 +37,7 @@ dependencies {
     // length allocations). It is on every consumer's runtime classpath, so the
     // constraint is `api` and goes out in the published metadata with it.
     constraints {
-        api("at.yawk.lz4:lz4-java:1.11.4")
+        api("at.yawk.lz4:lz4-java:1.12.0")
     }
 
     // An engine to run the scenarios these tests build, and nothing that is a

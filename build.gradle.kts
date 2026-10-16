@@ -16,14 +16,14 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "2.4.20" apply false
-    id("com.diffplug.spotless") version "8.10.2"
+    kotlin("jvm") version "2.4.21" apply false
+    id("com.diffplug.spotless") version "8.10.4"
     id("dev.detekt") version "2.0.0-alpha.6" apply false
-    id("org.jetbrains.kotlinx.kover") version "0.9.9"
+    id("org.jetbrains.kotlinx.kover") version "0.9.11"
     // The version comes from the nearest `v` tag rather than a property, so
     // cutting a release is `git tag v0.1.0 && git push --tags` and nothing
     // else. An untagged commit is a -SNAPSHOT of the next one.
-    id("pl.allegro.tech.build.axion-release") version "1.21.3"
+    id("pl.allegro.tech.build.axion-release") version "1.21.4"
     // So the root project has `check`/`build`, and the scripts formatted here
     // are covered by a plain `./gradlew build` like everything else.
     base
@@ -362,7 +362,7 @@ subprojects {
         // Assertions only. The tests run on the JUnit platform — kotest is here
         // for its matchers and the failure messages they produce, not as a
         // second test framework.
-        "testImplementation"("io.kotest:kotest-assertions-core:6.2.4")
+        "testImplementation"("io.kotest:kotest-assertions-core:6.2.5")
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
@@ -391,8 +391,8 @@ subprojects {
     // advisories. Only the build runs it, but the dependency graph reports it.
     configurations.matching { it.name == "zinc" }.configureEach {
         resolutionStrategy.force(
-            "org.apache.logging.log4j:log4j-api:2.25.5",
-            "org.apache.logging.log4j:log4j-core:2.25.5",
+            "org.apache.logging.log4j:log4j-api:2.26.1",
+            "org.apache.logging.log4j:log4j-core:2.26.1",
         )
     }
 

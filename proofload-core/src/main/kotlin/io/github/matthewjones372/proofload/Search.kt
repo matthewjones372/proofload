@@ -51,17 +51,18 @@ data class Rung(val rate: Rate, val result: RunResult) {
 
     /**
      * The rate the load actually left at: the departures the profile promised,
-     * over the window plus the backlog the injector still owed at its tail.
+     * less those refused at the cap, over the window plus the backlog the
+     * injector still owed at its tail.
      *
-     * The same fact the void gate tests, said as a count rather than as a time
-     * — a rung is void exactly when this falls a whole departure short of
-     * [rate] over the window.
+     * The lateness half is the fact the lost-ground gate tests, said as a count
+     * rather than as a time. Refusals after a stall lower it without voiding
+     * the rung, so a rung that passed still says how much load left.
      */
     val offered: Rate
         get() {
             val over = result.plan.plannedWindow + result.behind.p99
             if (over <= Duration.ZERO) return rate
-            return (result.plan.plannedUsers / over.toDouble(DurationUnit.SECONDS)).perSecond
+            return ((result.plan.plannedUsers - result.refused) / over.toDouble(DurationUnit.SECONDS)).perSecond
         }
 
     val outcome: Outcome

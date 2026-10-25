@@ -11,17 +11,50 @@ import kotlin.time.Duration.Companion.seconds
 /** Spec 0144: a run whose generator refused arrivals measured the generator, and says so. */
 class SaturatedTest {
 
-    private fun resultWith(refused: List<Long> = emptyList(), limits: Limits = Limits.none) = RunResult(
+    private fun resultWith(
+        refused: List<Long> = emptyList(),
+        afterStall: List<Long> = emptyList(),
+        limits: Limits = Limits.none,
+    ) = RunResult(
         startedAt = Instant.parse("2026-10-15T09:00:00Z"),
         steps = emptyMap(),
         behind = Timing.none,
         limits = limits,
         refusedPerSecond = refused,
+        refusedAfterStallPerSecond = afterStall,
     )
 
     @Test
     fun `one refusal is enough to call the generator saturated`() {
         resultWith(refused = listOf(0L, 1L)).generatorSaturated() shouldBe true
+    }
+
+    @Test
+    fun `refusals the generator's own stall caused do not call it saturated`() {
+        resultWith(refused = listOf(1_400L, 0L), afterStall = listOf(1_400L, 0L)).generatorSaturated() shouldBe false
+    }
+
+    @Test
+    fun `one refusal beyond the stalled ones is still saturation`() {
+        resultWith(refused = listOf(1_400L, 1L), afterStall = listOf(1_400L, 0L)).generatorSaturated() shouldBe true
+    }
+
+    @Test
+    fun `a rung whose only refusals followed a stall is judged on its goals`() {
+        val stalled = Rung(rate = 100.perSecond, result = resultWith(refused = listOf(9L), afterStall = listOf(9L)))
+
+        stalled.outcome shouldBe Rung.Outcome.Passed
+    }
+
+    @Test
+    fun `a rung's offered rate leaves out the arrivals it refused`() {
+        val plan = Plan(scenario = "pay", steps = listOf("pay"), profile = hold(100.perSecond, over = 10.seconds))
+        val stalled = Rung(
+            rate = 100.perSecond,
+            result = resultWith(refused = listOf(50L), afterStall = listOf(50L)).copy(plan = plan),
+        )
+
+        stalled.offered.perSecond shouldBe 95.0
     }
 
     @Test

@@ -69,11 +69,13 @@ fun RunResult.ranOutOfRoom(): Boolean = listOf(limits.openFiles, limits.ports).a
 
 /**
  * Whether the generator, rather than the target, set what this run measured:
- * it refused an arrival at its cap on users in flight, ran out of room, or
- * lost its own schedule. One refusal is enough, because a run that refused
- * any did not offer the load its profile named.
+ * it refused an arrival at a cap that punctual users had filled, ran out of
+ * room, or lost its own schedule. One such refusal is enough.
+ *
+ * Refusals after the generator's own stall do not count (spec 0145): the cap
+ * was full of the burst the stall released, not of users the target held.
  */
-fun RunResult.generatorSaturated(): Boolean = refused > 0L || ranOutOfRoom() || lostGround()
+fun RunResult.generatorSaturated(): Boolean = refused > refusedAfterStall || ranOutOfRoom() || lostGround()
 
 private fun Headroom.tight(): Boolean = when (this) {
     is Headroom.Measured -> used >= TIGHT

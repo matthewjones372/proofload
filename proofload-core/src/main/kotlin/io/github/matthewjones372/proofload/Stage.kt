@@ -131,6 +131,7 @@ internal fun RunResult.during(stage: Stage): RunResult {
         latePerSecond = latePerSecond.window(from, until),
         usersInFlight = usersInFlight.window(from, until),
         refusedPerSecond = refusedPerSecond.window(from, until),
+        refusedAfterStallPerSecond = refusedAfterStallPerSecond.window(from, until),
     )
 }
 

@@ -685,11 +685,12 @@ class RunRecorder
     fun outstanding(String, Outstanding)
     fun record(String, Reason, Long, Long, Long, Boolean, Boolean, Int, String)
     fun refused(Long)
+    fun refusedAfterStall(Long)
     fun shard(): RunRecorder
     fun sinceStart(): Long
 class RunRecorder.Companion
 class RunResult
-    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int, List)
+    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int, List, List)
     fun get(String): StepStats
     val arrivals: Arrivals
     val behind: Timing
@@ -705,6 +706,8 @@ class RunResult
     val plan: Plan
     val probe: Probe
     val refused: Long
+    val refusedAfterStall: Long
+    val refusedAfterStallPerSecond: List
     val refusedPerSecond: List
     val shard: Shard
     val startedAt: Instant

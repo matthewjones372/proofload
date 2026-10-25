@@ -47,6 +47,9 @@ internal fun interface StepSink {
 
     /** An arrival due [at] was refused because the cap on users in flight was full. Only the scheduler calls it. */
     fun refused(at: Duration) {}
+
+    /** The same, where punctual users alone would have left room: the generator's own stall filled the cap. */
+    fun refusedAfterStall(at: Duration) {}
 }
 
 /**
@@ -99,6 +102,8 @@ internal class Recorders(
     private val refusals = first.shard()
 
     override fun refused(at: Duration) = refusals.refused(at)
+
+    override fun refusedAfterStall(at: Duration) = refusals.refusedAfterStall(at)
 
     // One counter per shard, written only by the thread holding that shard and
     // read approximately by the ticker. Single-writer, so a plain volatile

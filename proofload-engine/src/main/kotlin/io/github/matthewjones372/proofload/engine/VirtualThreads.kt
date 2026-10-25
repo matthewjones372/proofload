@@ -166,27 +166,44 @@ private fun Simulation.departAll(
                 users.booked()
                 scheduler.schedule(
                     {
+                        val fired = lateness(runStart, departure.offset)
+                        // Judged by when the scheduler fired, the clock the cap is checked on.
+                        val late = fired > STALL
                         // Checked here, at the instant it falls due, so a cap
                         // never defers an arrival: it starts now or not at all.
-                        if (users.admitted(inFlightCap)) {
-                            // Each arm's own feeder, asked for its own user number:
-                            // an arm's data is then reproducible whatever rate the
-                            // arms beside it are being sent at.
-                            departure.arm.scenario.depart(
-                                sink,
-                                runStart,
-                                departure.offset,
-                                users,
-                                departure.arm.feeder.forUser(departure.user),
-                                drain,
-                                departed,
-                                departure.arm.thinkingFor(departure.user),
-                            )
-                        } else {
+                        when (users.admit(inFlightCap, late)) {
+                            Admission.Started -> {
+                                // The scheduler counting itself, on its own thread.
+                                // What the report calls lateness is read where the
+                                // user starts: one says when this tool fired, the
+                                // other when a request left.
+                                departed.left(fired.inWholeNanoseconds)
+                                // Each arm's own feeder, asked for its own user number:
+                                // an arm's data is then reproducible whatever rate the
+                                // arms beside it are being sent at.
+                                departure.arm.scenario.depart(
+                                    sink,
+                                    runStart,
+                                    departure.offset,
+                                    late,
+                                    users,
+                                    departure.arm.feeder.forUser(departure.user),
+                                    drain,
+                                    departure.arm.thinkingFor(departure.user),
+                                )
+                            }
+
                             // Recorded before it is released, so the run cannot
                             // freeze between the two.
-                            sink.refused(departure.offset)
-                            users.refused()
+                            Admission.Saturated -> {
+                                sink.refused(departure.offset)
+                                users.refused()
+                            }
+
+                            Admission.AfterStall -> {
+                                sink.refusedAfterStall(departure.offset)
+                                users.refused()
+                            }
                         }
                     },
                     // Relative to now, but the offset is from the run's start
@@ -231,13 +248,13 @@ private fun Simulation.departPopulation(
         val population = (arm.profile as InjectionProfile.ClosedUsers).count
         repeat(population) { index ->
             users.booked()
-            users.admitted(cap = null)
+            users.admit(cap = null, late = false)
             Thread.ofVirtual().start {
                 users.departed()
                 try {
                     goRound(arm, index, population, sink, runStart, closesAt, drain, departed, users.outbound)
                 } finally {
-                    users.finished()
+                    users.finished(late = false)
                 }
             }
         }
@@ -367,16 +384,12 @@ private fun Scenario.depart(
     sink: StepSink,
     runStart: Long,
     departure: Duration,
+    sentLate: Boolean,
     users: Departures,
     session: Session,
     drain: Drain?,
-    departed: Departed,
     thinking: Random? = null,
 ) {
-    // The scheduler counting itself, on the scheduler's own thread. What the
-    // report calls lateness is still read below, where the user starts: one
-    // says when this tool fired, the other when a request left.
-    departed.left(lateness(runStart, departure).inWholeNanoseconds)
     Thread.ofVirtual().start {
         // Counted here rather than where it was booked: until this thread is
         // mounted, nothing has left.
@@ -391,7 +404,7 @@ private fun Scenario.depart(
             runOneUser(sink, runStart, late, departure, session, drain, thinking = thinking)
         } finally {
             users.outbound.back(departure)
-            users.finished()
+            users.finished(sentLate)
         }
     }
 }
@@ -484,7 +497,7 @@ private fun schedulerThread(runnable: Runnable): Thread =
  * whose early users finish before its late ones are even scheduled cannot
  * declare itself over.
  */
-private class Departures {
+internal class Departures {
 
     // Two counts, because they answer two questions. `outstanding` is what the
     // run waits on: a user is counted the moment it is booked, so the latch
@@ -503,6 +516,10 @@ private class Departures {
     // scheduler before the thread exists. `running` is too late, because a
     // thread waiting for a carrier is the cost the cap bounds.
     private val started = AtomicLong()
+
+    // Of those, the ones that left more than STALL late: what tells a cap the
+    // target filled from one the generator's own stall filled (spec 0145).
+    private val startedLate = AtomicLong()
     private val allFinished = CountDownLatch(1)
 
     /** Which seconds the users still running departed in, so the recorder knows what it can close. */
@@ -518,17 +535,28 @@ private class Departures {
         running.incrementAndGet()
     }
 
-    /** Whether a thread may start for the next user, counting it as started if so. Scheduler only. */
-    fun admitted(cap: Int?): Boolean {
-        if (cap != null && started.get() >= cap) return false
+    /**
+     * Whether a thread may start for the next user, counting it as started if
+     * so, and when not, whether punctual users alone would have left room.
+     * Scheduler only.
+     */
+    fun admit(cap: Int?, late: Boolean): Admission {
+        val inFlight = started.get()
+        if (cap != null && inFlight >= cap) {
+            return if (inFlight - startedLate.get() < cap) Admission.AfterStall else Admission.Saturated
+        }
         started.incrementAndGet()
-        return true
+        if (late) startedLate.incrementAndGet()
+        return Admission.Started
     }
 
     /** Booked and never started: owed nothing more. */
     fun refused() = release()
 
-    fun finished() {
+    fun finished(late: Boolean) {
+        // Late first: a scheduler reading between the two then sees one punctual
+        // user too many, which errs towards calling a refusal saturation.
+        if (late) startedLate.decrementAndGet()
         started.decrementAndGet()
         running.decrementAndGet()
         release()
@@ -545,6 +573,24 @@ private class Departures {
     /** Users whose journey has started and not yet ended. */
     fun inFlight(): Long = running.get().coerceAtLeast(0)
 }
+
+/** What became of an arrival at the cap. */
+internal enum class Admission {
+    Started,
+
+    /** Refused, with the cap full of users that left on time: the target's. */
+    Saturated,
+
+    /** Refused, with the cap full only because users the generator sent late piled in: its own stall's. */
+    AfterStall,
+}
+
+/**
+ * How late a departure has to fire before it counts as sent after a stall
+ * rather than on time: the hiccup watch's tick, the smallest stall this
+ * process says it can see in itself.
+ */
+private val STALL = TICK
 
 /**
  * How late a user left against the departure its profile named. Floored at

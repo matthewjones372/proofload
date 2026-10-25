@@ -78,6 +78,7 @@ private fun RunResult.from(offset: Duration): RunResult = RunResult(
     // the same seconds the throughput and latency come from.
     usersInFlight = usersInFlight.drop((offset / timeline.slotWidth).toInt()),
     refusedPerSecond = refusedPerSecond.drop((offset / timeline.slotWidth).toInt()),
+    refusedAfterStallPerSecond = refusedAfterStallPerSecond.drop((offset / timeline.slotWidth).toInt()),
 )
 
 private fun StepStats.from(offset: Duration): StepStats {

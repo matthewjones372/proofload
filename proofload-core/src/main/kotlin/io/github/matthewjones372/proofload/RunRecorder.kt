@@ -57,6 +57,10 @@ class RunRecorder @JvmOverloads constructor(
 
     private val refusals = Tally(width)
 
+    // Counted in refusals as well: the total keeps `requested = departed +
+    // refused + dropped`, and this says how much of it the generator caused.
+    private val stalls = Tally(width)
+
     /**
      * How long this run has been going, on the monotonic clock this recorder
      * was made with.
@@ -161,10 +165,17 @@ class RunRecorder @JvmOverloads constructor(
     /** An arrival due [at] this point in the run was refused, because the cap on users in flight was full. */
     fun refused(at: Duration) = refusals.add(at.inWholeSeconds.toInt(), 1L)
 
+    /** A refusal due [at] that punctual users alone would have had room for: see [RunResult.refusedAfterStall]. */
+    fun refusedAfterStall(at: Duration) {
+        refused(at)
+        stalls.add(at.inWholeSeconds.toInt(), 1L)
+    }
+
     fun merge(other: RunRecorder) {
         behind.merge(other.behind)
         sampled.merge(other.sampled)
         refusals.merge(other.refusals)
+        stalls.merge(other.stalls)
         lateness.merge(other.lateness)
         other.steps.forEach { (name, theirs) -> stepCalled(name).merge(theirs) }
     }
@@ -199,6 +210,7 @@ class RunRecorder @JvmOverloads constructor(
         latePerSecond = lateness.freeze(),
         usersInFlight = sampled.freeze(),
         refusedPerSecond = refusals.freeze(),
+        refusedAfterStallPerSecond = stalls.freeze(),
     )
 
     /**

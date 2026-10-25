@@ -75,6 +75,47 @@ class RefusedTest {
     }
 
     @Test
+    fun `a refusal after a stall counts in the total and in its own slots`() {
+        val recorder = RunRecorder(began)
+        recorder.refused(at = 0.seconds)
+        recorder.refusedAfterStall(at = 1.seconds)
+        recorder.refusedAfterStall(at = 1.seconds)
+
+        val result = recorder.freeze()
+
+        result.refused shouldBe 3L
+        result.refusedAfterStall shouldBe 2L
+        result.refusedAfterStallPerSecond shouldBe listOf(0L, 2L)
+    }
+
+    @Test
+    fun `merged runs and stages keep which refusals followed a stall`() {
+        fun stalling(perSecond: Int) = RunRecorder(began).apply {
+            repeat(4) { second ->
+                record("pay", null, 20.milliseconds, Duration.ZERO, second.seconds)
+                repeat(perSecond) { refusedAfterStall(at = second.seconds) }
+            }
+        }.freeze()
+
+        val merged = Runs(listOf(stalling(1), stalling(2))).merged
+        merged.refusedAfterStallPerSecond shouldBe List(4) { 3L }
+
+        val second = Stage(
+            index = 1,
+            of = 2,
+            profile = hold(1.perSecond, over = 2.seconds),
+            from = 2.seconds,
+            until = 4.seconds,
+            planned = 2.seconds,
+            serviceTime = Timing.none,
+            responseTime = Timing.none,
+            ok = 2L,
+            failed = 0L,
+        )
+        stalling(1).during(second).refusedAfterStall shouldBe 2L
+    }
+
+    @Test
     fun `two simulations sent together share the stricter cap`() {
         val pay = scenario("pay") { exec("pay") { } }
         val browse = scenario("browse") { exec("browse") { } }

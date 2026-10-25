@@ -90,6 +90,9 @@ data class Runs(val each: List<RunResult>) {
             refusedPerSecond = each
                 .map { it.refusedPerSecond.summed(it.timeline.slotWidth, width) }
                 .superimposedCounts(),
+            refusedAfterStallPerSecond = each
+                .map { it.refusedAfterStallPerSecond.summed(it.timeline.slotWidth, width) }
+                .superimposedCounts(),
             // The worst each run came to its own ceiling. A mean would say a
             // set was comfortable because most of its runs were, when the
             // question is whether any of them was measuring this process.

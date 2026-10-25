@@ -1331,6 +1331,7 @@ public final class io/github/matthewjones372/proofload/RunRecorder {
 	public final fun record-5wlj91o (Ljava/lang/String;Lio/github/matthewjones372/proofload/Reason;JJJZZILjava/lang/String;)V
 	public static synthetic fun record-5wlj91o$default (Lio/github/matthewjones372/proofload/RunRecorder;Ljava/lang/String;Lio/github/matthewjones372/proofload/Reason;JJJZZILjava/lang/String;ILjava/lang/Object;)V
 	public final fun refused-LRDsOJo (J)V
+	public final fun refusedAfterStall-LRDsOJo (J)V
 	public final fun shard ()Lio/github/matthewjones372/proofload/RunRecorder;
 	public final fun sinceStart-UwyO8pc ()J
 }
@@ -1339,8 +1340,8 @@ public final class io/github/matthewjones372/proofload/RunRecorder$Companion {
 }
 
 public final class io/github/matthewjones372/proofload/RunResult {
-	public fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;)V
-	public synthetic fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/time/Instant;
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Lio/github/matthewjones372/proofload/Limits;
@@ -1348,6 +1349,7 @@ public final class io/github/matthewjones372/proofload/RunResult {
 	public final fun component13 ()Lio/github/matthewjones372/proofload/Shard;
 	public final fun component14 ()I
 	public final fun component15 ()Ljava/util/List;
+	public final fun component16 ()Ljava/util/List;
 	public final fun component2 ()Ljava/util/Map;
 	public final fun component3 ()Lio/github/matthewjones372/proofload/Timing;
 	public final fun component4 ()Lio/github/matthewjones372/proofload/Plan;
@@ -1356,8 +1358,8 @@ public final class io/github/matthewjones372/proofload/RunResult {
 	public final fun component7 ()Lio/github/matthewjones372/proofload/Timing;
 	public final fun component8 ()Ljava/util/List;
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;)Lio/github/matthewjones372/proofload/RunResult;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/RunResult;
+	public final fun copy (Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;Ljava/util/List;)Lio/github/matthewjones372/proofload/RunResult;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/proofload/RunResult;Ljava/time/Instant;Ljava/util/Map;Lio/github/matthewjones372/proofload/Timing;Lio/github/matthewjones372/proofload/Plan;Lio/github/matthewjones372/proofload/Arrivals;Lio/github/matthewjones372/proofload/Machine;Lio/github/matthewjones372/proofload/Timing;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lio/github/matthewjones372/proofload/Limits;Lio/github/matthewjones372/proofload/Probe;Lio/github/matthewjones372/proofload/Shard;ILjava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/proofload/RunResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun get (Ljava/lang/String;)Lio/github/matthewjones372/proofload/StepStats;
 	public final fun get-2Z79qHc (Ljava/lang/String;)Lio/github/matthewjones372/proofload/StepStats;
@@ -1375,6 +1377,8 @@ public final class io/github/matthewjones372/proofload/RunResult {
 	public final fun getPlan ()Lio/github/matthewjones372/proofload/Plan;
 	public final fun getProbe ()Lio/github/matthewjones372/proofload/Probe;
 	public final fun getRefused ()J
+	public final fun getRefusedAfterStall ()J
+	public final fun getRefusedAfterStallPerSecond ()Ljava/util/List;
 	public final fun getRefusedPerSecond ()Ljava/util/List;
 	public final fun getShard ()Lio/github/matthewjones372/proofload/Shard;
 	public final fun getStartedAt ()Ljava/time/Instant;

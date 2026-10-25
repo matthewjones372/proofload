@@ -623,6 +623,13 @@ data class RunResult(
      * where nothing was refused, which is every run without a cap.
      */
     val refusedPerSecond: List<Long> = emptyList(),
+
+    /**
+     * Of [refusedPerSecond], the ones that fell due while the cap was full only
+     * because users the generator sent late had piled into it: punctual users
+     * alone would have left room. The generator's own stall, not the target.
+     */
+    val refusedAfterStallPerSecond: List<Long> = emptyList(),
 ) {
     init {
         require(injectors > 0) { "a run is sent by at least one injector, but injectors was $injectors" }
@@ -636,6 +643,9 @@ data class RunResult(
 
     /** Arrivals the generator refused rather than sent: see [refusedPerSecond]. */
     val refused: Long get() = refusedPerSecond.sum()
+
+    /** The refusals the generator's own stall caused: see [refusedAfterStallPerSecond]. */
+    val refusedAfterStall: Long get() = refusedAfterStallPerSecond.sum()
 
     operator fun get(step: String): StepStats = requireNotNull(steps[step]) {
         "no step named '$step' ran; this simulation had ${steps.keys.sorted()}"

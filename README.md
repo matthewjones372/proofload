@@ -13,7 +13,7 @@ Load testing for the JVM that checks its own schedule.
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/proofload-core?label=maven%20central)](https://central.sonatype.com/artifact/io.github.matthewjones372/proofload-core)
 <!-- Line coverage, the figure koverVerify's floor is on. `coverage-badge` in
      build.yml rewrites this line, so keep the badge's URL shape. -->
-[![coverage](https://img.shields.io/badge/coverage-92.6%25-brightgreen)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
+[![coverage](https://img.shields.io/badge/coverage-92.5%25-brightgreen)](https://github.com/matthewjones372/proofload/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21%2B-437291.svg?logo=openjdk&logoColor=white)](https://adoptium.net)

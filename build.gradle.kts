@@ -334,6 +334,12 @@ val invariants = tasks.register("invariants") {
 
 tasks.named("check") { dependsOn(invariants) }
 
+// Leased by every Dokka generation below; `DokkaSlots` says why there are two.
+val dokkaSlots =
+    gradle.sharedServices.registerIfAbsent(DokkaSlots.NAME, DokkaSlots::class) {
+        maxParallelUsages.set(DokkaSlots.SLOTS)
+    }
+
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     repositories { mavenCentral() }
@@ -439,6 +445,10 @@ subprojects {
                 add("dokkaHtmlGeneratorRuntime", "org.jsoup:jsoup:1.23.2")
                 add("dokkaHtmlGeneratorRuntime", "org.freemarker:freemarker:2.3.35")
             }
+        }
+
+        tasks.withType<org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask>().configureEach {
+            usesService(dokkaSlots)
         }
 
         // What a launcher matches a `Main-Class` against. Coursier keys every

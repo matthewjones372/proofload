@@ -25,6 +25,13 @@ updates:
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
+      # `pelican-core` 1.0.0 declares JVM 25 in its Gradle metadata, and
+      # Proofload builds for 21 and tests on 21, 23 and 25. Taking it would
+      # drop Java 21 for every consumer, which is a decision rather than an
+      # update; 1.0.0-RC1 still resolves for 21. Lift this when either side
+      # moves.
+      - dependency-name: "io.github.matthewjones372:pelican-core"
+        versions: [">= 1.0.0"]
 
   # `smoke/` is a build of its own with its own settings file — it resolves the
   # published coordinates rather than the projects — so the root entry above

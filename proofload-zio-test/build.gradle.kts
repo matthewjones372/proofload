@@ -10,7 +10,7 @@ plugins {
 // What it must not carry is either of the other framework modules: if wiring a
 // third framework needed anything from the first two, "framework-agnostic" was
 // decoration, and `NoSecondStackTest` beside this is where that gets caught.
-val zioVersion = "2.1.26"
+val zioVersion = "2.1.27"
 
 dependencies {
     api(project(":proofload-scala"))

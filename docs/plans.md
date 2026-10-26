@@ -131,8 +131,8 @@ its main class, so a launcher that resolves Maven coordinates can start it, for
 example [JBang](https://www.jbang.dev):
 
 ```bash
-jbang io.github.matthewjones372:proofload-cli:0.1.0-rc4 preview checkout.yaml
-jbang io.github.matthewjones372:proofload-cli:0.1.0-rc4 run checkout.yaml
+jbang io.github.matthewjones372:proofload-cli:0.1.0-rc5 preview checkout.yaml
+jbang io.github.matthewjones372:proofload-cli:0.1.0-rc5 run checkout.yaml
 ```
 
 `java -jar` does not work, because the jar carries no classpath.

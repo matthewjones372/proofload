@@ -10,7 +10,7 @@
 Facts worth having before anything else:
 
 - Kotlin 2.4, JVM 21+, Apache 2.0. Virtual threads on the JDK's own HTTP client.
-- `0.1.0-rc4` is the current release on Maven Central. Coordinates are
+- `0.1.0-rc5` is the current release on Maven Central. Coordinates are
   `io.github.matthewjones372:proofload-core` and its siblings, such as
   `proofload-http`, `proofload-junit5` and `proofload-report-html`.
   `proofload-core` depends on the Kotlin standard library and nothing else;

@@ -183,7 +183,7 @@ checkout.at(50.perSecond, over = 1.minutes)
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-arbs:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-arbs:0.1.0-rc5")
 }
 ```
 
@@ -260,7 +260,7 @@ source draw the same data.
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-plan:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-plan:0.1.0-rc5")
 }
 ```
 

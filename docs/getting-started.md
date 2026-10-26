@@ -20,9 +20,9 @@ checks its own schedule and writes a report.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc5")
 }
 
 tasks.test {
@@ -30,7 +30,7 @@ tasks.test {
 }
 ```
 
-`0.1.0-rc4` is the current release on Maven Central; [versions.md](versions.md)
+`0.1.0-rc5` is the current release on Maven Central; [versions.md](versions.md)
 says what has changed on `main` since. For Kotest or zio-test instead of JUnit,
 see [running.md](running.md). Other protocols and outputs are separate modules:
 [modules.md](modules.md).

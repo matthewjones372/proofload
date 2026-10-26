@@ -109,8 +109,7 @@ or `Comparison.NotComparable`. Each step comes back as one of `Better`, `Worse`,
 `Indistinguishable`, `Added` or `Gone`. Runs of different plans are refused, and
 runs from different machines are compared with a caveat
 ([below](#what-the-comparison-will-refuse-to-say)). `of = Clock.ServiceTime`
-compares service time instead; it is not in `0.1.0-rc4`
-([versions.md](versions.md)).
+compares service time instead.
 
 **Discard a run before keeping one.** The first run in a JVM pays for class
 loading, JIT compilation and opening connections, and can measure several times
@@ -176,11 +175,11 @@ fun main() {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.matthewjones372:proofload-core:0.1.0-rc4")
-    implementation("io.github.matthewjones372:proofload-engine:0.1.0-rc4")
-    implementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
-    implementation("io.github.matthewjones372:proofload-baseline:0.1.0-rc4")
-    implementation("io.github.matthewjones372:proofload-report-github:0.1.0-rc4")
+    implementation("io.github.matthewjones372:proofload-core:0.1.0-rc5")
+    implementation("io.github.matthewjones372:proofload-engine:0.1.0-rc5")
+    implementation("io.github.matthewjones372:proofload-http:0.1.0-rc5")
+    implementation("io.github.matthewjones372:proofload-baseline:0.1.0-rc5")
+    implementation("io.github.matthewjones372:proofload-report-github:0.1.0-rc5")
 }
 ```
 

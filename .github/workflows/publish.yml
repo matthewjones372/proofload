@@ -66,11 +66,10 @@ jobs:
       # it is a click there: a staged bundle can be dropped, a released one is
       # permanent. Set `mavenCentralAutomaticPublishing` to skip the click.
       #
-      # A candidate tag still drafts its pre-release and pushes its image, but
-      # does not reach Central: a version there is permanent and counts against
-      # the Portal's monthly limits. snapshot.yml publishes candidates instead.
+      # Every tag reaches Central, candidates included: a candidate is what
+      # people are asked to try, and the documentation pins its coordinates.
+      # snapshot.yml is for trying `main` between tags.
       - name: Publish the modules to Maven Central
-        if: ${{ !contains(github.ref_name, '-') }}
         run: ./gradlew publishToMavenCentral --no-configuration-cache
 
       # For anyone who wants neither a launcher nor a JDK. Only the server has a

@@ -16,9 +16,9 @@ one.
 
 The first release. Twenty-seven modules, published together and versioned together.
 
-Release candidates `0.1.0-rc1` to `0.1.0-rc4` are on Maven Central. The entries
-below cover what is in them and what is on `main` since `v0.1.0-rc4`; `git log
-v0.1.0-rc4..main` lists the latter.
+Release candidates `0.1.0-rc1` to `0.1.0-rc5` are on Maven Central. The entries
+below cover what is in them and what is on `main` since `v0.1.0-rc5`; `git log
+v0.1.0-rc5..main` lists the latter.
 
 Read the limitations before the features: what this does not do yet is short
 enough to list, and long enough to matter.

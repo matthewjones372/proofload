@@ -191,14 +191,14 @@ them all.
 
 ## Getting started
 
-Proofload needs JDK 21 or later. `0.1.0-rc4` is the current release, on Maven
+Proofload needs JDK 21 or later. `0.1.0-rc5` is the current release, on Maven
 Central; the API may still change before `0.1.0` ([versions](docs/versions.md)).
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc5")
 }
 ```
 

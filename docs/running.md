@@ -304,8 +304,8 @@ val proofload = Proofload(
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-engine:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-otel:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-engine:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-otel:0.1.0-rc5")
 }
 ```
 

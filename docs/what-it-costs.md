@@ -320,9 +320,7 @@ table written on somebody else's.
 ## What the recorder keeps
 
 Memory is the other overhead. The figures in this section were measured on the
-macOS aarch64 machine. The timeline behaviour described here (slots that widen
-after an hour, closed seconds compacted) is on `main` and not in `0.1.0-rc4`
-([versions.md](versions.md)).
+macOS aarch64 machine.
 
 A `Histogram` is a table of counters (5,377 longs, 43,016 bytes, and 43,681
 bytes retained once the objects around it are counted) and a run keeps four per

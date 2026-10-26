@@ -65,6 +65,7 @@ way. They live in the guide for their topic; this page is the index.
 - [Did the generator keep up?](goals-and-results.md#did-the-generator-keep-up)
 - [Read only the part that settled](goals-and-results.md#read-only-the-part-that-settled)
 - [Find the rate it sustains](goals-and-results.md#find-the-rate-it-sustains)
+- [Catch a leak with JFR beside the soak](goals-and-results.md#catch-a-leak-with-jfr-beside-the-soak)
 
 ## Keeping the answer
 

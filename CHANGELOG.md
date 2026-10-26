@@ -566,6 +566,11 @@ enough to list, and long enough to matter.
 
 ### Changed
 
+- **The javadoc jar is empty.** Maven Central requires one and accepts it
+  empty, so Dokka no longer renders the KDoc into it, and javadoc.io shows
+  nothing for versions after `0.1.0-rc4`. The KDoc is still in each module's
+  sources jar, which is where an IDE reads it.
+
 - **The users in flight are kept one reading a slot.** The engine sampled them
   once a second into a map it held for the whole run, 86,400 entries and about
   6 MiB for a day. `RunResult.usersInFlight` is now indexed by the timeline's

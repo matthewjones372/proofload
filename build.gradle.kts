@@ -1,14 +1,11 @@
 // Plugin classpaths carry advisories of their own, and nothing here names the
-// coordinates, so these constraints are the only lever: Dokka resolves
-// `jackson-databind` 2.15.3, Kover's reporter `freemarker` 2.3.32, and the
-// Kotlin plugin Bouncy Castle 1.84. Constraining databind covers the jackson
-// cluster, because it pulls the 2.22.3 BOM. Dokka's worker and the Kotlin
-// plugin's own Bouncy Castle bucket run on classpaths this block does not
-// reach, pinned in `subprojects` below.
+// coordinates, so these constraints are the only lever: Kover's reporter
+// resolves `freemarker` 2.3.32, and the Kotlin plugin Bouncy Castle 1.84. The
+// Kotlin plugin's own Bouncy Castle bucket runs on a classpath this block does
+// not reach, pinned in `subprojects` below.
 buildscript {
     dependencies {
         constraints {
-            classpath("com.fasterxml.jackson.core:jackson-databind:2.22.4")
             classpath("org.freemarker:freemarker:2.3.35")
             classpath("org.bouncycastle:bcprov-jdk18on:1.86")
         }
@@ -31,8 +28,6 @@ plugins {
     // closed. It wraps `maven-publish` and `signing`, so neither is applied
     // here directly.
     id("com.vanniktech.maven.publish") version "0.37.0" apply false
-    // Renders the KDoc into the javadoc jar the published modules ship.
-    id("org.jetbrains.dokka") version "2.2.0" apply false
     // Writes each published module's public surface to `api/<module>.api` and
     // fails `check` where the surface moved and the file did not. It records
     // the API rather than freezing it: until 1.0 a break is allowed, and the
@@ -334,12 +329,6 @@ val invariants = tasks.register("invariants") {
 
 tasks.named("check") { dependsOn(invariants) }
 
-// Leased by every Dokka generation below; `DokkaSlots` says why there are two.
-val dokkaSlots =
-    gradle.sharedServices.registerIfAbsent(DokkaSlots.NAME, DokkaSlots::class) {
-        maxParallelUsages.set(DokkaSlots.SLOTS)
-    }
-
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     repositories { mavenCentral() }
@@ -433,23 +422,6 @@ subprojects {
 
     if (name in publishedModules) {
         apply(plugin = "com.vanniktech.maven.publish")
-        apply(plugin = "org.jetbrains.dokka")
-
-        // Dokka's worker classpath, which the buildscript constraints at the top
-        // of this file do not reach. `dokkaHtmlGeneratorRuntime` is the bucket
-        // its resolver extends. Dokka templates with freemarker and parses with
-        // jsoup, so both arrive here as well.
-        dependencies {
-            add("dokkaHtmlGeneratorRuntime", platform("com.fasterxml.jackson:jackson-bom:2.22.4"))
-            constraints {
-                add("dokkaHtmlGeneratorRuntime", "org.jsoup:jsoup:1.23.2")
-                add("dokkaHtmlGeneratorRuntime", "org.freemarker:freemarker:2.3.35")
-            }
-        }
-
-        tasks.withType<org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask>().configureEach {
-            usesService(dokkaSlots)
-        }
 
         // What a launcher matches a `Main-Class` against. Coursier keys every
         // main it finds on the resolved classpath by
@@ -473,12 +445,13 @@ subprojects {
         extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             // Sources are not an optional extra for a library someone else has
             // to debug, and Maven Central will not accept a release without a
-            // javadoc jar. Dokka fills it: an empty jar leaves javadoc.io
-            // blank, which puts the KDoc out of reach of anyone who has not
-            // cloned the repository.
+            // javadoc jar, but it does accept an empty one. The KDoc travels in
+            // the sources jar, which is where an IDE reads it. Dokka's
+            // generator pre-touches 2 GB per module, more than the 8 GB release
+            // runner holds beside the build.
             configure(
                 com.vanniktech.maven.publish.KotlinJvm(
-                    javadocJar = com.vanniktech.maven.publish.JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+                    javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
                     sourcesJar = true,
                 ),
             )

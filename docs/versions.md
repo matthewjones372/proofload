@@ -2,38 +2,34 @@
 
 ## Which version to use
 
-`0.1.0-rc4` is the current release on Maven Central. Every coordinate in these
+`0.1.0-rc5` is the current release on Maven Central. Every coordinate in these
 documents is pinned to it. All modules share one version.
 
 `0.1.0` has not been released. Until it is, the API can still change between
 release candidates; [CHANGELOG.md](../CHANGELOG.md) lists what has changed and
-its known limitations. The CHANGELOG does not separate what is in `rc4` from what
-is only on `main`; `git log v0.1.0-rc4..main` does.
+its known limitations. The CHANGELOG does not separate what is in `rc5` from what
+is only on `main`; `git log v0.1.0-rc5..main` does.
 
-Release candidates after `rc4` are published to Maven Central's snapshot
-repository rather than to Central itself, and that repository drops them after
-90 days. To use what is on `main`, build it:
+To use what is on `main`, build it:
 
 ```bash
 ./gradlew publishToMavenLocal
 ```
 
-## On `main`, not in `0.1.0-rc4`
-
-These documents describe `main`. Where `rc4` behaves differently, it is listed
-here:
+## Upgrading from `0.1.0-rc4`
 
 - **Choosing the clock for a comparison.** `result.against(previous, of = Clock.ServiceTime)`,
   `Results.against(result, previous, 99.0, Clock.ServiceTime)` from Java and the
-  Scala equivalent are on `main` only. In `rc4`, `against` always compares
-  response time.
-- **Timeline memory.** On `main` a long run's timeline stops growing after 3,600
-  slots, by widening its slots, and closed seconds are compacted
+  Scala equivalent are new. In `rc4`, `against` always compares response time.
+- **Timeline memory.** A long run's timeline stops growing after 3,600 slots, by
+  widening its slots, and closed seconds are compacted
   ([what-it-costs.md](what-it-costs.md#what-the-recorder-keeps)). This changed the
   constructors of `Second`, `Simulation` and `RunRecorder`.
-- **Coursier and the MCP server.** On `main`, `cs launch` on the
-  `proofload-mcp` coordinate starts the server. With `rc4` and earlier, pass
+- **Coursier and the MCP server.** `cs launch` on the `proofload-mcp` coordinate
+  starts the server. With `rc4` and earlier, pass
   `-M io.github.matthewjones372.proofload.mcp.ServerKt`.
+- **The javadoc jar is empty.** javadoc.io shows nothing for `rc5`; the KDoc is
+  in the sources jar.
 
 ## Known incompatibilities
 

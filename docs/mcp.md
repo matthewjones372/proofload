@@ -12,13 +12,14 @@ Every module is on Maven Central, so a launcher that resolves coordinates starts
 the server without a clone or a build:
 
 ```bash
-jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc4
+jbang io.github.matthewjones372:proofload-mcp:0.1.0-rc5
 ```
 
-The published jar names its main class, so the coordinate is enough.
-[Coursier](https://get-coursier.io) works too: with `0.1.0-rc4`, run
-`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4 -M io.github.matthewjones372.proofload.mcp.ServerKt`
-([versions.md](versions.md) has the details).
+The published jar names its main class, so the coordinate is enough, and the
+same holds for [Coursier](https://get-coursier.io):
+`cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc5`. With `0.1.0-rc4`
+and earlier, coursier needs `-M io.github.matthewjones372.proofload.mcp.ServerKt`
+([versions.md](versions.md)).
 
 jbang writes its own progress to stderr, so stdout carries nothing but JSON-RPC
 and a client parses it as-is.
@@ -34,15 +35,15 @@ A download, for anyone who wants no launcher. It carries `bin/proofload-mcp` and
 `bin/proofload-mcp.bat`, so it is also the Windows answer:
 
 ```bash
-curl -LO https://github.com/matthewjones372/proofload/releases/download/v0.1.0-rc4/proofload-mcp-0.1.0-rc4.zip
-unzip proofload-mcp-0.1.0-rc4.zip
-claude mcp add proofload -- "$PWD/proofload-mcp-0.1.0-rc4/bin/proofload-mcp"
+curl -LO https://github.com/matthewjones372/proofload/releases/download/v0.1.0-rc5/proofload-mcp-0.1.0-rc5.zip
+unzip proofload-mcp-0.1.0-rc5.zip
+claude mcp add proofload -- "$PWD/proofload-mcp-0.1.0-rc5/bin/proofload-mcp"
 ```
 
 A container, for anyone who wants no JDK either:
 
 ```bash
-claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc4
+claude mcp add proofload -- docker run -i --rm -v "$PWD:/work:ro" ghcr.io/matthewjones372/proofload-mcp:0.1.0-rc5
 ```
 
 `-i` and no `-t`: the protocol is stdin and stdout, and a TTY would corrupt it.

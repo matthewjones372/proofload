@@ -16,7 +16,7 @@ the `RunResult` that comes back is the one both languages read.
 // build.gradle.kts
 dependencies {
     // Brings proofload-core, proofload-engine and proofload-http with it.
-    implementation("io.github.matthewjones372:proofload-java:0.1.0-rc4")
+    implementation("io.github.matthewjones372:proofload-java:0.1.0-rc5")
 }
 ```
 

@@ -1,11 +1,11 @@
 name: snapshot
 
-# What a release candidate used to be for: something to try before it is a
-# release. A candidate tag put every module on Central for good and counted
-# against the Portal's monthly limits; a snapshot goes to Central's snapshot
-# repository, which drops it after 90 days. Dispatched by hand, from the branch
-# whose next version should be tried, rather than on every push: whether
-# snapshots count against the limits is something the Portal does not say.
+# Something to try between tags. A tag puts every module on Central for good
+# and counts against the Portal's monthly limits; a snapshot goes to Central's
+# snapshot repository, which drops it after 90 days. Dispatched by hand, from
+# the branch whose next version should be tried, rather than on every push:
+# whether snapshots count against the limits is something the Portal does not
+# say.
 #
 # Consumers add https://central.sonatype.com/repository/maven-snapshots/ and
 # depend on the version this prints, e.g. `1.2.1-SNAPSHOT`.

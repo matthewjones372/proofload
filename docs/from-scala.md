@@ -21,7 +21,7 @@ agreeing. Do not use `0.1.0-rc3` from Scala ([versions.md](versions.md)).
 dependencies {
     // Brings proofload-java, and proofload-core, proofload-engine and proofload-http
     // with it. The coordinate has no Scala version suffix.
-    implementation("io.github.matthewjones372:proofload-scala:0.1.0-rc4")
+    implementation("io.github.matthewjones372:proofload-scala:0.1.0-rc5")
 }
 ```
 
@@ -127,8 +127,7 @@ should be read on: `result.against(baseline, of = Clock.ServiceTime)` where the
 generator fell behind, because the response times of such a run carry a wait
 this tool caused. The `Comparison` it hands back is what `writeHtmlReport` and
 `markdown` take, and it records which clock it was read on so the page says so
-rather than assuming. Choosing the clock is not in `0.1.0-rc4`
-([versions.md](versions.md)).
+rather than assuming.
 
 `result.offered` is the other half of reading a run, and an `Option`: it is
 what the run asked for beside what actually left, and it cannot be said of a
@@ -239,7 +238,7 @@ and `proofload-kotest`.
 // build.gradle.kts
 dependencies {
     // zio-test is compileOnly here: the spec that uses this already has it.
-    testImplementation("io.github.matthewjones372:proofload-zio-test:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-zio-test:0.1.0-rc5")
 }
 ```
 

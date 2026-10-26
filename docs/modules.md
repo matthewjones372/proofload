@@ -31,9 +31,9 @@ Most projects need three: a protocol, a test framework and a report.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-report-html:0.1.0-rc5")
 }
 ```
 

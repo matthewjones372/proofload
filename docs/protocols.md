@@ -543,7 +543,7 @@ val reading = scenario("reading") {
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-jdbc:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-jdbc:0.1.0-rc5")
     // The driver and the pool are yours, and are the point: this module carries
     // neither, so a run measures the pool your service actually runs.
     testImplementation("org.postgresql:postgresql:42.7.4")

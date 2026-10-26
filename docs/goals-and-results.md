@@ -197,8 +197,7 @@ This is also the run to change the clock on when comparing against a baseline.
 `result.against(previous, of = Clock.ServiceTime)` reads service time instead,
 and the comparison records which clock it used. Java writes it as
 `Results.against(result, previous, 99.0, Clock.ServiceTime)` and Scala as
-`result.against(previous, of = Clock.ServiceTime)`. Choosing the clock is not in
-`0.1.0-rc4`; see [versions.md](versions.md).
+`result.against(previous, of = Clock.ServiceTime)`.
 
 Scala reads the same checks as `result.fellBehind`,
 `result.lostGround`, `result.ranOutOfRoom`, `result.concurrency` for Little's
@@ -353,8 +352,8 @@ private fun awaitUp(url: String) {
 
 ```groovy
 dependencies {
-    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc4")
-    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc4")
+    testImplementation("io.github.matthewjones372:proofload-junit5:0.1.0-rc5")
+    testImplementation("io.github.matthewjones372:proofload-http:0.1.0-rc5")
     testImplementation("io.kotest:kotest-assertions-core:6.2.4")
 }
 ```

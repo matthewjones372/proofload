@@ -47,7 +47,7 @@ dependencies {
     // What a reader of the README already has in a test project, spelled out
     // because this one starts from nothing.
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
-    testImplementation("io.kotest:kotest-assertions-core:6.2.5")
+    testImplementation("io.kotest:kotest-assertions-core:6.2.6")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

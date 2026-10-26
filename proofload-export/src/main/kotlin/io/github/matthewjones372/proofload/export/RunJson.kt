@@ -152,7 +152,7 @@ private fun RunResult.failuresByReason(): List<Pair<String, Long>> =
 private fun RunResult.headline(): Headline {
     val verdicts = judged()
     return when {
-        fellBehind() || lostGround() -> Headline.Behind
+        fellBehind() || lostGround() || refused > 0L -> Headline.Behind
         verdicts.isEmpty() -> Headline.NothingAsked
         verdicts.any { !it.met } -> Headline.Missed
         verdicts.any { it.refused != null } -> Headline.CannotTell
@@ -182,7 +182,7 @@ private fun RunResult.judged(): List<Verdict> = plan.goals.flatMap { it.judgeAll
 private fun RunResult.scheduleJson(depth: Int): String = jsonObject(
     depth = depth,
     fields = listOf(
-        "kept" to (!fellBehind() && !lostGround()).toString(),
+        "kept" to (!fellBehind() && !lostGround() && refused == 0L).toString(),
         // How long it held before the first second that lost ground, which is
         // what says at what point a rate stopped being the rate that left.
         "heldFor" to (heldScheduleFor?.inWholeNanoseconds?.toString() ?: "null"),
@@ -359,6 +359,8 @@ private fun Outcome.toJson(depth: Int): String = jsonObject(
 private fun Second.toJson(depth: Int): String = jsonObject(
     depth = depth,
     fields = listOf(
+        // On every slot rather than once, so a slot read out of the array alone still says how long it was.
+        "width" to width.inWholeNanoseconds.toString(),
         "count" to count.toString(),
         "ok" to ok.toString(),
         "failed" to failed.toString(),

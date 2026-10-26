@@ -22,6 +22,7 @@ import io.github.matthewjones372.proofload.offered
 import io.github.matthewjones372.proofload.precision
 import io.github.matthewjones372.proofload.ranOutOfRoom
 import io.github.matthewjones372.proofload.seeds
+import io.github.matthewjones372.proofload.span
 import io.github.matthewjones372.proofload.stages
 import io.github.matthewjones372.proofload.startRate
 import io.github.matthewjones372.proofload.unanswered
@@ -30,7 +31,6 @@ import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 /**
@@ -51,6 +51,7 @@ private fun RunResult.blocks(comparison: Comparison?, floor: Floor?): List<Strin
             floor?.line(),
             behindWarning(),
             roomWarning(),
+            saturatedWarning(),
             concurrencyLine(),
         ) +
             comparison.blocks(floor) + mixBlocks() +
@@ -250,7 +251,7 @@ private fun Plan.warmed(): String {
  */
 private fun RunResult.cutShortWarning(): String? {
     val asked = plan.plannedWindow
-    val recorded = timeline.size.seconds
+    val recorded = timeline.span
     if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return null
 
     return "> **Cut short:** the schedule asked for ${asked.report()} and the run recorded ${recorded.report()}. " +
@@ -293,6 +294,15 @@ private fun RunResult.roomWarning(): String? {
     return "> **The injector ran out of room:** $tight. Failures below are this process hitting its own " +
         "ceiling as readily as the target refusing work."
 }
+
+private fun RunResult.saturatedWarning(): String? {
+    if (refused == 0L) return null
+    return "> **The generator was saturated:** ${refused.thousands()} arrivals were not sent, because its cap on " +
+        "users in flight was full when they fell due. They are not failures of the target, and the load below " +
+        "is not the load the profile named, so this run is void."
+}
+
+private fun Long.thousands(): String = String.format(Locale.ROOT, "%,d", this)
 
 private fun RunResult.behindWarning(): String? {
     if (!fellBehind()) return null
@@ -559,7 +569,10 @@ private fun RunResult.failureBlocks(): List<String> {
     return listOf("**Failures**", table(columns, rows))
 }
 
-private fun RunResult.totals(): String = "$count requests, $ok ok, $failed failed. Started $startedAt."
+private fun RunResult.totals(): String {
+    val notSent = if (refused == 0L) "" else ", not sent: generator saturated, ${refused.thousands()}"
+    return "$count requests, $ok ok, $failed failed$notSent. Started $startedAt."
+}
 
 /**
  * The shape the percentiles were read off, for the steps worth looking at.

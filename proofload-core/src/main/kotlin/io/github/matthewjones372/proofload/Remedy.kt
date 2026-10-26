@@ -59,6 +59,11 @@ val RunResult.scheduleRemedy: String?
         // at a reader whose verdict came from the other comparison entirely —
         // evidence arguing against the conclusion it was attached to, which is
         // worse than saying nothing.
+        refused > 0L ->
+            "The generator refused $refused arrivals because its cap on users in flight was full, so the " +
+                "load that left is not the load the profile named. Re-run at a lower rate, with a higher cap, or " +
+                "across more injectors."
+
         lostGround() ->
             "The generator's own lateness reached ${behind.p99} at p99, past the $ownInterval it " +
                 "planned between departures. The load that left is not the load the profile named. Re-run at a " +

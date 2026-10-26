@@ -2,9 +2,9 @@ package io.github.matthewjones372.proofload.report
 
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.SteadyState
+import io.github.matthewjones372.proofload.span
 import io.github.matthewjones372.proofload.steadyState
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Which part of the run the goals above were judged over, and what was left
@@ -26,7 +26,7 @@ internal fun RunResult.steadyLines(): List<String> {
 private fun RunResult.settledLines(offset: Duration): List<String> = listOf(
     """  <p class="note" id="proofload-steady">""",
     "    <strong>Settled after ${offset.forPlan()}</strong>, judged over the remaining " +
-        "${(timeline.size.seconds - offset).forPlan()}. The first ${offset.forPlan()} are drawn on the timeline " +
+        "${(timeline.span - offset).forPlan()}. The first ${offset.forPlan()} are drawn on the timeline " +
         "below and left out of every goal above that reads the counts or either clock; the generator's own " +
         "backlog is not kept second by second, so a goal on that is judged over the whole run. Every percentile " +
         "in the table below is the whole run: nothing here is discarded. ${aDefault()}",

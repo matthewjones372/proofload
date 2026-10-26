@@ -2,7 +2,6 @@ package io.github.matthewjones372.proofload.engine
 
 import io.github.matthewjones372.proofload.Progress
 import io.github.matthewjones372.proofload.Snapshot
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -57,25 +56,7 @@ internal class ProgressWatch(
     private val progress: Progress,
     private val runStart: Long,
     private val take: (Boolean) -> Snapshot,
-    private val inFlight: MutableMap<Int, Long>,
 ) {
-
-    /**
-     * How many users were running in each second of the run, as the sampler
-     * saw them.
-     *
-     * Kept here rather than reported through [Progress], so a run watched by
-     * `Progress.silent` measures exactly what a watched one does: this is a
-     * measurement, and a measurement that vanishes when nobody is looking is
-     * not one.
-     *
-     * A second the sampler missed is absent rather than zero — nothing counted
-     * no users, it counted nothing.
-     */
-    fun usersInFlight(): List<Long?> {
-        val last = inFlight.keys.maxOrNull() ?: return emptyList()
-        return (0..last).map { inFlight[it] }
-    }
 
     /** The last line, once nothing more will depart. */
     fun stop() {
@@ -89,31 +70,36 @@ internal class ProgressWatch(
 }
 
 /**
- * Ticks [progress] until the returned watch is stopped.
+ * Ticks [progress] until the returned watch is stopped, and hands each tick's
+ * users in flight to [sample].
  *
  * The sampling is faster than any line is due, because the interval a reporter
  * wants is the reporter's and this interface has one method. A tick allocates
  * one `Snapshot` on a thread of its own, which no departure and no step is ever
  * submitted to.
+ *
+ * The sample goes to [sample] rather than through [Progress], so a run watched
+ * by `Progress.silent` measures exactly what a watched one does.
  */
-internal fun watchProgress(progress: Progress, runStart: Long, take: (Boolean) -> Snapshot): ProgressWatch {
+internal fun watchProgress(
+    progress: Progress,
+    runStart: Long,
+    sample: (Duration, Long) -> Unit,
+    take: (Boolean) -> Snapshot,
+): ProgressWatch {
     val executor = Executors.newSingleThreadScheduledExecutor(::progressThread)
-    // Written by the sampler thread and read once it has terminated, as the
-    // hiccup and room watches are. Concurrent because the last tick is taken
-    // by the thread that stops the watch.
-    val inFlight = ConcurrentHashMap<Int, Long>()
     executor.scheduleAtFixedRate(
         {
             val elapsed = elapsed(runStart)
             val snapshot = take(false)
-            inFlight[elapsed.inWholeSeconds.toInt()] = snapshot.inFlight
+            sample(elapsed, snapshot.inFlight)
             progress.tick(elapsed, snapshot)
         },
         SAMPLE.inWholeNanoseconds,
         SAMPLE.inWholeNanoseconds,
         TimeUnit.NANOSECONDS,
     )
-    return ProgressWatch(executor, progress, runStart, take, inFlight)
+    return ProgressWatch(executor, progress, runStart, take)
 }
 
 private fun elapsed(runStart: Long): Duration = (System.nanoTime() - runStart).nanoseconds

@@ -64,13 +64,17 @@ data class Arm(
 )
 
 /** The arms sent together, what they have to achieve and the sink they are drained into: a run, as one value. */
-data class Simulation(
+data class Simulation @JvmOverloads constructor(
     val arms: List<Arm>,
     val goals: List<Goal> = emptyList(),
     val completing: Completing? = null,
     val warmUp: WarmUp? = null,
     /** Which injector this is, where the run is split across several. */
     val shard: Shard? = null,
+    /** How many slots the timeline holds before they widen: see [keepingSlots]. */
+    val slots: Int = RunRecorder.SLOTS,
+    /** How many users may be in flight at once before an arrival is refused: see [inFlightAtMost]. */
+    val inFlightCap: Int? = null,
 ) {
 
     constructor(
@@ -84,6 +88,10 @@ data class Simulation(
 
     init {
         require(arms.isNotEmpty()) { "a simulation sends at least one arm" }
+        require(slots > 0) { "a timeline holds at least one slot, but slots was $slots" }
+        require(inFlightCap == null || inFlightCap > 0) {
+            "a cap on users in flight is above zero, but was $inFlightCap"
+        }
         val shared = arms
             .flatMap { arm -> arm.scenario.stepNames.distinct().map { step -> step to arm.scenario.name } }
             .groupBy({ (step, _) -> step }, { (_, scenario) -> scenario })
@@ -118,7 +126,13 @@ fun Simulation.userCount(): Long = arms.sumOf { it.profile.userCount() }
  * side's is the one kept.
  */
 operator fun Simulation.plus(other: Simulation): Simulation =
-    Simulation(arms + other.arms, goals + other.goals, completing ?: other.completing)
+    Simulation(
+        arms + other.arms,
+        goals + other.goals,
+        completing ?: other.completing,
+        // One heap and one set of carriers, so the stricter cap is the one both sides share.
+        inFlightCap = listOfNotNull(inFlightCap, other.inFlightCap).minOrNull(),
+    )
 
 /**
  * The same run, with [from] drained for the answers its emit steps departed
@@ -209,6 +223,27 @@ fun Simulation.requireSeededThinking() {
  */
 fun Simulation.thinkingFrom(seed: Long): Simulation =
     copy(arms = arms.mapIndexed { index, arm -> arm.copy(thinkSeed = seed + index) })
+
+/**
+ * The same run, with a timeline of [slots] before its slots widen.
+ *
+ * Past that many seconds, neighbouring slots are added in pairs and each is
+ * twice as wide, so a run holds the same tables however long it goes. More
+ * slots is finer resolution on a long run, paid for in memory.
+ */
+fun Simulation.keepingSlots(slots: Int): Simulation = copy(slots = slots)
+
+/**
+ * The same run, refusing any arrival that falls due while [users] are already
+ * in flight rather than starting a thread for it.
+ *
+ * For a generator that must stay cheap when its target falls behind: each
+ * waiting user is a thread and a place in a client's queue, and enough of them
+ * take the injector's cores and heap before the target is busy. A refusal is
+ * counted in `RunResult.refused`, never sent and never the target's failure.
+ * A closed population is its own cap, so a closed run ignores this.
+ */
+fun Simulation.inFlightAtMost(users: Int): Simulation = copy(inFlightCap = users)
 
 /** The same run, with each user of every arm seeded from [feeder] before its first step. */
 fun Simulation.fedBy(feeder: Feeder): Simulation = copy(arms = arms.map { it.copy(feeder = feeder) })

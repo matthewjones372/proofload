@@ -19,6 +19,7 @@ import io.github.matthewjones372.proofload.inFlight
 import io.github.matthewjones372.proofload.offered
 import io.github.matthewjones372.proofload.precision
 import io.github.matthewjones372.proofload.ranOutOfRoom
+import io.github.matthewjones372.proofload.span
 import io.github.matthewjones372.proofload.stages
 import io.github.matthewjones372.proofload.unanswered
 import io.github.matthewjones372.proofload.unmatched
@@ -26,7 +27,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * The run as one self-contained page: the data, the stylesheet and the script
@@ -87,6 +87,7 @@ private fun RunResult.documentLines(
         floor.resolutionLines(),
         hiccupLines(),
         roomLines(),
+        saturatedLines(),
         concurrencyLines(),
         attemptLines(),
         streamLines(),
@@ -113,7 +114,7 @@ private fun RunResult.documentLines(
  */
 private fun RunResult.cutShortLines(): List<String> {
     val asked = plan.plannedWindow
-    val recorded = timeline.size.seconds
+    val recorded = timeline.span
     if (timeline.isEmpty() || asked <= Duration.ZERO || asked - recorded < asked * SHORTFALL) return emptyList()
 
     return listOf(
@@ -275,6 +276,7 @@ private fun RunResult.totalsLines(): List<String> =
         tile("Requests", count.grouped(), "") +
         tile("OK", ok.grouped(), " ok") +
         tile("Failed", failed.grouped(), " failed") +
+        refusedTile() +
         lostTiles() +
         tile("Behind schedule, p99", behind.p99OrNothing(), "") +
         hiccupTile() +
@@ -372,6 +374,21 @@ private fun RunResult.roomLines(): List<String> {
         """  <p class="behind" id="proofload-room" role="status">""",
         "    <strong>The injector ran out of room.</strong> $tight. Failures below are this process " +
             "hitting its own ceiling as readily as the target refusing work.",
+        "  </p>",
+    )
+}
+
+// Beside the failures and never inside them: a refusal never reached the target.
+private fun RunResult.refusedTile(): List<String> =
+    if (refused == 0L) emptyList() else tile("Not sent: generator saturated", refused.grouped(), " failed")
+
+private fun RunResult.saturatedLines(): List<String> {
+    if (refused == 0L) return emptyList()
+    return listOf(
+        """  <p class="behind" id="proofload-saturated" role="status">""",
+        "    <strong>The generator was saturated.</strong> ${refused.grouped()} arrivals were not sent, because " +
+            "its cap on users in flight was full when they fell due. They are not failures of the target, and " +
+            "the load below is not the load the profile named, so this run is void.",
         "  </p>",
     )
 }

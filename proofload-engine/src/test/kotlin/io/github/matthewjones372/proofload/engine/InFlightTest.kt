@@ -3,6 +3,7 @@ package io.github.matthewjones372.proofload.engine
 import io.github.matthewjones372.proofload.Progress
 import io.github.matthewjones372.proofload.Snapshot
 import io.github.matthewjones372.proofload.at
+import io.github.matthewjones372.proofload.keepingSlots
 import io.github.matthewjones372.proofload.perSecond
 import io.github.matthewjones372.proofload.scenario
 import io.kotest.assertions.withClue
@@ -71,6 +72,18 @@ class InFlightTest {
         }
         withClue("a measurement that vanishes when nobody is looking is not one") {
             silent.usersInFlight.count { it != null } shouldBe watched.usersInFlight.count { it != null }
+        }
+    }
+
+    @Test
+    fun `a run past its slots keeps one reading a slot, as wide as the timeline's`() {
+        val slow = scenario("slow") { exec("wait") { Thread.sleep(50) } }
+
+        val result = slow.at(10.perSecond, over = 4.seconds).keepingSlots(2).run(Progress.silent)
+
+        withClue("four seconds in two slots is two a slot, and the readings are kept the same way") {
+            (result.timeline.first().width > 1.seconds) shouldBe true
+            (result.usersInFlight.size <= result.timeline.size) shouldBe true
         }
     }
 

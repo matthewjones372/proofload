@@ -1,5 +1,22 @@
+// Plugin classpaths carry advisories of their own, and nothing here names the
+// coordinates, so these constraints are the only lever: Dokka resolves
+// `jackson-databind` 2.15.3, Kover's reporter `freemarker` 2.3.32, and the
+// Kotlin plugin Bouncy Castle 1.84. Constraining databind covers the jackson
+// cluster, because it pulls the 2.22.3 BOM. Dokka's worker and the Kotlin
+// plugin's own Bouncy Castle bucket run on classpaths this block does not
+// reach, pinned in `subprojects` below.
+buildscript {
+    dependencies {
+        constraints {
+            classpath("com.fasterxml.jackson.core:jackson-databind:2.22.3")
+            classpath("org.freemarker:freemarker:2.3.35")
+            classpath("org.bouncycastle:bcprov-jdk18on:1.86")
+        }
+    }
+}
+
 plugins {
-    kotlin("jvm") version "2.4.10" apply false
+    kotlin("jvm") version "2.4.20" apply false
     id("com.diffplug.spotless") version "8.10.2"
     id("dev.detekt") version "2.0.0-alpha.6" apply false
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
@@ -359,6 +376,26 @@ subprojects {
             ?.let { asked -> systemProperty("proofload.regenerate", asked) }
     }
 
+    // The Kotlin plugin resolves Bouncy Castle 1.84 here, which has a critical
+    // name-constraints bypass.
+    configurations.matching { it.name == "kotlinBouncyCastleConfiguration" }.configureEach {
+        resolutionStrategy.force(
+            "org.bouncycastle:bcprov-jdk18on:1.86",
+            "org.bouncycastle:bcpg-jdk18on:1.86",
+            "org.bouncycastle:bcpkix-jdk18on:1.86",
+            "org.bouncycastle:bcutil-jdk18on:1.86",
+        )
+    }
+
+    // The Scala plugin's zinc compiler brings log4j 2.17.1, which has open
+    // advisories. Only the build runs it, but the dependency graph reports it.
+    configurations.matching { it.name == "zinc" }.configureEach {
+        resolutionStrategy.force(
+            "org.apache.logging.log4j:log4j-api:2.25.5",
+            "org.apache.logging.log4j:log4j-core:2.25.5",
+        )
+    }
+
     apply(plugin = "org.jetbrains.kotlinx.kover")
 
     apply(plugin = "dev.detekt")
@@ -391,6 +428,37 @@ subprojects {
     if (name in publishedModules) {
         apply(plugin = "com.vanniktech.maven.publish")
         apply(plugin = "org.jetbrains.dokka")
+
+        // Dokka's worker classpath, which the buildscript constraints at the top
+        // of this file do not reach. `dokkaHtmlGeneratorRuntime` is the bucket
+        // its resolver extends. Dokka templates with freemarker and parses with
+        // jsoup, so both arrive here as well.
+        dependencies {
+            add("dokkaHtmlGeneratorRuntime", platform("com.fasterxml.jackson:jackson-bom:2.22.3"))
+            constraints {
+                add("dokkaHtmlGeneratorRuntime", "org.jsoup:jsoup:1.23.2")
+                add("dokkaHtmlGeneratorRuntime", "org.freemarker:freemarker:2.3.35")
+            }
+        }
+
+        // What a launcher matches a `Main-Class` against. Coursier keys every
+        // main it finds on the resolved classpath by
+        // (`Implementation-Vendor-Id`, `Specification-Title`), both defaulting
+        // to the empty string, and where two jars key alike it keeps one of
+        // them. `proofload-mcp` and `proofload-cli` both carry a main and
+        // neither named itself, so `cs launch` on the server's coordinate
+        // started the command line instead — usage text and exit code 4 where a
+        // client expected JSON-RPC. Every published jar names its coordinate,
+        // rather than only the two that carry a main, because the collision is
+        // between jars and a third one would bring it back.
+        tasks.named<Jar>("jar") {
+            manifest {
+                attributes(
+                    "Implementation-Vendor-Id" to project.group.toString(),
+                    "Specification-Title" to project.name,
+                )
+            }
+        }
 
         extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             // Sources are not an optional extra for a library someone else has

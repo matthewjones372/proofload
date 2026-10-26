@@ -44,6 +44,12 @@ internal fun interface StepSink {
      * stays a lambda. Only a step with something to say reaches it.
      */
     fun aside(step: String, queued: Duration, produced: Long) {}
+
+    /** An arrival due [at] was refused because the cap on users in flight was full. Only the scheduler calls it. */
+    fun refused(at: Duration) {}
+
+    /** The same, where punctual users alone would have left room: the generator's own stall filled the cap. */
+    fun refusedAfterStall(at: Duration) {}
 }
 
 /**
@@ -68,12 +74,13 @@ internal class Recorders(
     shards: Int = defaultShards,
     /** False for a closed run, which promised no departures and so records no lateness. */
     keepingSchedule: Boolean = true,
+    slots: Int = RunRecorder.SLOTS,
 ) : StepSink {
 
     // One origin for the run, spawned rather than read again per shard: shards
     // are merged into one timeline at the end, and three recorders that each
     // read the clock are three zero points that pool into a smear.
-    private val first = RunRecorder(startedAt, keepingSchedule)
+    private val first = RunRecorder(startedAt, keepingSchedule, slots)
 
     // The mutable accumulator this whole class is about: the alternative is an
     // allocation per request on the path the report calls the target's latency.
@@ -82,6 +89,21 @@ internal class Recorders(
             .also { array -> repeat(shards) { index -> array.set(index, first.shard()) } }
 
     private val completions = first.shard()
+
+    // Written only by the progress sampler's thread, and read at freeze once
+    // it has stopped. Locked anyway: stopping waits a bounded time, and the
+    // lock is on a thread no request is timed on.
+    private val sampled = first.shard()
+
+    fun inFlight(at: Duration, users: Long) = synchronized(sampled) { sampled.inFlight(at, users) }
+
+    // Written only on the scheduler's thread, and read at freeze after the
+    // run's latch, which every refusal releases after writing here.
+    private val refusals = first.shard()
+
+    override fun refused(at: Duration) = refusals.refused(at)
+
+    override fun refusedAfterStall(at: Duration) = refusals.refusedAfterStall(at)
 
     // One counter per shard, written only by the thread holding that shard and
     // read approximately by the ticker. Single-writer, so a plain volatile
@@ -150,9 +172,36 @@ internal class Recorders(
      * claims no shard: there is only ever the one writer, and it is not on the
      * path a step is timed on.
      */
-    fun arrived(step: String, latency: Duration, at: Duration) = completions.arrived(step, latency, at)
+    fun arrived(step: String, latency: Duration, at: Duration) {
+        completions.arrived(step, latency, at)
+        // Its one writer records at the time it observes, which only moves
+        // forward, so every second before this one is finished.
+        completions.close(before = at)
+    }
 
     fun outstanding(step: String, outstanding: Outstanding) = completions.outstanding(step, outstanding)
+
+    /**
+     * Folds every second before [before] in each shard, so a run holds tables
+     * only for the seconds a request in flight can still land in.
+     *
+     * Each shard is claimed the way a writer claims one. A writer finding it
+     * taken moves on to the next, so this never holds a request up.
+     */
+    tailrec fun close(before: Duration, index: Int = 0) {
+        if (index == slots.length()) return
+        val claimed = slots.getAndSet(index, null)
+        if (claimed == null) {
+            Thread.onSpinWait()
+            return close(before, index)
+        }
+        try {
+            claimed.close(before)
+        } finally {
+            slots.set(index, claimed)
+        }
+        close(before, index + 1)
+    }
 
     fun freeze(plan: Plan, arrivals: Arrivals): RunResult {
         val merged = first.shard()
@@ -160,6 +209,8 @@ internal class Recorders(
             merged.merge(checkNotNull(slots.get(index)) { "a shard was still in use when the run ended" })
         }
         merged.merge(completions)
+        synchronized(sampled) { merged.merge(sampled) }
+        merged.merge(refusals)
         return merged.freeze().copy(plan = plan, arrivals = arrivals)
     }
 

@@ -33,6 +33,26 @@ enough to list, and long enough to matter.
 
 ### Added
 
+- **A cap on users in flight.** `Simulation.inFlightAtMost(n)` refuses any
+  arrival that falls due while `n` users are already in flight, rather than
+  starting a virtual thread for it. Without one, a target that falls behind
+  hands its backlog to the generator: petshop at 50,000 a second left 120,000
+  threads queued in its client and took the injector's cores and heap while
+  the target sat idle. A refusal is never sent, never deferred and never the
+  target's failure; `RunResult.refused` counts them and
+  `RunResult.refusedPerSecond` says when, and merges, stages and the steady
+  segment carry both. Off unless set, and ignored by a closed population
+  (spec 0144). A binary break: `RunResult` and `Simulation` each gained a
+  constructor parameter, so their constructors and `copy` changed signature;
+  source that names its arguments compiles unchanged.
+
+  `RunResult.generatorSaturated()` asks whether the generator rather than the
+  target set what a run measured: a refusal, running out of room, or losing
+  its own schedule. A search rung that refused any arrival is void and its
+  line names the count; the HTML page and the markdown summary print "not
+  sent: generator saturated" beside the failures with a warning above them;
+  the JSON headline reads `behind` and its schedule remedy names the refusals.
+
 - **A load test that is a zio-test test.** `proofload-zio-test` is one method:
   `ZIO.attemptBlocking` around the same silent, exclusive runner
   `proofload-junit5` and `proofload-kotest` build. Blocking rather than compute,
@@ -545,6 +565,74 @@ enough to list, and long enough to matter.
   which is how a coordinator gets them, had no way to say so.
 
 ### Changed
+
+- **The users in flight are kept one reading a slot.** The engine sampled them
+  once a second into a map it held for the whole run, 86,400 entries and about
+  6 MiB for a day. `RunResult.usersInFlight` is now indexed by the timeline's
+  slots and widens with them, keeping the first reading taken in each, so a
+  day holds 2,700 rather than 86,400. The engine hands each reading to the new
+  `RunRecorder.inFlight(at, users)`. Steady state, stages and `Runs.merged`
+  read it by slot. `docs/what-it-costs.md` gives what an hour and a day of ten
+  steps hold, and a day of the petshop demo's three, measured by
+  `:benchmarks:timelineCost`.
+
+- **A timeline holds a fixed number of slots, which widen as a run outgrows
+  them.** Past 3,600 slots, neighbours are added in pairs and every slot is
+  twice as wide: one second, then two, then four. Buckets add, so a widened
+  slot is exact. An hour keeps a slot a second and a day keeps 2,700 of
+  thirty-two seconds, so what a run holds stops growing with its length.
+  Lateness widens with the timeline. `Second.width` says how wide a slot is,
+  `List<Second>.span` how long a timeline covers, and `slotWidth` how wide its
+  slots are. Steady state, stages, `Concurrency`, `offered`,
+  `heldScheduleFor`, the report's charts and the exports read slots by their
+  width rather than as seconds; the charts draw a widened slot's counts as a
+  rate a second, and the JSON carries `width` on every slot. `Runs.merged`
+  and `Shards.merged` add a narrower run's slots up into the widest one's.
+  `Simulation.keepingSlots(n)` and `RunRecorder(..., slots = n)` set the
+  count. Breaking for a caller compiled against the old shapes:
+  `Second.copy` and `Simulation.copy` take the new field, and the
+  default-argument constructors of `Second`, `Simulation` and `RunRecorder`
+  changed signature. The constructors without defaults are kept.
+
+- **A second's tables are let go once nothing in flight can land in it.** A run
+  kept a coarse histogram pair per second per step, and a lateness table per
+  second, until `freeze()`, so its memory grew with its length: an hour of ten
+  steps held about 400 MiB while recording, and three steps left running as a
+  demo's background traffic ran out of heap in under two hours. The engine now
+  tells the recorder the oldest departure still in flight once a second, and
+  `RunRecorder.close(before)` folds every earlier second into the buckets
+  `freeze()` would have kept. The same hour now holds about 61 MiB while
+  recording. The frozen result is unchanged, and a record that lands in a
+  second already closed is still counted there. Memory is now small per
+  second but still linear; spec 0143's next entry bounds it.
+
+- **`cs launch` on the server's coordinate starts the server.** Coursier keys
+  every `Main-Class` it finds on a resolved classpath by
+  (`Implementation-Vendor-Id`, `Specification-Title`), both defaulting to the
+  empty string, and keeps one of any two that key alike. `proofload-mcp` and
+  `proofload-cli` both carry a main and neither named itself, so
+  `cs launch io.github.matthewjones372:proofload-mcp:0.1.0-rc4` started the
+  command line: usage text and exit code 4 where a client expected JSON-RPC.
+  jbang reads the manifest of the jar it was asked for and was never affected,
+  so the two launchers `docs/mcp.md` called interchangeable were not.
+
+  Every published jar now names its coordinate in its manifest — every one
+  rather than the two that carry a main, because the collision is between jars
+  and a third entry point would bring it back. `LaunchingTest` opens the jars
+  this coordinate resolves and fails when two carry a main under the same name
+  or when coursier's own rule picks anything but `ServerKt`, and the release
+  workflow runs the real launcher against a repository built from the tag.
+  **`0.1.0-rc4` and earlier are not fixed by this** and cannot be: the manifests
+  are published. From coursier, those versions need
+  `-M io.github.matthewjones372.proofload.mcp.ServerKt`.
+
+- **The download `docs/mcp.md` names is checked against the release.** The
+  `0.1.0-rc4` zip was built and attached, but its release was left drafted while
+  the modules went to Maven Central, so the documented URL was a 404 against an
+  asset sitting under an `untagged-…` path. The release is published and the URL
+  is served; `downloads.yml` fails when any `releases/download/` URL in the
+  README or `docs/` is not 200, on publication and on a daily schedule, because
+  nothing in `./gradlew build` can check an asset that does not exist yet.
 
 - **A run's id no longer counts, and a finished run survives a restart.** Ids
   came from an `AtomicInteger`, so two replicas started together both answered

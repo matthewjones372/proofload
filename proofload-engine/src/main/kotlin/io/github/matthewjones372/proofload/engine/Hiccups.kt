@@ -79,7 +79,7 @@ private fun hiccupThread(runnable: Runnable): Thread =
     Thread(runnable, "proofload-hiccups").apply { isDaemon = true }
 
 /** What jHiccup asks for, and small enough that a stall worth naming spans several. */
-private val TICK = 1.milliseconds
+internal val TICK = 1.milliseconds
 
 // The ticks do not block, so an interrupted one is already finished.
 private const val SHUTDOWN_SECONDS = 5L

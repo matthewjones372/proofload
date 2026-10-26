@@ -314,12 +314,15 @@ private fun Long.padded(): String = toString().padStart(2, '0')
 /** A whole rate reads as one; a bisected one keeps the digit that makes it different from its neighbours. */
 
 /**
- * Which of the two ways a rung learned nothing: the schedule was not kept, or
- * this process ran out of its own room. Named because they are fixed
- * differently — a lower rate against a bigger ulimit.
+ * Which of the three ways a rung learned nothing: it refused arrivals at its
+ * cap, this process ran out of its own room, or the schedule was not kept.
+ * Named because they are fixed differently: a lower rate, a bigger ulimit, a
+ * higher cap or another injector.
  */
 private fun Rung.whyVoid(): String =
-    if (result.ranOutOfRoom()) {
+    if (result.refused > 0L) {
+        "the generator refused ${result.refused.grouped()} arrivals at its cap"
+    } else if (result.ranOutOfRoom()) {
         val tight = result.limits.all
             .firstOrNull { (_, headroom) -> headroom is Headroom.Measured && headroom.used >= TIGHT }
         "the injector ran out of ${tight?.first ?: "room"}"

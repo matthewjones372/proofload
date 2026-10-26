@@ -58,6 +58,7 @@ class NoThirdPartyDependenciesTest {
 
         val unexpected = raw!!.split(File.pathSeparator)
             .filter { it.isNotBlank() }
+            .map { File(it).name }
             .filterNot { entry -> allowed.any { entry.startsWith(it) } }
 
         withClue("proofload-mcp brings no MCP library, logger or second parser, but found: $unexpected") {

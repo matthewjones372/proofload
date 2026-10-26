@@ -118,6 +118,8 @@ built. Each row links the spec that argued for it.
 | [0120](0120-more-than-one-client.md) | how many JDK clients a run holds, swept. The rows are flat on both machines that have run it, so one client was never the bound and `striped(n)` is deliberately not shipped |
 | [0124](0124-a-schedule-tested-without-a-clock.md) | the scheduling arithmetic proven deterministically, on seams that already existed. No virtual clock, which the spec recommended against |
 | [0134](0134-the-statements-that-must-never-become-false.md) | the sixteen invariants as `docs/invariants.md`, the tests that cite each, and `./gradlew invariants` gating them from `check`. Five still do not hold, and the page says which |
+| [0142](0142-the-start-command-in-the-documentation.md) | every published jar naming its coordinate, so a launcher starts the server rather than the command line, and the documented download checked against the release |
+| [0143](0143-a-run-that-does-not-grow-with-its-length.md) | a second frozen once nothing in flight can land in it, a timeline and users in flight of fixed slots that widen, and a day measured: 47.85 MiB recording for ten steps, less than an hour's 60.97 |
 
 Everything else drafted is built, bar the tails listed below and the three
 specs under "Drafted, not built".
@@ -142,6 +144,12 @@ and are above; concurrency as an axis is what is left.
 | Spec | What it would get |
 |---|---|
 | [0119](0119-the-concurrency-a-ceiling-hides.md) | service time as an axis, so what a parked user costs is measured where thousands of them exist rather than where none do |
+
+And one from a run that measured the generator instead: petshop at 50,000 a second, where the injector's own backlog took its cores and heap before the target was busy.
+
+| Spec | What it would get |
+|---|---|
+| [0144](0144-a-generator-that-refuses-rather-than-collapses.md) | an opt-in cap on users in flight, every arrival past it counted as refused, and a run that refused any read as void |
 
 Fourteen more came out of one adversarial review of the tree, aimed at finding
 ways it could produce a plausible-looking but incorrect result. It found five.

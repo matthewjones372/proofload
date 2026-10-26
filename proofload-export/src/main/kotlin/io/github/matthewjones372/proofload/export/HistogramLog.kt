@@ -2,6 +2,7 @@ package io.github.matthewjones372.proofload.export
 
 import io.github.matthewjones372.proofload.RunResult
 import io.github.matthewjones372.proofload.Timing
+import io.github.matthewjones372.proofload.span
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
@@ -64,7 +65,7 @@ private fun RunResult.tagLines(): List<String> =
  * measurement rather than a resolution invented for the file.
  */
 private fun RunResult.line(tag: String, timing: Timing): String {
-    val seconds = timeline.size.toDouble()
+    val seconds = timeline.span.inWholeNanoseconds / NANOS_PER_SECOND
     return listOf(
         "Tag=${tag.withoutSpaces()}",
         0.0.asSeconds(),

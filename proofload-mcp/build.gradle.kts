@@ -26,6 +26,9 @@ application {
 // because two spellings of one entry point is one that goes stale. This makes no
 // fat jar and does not make `java -jar` work — a thin jar carries no classpath —
 // it only saves a launcher that already resolves the POM from being told.
+//
+// A main is not enough on its own: the root build adds the two attributes a
+// launcher tells one jar's main from another's, and `LaunchingTest` holds it.
 tasks.jar {
     manifest { attributes("Main-Class" to application.mainClass.get()) }
 }
@@ -59,12 +62,17 @@ dependencies {
 
 tasks.test {
     val mainRuntime: FileCollection = configurations.runtimeClasspath.get()
+    // Paths rather than names: one test reads the file names off them, the
+    // other opens each jar's manifest to ask which main a launcher would pick.
+    val ownJar: Provider<RegularFile> = tasks.jar.flatMap { it.archiveFile }
     inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
+    inputs.file(ownJar).withPropertyName("theJarALauncherResolvesFirst")
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
                 "-Dproofload.mcp.runtimeClasspath=" +
-                    mainRuntime.joinToString(File.pathSeparator) { it.name },
+                    mainRuntime.joinToString(File.pathSeparator) { it.path },
+                "-Dproofload.mcp.jar=" + ownJar.get().asFile.path,
             )
         },
     )

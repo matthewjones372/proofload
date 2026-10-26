@@ -4,11 +4,16 @@ The long form of [`llms.txt`](../llms.txt), for a model that has room for more
 than a screenful. It carries two things the other documents do not: the public
 surface of every published module, and the mistakes a model makes here.
 
-It does not repeat the recipes. [The cookbook](cookbook.md) is where the code
-is: profiles, feeders, captures, goals, gRPC, Kafka, JDBC, WebSockets,
-baselines and reports, each a few lines with the reason it is those lines.
-[Modules](modules.md) says which coordinates carry what, and the
-[README](../README.md) says what the library is for.
+It does not repeat the guides. [Getting started](getting-started.md) has a
+complete first test; [workload](workload.md), [data](data.md),
+[protocols](protocols.md), [goals and results](goals-and-results.md),
+[plans](plans.md) and [reports and baselines](reports-and-baselines.md) have the
+code for each task; [modules](modules.md) says which coordinates carry what.
+
+Before reading any latency off a result, read
+[measurement.md](measurement.md#where-each-surface-reports-the-schedule):
+nothing fails a run for falling behind unless `keptSchedule` is declared, and
+`metEveryGoal` is true for a run with no goals.
 
 ## Written wrong, written right
 
@@ -30,7 +35,7 @@ compiles. Every call in the right-hand column is checked against `examples` by
 
 Rendered from the `.api` dumps that `apiCheck` gates, by `./gradlew apiDocDump`,
 so a method that leaves the library leaves this section in the commit that
-removed it. Read it for *what exists*; read the cookbook for how it is called.
+removed it. Read it for *what exists*; read the guides for how it is called.
 
 A dump records the JVM signature, which is less than the source says. Parameter
 names are not in it. An extension function appears as a top-level function whose
@@ -137,6 +142,7 @@ interface Action
 top-level in ActionKt
     fun action(Function1): Action
 class Allowance
+    constructor()
     fun allows(String): Boolean
     val hosts: List
     val maxDuration: Duration
@@ -488,6 +494,7 @@ class Limits.Companion
     val none: Limits
 top-level in LimitsKt
     val TIGHT: Double
+    fun generatorSaturated(RunResult): Boolean
     fun ranOutOfRoom(RunResult): Boolean
 class Machine
     constructor(Int, String, String, String)
@@ -662,19 +669,28 @@ top-level in RemedyKt
     fun getScheduleRemedy(RunResult): String
 class RunRecorder
     val MAX_REASONS_PER_STEP: Int
+    val SLOTS: Int
+    constructor(Instant)
+    constructor(Instant, Long)
     constructor(Instant, Long, Boolean)
+    constructor(Instant, Long, Boolean, Int)
     constructor(Instant, Boolean)
+    constructor(Instant, Boolean, Int)
     fun arrived(String, Long, Long)
     fun aside(String, Long, Long)
+    fun close(Long)
     fun freeze(): RunResult
+    fun inFlight(Long, Long)
     fun merge(RunRecorder)
     fun outstanding(String, Outstanding)
     fun record(String, Reason, Long, Long, Long, Boolean, Boolean, Int, String)
+    fun refused(Long)
+    fun refusedAfterStall(Long)
     fun shard(): RunRecorder
     fun sinceStart(): Long
 class RunRecorder.Companion
 class RunResult
-    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int)
+    constructor(Instant, Map, Timing, Plan, Arrivals, Machine, Timing, List, List, List, Limits, Probe, Shard, Int, List, List)
     fun get(String): StepStats
     val arrivals: Arrivals
     val behind: Timing
@@ -689,6 +705,10 @@ class RunResult
     val ok: Long
     val plan: Plan
     val probe: Probe
+    val refused: Long
+    val refusedAfterStall: Long
+    val refusedAfterStallPerSecond: List
+    val refusedPerSecond: List
     val shard: Shard
     val startedAt: Instant
     val steps: Map
@@ -703,6 +723,8 @@ top-level in RunResultKt
     fun getInFlight(RunResult): Long
     fun getOwnInterval(RunResult): Long
     fun getPrecision(RunResult): Double
+    fun getSlotWidth(List): Long
+    fun getSpan(List): Long
     fun getTimelinePrecision(RunResult): Double
     fun getUnanswered(RunResult): List
     fun getUnmatched(RunResult): Long
@@ -793,6 +815,7 @@ class Second
     val p99: Long
     val responseTime: Timing
     val serviceTime: Timing
+    val width: Long
 class Session
     fun get(SessionKey): Object
     fun set(SessionKey, Object): Session
@@ -831,14 +854,22 @@ class Share
     val percent: Double
 class Simulation
     constructor(Scenario, InjectionProfile, Feeder, List, Completing, WarmUp)
+    constructor(List)
+    constructor(List, List)
+    constructor(List, List, Completing)
+    constructor(List, List, Completing, WarmUp)
     constructor(List, List, Completing, WarmUp, Shard)
+    constructor(List, List, Completing, WarmUp, Shard, Int)
+    constructor(List, List, Completing, WarmUp, Shard, Int, Integer)
     val arms: List
     val completing: Completing
     val feeder: Feeder
     val goals: List
+    val inFlightCap: Integer
     val over: Long
     val profile: InjectionProfile
     val shard: Shard
+    val slots: Int
     val warmUp: WarmUp
 top-level in SimulationKt
     fun at(Scenario, InjectionProfile.ClosedUsers): Simulation
@@ -850,7 +881,9 @@ top-level in SimulationKt
     fun getClosed(Simulation): Boolean
     fun getPerMinute(Number): Double
     fun getPerSecond(Number): Double
+    fun inFlightAtMost(Simulation, Int): Simulation
     fun injecting(Scenario, InjectionProfile): Simulation
+    fun keepingSlots(Simulation, Int): Simulation
     fun plan(Simulation): Plan
     fun plus(Simulation, Simulation): Simulation
     fun requireSeededThinking(Simulation)

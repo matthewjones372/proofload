@@ -84,7 +84,7 @@ private fun Simulation.send(progress: Progress): RunResult {
     // long it waited. Nothing else is coordinated — a sample is two readings
     // of this injector's own monotonic clock.
     val held = shard?.let { waitFor(it, progress) }
-    val recorders = Recorders(Instant.now(), keepingSchedule = !closed)
+    val recorders = Recorders(Instant.now(), keepingSchedule = !closed, slots = slots)
     val watch = watchForHiccups()
     val room = watchForRoom()
     // The recorder's origin rather than a second reading of the clock: a
@@ -93,7 +93,11 @@ private fun Simulation.send(progress: Progress): RunResult {
     val runStart = System.nanoTime() - recorders.sinceStart().inWholeNanoseconds
     val users = Departures()
     val departed = Departed()
-    val watching = watchProgress(progress, runStart) { ended ->
+    val watching = watchProgress(progress, runStart, recorders::inFlight) { ended ->
+        // On the sampler's thread once a second, which no request is timed on:
+        // a second is closed once no user still out could record into it.
+        val now = (System.nanoTime() - runStart).nanoseconds
+        recorders.close(before = users.outbound.oldest()?.coerceAtMost(now) ?: now)
         // The whole run's window, which is the longest arm's: a mix is over
         // when its last arm is.
         val (requests, failed) = recorders.counts()
@@ -111,12 +115,10 @@ private fun Simulation.send(progress: Progress): RunResult {
     departAll(recorders, users, departed, arrivals, drain, runStart)
     drain?.close()
     watching.stop()
-    val sampled = watching.usersInFlight()
     return recorders.freeze(plan(), arrivals.freeze())
         .copy(
             hiccups = watch.stop(),
             limits = room.stop(),
-            usersInFlight = sampled,
             // The shard the caller declared, plus the hold this host actually
             // computed: the only thing a merge can read a disagreeing clock off.
             shard = shard?.copy(heldFor = held),
@@ -164,19 +166,45 @@ private fun Simulation.departAll(
                 users.booked()
                 scheduler.schedule(
                     {
-                        // Each arm's own feeder, asked for its own user number:
-                        // an arm's data is then reproducible whatever rate the
-                        // arms beside it are being sent at.
-                        departure.arm.scenario.depart(
-                            sink,
-                            runStart,
-                            departure.offset,
-                            users,
-                            departure.arm.feeder.forUser(departure.user),
-                            drain,
-                            departed,
-                            departure.arm.thinkingFor(departure.user),
-                        )
+                        val fired = lateness(runStart, departure.offset)
+                        // Judged by when the scheduler fired, the clock the cap is checked on.
+                        val late = fired > STALL
+                        // Checked here, at the instant it falls due, so a cap
+                        // never defers an arrival: it starts now or not at all.
+                        when (users.admit(inFlightCap, late)) {
+                            Admission.Started -> {
+                                // The scheduler counting itself, on its own thread.
+                                // What the report calls lateness is read where the
+                                // user starts: one says when this tool fired, the
+                                // other when a request left.
+                                departed.left(fired.inWholeNanoseconds)
+                                // Each arm's own feeder, asked for its own user number:
+                                // an arm's data is then reproducible whatever rate the
+                                // arms beside it are being sent at.
+                                departure.arm.scenario.depart(
+                                    sink,
+                                    runStart,
+                                    departure.offset,
+                                    late,
+                                    users,
+                                    departure.arm.feeder.forUser(departure.user),
+                                    drain,
+                                    departure.arm.thinkingFor(departure.user),
+                                )
+                            }
+
+                            // Recorded before it is released, so the run cannot
+                            // freeze between the two.
+                            Admission.Saturated -> {
+                                sink.refused(departure.offset)
+                                users.refused()
+                            }
+
+                            Admission.AfterStall -> {
+                                sink.refusedAfterStall(departure.offset)
+                                users.refused()
+                            }
+                        }
                     },
                     // Relative to now, but the offset is from the run's start
                     // and a pump books partway through it. Subtracting what has
@@ -220,12 +248,13 @@ private fun Simulation.departPopulation(
         val population = (arm.profile as InjectionProfile.ClosedUsers).count
         repeat(population) { index ->
             users.booked()
+            users.admit(cap = null, late = false)
             Thread.ofVirtual().start {
                 users.departed()
                 try {
-                    goRound(arm, index, population, sink, runStart, closesAt, drain, departed)
+                    goRound(arm, index, population, sink, runStart, closesAt, drain, departed, users.outbound)
                 } finally {
-                    users.finished()
+                    users.finished(late = false)
                 }
             }
         }
@@ -254,6 +283,7 @@ private fun goRound(
     closesAt: Long,
     drain: Drain?,
     departed: Departed,
+    outbound: Outbound,
 ) {
     var lap = 0L
     while (System.nanoTime() - runStart < closesAt) {
@@ -264,18 +294,23 @@ private fun goRound(
         // has no such thread, and fifty of them writing to it is a race whose
         // symptom is a spacing figure quietly wrong rather than a crash.
         departed.left(0L)
-        arm.scenario.runOneUser(
-            sink,
-            runStart,
-            // Nothing promised this journey a departure, so there is no
-            // lateness to carry. The recorder drops it rather than counting a
-            // zero, and the two clocks become one.
-            schedulingDelay = Duration.ZERO,
-            departure = at,
-            started = arm.feeder.forUser(lap * population + index),
-            drain = drain,
-            thinking = arm.thinkingFor(lap * population + index),
-        )
+        outbound.left(at)
+        try {
+            arm.scenario.runOneUser(
+                sink,
+                runStart,
+                // Nothing promised this journey a departure, so there is no
+                // lateness to carry. The recorder drops it rather than counting a
+                // zero, and the two clocks become one.
+                schedulingDelay = Duration.ZERO,
+                departure = at,
+                started = arm.feeder.forUser(lap * population + index),
+                drain = drain,
+                thinking = arm.thinkingFor(lap * population + index),
+            )
+        } finally {
+            outbound.back(at)
+        }
         lap++
     }
 }
@@ -297,6 +332,7 @@ private fun Simulation.warmingUpRun(warmUp: WarmUp): Simulation =
                 ?: hold(arm.profile.startRate, over = warmUp.over)
             arm.copy(profile = warming)
         },
+        inFlightCap = inFlightCap,
     )
 
 /**
@@ -348,35 +384,27 @@ private fun Scenario.depart(
     sink: StepSink,
     runStart: Long,
     departure: Duration,
+    sentLate: Boolean,
     users: Departures,
     session: Session,
     drain: Drain?,
-    departed: Departed,
     thinking: Random? = null,
 ) {
-    // The scheduler counting itself, on the scheduler's own thread. What the
-    // report calls lateness is still read below, where the user starts: one
-    // says when this tool fired, the other when a request left.
-    departed.left(lateness(runStart, departure).inWholeNanoseconds)
     Thread.ofVirtual().start {
         // Counted here rather than where it was booked: until this thread is
         // mounted, nothing has left.
         users.departed()
+        // Read here rather than on the scheduler: what the report calls
+        // lateness is how late the user's first request left, and until the
+        // virtual thread is mounted nothing has left. Read before the user is
+        // counted out, so counting it is not part of the lateness.
+        val late = lateness(runStart, departure)
         try {
-            // Read here rather than on the scheduler: what the report calls
-            // lateness is how late the user's first request left, and until the
-            // virtual thread is mounted nothing has left.
-            runOneUser(
-                sink,
-                runStart,
-                lateness(runStart, departure),
-                departure,
-                session,
-                drain,
-                thinking = thinking,
-            )
+            users.outbound.left(departure)
+            runOneUser(sink, runStart, late, departure, session, drain, thinking = thinking)
         } finally {
-            users.finished()
+            users.outbound.back(departure)
+            users.finished(sentLate)
         }
     }
 }
@@ -469,7 +497,7 @@ private fun schedulerThread(runnable: Runnable): Thread =
  * whose early users finish before its late ones are even scheduled cannot
  * declare itself over.
  */
-private class Departures {
+internal class Departures {
 
     // Two counts, because they answer two questions. `outstanding` is what the
     // run waits on: a user is counted the moment it is booked, so the latch
@@ -483,7 +511,19 @@ private class Departures {
     // target's latency.
     private val outstanding = AtomicLong(1)
     private val running = AtomicLong()
+
+    // A third, for the cap: threads started and not finished, counted on the
+    // scheduler before the thread exists. `running` is too late, because a
+    // thread waiting for a carrier is the cost the cap bounds.
+    private val started = AtomicLong()
+
+    // Of those, the ones that left more than STALL late: what tells a cap the
+    // target filled from one the generator's own stall filled (spec 0145).
+    private val startedLate = AtomicLong()
     private val allFinished = CountDownLatch(1)
+
+    /** Which seconds the users still running departed in, so the recorder knows what it can close. */
+    val outbound = Outbound()
 
     /** Booked, and owed a departure: the run cannot end until this user has run. */
     fun booked() {
@@ -495,7 +535,29 @@ private class Departures {
         running.incrementAndGet()
     }
 
-    fun finished() {
+    /**
+     * Whether a thread may start for the next user, counting it as started if
+     * so, and when not, whether punctual users alone would have left room.
+     * Scheduler only.
+     */
+    fun admit(cap: Int?, late: Boolean): Admission {
+        val inFlight = started.get()
+        if (cap != null && inFlight >= cap) {
+            return if (inFlight - startedLate.get() < cap) Admission.AfterStall else Admission.Saturated
+        }
+        started.incrementAndGet()
+        if (late) startedLate.incrementAndGet()
+        return Admission.Started
+    }
+
+    /** Booked and never started: owed nothing more. */
+    fun refused() = release()
+
+    fun finished(late: Boolean) {
+        // Late first: a scheduler reading between the two then sees one punctual
+        // user too many, which errs towards calling a refusal saturation.
+        if (late) startedLate.decrementAndGet()
+        started.decrementAndGet()
         running.decrementAndGet()
         release()
     }
@@ -511,6 +573,24 @@ private class Departures {
     /** Users whose journey has started and not yet ended. */
     fun inFlight(): Long = running.get().coerceAtLeast(0)
 }
+
+/** What became of an arrival at the cap. */
+internal enum class Admission {
+    Started,
+
+    /** Refused, with the cap full of users that left on time: the target's. */
+    Saturated,
+
+    /** Refused, with the cap full only because users the generator sent late piled in: its own stall's. */
+    AfterStall,
+}
+
+/**
+ * How late a departure has to fire before it counts as sent after a stall
+ * rather than on time: the hiccup watch's tick, the smallest stall this
+ * process says it can see in itself.
+ */
+private val STALL = TICK
 
 /**
  * How late a user left against the departure its profile named. Floored at

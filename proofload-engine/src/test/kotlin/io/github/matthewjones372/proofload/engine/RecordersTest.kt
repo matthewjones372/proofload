@@ -74,6 +74,48 @@ class RecordersTest {
     }
 
     @Test
+    fun `closing the seconds behind writers that are still writing loses nothing they wrote`() {
+        val now = Instant.now()
+        val closing = Recorders(now, shards = 4)
+        val kept = Recorders(now, shards = 4)
+        val ready = CountDownLatch(WRITERS + 1)
+
+        val writers = List(WRITERS) {
+            Thread.ofVirtual().start {
+                ready.countDown()
+                ready.await()
+                repeat(EACH) { index ->
+                    // Each writer walks forward through the run, as users departing later do.
+                    val at = (index * SECONDS / EACH).seconds
+                    listOf(closing, kept).forEach { recorders ->
+                        recorders.record("browse", null, 1.milliseconds, Duration.ZERO, at, false, true, 1, null)
+                    }
+                }
+            }
+        }
+        ready.countDown()
+        ready.await()
+        repeat(SECONDS) { closing.close(before = it.seconds) }
+        writers.forEach { it.join() }
+
+        closing.freeze(Plan.none, Arrivals.none) shouldBe kept.freeze(Plan.none, Arrivals.none)
+    }
+
+    @Test
+    fun `every shard widens to the slots the run was given, and the completions with them`() {
+        val recorders = Recorders(Instant.now(), shards = 2, slots = 2)
+        repeat(SECONDS) { at ->
+            recorders.record("browse", null, 1.milliseconds, Duration.ZERO, at.seconds, false, true, 1, null)
+        }
+        recorders.arrived("settled", 3.milliseconds, 1.seconds)
+
+        val result = recorders.freeze(Plan.none, Arrivals.none)
+
+        result.timeline.map { it.width to it.count } shouldBe listOf(2.seconds to 3L, 2.seconds to 2L)
+        result["settled"].timeline.map { it.width } shouldBe listOf(2.seconds)
+    }
+
+    @Test
     fun `there is one recorder per processor, not one per virtual user`() {
         Recorders.defaultShards shouldBe Runtime.getRuntime().availableProcessors()
     }

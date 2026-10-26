@@ -1,5 +1,7 @@
 package io.github.matthewjones372.proofload
 
+import kotlin.time.Duration
+
 /**
  * Several runs of one plan, kept individually and as one merged result.
  *
@@ -57,9 +59,13 @@ data class Runs(val each: List<RunResult>) {
      * [each] still holds every run on its own.
      */
     val merged: RunResult by lazy {
+        // The coarsest slot any run had to widen to: a narrower one can be
+        // added up into it, and a wide one cannot be split.
+        val width = each.maxOf { it.timeline.slotWidth }
         RunResult(
             startedAt = each.minOf { it.startedAt },
-            steps = each.flatMap { it.steps.values }.groupBy { it.name }.mapValues { (_, step) -> step.merged() },
+            steps = each.flatMap { it.steps.values }.groupBy { it.name }
+                .mapValues { (_, step) -> step.merged(width) },
             behind = each.map { it.behind }.merged(),
             hiccups = each.map { it.hiccups }.merged(),
             plan = first.plan,
@@ -69,16 +75,24 @@ data class Runs(val each: List<RunResult>) {
             // its own on `each`.
             arrivals = Arrivals.none,
             machine = first.machine,
-            timeline = each.map { it.timeline }.superimposed(),
+            timeline = each.map { it.timeline }.superimposed(width),
             // Superimposed with the timeline it is indexed with: second n of
             // every run is second n here, so the lateness of second n is every
             // run's lateness in that second pooled.
-            latePerSecond = each.map { it.latePerSecond }.superimposedLateness(),
-            // Added second by second, as the timeline is superimposed: second
-            // n of ten runs held the users of ten runs, and that is the
-            // concurrency the merged throughput and latency predict. A second
-            // no run sampled stays absent.
-            usersInFlight = each.map { it.usersInFlight }.superimposedInFlight(),
+            latePerSecond = each.map { it.latePerSecond.widened(it.timeline.slotWidth, width) }.superimposedLateness(),
+            // Added slot by slot, as the timeline is superimposed: slot n of
+            // ten runs held the users of ten runs, and that is the concurrency
+            // the merged throughput and latency predict. A slot no run
+            // sampled stays absent.
+            usersInFlight = each.map { it.usersInFlight.thinned(it.timeline.slotWidth, width) }.superimposedInFlight(),
+            // Added slot by slot like the timeline: a refusal in any run is one
+            // the merged run made, and dropping it would read as none.
+            refusedPerSecond = each
+                .map { it.refusedPerSecond.summed(it.timeline.slotWidth, width) }
+                .superimposedCounts(),
+            refusedAfterStallPerSecond = each
+                .map { it.refusedAfterStallPerSecond.summed(it.timeline.slotWidth, width) }
+                .superimposedCounts(),
             // The worst each run came to its own ceiling. A mean would say a
             // set was comfortable because most of its runs were, when the
             // question is whether any of them was measuring this process.
@@ -116,9 +130,10 @@ private fun RunResult.unlike(first: RunResult, position: Int): List<String> =
  * format does not carry one; that is a different fact from a run that measured
  * no seconds, and the refusal above should not read as if it were.
  */
-private fun List<Second>.asLength(): String = if (isEmpty()) "no timeline" else "$size seconds of timeline"
+private fun List<Second>.asLength(): String =
+    if (isEmpty()) "no timeline" else "${span.inWholeSeconds} seconds of timeline"
 
-private fun List<StepStats>.merged(): StepStats = StepStats(
+private fun List<StepStats>.merged(width: Duration): StepStats = StepStats(
     name = first().name,
     ok = map { it.ok }.mergedOutcome(),
     failed = map { it.failed }.mergedOutcome(),
@@ -129,7 +144,7 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
     attempts = sumOf { it.attempts },
     unmatched = sumOf { it.unmatched },
     inFlight = sumOf { it.inFlight },
-    timeline = map { it.timeline }.superimposed(),
+    timeline = map { it.timeline }.superimposed(width),
 )
 
 /**
@@ -151,13 +166,19 @@ private fun List<StepStats>.merged(): StepStats = StepStats(
  * landed, which the plan check has already seen.
  */
 
-/** Second *n* of every run's in-flight count added together, absent where no run sampled it. */
+/** Slot *n* of every run's in-flight count added together, absent where no run sampled it. */
 private fun List<List<Long?>>.superimposedInFlight(): List<Long?> {
     if (all { it.isEmpty() }) return emptyList()
     return (0 until maxOf { it.size }).map { second ->
         val counted = mapNotNull { it.getOrNull(second) }
         if (counted.isEmpty()) null else counted.sum()
     }
+}
+
+/** Slot *n* of every run's counts added together. */
+private fun List<List<Long>>.superimposedCounts(): List<Long> {
+    if (all { it.isEmpty() }) return emptyList()
+    return (0 until maxOf { it.size }).map { slot -> sumOf { it.getOrElse(slot) { 0L } } }
 }
 
 /**
@@ -181,16 +202,10 @@ private fun List<List<Timing>>.superimposedLateness(): List<Timing> {
     }
 }
 
-private fun List<List<Second>>.superimposed(): List<Second> =
-    (0 until maxOf { it.size }).map { second ->
-        val counted = mapNotNull { it.getOrNull(second) }
-        Second(
-            okServiceTime = counted.map { it.okServiceTime }.merged(),
-            failedServiceTime = counted.map { it.failedServiceTime }.merged(),
-            okResponseTime = counted.map { it.okResponseTime }.merged(),
-            failedResponseTime = counted.map { it.failedResponseTime }.merged(),
-        )
-    }
+private fun List<List<Second>>.superimposed(width: Duration): List<Second> {
+    val widened = map { it.widenedTo(width) }
+    return (0 until widened.maxOf { it.size }).map { slot -> widened.mapNotNull { it.getOrNull(slot) }.added(width) }
+}
 
 private fun List<Outcome>.mergedOutcome(): Outcome = Outcome(
     serviceTime = map { it.serviceTime }.merged(),

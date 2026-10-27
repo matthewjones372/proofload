@@ -28,6 +28,9 @@ class NoThirdPartyDependenciesTest {
         "proofload-arbs",
         "proofload-openapi",
         "pelican-core",
+        // Arrives with `pelican-core` from 1.0.0: Jackson's streaming parser, not
+        // databind, with no dependencies of its own (Pelican's spec 0045).
+        "jackson-core",
         "snakeyaml-engine",
     )
 

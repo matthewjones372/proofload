@@ -88,7 +88,7 @@ classpath from outside it.
 | `proofload-grpc-dynamic` | gRPC calls from a descriptor set or server reflection, with JSON bodies | core, grpc | `protobuf-java`, `protobuf-java-util`, `grpc-protobuf-lite`, `grpc-services` |
 | `proofload-kafka` | produce steps, and completions read off another topic | core | `kafka-clients` |
 | `proofload-jdbc` | statements over your own `DataSource`, with the pool wait recorded apart | core | none (the driver and pool are yours) |
-| `proofload-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core | `pelican-core` |
+| `proofload-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core | `pelican-core` (and its `jackson-core`) |
 
 ### Test frameworks and languages
 
@@ -111,7 +111,7 @@ as `compileOnly`: their report calls work when you add those modules yourself.
 | `proofload-plan` | reads a `plan/1` YAML or JSON file into a simulation, and emits it as Kotlin | core, http, arbs | `snakeyaml-engine` |
 | `proofload-plan-kafka` | lets a plan produce to Kafka topics | plan, kafka | through kafka |
 | `proofload-openapi` | writes a plan from an OpenAPI document | plan | `snakeyaml-engine` |
-| `proofload-contract` | writes a draft plan from Pelican endpoint values | plan, openapi | `pelican-core` |
+| `proofload-contract` | writes a draft plan from Pelican endpoint values | plan, openapi | `pelican-core` (and its `jackson-core`) |
 | `proofload-record` | reads a HAR recording into Kotlin source to edit and commit | core | `kotlinx-serialization-json` |
 
 ### Running and reporting

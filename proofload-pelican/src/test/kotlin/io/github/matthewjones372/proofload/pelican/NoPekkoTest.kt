@@ -15,7 +15,15 @@ import java.io.File
  */
 class NoPekkoTest {
 
-    private val allowed = listOf("kotlin-stdlib", "annotations-", "proofload-core", "pelican-core")
+    private val allowed = listOf(
+        "kotlin-stdlib",
+        "annotations-",
+        "proofload-core",
+        "pelican-core",
+        // Arrives with `pelican-core` from 1.0.0: Jackson's streaming parser, not
+        // databind, with no dependencies of its own (Pelican's spec 0045).
+        "jackson-core",
+    )
 
     @Test
     fun `the main runtime classpath is proofload, pelican-core, and no actor system`() {

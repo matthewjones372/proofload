@@ -88,7 +88,7 @@ classpath from outside it.
 | `proofload-grpc-dynamic` | gRPC calls from a descriptor set or server reflection, with JSON bodies | core, grpc | `protobuf-java`, `protobuf-java-util`, `grpc-protobuf-lite`, `grpc-services` |
 | `proofload-kafka` | produce steps, and completions read off another topic | core | `kafka-clients` |
 | `proofload-jdbc` | statements over your own `DataSource`, with the pool wait recorded apart | core | none (the driver and pool are yours) |
-| `proofload-pelican` | [Pelican](https://github.com/matthewjones372/pelican) endpoints as steps | core | `pelican-core` (and its `jackson-core`) |
+| `proofload-pelican` | [Pelican](https://github.com/surefold/pelican) endpoints as steps | core | `pelican-core` (and its `jackson-core`) |
 
 ### Test frameworks and languages
 

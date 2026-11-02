@@ -243,7 +243,7 @@ the design history.
 - [tweet-street](https://github.com/matthewjones372/tweet-street): its
   [`lark-bank/loadtest`](https://github.com/matthewjones372/tweet-street/tree/main/lark-bank/loadtest)
   scenarios run in Docker Compose or as a Job in a kind cluster.
-- [petshop](https://github.com/matthewjones372/petshop): `./gradlew loadTest`
+- [petshop](https://github.com/surefold/petshop): `./gradlew loadTest`
   starts the service in-process and holds it at 200 requests a second,
   asserting correctness under load as well as latency.
 - [starwars-api](https://github.com/matthewjones372/starwars-api), from Scala:

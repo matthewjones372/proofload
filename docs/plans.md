@@ -183,7 +183,7 @@ What it writes is a starting point to edit:
 ## From Pelican endpoints
 
 `proofload-contract` writes the same kind of first draft from
-[Pelican](https://github.com/matthewjones372/pelican) endpoint values, with
+[Pelican](https://github.com/surefold/pelican) endpoint values, with
 `planFrom(endpoints, baseUrl)`: one step per `GET` endpoint in the order they
 were declared, path parameters filled with one legal value, a smoke-sized load
 and a placeholder p99 goal per step. It is build-time tooling.

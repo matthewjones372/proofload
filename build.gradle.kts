@@ -14,7 +14,7 @@ buildscript {
 
 plugins {
     kotlin("jvm") version "2.4.21" apply false
-    id("com.diffplug.spotless") version "8.10.4"
+    id("com.diffplug.spotless") version "8.11.0"
     id("dev.detekt") version "2.0.0-alpha.6" apply false
     id("org.jetbrains.kotlinx.kover") version "0.9.11"
     // The version comes from the nearest `v` tag rather than a property, so

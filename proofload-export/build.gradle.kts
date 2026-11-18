@@ -12,9 +12,9 @@ dependencies {
     // The schema is the contract this module publishes, so it is checked by a
     // real validator rather than by a reader written here — the same reason
     // HdrHistogram sits above as the oracle for the encoding.
-    testImplementation("com.networknt:json-schema-validator:3.0.8")
+    testImplementation("com.networknt:json-schema-validator:3.0.9")
     // The validator brings jackson 3.2.1, which has open advisories.
-    testImplementation(platform("tools.jackson:jackson-bom:3.2.3"))
+    testImplementation(platform("tools.jackson:jackson-bom:3.3.0"))
 }
 
 tasks.test {

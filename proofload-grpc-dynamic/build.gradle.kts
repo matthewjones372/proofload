@@ -27,7 +27,7 @@ dependencies {
     // wire format. The `-lite` artefact rather than `grpc-protobuf`: the
     // marshaller is all that is wanted, and the full one drags protobuf's
     // `Any` support and the `com.google.api` protos with it.
-    api("io.grpc:grpc-protobuf-lite:1.85.0")
+    api("io.grpc:grpc-protobuf-lite:1.85.1")
     // The reflection stubs, for a target that will hand over its own
     // descriptors. It is the heaviest thing here: `grpc-core`, `grpc-protobuf`
     // and `proto-google-common-protos` arrive with it. Tolerable only because
@@ -36,19 +36,19 @@ dependencies {
     // because the alternative is hand-writing gRPC's own wire protocol, whose
     // test would be written against the same hand-written descriptors it was
     // meant to check.
-    api("io.grpc:grpc-services:1.85.0")
+    api("io.grpc:grpc-services:1.85.1")
 }
 
 dependencies {
     // A server these tests call, on the test classpath only. It answers with
     // `DynamicMessage` too, so nothing here needs generated code either — which
     // is the same claim the module makes, made twice.
-    testImplementation("io.grpc:grpc-inprocess:1.85.0")
+    testImplementation("io.grpc:grpc-inprocess:1.85.1")
 
     // Named rather than reached through `grpc-services`: the server here
     // attaches a schema descriptor to its service so reflection has something
     // to read, and that supplier is this artefact's type.
-    testImplementation("io.grpc:grpc-protobuf:1.85.0")
+    testImplementation("io.grpc:grpc-protobuf:1.85.1")
 
     // An engine to run the scenarios these tests build. Test-only: a module of
     // steps does not depend on the thing that runs them.
